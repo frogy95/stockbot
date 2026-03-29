@@ -7,6 +7,8 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_db
+from core.models.financial_data import FinancialData
+from core.models.news_sentiment import NewsSentiment
 from core.models.screening_result import ScreeningResult
 
 router = APIRouter(tags=["screening"])
@@ -67,6 +69,71 @@ async def get_screening_status(request: Request):
     if scheduler is None:
         return {"message": "스케줄러 미초기화"}
     return scheduler.get_screening_status()
+
+
+@router.get("/screening/auxiliary/financial/{stock_code}")
+async def get_auxiliary_financial(
+    stock_code: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """특정 종목의 최신 분기 재무 데이터 조회."""
+    stmt = (
+        select(FinancialData)
+        .where(FinancialData.stock_code == stock_code)
+        .order_by(FinancialData.fiscal_year.desc(), FinancialData.fiscal_quarter.desc())
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    row = result.scalars().first()
+
+    return {
+        "stock_code": row.stock_code if row else stock_code,
+        "fiscal_year": row.fiscal_year if row else None,
+        "fiscal_quarter": row.fiscal_quarter if row else None,
+        "revenue": row.revenue if row else None,
+        "operating_profit": row.operating_profit if row else None,
+        "net_income": row.net_income if row else None,
+        "source": row.source if row else None,
+        "collected_at": row.collected_at.isoformat() if row and row.collected_at else None,
+    }
+
+
+@router.get("/screening/auxiliary/sentiment/{stock_code}")
+async def get_auxiliary_sentiment(
+    stock_code: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """특정 종목의 최근 뉴스 센티멘트 10건 조회."""
+    stmt = (
+        select(NewsSentiment)
+        .where(NewsSentiment.stock_code == stock_code)
+        .order_by(NewsSentiment.collected_at.desc())
+        .limit(10)
+    )
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+
+    return {
+        "stock_code": stock_code,
+        "sentiments": [
+            {
+                "title": r.title,
+                "sentiment_score": float(r.sentiment_score) if r.sentiment_score is not None else None,
+                "published_at": r.published_at.isoformat() if r.published_at else None,
+                "source_url": r.source_url,
+            }
+            for r in rows
+        ],
+    }
+
+
+@router.get("/screening/auxiliary/status")
+async def get_auxiliary_status(request: Request):
+    """보조 데이터 수집 상태 조회."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"last_dart": None, "last_sentiment": None}
+    return scheduler.get_auxiliary_status()
 
 
 async def _get_latest_results(
