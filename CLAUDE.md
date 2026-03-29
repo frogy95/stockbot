@@ -1,10 +1,10 @@
-# choiji-guide-big
+# stockbot
 
 Claude Code 설정 예제 + 개발 프로세스 템플릿 프로젝트입니다.
 
 ## 저장소
 
-- **원격 저장소**: [https://github.com/frogy95/choiji-guide-big.git](https://github.com/frogy95/choiji-guide-big.git)
+- **원격 저장소**: [https://github.com/frogy95/stockbot.git](https://github.com/frogy95/stockbot.git)
 
 ## 언어 및 커뮤니케이션 규칙
 
