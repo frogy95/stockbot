@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Redis
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
+    REDIS_URL: str = ""
 
     # 프론트엔드
     NEXT_PUBLIC_API_URL: str = "http://localhost:8000"
@@ -62,6 +63,8 @@ class Settings(BaseSettings):
 
     @property
     def redis_url(self) -> str:
+        if self.REDIS_URL:
+            return self.REDIS_URL
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
