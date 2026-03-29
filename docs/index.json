@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-29T10:00:00+09:00",
+  "lastUpdated": "2026-03-29T22:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -287,6 +287,97 @@
               "testResult": "pass",
               "status": "completed"
             }
+          ]
+        }
+      ]
+    }
+    },
+    {
+      "id": "phase2",
+      "title": "데이터 수집 + 종목 스크리닝",
+      "status": "in_progress",
+      "phaseDoc": "docs/phase/phase2/phase2.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "핵심 데이터 수집",
+          "status": "completed",
+          "branch": "phase2-sprint1",
+          "sprintDoc": "docs/phase/phase2/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/5",
+          "progress": {
+            "total": 8,
+            "completed": 8
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "screening_results 테이블 + Alembic 마이그레이션",
+              "status": "completed",
+              "commits": [{"hash": "5e812e1", "message": "feat(phase2-sprint1): task1 -- screening_results 테이블 모델 + 마이그레이션", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task2",
+              "title": "공공데이터포털 수집기",
+              "status": "completed",
+              "commits": [{"hash": "0cc5c8a", "message": "feat(phase2-sprint1): task2 -- 공공데이터포털 수집기 (전 종목 일괄 OHLCV/시총)", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task3",
+              "title": "한투 WS 데이터 파서 (체결/호가)",
+              "status": "completed",
+              "commits": [{"hash": "304a6b0", "message": "feat(phase2-sprint1): task3 -- 한투 WS 체결/호가 파서 (H0STCNT0, H0STASP0)", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task4",
+              "title": "체결강도 계산 모듈",
+              "status": "completed",
+              "commits": [{"hash": "82947a8", "message": "feat(phase2-sprint1): task4 -- 체결강도 계산 모듈 (5분 윈도우, 매수/매도 누적 비율)", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task5",
+              "title": "WS 구독 매니저",
+              "status": "completed",
+              "commits": [{"hash": "655f096", "message": "feat(phase2-sprint1): task5 -- WS 구독 매니저 (35종목 상한, 우선순위 로테이션, Lock)", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task6",
+              "title": "한투 REST ETF 수집기",
+              "status": "completed",
+              "commits": [{"hash": "f12ab99", "message": "feat(phase2-sprint1): task6 -- 한투 REST ETF 수집기 (개별 시세 조회 + DB 저장)", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task7",
+              "title": "수집 스케줄러 + 수집 API",
+              "status": "completed",
+              "commits": [{"hash": "60e0273", "message": "feat(phase2-sprint1): task7 -- 수집 스케줄러 (APScheduler) + 수집 상태/트리거 API", "date": "2026-03-29"}]
+            },
+            {
+              "id": "task8",
+              "title": "통합 테스트 + main.py 연동",
+              "status": "completed",
+              "commits": [{"hash": "42a0efd", "message": "feat(phase2-sprint1): task8 -- 통합 테스트 + main.py 스케줄러 연동", "date": "2026-03-29"}]
+            }
+          ]
+        },
+        {
+          "id": "sprint2",
+          "title": "종목 스크리닝 엔진",
+          "status": "planned",
+          "branch": "phase2-sprint2",
+          "sprintDoc": "docs/phase/phase2/sprint2/sprint2.md",
+          "progress": {
+            "total": 7,
+            "completed": 0
+          },
+          "tasks": [
+            {"id": "task1", "title": "필터 조건 정의 모듈", "status": "planned"},
+            {"id": "task2", "title": "팩터 계산기 모듈", "status": "planned"},
+            {"id": "task3", "title": "팩터 스코어링 엔진", "status": "planned"},
+            {"id": "task4", "title": "1차 스크리닝 엔진", "status": "planned"},
+            {"id": "task5", "title": "2차 스크리닝 엔진", "status": "planned"},
+            {"id": "task6", "title": "스크리닝 API + 스케줄러 연동", "status": "planned"},
+            {"id": "task7", "title": "통합 테스트 + 회귀 검증", "status": "planned"}
           ]
         }
       ]
