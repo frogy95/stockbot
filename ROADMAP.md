@@ -21,10 +21,11 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~1 완료 (Phase 1 Sprint 1~2 모두 완료)
+- 전체 진행률: Phase 0~1 완료, v0.1.0 프로덕션 배포 완료 (2/6 Phase)
 - 현재 Phase: Phase 1 (개발 환경 + 한투 API 기반) ✅
 - 현재 Sprint: Phase 2 Sprint 1 (데이터 수집 + 종목 스크리닝) 예정
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29)
+- 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
 - 다음 마일스톤: Phase 2 Sprint 1 — 데이터 수집 시스템 (공공데이터포털 + 한투 실시간)
 
 ## 기술 아키텍처 결정 사항
