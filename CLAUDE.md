@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-Claude Code 에이전트 기반 개발 프로세스 템플릿. 7개 전문 에이전트와 훅 시스템으로 Phase-Sprint-Task 계층 워크플로우를 자동화한다.
+한국 주식/ETF 단타 자동 매매 시스템. 자동 종목 스크리닝, 매매 신호 분석, 주문 실행(반자동/완전자동), 웹 대시보드, 텔레그램 알림을 제공한다.
 
-- **원격 저장소**: [https://github.com/frogy95/stockbot.git](https://github.com/frogy95/stockbot.git)
-- **예정 기술 스택**: Python(FastAPI) + Next.js + PostgreSQL + Redis + Docker Compose
+- **원격 저장소**: https://github.com/frogy95/stockbot.git
+- **기술 스택**: Python 3.12(FastAPI) + Next.js(App Router) + PostgreSQL 16 + Redis 7
+- **인프라**: AWS Lightsail 단일 인스턴스, Docker Compose 4컨테이너
+- **PRD**: `docs/prd.md` | **로드맵**: `ROADMAP.md`
 
 ## 언어 및 커뮤니케이션 규칙
 
@@ -20,17 +22,55 @@ Claude Code 에이전트 기반 개발 프로세스 템플릿. 7개 전문 에�
 ```bash
 # 환경 구성
 cp .env.example .env            # 환경변수 설정
-docker compose up -d            # 전체 서비스 기동
+docker compose up -d            # 전체 서비스 기동 (FastAPI, Next.js, PostgreSQL, Redis)
 
 # 개발 서버
 docker compose up backend -d    # 백엔드만 기동
 docker compose up frontend -d   # 프론트엔드만 기동
 
-# 스프린트 구현 (커스텀 커맨드)
+# 백엔드 테스트/마이그레이션
+docker compose exec backend pytest -v              # 전체 테스트
+docker compose exec backend pytest tests/test_x.py # 단일 파일 테스트
+docker compose exec backend alembic upgrade head    # DB 마이그레이션
+
+# 프론트엔드 타입 체크
+cd frontend && npx tsc --noEmit
+
+# 커스텀 커맨드
 /sprint-dev {P}-{N}             # Phase P의 Sprint N 구현 실행
 /restart [service]              # Docker 서비스 재시작 (backend|frontend|db|all)
 /dashboard                      # 프로젝트 대시보드 열기
 ```
+
+## 시스템 아키텍처
+
+```
+┌─────────────────────────────────────────────┐
+│              AWS Lightsail                    │
+│  [Next.js :3000] ◄──► [FastAPI :8000]        │
+│                        ├ modules/trading/     │  매매 엔진 (전략, 주문, 포지션)
+│                        ├ modules/collector/   │  데이터 수집 (한투, 네이버, DART)
+│  [Telegram Bot] ◄──── ├ modules/screening/   │  종목 스크리닝/스코어링
+│                        ├ modules/notifier/    │  알림 (텔레그램)
+│                        ├ modules/analyzer/    │  성과 분석/리포트
+│  [PostgreSQL :5432] ◄──├ core/               │  설정, DB, Redis, 인증, 모델
+│  [Redis :6379]     ◄── └ api/                │  REST 엔드포인트
+└─────────────────────────────────────────────┘
+ 외부: 한투 API, 네이버 API, DART API, Telegram Bot API
+```
+
+### 매매 실행 흐름
+
+```
+collector(수집) → screening(스크리닝) → trading.strategy(신호 분석)
+  → [반자동] notifier(승인 요청) → 사용자 응답 → trading.order(주문)
+  → [완전자동] trading.order(즉시 주문)
+  → trading.position(포지션 업데이트) → analyzer(결과 기록) → notifier(결과 알림)
+```
+
+### 모의/실전 전환
+
+`TRADING_ENV` 플래그(paper/live)로 일괄 전환. 도메인, APP_KEY/SECRET, 계좌번호, tr_id 접두사가 환경별 독립. 모의거래는 Rate Limit 초당 1건 스로틀링 내장.
 
 ## Bash 명령 실행 규칙
 
@@ -79,20 +119,15 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 프로덕션 배포 | `deploy-prod` | Sonnet |
 | 핫픽스 마무리 | `hotfix-close` | Sonnet |
 
-## 문서 구조
+## 외부 API 의존성
 
-```
-docs/
-├── dev-process.md          # 개발 프로세스 전체 가이드 (10개 섹션)
-├── ci-policy.md            # CI/CD 정책 (Docker 태깅, 롤백)
-├── setup-guide.md          # 환경 셋업 가이드
-├── prompt-guide.md         # 바이브 코딩 프롬프트 가이드
-├── index.json              # 프로젝트 상태 추적 (phases, hotfixes, deployHistory)
-├── phase/phase{N}/         # Phase 문서 + 하위 Sprint 문서
-├── hotfix/                 # 핫픽스 문서
-├── deploy-history/         # 배포 기록 아카이브
-└── templates/              # PRD, Sprint, Phase, Task 등 문서 템플릿
-```
+| API | 용도 | Rate Limit | 환경변수 |
+|-----|------|-----------|---------|
+| 한국투자증권 (실전) | 시세 + 주문 | 초당 ~20건 | `KIS_APP_KEY`, `KIS_APP_SECRET` |
+| 한국투자증권 (모의) | 개발/테스트 | 초당 ~1건 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET` |
+| 네이버 검색 | 뉴스/트렌드 | 일 25,000건 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
+| Open Dart | 재무/공시 | 일 10,000건 | `DART_API_KEY` |
+| Telegram Bot | 알림/승인 | 초당 30건 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 
 ## 경로별 상세 규칙
 
