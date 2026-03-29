@@ -11,7 +11,7 @@ from exploration.common.config import DART_API_KEY
 # 종목코드 → corp_code 매핑은 corpCode.xml에서 추출해야 하지만, 탐색 목적으로 하드코딩
 CORP_CODES = {
     "삼성전자": "00126380",
-    "에코프로비엠": "01122897",
+    "에코프로비엠": "01160363",
     "KODEX 200": None,  # ETF는 DART에 없을 수 있음
 }
 
