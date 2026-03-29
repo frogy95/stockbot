@@ -119,12 +119,14 @@ graph TB
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | Docker Compose + DB/Redis + 백엔드 스켈레톤 | Docker 4컨테이너, FastAPI 구조, DB 스키마(3테이블), Redis, Alembic, 헬스체크 | 없음 |
+| 1 ✅ | Docker Compose + DB/Redis + 백엔드 스켈레톤 | Docker 4컨테이너, FastAPI 구조, DB 스키마(3테이블), Redis, Alembic, 헬스체크 | 없음 |
 | 2 | 한투 API 연동 + 토큰 관리 + 모의/실전 전환 | KIS REST/WS 클라이언트, 토큰 자동 갱신, Rate Limit 스로틀러, 환경 전환, 에러 핸들링 | Sprint 1 |
 
 ---
 
-## Sprint 1 상세 — Docker Compose + DB/Redis + 백엔드 스켈레톤
+## Sprint 1 상세 ✅ 완료 — Docker Compose + DB/Redis + 백엔드 스켈레톤
+
+> 완료: PR #2 (phase1-sprint1 → develop), 2026-03-29. 24개 테스트 전체 통과.
 
 ### 백엔드
 
@@ -368,10 +370,10 @@ LIVE = KISEnvironment(
 | 1 | Sprint 2 범위 과다 우려 | 정프로 | 중간 | WS 파싱/구독관리를 Phase 2로 이동하여 범위 축소 | Sprint 2 |
 | 2 | 모의거래 주문 테스트는 평일 장중에만 가능 | 윤에이피 | 중간 | Sprint 2 일정에 평일 장중 테스트 시간 확보 | Sprint 2 |
 | 3 | WS 40종목 구독 제한 | 윤에이피 | 낮음 | Phase 2에서 복수 세션 또는 우선순위 로테이션 검토. Phase 1에서는 인지만 | Phase 2 |
-| 4 | DB 스키마 조기 설계 변경 리스크 | 정프로 | 낮음 | 최소 3테이블만. Alembic으로 마이그레이션 관리 | Sprint 1 |
+| 4 | ~~DB 스키마 조기 설계 변경 리스크~~ | 정프로 | 낮음 | 최소 3테이블만. Alembic으로 마이그레이션 관리 | Sprint 1 ✅ 해결 |
 | 5 | 모의거래 체결 로직이 실전과 다름 | 김단타 | 높음 | 코드 주석/문서에 반복 명시. Phase 3 모의거래 2주 운영 후 차이 문서화 | Phase 3 |
-| 6 | settings key-value vs typed columns 트레이드오프 | 박퀀트 | 낮음 | key-value + value_type 검증으로 절충. 필요 시 Phase 3에서 전환 | Sprint 1 |
-| 7 | Next.js 프로젝트 Phase 4까지 미사용 시 의존성 노후화 | 정프로 | 낮음 | 빈 프로젝트 + 헬스체크만. Phase 4 시작 시 의존성 업데이트 | Sprint 1 |
+| 6 | ~~settings key-value vs typed columns 트레이드오프~~ | 박퀀트 | 낮음 | key-value + value_type 검증으로 절충. 필요 시 Phase 3에서 전환 | Sprint 1 ✅ 해결 |
+| 7 | ~~Next.js 프로젝트 Phase 4까지 미사용 시 의존성 노후화~~ | 정프로 | 낮음 | 빈 프로젝트 + 헬스체크만. Phase 4 시작 시 의존성 업데이트 | Sprint 1 ✅ 해결 |
 | 8 | 환경변수 > DB 설정 계층에서 TRADING_ENV 전환 시 Docker 재시작 필요 | 최리스크 | 중간 | 환경변수는 안전장치, 런타임 전환은 DB + API 사용. 환경변수 paper면 DB live여도 paper 강제 | Sprint 2 |
 
 ---
@@ -380,11 +382,11 @@ LIVE = KISEnvironment(
 
 | # | 항목 | 기준 | 상태 |
 |---|------|------|------|
-| 1 | Docker Compose | 4컨테이너(FastAPI, Next.js, PostgreSQL, Redis) 정상 기동 | ⬜ |
-| 2 | FastAPI 스켈레톤 | modules/, core/, api/ 디렉토리 구조 + 헬스체크 API 동작 | ⬜ |
-| 3 | DB 스키마 | settings + stocks + market_data 3테이블 생성 + Alembic 마이그레이션 | ⬜ |
-| 4 | Redis | 연결 + 기본 get/set/delete 동작 확인 | ⬜ |
-| 5 | settings 시드 데이터 | 리스크/매매/스케줄 파라미터 21개 항목 초기 적재 | ⬜ |
+| 1 | Docker Compose | 4컨테이너(FastAPI, Next.js, PostgreSQL, Redis) 정상 기동 | ✅ 완료 |
+| 2 | FastAPI 스켈레톤 | modules/, core/, api/ 디렉토리 구조 + 헬스체크 API 동작 | ✅ 완료 |
+| 3 | DB 스키마 | settings + stocks + market_data 3테이블 생성 + Alembic 마이그레이션 | ✅ 완료 |
+| 4 | Redis | 연결 + 기본 get/set/delete 동작 확인 | ✅ 완료 |
+| 5 | settings 시드 데이터 | 리스크/매매/스케줄 파라미터 21개 항목 초기 적재 | ✅ 완료 |
 | 6 | KIS REST 클라이언트 | 토큰 발급 + 시세 조회(현재가/호가) + 주문 기본 구조 | ⬜ |
 | 7 | KIS WebSocket 클라이언트 | 연결/인증/구독/수신/재연결 기본 프레임 동작 | ⬜ |
 | 8 | 토큰 자동 갱신 | Redis 캐싱 + APScheduler 6시간 주기 체크 + 만료 2시간 전 갱신 | ⬜ |
