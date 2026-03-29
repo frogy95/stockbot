@@ -13,7 +13,7 @@
 |--------|------|----------|
 | `phase{P}-sprint{N}` | 스프린트 단위 개발 | 로컬 |
 | `develop` | 스테이징 통합 브랜치 | 로컬 Docker |
-| `main` | 프로덕션 브랜치 | 프로덕션 서버 |
+| `main` | 프로덕션 브랜치 | Vercel + Railway |
 | `hotfix/*` | 긴급 운영 패치 | main + develop 역머지 |
 
 ### Sprint 흐름

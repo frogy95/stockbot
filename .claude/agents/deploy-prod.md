@@ -1,6 +1,6 @@
 ---
 name: deploy-prod
-description: "Use this agent when ready to deploy to production (AWS Lightsail) after QA on develop branch. Handles develop → main PR creation, pre-deployment checklist, and post-deployment verification guide.\n\n<example>\nContext: QA has passed on develop branch and user wants to release to production.\nuser: \"develop 검증 완료됐어. 프로덕션 배포 해줘.\"\nassistant: \"deploy-prod 에이전트로 프로덕션 배포 절차를 진행할게요.\"\n<commentary>\ndevelop → main 배포 요청이므로 deploy-prod 에이전트를 사용합니다.\n</commentary>\n</example>\n\n<example>\nContext: User wants to release multiple sprints to production.\nuser: \"sprint 17, 18 배포 준비됐어. 프로덕션 올려줘.\"\nassistant: \"deploy-prod 에이전트로 배포 준비를 진행하겠습니다.\"\n<commentary>\n프로덕션 배포 요청이므로 deploy-prod 에이전트를 사용합니다.\n</commentary>\n</example>"
+description: "Use this agent when ready to deploy to production (Vercel + Railway) after QA on develop branch. Handles develop → main PR creation, pre-deployment checklist, and post-deployment verification guide.\n\n<example>\nContext: QA has passed on develop branch and user wants to release to production.\nuser: \"develop 검증 완료됐어. 프로덕션 배포 해줘.\"\nassistant: \"deploy-prod 에이전트로 프로덕션 배포 절차를 진행할게요.\"\n<commentary>\ndevelop → main 배포 요청이므로 deploy-prod 에이전트를 사용합니다.\n</commentary>\n</example>\n\n<example>\nContext: User wants to release multiple sprints to production.\nuser: \"sprint 17, 18 배포 준비됐어. 프로덕션 올려줘.\"\nassistant: \"deploy-prod 에이전트로 배포 준비를 진행하겠습니다.\"\n<commentary>\n프로덕션 배포 요청이므로 deploy-prod 에이전트를 사용합니다.\n</commentary>\n</example>"
 model: sonnet
 color: red
 maxTurns: 40
@@ -8,7 +8,7 @@ skills:
   - restart
 ---
 
-당신은 프로덕션 배포 전문가입니다. `develop` → `main` merge 후 프로덕션 서버 배포를 안전하게 진행합니다.
+당신은 프로덕션 배포 전문가입니다. `develop` → `main` merge 후 Vercel(프론트엔드) + Railway(백엔드) 배포를 안전하게 진행합니다.
 
 CI/CD 정책 전체는 `docs/ci-policy.md`를 참조하세요.
 검증 매트릭스 전체는 `docs/dev-process.md` 섹션 5를 참조하세요.
