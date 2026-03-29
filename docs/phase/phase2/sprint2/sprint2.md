@@ -6,9 +6,11 @@
 
 **Tech Stack:** SQLAlchemy async (DB 쿼리), Redis (실시간 데이터 조회), APScheduler (2차 스크리닝 30초 주기), httpx (REST 시세 조회)
 
-**Sprint 기간:** 2026-03-29 ~
+**Sprint 기간:** 2026-03-29 ~ 2026-03-29
+**상태:** ✅ 완료 (2026-03-29)
 **이전 스프린트:** Phase 2 Sprint 1 (pytest 전체 통과, PR #5)
 **브랜치명:** `phase2-sprint2`
+**PR:** https://github.com/frogy95/stockbot/pull/6
 
 ---
 
@@ -100,8 +102,8 @@ git commit -m "feat(phase2-sprint2): task1 -- 필터 조건 정의 모듈 (1차/
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ PrimaryFilters 기본값이 Phase 2 확정 파라미터와 일치
+- ✅ pytest 테스트 통과
+- ✅ PrimaryFilters 기본값이 Phase 2 확정 파라미터와 일치
 
 ---
 
@@ -151,9 +153,9 @@ git commit -m "feat(phase2-sprint2): task2 -- 팩터 계산기 모듈 (주식 5�
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ ATR 5일, 3일 모멘텀 공식 정확
-- ⬜ 데이터 부족 시 안전 기본값 반환
+- ✅ pytest 테스트 통과
+- ✅ ATR 5일, 3일 모멘텀 공식 정확
+- ✅ 데이터 부족 시 안전 기본값 반환
 
 ---
 
@@ -209,9 +211,9 @@ git commit -m "feat(phase2-sprint2): task3 -- 팩터 스코어링 엔진 (순위
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ 순위 기반 백분위 정규화 동작 확인
-- ⬜ ETF 괴리율 역순위 처리 정확
+- ✅ pytest 테스트 통과
+- ✅ 순위 기반 백분위 정규화 동작 확인
+- ✅ ETF 괴리율 역순위 처리 정확
 
 ---
 
@@ -263,9 +265,9 @@ git commit -m "feat(phase2-sprint2): task4 -- 1차 스크리닝 엔진 (DB 정�
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ 필터 조건이 Phase 2 확정 파라미터와 일치
-- ⬜ 후보 상한 30종목 제한 동작
+- ✅ pytest 테스트 통과
+- ✅ 필터 조건이 Phase 2 확정 파라미터와 일치
+- ✅ 후보 상한 30종목 제한 동작
 
 ---
 
@@ -318,9 +320,9 @@ git commit -m "feat(phase2-sprint2): task5 -- 2차 스크리닝 엔진 (실시�
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ 체결강도 70+, 호가잔량 1.2+ 필터 동작
-- ⬜ 시초가 구간(09:00~09:30) 신호 금지 동작
+- ✅ pytest 테스트 통과
+- ✅ 체결강도 70+, 호가잔량 1.2+ 필터 동작
+- ✅ 시초가 구간(09:00~09:30) 신호 금지 동작
 
 ---
 
@@ -388,10 +390,10 @@ git commit -m "feat(phase2-sprint2): task6 -- 스크리닝 API + 스케줄러 �
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ API 5개 엔드포인트 정상 응답
-- ⬜ 스케줄러에 1차(08:10), 2차(30초 주기) job 등록
-- ⬜ 1차 스크리닝 후 WS 구독 목록 자동 업데이트
+- ✅ pytest 테스트 통과
+- ✅ API 5개 엔드포인트 정상 응답
+- ✅ 스케줄러에 1차(08:10), 2차(30초 주기) job 등록
+- ✅ 1차 스크리닝 후 WS 구독 목록 자동 업데이트
 
 ---
 
@@ -433,9 +435,9 @@ git commit -m "feat(phase2-sprint2): task7 -- 통합 테스트 + 회귀 검증"
 ```
 
 **완료 기준:**
-- ⬜ 통합 테스트 통과
-- ⬜ 기존 Sprint 1 테스트 회귀 없음
-- ⬜ 전체 pytest PASS
+- ✅ 통합 테스트 통과 (227 passed)
+- ✅ 기존 Sprint 1 테스트 회귀 없음
+- ✅ 전체 pytest PASS (227 passed)
 
 ---
 
