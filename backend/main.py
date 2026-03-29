@@ -13,6 +13,7 @@ from core.clients.kis_ws import KISWebSocketClient
 from api.routes.health import router as health_router
 from api.routes.settings import router as settings_router
 from api.routes.kis import router as kis_router
+from api.routes.collector import router as collector_router
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(settings_router, prefix="/api/v1")
     app.include_router(kis_router, prefix="/api/v1")
+    app.include_router(collector_router, prefix="/api/v1")
 
     return app
 
