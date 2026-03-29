@@ -15,3 +15,4 @@
 ## 스프린트 현황 (2026-03-29 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, 계획 수립 완료
+- [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, 계획 수립 완료
