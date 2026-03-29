@@ -2,6 +2,7 @@
 
 **작성일**: 2026-03-29
 **근거**: `api-test-report.md` 검증 결과
+**데이터 흐름**: `docs/data-flow.md` (Mermaid 다이어그램)
 
 ---
 
