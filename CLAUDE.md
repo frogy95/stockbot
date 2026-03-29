@@ -40,6 +40,7 @@ cd frontend && npx tsc --noEmit
 /sprint-dev {P}-{N}             # Phase P의 Sprint N 구현 실행
 /restart [service]              # Docker 서비스 재시작 (backend|frontend|db|all)
 /dashboard                      # 프로젝트 대시보드 열기
+/context-audit                  # 컨텍스트 자산 감사 (중복/상충/고아 파일 검출)
 ```
 
 ## 시스템 아키텍처
@@ -96,10 +97,7 @@ bash-guard hook(`.claude/hooks/pretooluse-bash-guard.sh`)이 자동 차단:
 
 ## Git 브랜치 전략
 
-- `main`: 프로덕션 배포 (직접 push 금지, PR만 허용)
-- `develop`: 통합 브랜치 (직접 push 금지, PR만 허용)
-- `phase{P}-sprint{N}`: 스프린트 작업 브랜치 (`git checkout -b`로 생성, worktree 사용 금지)
-- `hotfix/*`: 긴급 수정 브랜치
+`main`/`develop` 직접 push 금지, PR만 허용. 상세: `docs/dev-process.md` §1, `docs/ci-policy.md`
 
 ## 개발 프로세스
 
@@ -152,7 +150,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 - 백엔드: `.claude/rules/backend.md`
 - 프론트엔드: `.claude/rules/frontend.md`
 - 스프린트 워크플로우: `.claude/rules/sprint-workflow.md`
-- Notion 문서 관리: `.claude/rules/notion.md`
+- Notion 문서 관리: Notion 설정 시 `.claude/rules/notion.md` 생성 예정
 
 ## 훅 시스템
 
