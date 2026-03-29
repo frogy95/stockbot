@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **원격 저장소**: https://github.com/frogy95/stockbot.git
 - **기술 스택**: Python 3.12(FastAPI) + Next.js(App Router) + PostgreSQL 16 + Redis 7
-- **인프라**: AWS Lightsail 단일 인스턴스, Docker Compose 4컨테이너
+- **인프라**: Vercel (프론트엔드) + Railway (백엔드 + PostgreSQL + Redis) + Cloudflare (도메인/DNS)
 - **PRD**: `docs/prd.md` | **로드맵**: `ROADMAP.md`
 
 ## 언어 및 커뮤니케이션 규칙
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 주요 명령어
 
 ```bash
-# 환경 구성
+# 로컬 개발 환경 (Docker Compose)
 cp .env.example .env            # 환경변수 설정
 docker compose up -d            # 전체 서비스 기동 (FastAPI, Next.js, PostgreSQL, Redis)
 
@@ -45,17 +45,24 @@ cd frontend && npx tsc --noEmit
 ## 시스템 아키텍처
 
 ```
-┌─────────────────────────────────────────────┐
-│              AWS Lightsail                    │
-│  [Next.js :3000] ◄──► [FastAPI :8000]        │
-│                        ├ modules/trading/     │  매매 엔진 (전략, 주문, 포지션)
-│                        ├ modules/collector/   │  데이터 수집 (한투, 네이버, DART)
-│  [Telegram Bot] ◄──── ├ modules/screening/   │  종목 스크리닝/스코어링
-│                        ├ modules/notifier/    │  알림 (텔레그램)
-│                        ├ modules/analyzer/    │  성과 분석/리포트
-│  [PostgreSQL :5432] ◄──├ core/               │  설정, DB, Redis, 인증, 모델
-│  [Redis :6379]     ◄── └ api/                │  REST 엔드포인트
-└─────────────────────────────────────────────┘
+┌── Cloudflare (DNS/CDN) ─────────────────────┐
+│                                               │
+│  stockbot.{domain}     api.stockbot.{domain}  │
+│       │                        │              │
+│       ▼                        ▼              │
+│  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
+│  │ Next.js   │───►│ FastAPI :8000         │  │
+│  │ Dashboard │    │  ├ modules/trading/    │  │
+│  └───────────┘    │  ├ modules/collector/  │  │
+│                   │  ├ modules/screening/  │  │
+│  [Telegram Bot]◄──│  ├ modules/notifier/   │  │
+│                   │  ├ modules/analyzer/   │  │
+│                   │  ├ core/               │  │
+│                   │  └ api/                │  │
+│                   │                        │  │
+│                   │ [PostgreSQL] [Redis]    │  │
+│                   └────────────────────────┘  │
+└───────────────────────────────────────────────┘
  외부: 한투 API, 공공데이터포털 API, DART API, 네이버 API, Telegram Bot API
 ```
 

@@ -160,8 +160,10 @@
 | 스케줄러 | APScheduler | FastAPI 내장, 크론 표현식 |
 | 텔레그램 | python-telegram-bot | 웹훅, 비동기 지원 |
 | ORM | SQLAlchemy 2.0 + Alembic | 비동기 지원, 마이그레이션 |
-| 컨테이너 | Docker Compose | 로컬/서버 동일 환경 |
-| 인프라 | AWS Lightsail | 비용 효율, 단일 서버 |
+| 컨테이너 | Docker Compose | 로컬 개발 환경 |
+| 프론트엔드 배포 | Vercel | Next.js 최적, CDN, 무료 티어 |
+| 백엔드 배포 | Railway | 상주 프로세스, PostgreSQL/Redis add-on |
+| 도메인/DNS | Cloudflare | CDN, DDoS 보호, SSL |
 
 ### 4.2 외부 API 의존성
 
@@ -176,9 +178,10 @@
 
 ### 4.3 인프라 환경
 
-- AWS Lightsail 단일 인스턴스
-- Docker Compose로 4개 컨테이너: FastAPI, Next.js, PostgreSQL, Redis
-- HTTPS 적용 (Let's Encrypt)
+- **Vercel**: Next.js 대시보드 배포 (SSR, CDN)
+- **Railway**: FastAPI 백엔드 + PostgreSQL + Redis (상주 프로세스, 도쿄 리전)
+- **Cloudflare**: 도메인 DNS 관리, CDN, SSL
+- **Docker Compose**: 로컬 개발 환경 (4컨테이너)
 
 ---
 
@@ -189,27 +192,26 @@
 모놀리식 + 모듈 경계 (접근방식 C): 배포는 단일 서버, 코드는 모듈로 분리하여 확장 대비.
 
 ```
-┌─────────────────────────────────────────────┐
-│              AWS Lightsail                    │
-│  ┌────────────────────────────────────────┐  │
-│  │        Docker Compose                  │  │
-│  │                                        │  │
-│  │  [Next.js :3000] ◄──► [FastAPI :8000]  │  │
-│  │                        │               │  │
-│  │                        ├ modules/      │  │
-│  │                        │ ├ trading/    │  │
-│  │                        │ ├ collector/  │  │
-│  │  [Telegram Bot API]◄───│ ├ screening/  │  │
-│  │                        │ ├ notifier/   │  │
-│  │                        │ └ analyzer/   │  │
-│  │  [PostgreSQL :5432]◄───│               │  │
-│  │  [Redis :6379]     ◄───│ ├ core/       │  │
-│  │                        │ └ api/        │  │
-│  └────────────────────────────────────────┘  │
+┌── Cloudflare (DNS/CDN) ─────────────────────┐
+│                                               │
+│  stockbot.{domain}     api.stockbot.{domain}  │
+│       │                        │              │
+│       ▼                        ▼              │
+│  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
+│  │ Next.js   │───►│ FastAPI               │  │
+│  │ Dashboard │    │  ├ modules/trading/    │  │
+│  └───────────┘    │  ├ modules/collector/  │  │
+│                   │  ├ modules/screening/  │  │
+│  [Telegram Bot]◄──│  ├ modules/notifier/   │  │
+│                   │  ├ modules/analyzer/   │  │
+│                   │  ├ core/  └ api/       │  │
+│                   │                        │  │
+│                   │ [PostgreSQL] [Redis]    │  │
+│                   └────────────────────────┘  │
 │                                               │
 │  외부: 한투 API, 네이버 API, DART API,        │
 │        공공데이터포털 API                      │
-└─────────────────────────────────────────────┘
+└───────────────────────────────────────────────┘
 ```
 
 ### 5.2 백엔드 모듈 구조

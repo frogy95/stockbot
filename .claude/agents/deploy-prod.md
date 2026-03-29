@@ -92,8 +92,8 @@ EOF
 포함 스프린트: Sprint {N}, {M}
 PR: {PR URL}
 
-- ✅ main merge 시 GHCR 이미지 push 자동 실행
-- ✅ 서버 SSH 배포 자동 실행
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
 자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 ```
@@ -109,29 +109,25 @@ PR: {PR URL}
 
 사용자에게 다음을 보고합니다:
 
-1. **PR URL** — merge 후 GitHub Actions가 자동 배포를 시작합니다.
-2. **GitHub Actions 모니터링** — 저장소 Actions 탭에서 진행 상태를 확인하세요.
-3. **5단계 실서버 자동 검증** — GitHub Actions 완료 후 자동으로 진행됩니다.
+1. **PR URL** — merge 후 Vercel/Railway가 자동 배포를 시작합니다.
+2. **배포 모니터링** — Vercel 대시보드 + Railway 대시보드에서 진행 상태를 확인하세요.
+3. **5단계 실서버 자동 검증** — 배포 완료 후 자동으로 진행됩니다.
 4. **롤백 방법** (문제 발생 시): `docs/dev-process.md` 섹션 6.4 참조
 
 ### 5단계: 실서버 자동 검증 (배포 완료 후)
 
 `docs/dev-process.md` 섹션 5의 "deploy-prod" 컬럼 기준으로 자동 검증을 수행합니다.
 
-SSH 접속 정보는 `docs/dev-process.md` 섹션 6.3을 참조하세요.
-
 **자동 검증 실행:**
 ```bash
-# 1. 헬스체크 (서버 IP는 docs/dev-process.md 섹션 6.3 참조)
-curl -s http://{SERVER_IP}/api/v1/health
+# 1. 백엔드 헬스체크 (Railway)
+curl -s https://api.{DOMAIN}/api/v1/health
 
-# 2. 컨테이너 상태 확인
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml ps"
+# 2. 프론트엔드 접속 확인 (Vercel)
+curl -s -o /dev/null -w "%{http_code}" https://{DOMAIN}
 
-# 3. 백엔드 최근 로그 오류 확인
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml logs backend --tail 30 2>&1 | grep -i 'error\|traceback\|critical' || echo 'No errors found'"
+# 3. Railway 로그 확인
+railway logs --service backend --tail 30
 ```
 
 **Playwright 프론트엔드 검증 (MCP 사용):**
