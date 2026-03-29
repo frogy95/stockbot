@@ -381,6 +381,8 @@ LIVE = KISEnvironment(
 | 10 | WebSocket 구독 관리 (종목 동적 추가/제거, 40종목 제한 대응) | Sprint 2 제외 범위 | 중간 | 기본 subscribe/unsubscribe만 구현, 고급 관리는 Phase 2 | Phase 2 |
 | 11 | 체결강도 계산 | Sprint 2 제외 범위 | 낮음 | 실시간 데이터 파싱 이후 가능, Phase 2 | Phase 2 |
 | 12 | 장 상태 관리 (시초가/장마감 시간대 로직) | Sprint 2 제외 범위 | 중간 | 운영 시간대 파라미터는 DB에 존재, 로직 구현은 Phase 2 | Phase 2 |
+| 13 | `kis_ws.py` subscribe/unsubscribe에서 `_ws is None` 미검증 | Sprint 2 리뷰 | 중간 | connect() 없이 호출 시 AttributeError 발생 가능. Phase 2 WS 구독 관리 고도화 시 가드 추가 | Phase 2 |
+| 14 | `index.json` sprint2 상태 동기화 | Sprint 2 리뷰 | 중간 | sprint-close가 업데이트 완료. 향후 sprint-close 후 상태 반영 확인 프로세스 유지 | ✅ 해결 |
 
 ---
 
