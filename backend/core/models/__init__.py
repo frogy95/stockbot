@@ -8,3 +8,4 @@ class Base(DeclarativeBase):
 from core.models.settings import SystemSetting  # noqa: E402, F401
 from core.models.stock import Stock  # noqa: E402, F401
 from core.models.market_data import MarketData  # noqa: E402, F401
+from core.models.screening_result import ScreeningResult  # noqa: E402, F401
