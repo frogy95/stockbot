@@ -95,6 +95,14 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 - 코드 리뷰 결과 요약
 - Phase 문서 반영 상태
 
+### 5-1단계: 모든 변경 파일 커밋 (필수)
+
+이 단계에서 수정한 모든 파일을 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`deploy.md`, `docs/phase/*/phase*.md`, `docs/index.json`, `agent-memory` 등)
+3. 커밋 메시지: `docs(sprint-review): Phase {P} Sprint {N} 코드 리뷰 + 검증 결과 기록`
+
 ### 6단계: 최종 보고
 
 사용자에게 다음을 보고합니다:
@@ -118,6 +126,7 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 2. 자동 검증 실행 (3단계)
 3. Phase 문서 반영 (4단계)
 4. deploy.md 결과 기록 (5단계)
+5. **모든 변경 파일 커밋** (5-1단계) — 미커밋 종료 금지
 
 > stop hook(`doc-checker`)이 Phase 문서 수정 여부와 Critical/High 미해결 이슈를 자동 검증합니다.
 
