@@ -119,16 +119,16 @@ PR 검토 후 별도로 실행합니다.
 | SSH 헬스체크 (`/api/v1/health`) | — | — | ✅ | **자동** |
 | Docker 컨테이너 상태 확인 | — | — | ✅ | **자동** |
 | 백엔드 로그 오류 확인 | — | — | ✅ | **자동** |
-| `docker compose up --build` | ⬜ | ⬜ | — | **수동** |
+| `docker compose up --build` | ⬜ | ⬜ | — | **반자동** (미실행 시 자동 기동) |
 | `alembic upgrade head` | ⬜ DB변경시 | — | ⬜ DB변경시 | **수동** |
 | KIS API 실거래 확인 | ⬜ | ⬜ 관련시 | ⬜ 관련시 | **수동** |
 | UI 디자인/시각적 품질 판단 | ⬜ | — | ⬜ | **수동** |
 
 ### 자동 검증 전제 조건
 
-- Docker 컨테이너가 실행 중일 때만 자동 실행
-- 서버가 응답하는지 확인 후 진행 (`http://localhost:3000`, `http://localhost:8000`)
-- Docker가 미실행인 경우: 자동 검증을 건너뛰고, deploy.md에 "⬜ Docker 미실행으로 자동 검증 미수행" 기록 후 수동 검증 항목으로 안내
+- Docker 컨테이너가 미실행이면 `docker compose up -d`로 자동 기동 시도
+- 기동 후 health check (`http://localhost:8000/docs`, `http://localhost:3000`) 통과 시 자동 검증 진행
+- Docker 환경 자체가 없는 경우 (Docker Desktop 미설치 등): deploy.md에 "⬜ Docker 환경 없음 — 자동 검증 미수행" 기록 후 수동 검증 항목으로 안내
 
 ### Playwright 검증 범위
 
@@ -307,3 +307,4 @@ sprint-review agent의 2단계 및 hotfix-close agent의 3단계에서 이 체�
 | 에이전트 워크플로우 변경 | `.claude/agents/*.md` 해당 파일 | 직접 수정 |
 | 새 버전 배포 | Notion 릴리즈 노트 (섹션 8.5 참조) | deploy-prod agent |
 | Phase/Sprint/Hotfix 상태 변경 | `docs/index.json` | 해당 에이전트 (phase-planner, sprint-planner, sprint-close, hotfix-close, deploy-prod) |
+| Sprint 구현 시작/Task 완료 시 상태 전환 | `docs/index.json` (sprint/task status, progress) | PostToolUse hook (`posttooluse-index-sync.sh`) — git checkout/commit 감지 시 자동 |

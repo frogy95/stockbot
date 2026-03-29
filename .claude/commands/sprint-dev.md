@@ -62,9 +62,10 @@ Task 실행 체크리스트 (건너뛰기 금지):
 2. ⬜ Step 실행 — sprint{N}.md의 Step 순서대로 (skill별 실행 전략 참조)
 3. ⬜ 검증 통과 — 명시된 검증 명령 실행
 4. ⬜ simplify — Skill("simplify") 실행 (생략 불가)
-5. ⬜ 커밋 — 명시된 커밋 메시지로
-6. ⬜ index.json 업데이트 — 커밋 후 커밋 정보를 index.json에 기록
+5. ⬜ 커밋 — 명시된 커밋 메시지로 (커밋 메시지에 task 제목 포함 필수)
 ```
+
+> **index.json 자동 동기화**: PostToolUse hook(`posttooluse-index-sync.sh`)이 `git commit` 감지 시 자동으로 task.status → completed, progress 갱신, commits[] 기록을 수행합니다. 수동 업데이트 불필요.
 
 각 단계 상세:
 
@@ -73,15 +74,10 @@ Task 실행 체크리스트 (건너뛰기 금지):
 3. **Step 실행**: sprint{N}.md에 명시된 Step을 순서대로 수행한다.
 4. **검증**: sprint{N}.md에 명시된 검증 명령을 실행하고 결과를 확인한다.
 5. **simplify**: Skill 도구로 `simplify`를 로드하고, 이번 Task에서 수정한 코드를 정리한다.
-6. **커밋**: sprint{N}.md에 명시된 커밋 메시지로 커밋한다.
-7. **index.json 업데이트**:
-   - `git log -1 --format="%h %s"` 으로 최신 커밋 해시와 메시지를 획득한다.
-   - `docs/index.json`을 읽어 해당 sprint의 `commits[]` 배열에 아래 형식으로 추가한다:
-     ```json
-     { "hash": "<short-hash>", "message": "<commit-message>", "date": "<YYYY-MM-DD>" }
-     ```
-   - 수정된 `docs/index.json`을 커밋한다 (메시지: `chore: index.json 커밋 기록 업데이트 — {task 제목}`).
-8. **완료 보고**: 완료 기준 체크리스트를 표시한다.
+6. **커밋**: sprint{N}.md에 명시된 커밋 메시지로 커밋한다. **커밋 메시지에 task 제목을 반드시 포함**해야 hook이 task를 매칭할 수 있다.
+   - hook이 자동으로 index.json을 업데이트한다 (task.status, progress, commits[]).
+   - hook이 수정한 index.json은 **다음 커밋에 포함**시킨다 (별도 chore 커밋 불필요, 다음 task 커밋에 함께 stage).
+7. **완료 보고**: 완료 기준 체크리스트를 표시한다.
 
 ### 4단계: Phase 체크포인트
 

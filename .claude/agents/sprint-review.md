@@ -48,9 +48,12 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
 
 `docs/dev-process.md` 섹션 5의 "Sprint" 컬럼 기준으로 자동 검증을 실행합니다.
 
-**Docker 상태 확인 먼저:**
-- `http://localhost:{BACKEND_PORT}`과 `http://localhost:{FRONTEND_PORT}` 응답 확인
-- 미실행 시: deploy.md에 "⬜ Docker 미실행으로 자동 검증 미수행" 기록 후 수동 검증 안내
+**Docker 상태 확인 및 자동 기동:**
+1. `docker compose ps --format json` 으로 컨테이너 상태 확인
+2. 컨테이너가 미실행이면 `docker compose up -d` 로 자동 기동 시도
+3. 기동 후 최대 30초 대기하며 health check (`http://localhost:8000/docs`, `http://localhost:3000`)
+4. health check 통과 → 자동 검증 진행
+5. `docker compose up -d` 자체가 실패하면 (Docker Desktop 미설치/미실행 등): deploy.md에 "⬜ Docker 환경 없음 — 자동 검증 미수행" 기록 후 수동 검증 안내
 
 **자동 실행 항목** (서버 실행 중인 경우):
 - `docker compose exec backend pytest -v`
@@ -125,5 +128,5 @@ CLAUDE.md의 언어/문서 작성 규칙을 따릅니다.
 ## 에러 처리
 
 - Playwright 실행 실패 시: 실패 이유를 기록하고 수동 검증 필요 항목으로 표시합니다.
-- Docker 미실행 시: deploy.md에 사유 기록 후 수동 검증 안내로 전환합니다.
+- Docker 미실행 시: `docker compose up -d`로 자동 기동을 시도합니다. Docker 환경 자체가 없으면 deploy.md에 사유 기록 후 수동 검증 안내로 전환합니다.
 - Critical 이슈 발견 시: 검증을 중단하고 사용자에게 수정 여부를 확인합니다.

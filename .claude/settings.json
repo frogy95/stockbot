@@ -17,6 +17,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/posttooluse-index-sync.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
