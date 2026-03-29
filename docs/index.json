@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-29T00:00:00+09:00",
+  "lastUpdated": "2026-03-29T09:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -146,7 +146,7 @@
     {
       "id": "phase1",
       "title": "개발 환경 + 한투 API 기반",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase1/phase1.md",
       "sprints": [
         {
@@ -222,12 +222,13 @@
         {
           "id": "sprint2",
           "title": "한투 API 연동 + 토큰 관리 + 모의/실전 전환",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase1-sprint2",
           "sprintDoc": "docs/phase/phase1/sprint2/sprint2.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/3",
           "progress": {
             "total": 7,
-            "completed": 0
+            "completed": 7
           },
           "tasks": [
             {
@@ -235,56 +236,56 @@
               "title": "KIS 환경 설정 (모의/실전 매핑)",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-1-kis-환경-설정-모의실전-매핑",
               "testPlan": "pytest test_kis_config.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task2",
               "title": "Rate Limit 스로틀러 (토큰 버킷)",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-2-rate-limit-스로틀러-토큰-버킷",
               "testPlan": "pytest test_throttler.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task3",
               "title": "토큰 매니저 (Redis 캐싱 + 자동 갱신)",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-3-토큰-매니저-redis-캐싱--자동-갱신",
               "testPlan": "pytest test_token_manager.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task4",
               "title": "KIS REST 클라이언트",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-4-kis-rest-클라이언트",
               "testPlan": "pytest test_kis_rest.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task5",
               "title": "KIS WebSocket 클라이언트 (기본 프레임)",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-5-kis-websocket-클라이언트-기본-프레임",
               "testPlan": "pytest test_kis_ws.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task6",
               "title": "Settings CRUD + KIS 테스트 API 엔드포인트",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-6-settings-crud--kis-테스트-api-엔드포인트",
               "testPlan": "pytest test_settings_api.py + test_kis_api.py",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             },
             {
               "id": "task7",
               "title": "통합 테스트 + main.py 라우터 등록",
               "path": "docs/phase/phase1/sprint2/sprint2.md#task-7-통합-테스트--mainpy-라우터-등록",
               "testPlan": "pytest -v (전체 통과)",
-              "testResult": null,
-              "status": "pending"
+              "testResult": "pass",
+              "status": "completed"
             }
           ]
         }

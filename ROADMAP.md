@@ -21,11 +21,11 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~0.5 완료, Phase 1 Sprint 1 완료 (2/6 Phase)
-- 현재 Phase: Phase 1 (개발 환경 + 한투 API 기반) 🔄
-- 현재 Sprint: Phase 1 Sprint 2 (한투 API 연동 + 토큰 관리 + 모의/실전 전환) 📋
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29)
-- 다음 마일스톤: Phase 1 Sprint 2 구현 (한투 API 연동)
+- 전체 진행률: Phase 0~1 완료 (Phase 1 Sprint 1~2 모두 완료)
+- 현재 Phase: Phase 1 (개발 환경 + 한투 API 기반) ✅
+- 현재 Sprint: Phase 2 Sprint 1 (데이터 수집 + 종목 스크리닝) 예정
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29)
+- 다음 마일스톤: Phase 2 Sprint 1 — 데이터 수집 시스템 (공공데이터포털 + 한투 실시간)
 
 ## 기술 아키텍처 결정 사항
 
@@ -166,7 +166,7 @@ Phase 0 (완료)
 
 ---
 
-## Phase 1: 개발 환경 + 한투 API 기반 (Sprint 1~2) 🔄
+## Phase 1: 개발 환경 + 한투 API 기반 (Sprint 1~2) ✅
 
 ### 목표
 Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 기반 확립, 모의/실전 전환 구조 설계. 전문가 확정 항목(매매 정책) 6건 확정 완료.
@@ -182,7 +182,9 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 - 환경변수 관리 (.env, 모의/실전 분리)
 - 기본 헬스체크 API
 
-#### Sprint 2: 한투 API 연동 + 토큰 관리 + 모의/실전 전환
+#### Sprint 2: 한투 API 연동 + 토큰 관리 + 모의/실전 전환 ✅ (2026-03-29 완료)
+> Sprint 계획: `docs/phase/phase1/sprint2/sprint2.md` (2026-03-29)
+
 - 한투 API REST 클라이언트 (인증, 시세 조회, 주문)
 - 한투 API 웹소켓 클라이언트 (실시간 시세, 호가, 체결) + 자동 재연결/재구독
 - Access Token 자동 발급/갱신 (Redis 저장, 스케줄러, 1분당 1회 발급 제한 대응)
