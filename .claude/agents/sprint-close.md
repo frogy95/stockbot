@@ -69,14 +69,25 @@ maxTurns: 30
 - `prUrl`에 PR URL을 기록합니다.
 - `lastUpdated`를 현재 시각으로 갱신합니다.
 
-### 5단계: sprint-planner MEMORY.md 업데이트
+### 5단계: 모든 변경 파일 커밋 (필수)
+
+PR에 문서 업데이트가 포함되도록 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`ROADMAP.md`, `deploy.md`, `docs/index.json`, `docs/phase/`, `docs/deploy-history/`, `sprint-planner MEMORY.md` 등)
+3. 커밋 메시지: `chore(phase{P}-sprint{N}): sprint{N} 마무리 문서 업데이트`
+4. `git push`로 원격에 반영 (PR에 포함되도록)
+
+### 6-1단계: sprint-planner MEMORY.md 업데이트
 
 `docs/dev-process.md` 섹션 8.6 기준에 따라 다음을 업데이트합니다:
 - `.claude/agent-memory/sprint-planner/MEMORY.md`의 스프린트 현황에 완료된 스프린트를 추가합니다.
 - 다음 사용 가능한 스프린트 번호를 갱신합니다.
 - 스프린트에서 발견된 핵심 주의사항이 있으면 MEMORY.md에 추가합니다.
 
-### 6단계: 최종 보고
+> **참고**: MEMORY.md 변경분은 5단계에서 이미 커밋되었으므로, 추가 변경이 있으면 amend하거나 새 커밋을 생성합니다.
+
+### 7단계: 최종 보고
 
 사용자에게 다음을 보고합니다:
 - PR URL (develop 브랜치로의 PR)
@@ -93,6 +104,7 @@ maxTurns: 30
 > stop hook(`doc-checker`)이 아래 항목을 자동 검증합니다. 누락 시 경고가 출력됩니다.
 
 - ROADMAP.md, deploy.md, index.json, sprint-planner MEMORY.md 업데이트
+- **모든 변경 파일 커밋 완료** (미커밋 종료 금지)
 - deploy-history 아카이빙, sprint.md 체크박스(⬜→✅), PR 대상=develop
 
 각 항목의 HOW는 위 2~4단계를 참조하세요.
