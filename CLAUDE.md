@@ -127,6 +127,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 한국투자증권 (모의) | 개발/테스트 | 초당 ~1건 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET` |
 | 네이버 검색 | 뉴스/트렌드 | 일 25,000건 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
 | Open Dart | 재무/공시 | 일 10,000건 | `DART_API_KEY` |
+| 공공데이터포털 | 시가총액/상장주식수 | 일 1,000건 | `DATA_GO_KR_API_KEY` |
 | Telegram Bot | 알림/승인 | 초당 30건 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 
 ## 경로별 상세 규칙

@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0/6 완료
-- 현재 Phase: Phase 0 완료, Phase 0.5 시작 전
-- 완료된 스프린트: 0개
-- 다음 마일스톤: Phase 0.5 (외부 API 탐색/검증) 시작
+- 전체 진행률: Phase 0~0.5 완료 (2/6 Phase)
+- 현재 Phase: Phase 1 (개발 환경 + 한투 API 기반) 준비 중
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29)
+- 다음 마일스톤: Phase 1 계획 수립 (Docker Compose + 백엔드 스켈레톤)
 
 ## 기술 아키텍처 결정 사항
 
@@ -94,13 +94,15 @@ Phase 0 (완료)
 
 ---
 
-## Phase 0.5: 외부 API 탐색/검증 (Sprint 1) 📋
+## Phase 0.5: 외부 API 탐색/검증 (Sprint 0~1) ✅
 
 ### 목표
-프로젝트에서 사용할 외부 API 4종(한국투자증권, 네이버 검색, Open Dart, Telegram Bot)을 실제 호출하여 검증하고, 결과에 따라 아키텍처/전략을 조정한다. 코드 품질보다 **빠른 검증과 학습**에 집중하는 탐색 Phase.
+프로젝트에서 사용할 외부 API 5종(한국투자증권, 네이버 검색, Open Dart, 공공데이터포털, Telegram Bot)을 실제 호출하여 검증하고, 결과에 따라 아키텍처/전략을 조정한다. 코드 품질보다 **빠른 검증과 학습**에 집중하는 탐색 Phase.
 
 ### 작업 목록
-#### Sprint 1: 외부 API 4종 탐색/검증
+#### Sprint 1: 외부 API 5종 탐색/검증 ✅ (2026-03-29 완료)
+
+> Sprint 계획: `docs/phase/phase0.5/sprint1/sprint1.md` (2026-03-29)
 
 **한국투자증권 API**
 - 모의거래 계정 발급 및 APP_KEY/SECRET 확보
@@ -121,6 +123,12 @@ Phase 0 (완료)
 - 공시 검색 (최근 공시, 키워드 검색)
 - 단타 매매에서의 실제 유용성 평가 (실시간성, 데이터 지연)
 
+**공공데이터포털 API (금융위원회_주식시세정보)**
+- API 키 발급 (https://www.data.go.kr)
+- 시가총액, 상장주식수 데이터 조회
+- 응답 구조 분석, 데이터 갱신 주기 확인
+- Rate Limit 실측 (일 1,000건 vs 실제)
+
 **Telegram Bot API**
 - BotFather로 봇 생성, 토큰 확보
 - 메시지 발송 + 인라인 버튼(승인/거부) 테스트
@@ -132,7 +140,7 @@ Phase 0 (완료)
 - `docs/phase/phase0.5/architecture-decisions.md`: 검증 결과에 따른 아키텍처 조정 사항
 
 ### 완료 기준 (Definition of Done)
-- 4개 API 모두 실제 호출 성공 및 응답 구조 기록
+- 5개 API 모두 실제 호출 성공 및 응답 구조 기록
 - 한투 API 모의거래 환경에서 시세 조회 + 주문 왕복 확인
 - 한투 웹소켓 30분 연결 유지 테스트 완료
 - API별 Rate Limit 실측값 기록
@@ -152,7 +160,8 @@ Phase 0 (완료)
 - Python 스크립트 또는 Jupyter Notebook으로 빠르게 검증
 - API 키/시크릿은 `.env`로 관리, 커밋 금지
 
-> Phase 상세 계획: `docs/phase/phase0.5/phase0.5.md` (phase-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase0.5/phase0.5.md` ✅ 생성 완료 (2026-03-29)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
 
 ---
 
