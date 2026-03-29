@@ -6,7 +6,8 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic, asyncpg, redis (aioredis), pydantic-settings, uvicorn, Next.js (App Router), PostgreSQL 16, Redis 7, Docker Compose
 
-**Sprint 기간:** 2026-03-29 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-03-29 ~ 2026-03-29
+**상태:** ✅ 완료 (2026-03-29)
 **이전 스프린트:** Phase 0.5 Sprint 1 (전체 통과, PR 없음 — 탐색 Phase)
 **브랜치명:** `phase1-sprint1`
 
@@ -108,8 +109,8 @@ git commit -m "feat(phase1-sprint1): Docker Compose 4컨테이너 + Dockerfile �
 ```
 
 **완료 기준:**
-- ⬜ docker compose config 문법 통과
-- ⬜ 4개 컨테이너 정상 기동 (docker compose ps)
+- ✅ docker compose config 문법 통과
+- ✅ 4개 컨테이너 정상 기동 (docker compose ps)
 
 ---
 
@@ -155,8 +156,8 @@ git commit -m "feat(phase1-sprint1): pydantic-settings 환경변수 관리 (Sett
 ```
 
 **완료 기준:**
-- ⬜ pytest test_config.py 통과
-- ⬜ Settings 클래스에서 .env 파일 로드 확인
+- ✅ pytest test_config.py 통과
+- ✅ Settings 클래스에서 .env 파일 로드 확인
 
 ---
 
@@ -232,9 +233,9 @@ git commit -m "feat(phase1-sprint1): SQLAlchemy 모델 3테이블 + Alembic 마�
 ```
 
 **완료 기준:**
-- ⬜ pytest test_models.py 통과
-- ⬜ alembic upgrade head 성공
-- ⬜ psql \dt로 3테이블 + alembic_version 확인
+- ✅ pytest test_models.py 통과
+- ✅ alembic upgrade head 성공
+- ✅ psql \dt로 3테이블 + alembic_version 확인
 
 ---
 
@@ -277,8 +278,8 @@ git commit -m "feat(phase1-sprint1): Redis 연결 풀 + 기본 캐시 유틸 (ge
 ```
 
 **완료 기준:**
-- ⬜ pytest test_redis.py 통과
-- ⬜ Redis ping/get/set/delete 동작 확인
+- ✅ pytest test_redis.py 통과
+- ✅ Redis ping/get/set/delete 동작 확인
 
 ---
 
@@ -359,9 +360,9 @@ git commit -m "feat(phase1-sprint1): FastAPI 앱 팩토리 + 헬스체크 API + 
 ```
 
 **완료 기준:**
-- ⬜ pytest test_health.py 통과
-- ⬜ curl /api/v1/health 응답 정상
-- ⬜ Swagger UI (/docs) 접근 가능
+- ✅ pytest test_health.py 통과
+- ✅ curl /api/v1/health 응답 정상
+- ✅ Swagger UI (/docs) 접근 가능
 
 ---
 
@@ -394,8 +395,8 @@ git commit -m "feat(phase1-sprint1): Next.js 플레이스홀더 앱 (다크 모�
 ```
 
 **완료 기준:**
-- ⬜ http://localhost:3000 접속 시 200 응답
-- ⬜ "StockBot Dashboard" 텍스트 표시
+- ✅ http://localhost:3000 접속 시 200 응답
+- ✅ "StockBot Dashboard" 텍스트 표시
 
 ---
 
@@ -456,9 +457,9 @@ git commit -m "feat(phase1-sprint1): 시드 데이터 21개 + 통합 테스트"
 ```
 
 **완료 기준:**
-- ⬜ 시드 스크립트 실행 후 21개 설정 적재 확인
-- ⬜ pytest test_integration.py 통과
-- ⬜ Stock/MarketData CRUD 동작 확인
+- ✅ 시드 스크립트 실행 후 21개 설정 적재 확인
+- ✅ pytest test_integration.py 통과 (24개 테스트 전체 통과)
+- ✅ Stock/MarketData CRUD 동작 확인
 
 ---
 

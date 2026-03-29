@@ -21,11 +21,11 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~0.5 완료, Phase 1 Sprint 1 계획 완료 (2/6 Phase)
+- 전체 진행률: Phase 0~0.5 완료, Phase 1 Sprint 1 완료 (2/6 Phase)
 - 현재 Phase: Phase 1 (개발 환경 + 한투 API 기반) 🔄
-- 현재 Sprint: Phase 1 Sprint 1 (Docker Compose + DB/Redis + 백엔드 스켈레톤) 🔄
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29)
-- 다음 마일스톤: Phase 1 Sprint 1 구현
+- 현재 Sprint: Phase 1 Sprint 2 (한투 API 연동 + 토큰 관리 + 모의/실전 전환) 📋
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29)
+- 다음 마일스톤: Phase 1 Sprint 2 구현 (한투 API 연동)
 
 ## 기술 아키텍처 결정 사항
 
@@ -172,7 +172,7 @@ Phase 0 (완료)
 Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 기반 확립, 모의/실전 전환 구조 설계. 전문가 확정 항목(매매 정책) 6건 확정 완료.
 
 ### 작업 목록
-#### Sprint 1: Docker Compose + DB/Redis + 백엔드 스켈레톤 🔄
+#### Sprint 1: Docker Compose + DB/Redis + 백엔드 스켈레톤 ✅ (2026-03-29 완료)
 > Sprint 계획: `docs/phase/phase1/sprint1/sprint1.md` (2026-03-29)
 
 - Docker Compose 설정 (FastAPI, Next.js, PostgreSQL, Redis 4컨테이너)
