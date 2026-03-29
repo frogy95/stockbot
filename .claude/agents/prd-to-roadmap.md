@@ -38,7 +38,58 @@ memory: project
   - 비즈니스 가치 (사용자에게 빠른 가치 제공 순서)
   - 리스크 (불확실한 기술은 초기에 검증)
 
-### 3단계: ROADMAP.md 작성
+### 3단계: 전문가 경량 검토
+
+**프로젝트 전용 전문가 7명(`docs/experts/*.md`)을 스폰하여 Phase 구조의 "큰 그림"을 검토합니다.**
+
+phase-planner의 상세 검토와 달리, 여기서는 **Phase 분할 적절성**만 검토합니다.
+
+#### 전문가 풀
+
+| 전문가 | 프로필 파일 | 항상/선택 |
+|--------|-----------|----------|
+| 정프로 (PO) | `docs/experts/product-owner.md` | 항상 |
+| 최리스크 (리스크관리) | `docs/experts/risk-manager.md` | 항상 |
+| 김단타 (단타 전문가) | `docs/experts/day-trader.md` | 선택 |
+| 박퀀트 (퀀트) | `docs/experts/quant-specialist.md` | 선택 |
+| 이자산 (펀드매니저) | `docs/experts/fund-manager.md` | 선택 |
+| 윤에이피 (API 개발자) | `docs/experts/api-developer.md` | 선택 |
+| 한유엑 (UX 전문가) | `docs/experts/ux-specialist.md` | 선택 |
+
+PRD의 핵심 기능에 관련된 전문가를 선정합니다. **최소 3명(PO + 리스크 + 도메인 1명), 최대 7명**.
+
+#### 스폰 형식
+
+각 전문가 스폰 시 **반드시 해당 프로필 파일의 전체 내용을 프롬프트에 포함**합니다:
+
+```
+Agent(
+  description: "{페르소나 이름} ROADMAP 경량 검토",
+  prompt: "## 페르소나
+  {docs/experts/{역할}.md의 전체 내용}
+
+  ## 검토 대상
+  {2단계에서 설계한 Phase/Sprint 구조 초안}
+
+  ## 경량 검토 관점 (Phase 분할만 검토, 상세 파라미터는 phase-planner에서 검토)
+  1. 누락된 Phase가 있는가? (이 전문가의 관점에서 반드시 필요한 기능이 빠졌는가)
+  2. Phase 순서가 적절한가? (의존성, 리스크 우선 검증 관점)
+  3. Sprint 범위가 현실적인가? (1인 개발 기준)
+  4. 완료 기준이 측정 가능한가?
+
+  ## 출력 형식
+  - ✅ 적절 / ⚠️ 조정 필요 / ❌ 재구성 필요
+  - 조정 필요 시: 구체적 제안 (Phase 추가/삭제/순서 변경/Sprint 분할 변경)",
+  subagent_type: "general-purpose"
+)
+```
+
+#### 결과 통합
+
+- 전문가 의견 충돌 시 보수적 방향(리스크 관리자 의견 우선)으로 조정
+- Phase 구조를 수정한 뒤 4단계로 진행
+
+### 4단계: ROADMAP.md 작성
 
 ```markdown
 # 프로젝트 로드맵 - {프로젝트명}
@@ -100,7 +151,7 @@ memory: project
 (반복)
 ```
 
-### 4단계: 품질 검증
+### 5단계: 품질 검증
 
 - [ ] PRD의 모든 핵심 기능이 ROADMAP에 반영되었는가?
 - [ ] Phase 간 의존성이 올바른가?
