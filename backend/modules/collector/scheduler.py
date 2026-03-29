@@ -6,6 +6,7 @@ from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -42,6 +43,8 @@ class CollectorScheduler:
         trade_strength: TradeStrengthCalculator,
         ws_client: KISWebSocketClient,
         redis: RedisClient,
+        primary_screener=None,
+        realtime_screener=None,
     ) -> None:
         self._session_factory = session_factory
         self._rest_client = rest_client
@@ -49,10 +52,14 @@ class CollectorScheduler:
         self._trade_strength = trade_strength
         self._ws_client = ws_client
         self._redis = redis
+        self._primary_screener = primary_screener
+        self._realtime_screener = realtime_screener
         self._scheduler = AsyncIOScheduler()
         self._running = False
         self._last_premarket: datetime | None = None
         self._last_etf: datetime | None = None
+        self._last_primary_screen: datetime | None = None
+        self._last_secondary_screen: datetime | None = None
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
@@ -80,6 +87,24 @@ class CollectorScheduler:
             id="market_close",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
+        # 1차 스크리닝: 08:10 (공공데이터포털 수집 완료 후)
+        if self._primary_screener:
+            self._scheduler.add_job(
+                self._primary_screen,
+                CronTrigger(hour=8, minute=10),
+                id="primary_screen",
+                misfire_grace_time=MISFIRE_GRACE_TIME,
+            )
+        # 2차 스크리닝: 09:30~15:30 30초 주기
+        if self._realtime_screener:
+            self._scheduler.add_job(
+                self._secondary_screen,
+                IntervalTrigger(seconds=30),
+                id="secondary_screen",
+                misfire_grace_time=MISFIRE_GRACE_TIME,
+            )
+            # 시작 시에는 일시 정지, _market_open에서 resume
+            self._scheduler.get_job("secondary_screen").pause()
         self._scheduler.start()
         self._running = True
         logger.info("수집 스케줄러 시작")
@@ -108,6 +133,32 @@ class CollectorScheduler:
             "last_premarket": self._last_premarket.isoformat() if self._last_premarket else None,
             "last_etf": self._last_etf.isoformat() if self._last_etf else None,
         }
+
+    def get_screening_status(self) -> dict:
+        """스크리닝 상태 조회."""
+        return {
+            "primary_last_run": (
+                self._last_primary_screen.isoformat() if self._last_primary_screen else None
+            ),
+            "secondary_last_run": (
+                self._last_secondary_screen.isoformat() if self._last_secondary_screen else None
+            ),
+            "secondary_interval": 30,
+            "primary_screener_ready": self._primary_screener is not None,
+            "realtime_screener_ready": self._realtime_screener is not None,
+        }
+
+    async def trigger_primary_screening(self) -> dict:
+        """수동 1차 스크리닝 트리거."""
+        if self._primary_screener is None:
+            return {"candidates": 0, "passed": 0}
+        return await self._primary_screen()
+
+    async def trigger_secondary_screening(self) -> dict:
+        """수동 2차 스크리닝 트리거."""
+        if self._realtime_screener is None:
+            return {"candidates": 0, "passed": 0}
+        return await self._secondary_screen()
 
     async def trigger_premarket(self) -> dict:
         """수동 장전 수집 트리거."""
@@ -150,24 +201,97 @@ class CollectorScheduler:
             return 0
 
     async def _market_open(self) -> None:
-        """09:00 WS 연결 + 구독 시작."""
+        """09:00 WS 연결 + 구독 시작 + 2차 스크리닝 활성화."""
         logger.info("장중 시작: WS 연결")
         try:
             self._ws_client.set_on_data(self._on_realtime_data)
             await self._ws_client.connect()
+            # 2차 스크리닝 30초 주기 활성화
+            job = self._scheduler.get_job("secondary_screen")
+            if job:
+                job.resume()
+                logger.info("2차 스크리닝 30초 주기 활성화")
             logger.info("WS 연결 완료, 구독 대기")
         except Exception:
             logger.exception("WS 연결 실패")
 
     async def _market_close(self) -> None:
-        """15:30 WS 구독 해제 + 연결 종료."""
+        """15:30 WS 구독 해제 + 연결 종료 + 2차 스크리닝 중지."""
         logger.info("장후 시작: WS 종료")
         try:
+            # 2차 스크리닝 일시 정지
+            job = self._scheduler.get_job("secondary_screen")
+            if job:
+                job.pause()
+                logger.info("2차 스크리닝 중지")
             await self._ws_manager.unsubscribe_all()
             await self._ws_client.disconnect()
             logger.info("WS 종료 완료")
         except Exception:
             logger.exception("WS 종료 실패")
+
+    # ── 스크리닝 job ─────────────────────────────────────
+
+    async def _primary_screen(self) -> dict:
+        """08:10 1차 스크리닝: DB 정적 필터 + 팩터 스코어링."""
+        logger.info("1차 스크리닝 시작")
+        try:
+            async with self._session_factory() as db_session:
+                results = await self._primary_screener.screen(db_session)
+                saved = await self._primary_screener.save_results(db_session, results)
+                await db_session.commit()
+
+            # 1차 결과로 WS 구독 목록 업데이트
+            for item in results:
+                await self._ws_manager.subscribe(
+                    item["stock_code"],
+                    priority=float(item.get("score", 0)),
+                )
+
+            passed = [r for r in results if r.get("is_passed")]
+            self._last_primary_screen = datetime.now()
+            logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
+            return {"candidates": len(results), "passed": len(passed)}
+        except Exception:
+            logger.exception("1차 스크리닝 실패")
+            return {"candidates": 0, "passed": 0}
+
+    async def _secondary_screen(self) -> dict:
+        """장중 30초 주기 2차 스크리닝: 실시간 필터 + 팩터 스코어링."""
+        logger.info("2차 스크리닝 시작")
+        try:
+            # 1차 통과 종목 코드 가져오기 (최신 1차 결과에서)
+            async with self._session_factory() as db_session:
+                from sqlalchemy import select, func
+                from core.models.screening_result import ScreeningResult
+
+                latest_q = select(func.max(ScreeningResult.screened_at)).where(
+                    ScreeningResult.screening_type == "primary"
+                )
+                latest_result = await db_session.execute(latest_q)
+                latest_at = latest_result.scalar()
+
+                candidate_codes = []
+                if latest_at:
+                    stmt = select(ScreeningResult.stock_code).where(
+                        ScreeningResult.screening_type == "primary",
+                        ScreeningResult.screened_at == latest_at,
+                    )
+                    code_result = await db_session.execute(stmt)
+                    candidate_codes = [row[0] for row in code_result.all()]
+
+                if not candidate_codes:
+                    return {"candidates": 0, "passed": 0}
+
+                results = await self._realtime_screener.screen(candidate_codes, db_session)
+
+            passed = [r for r in results if r.get("is_passed")]
+            self._last_secondary_screen = datetime.now()
+            logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
+            return {"candidates": len(candidate_codes), "passed": len(passed)}
+        except Exception:
+            logger.exception("2차 스크리닝 실패")
+            return {"candidates": 0, "passed": 0}
 
     # ── WS 수신 콜백 ───────────────────────────────────
 
