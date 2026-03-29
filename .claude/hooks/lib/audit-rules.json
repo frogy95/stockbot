@@ -1,0 +1,95 @@
+{
+  "targets": [
+    {
+      "id": "claude-md",
+      "paths": ["CLAUDE.md"],
+      "role": "인덱스 — 참조 링크와 고유 규칙만 유지"
+    },
+    {
+      "id": "rules",
+      "paths": [".claude/rules/*.md"],
+      "role": "경로별 상세 규칙"
+    },
+    {
+      "id": "agents",
+      "paths": [".claude/agents/*.md"],
+      "role": "에이전트 정의 (자족적 실행)"
+    },
+    {
+      "id": "commands",
+      "paths": [".claude/commands/*.md"],
+      "role": "슬래시 커맨드 정의"
+    },
+    {
+      "id": "hooks",
+      "paths": [".claude/hooks/*.sh", ".claude/hooks/lib/*.json"],
+      "role": "도구 호출 시 자동 실행 스크립트"
+    },
+    {
+      "id": "experts",
+      "paths": ["docs/experts/*.md"],
+      "role": "도메인 전문가 프로필"
+    },
+    {
+      "id": "templates",
+      "paths": ["docs/templates/*.md"],
+      "role": "문서 템플릿"
+    },
+    {
+      "id": "agent-memory",
+      "paths": [".claude/agent-memory/*/MEMORY.md"],
+      "role": "에이전트 영속 메모리"
+    },
+    {
+      "id": "settings",
+      "paths": [".claude/settings.json", ".claude/settings.local.json"],
+      "role": "Claude Code 설정"
+    },
+    {
+      "id": "docs",
+      "paths": ["docs/dev-process.md", "docs/ci-policy.md", "docs/index.json"],
+      "role": "핵심 프로세스 문서"
+    }
+  ],
+  "checks": {
+    "duplication": {
+      "severity": "warning",
+      "autofix": false,
+      "description": "동일 정보가 2곳 이상에 구체적으로 기술"
+    },
+    "conflict": {
+      "severity": "critical",
+      "autofix": false,
+      "description": "문서 간 상충되는 지시/기준"
+    },
+    "dead_reference": {
+      "severity": "warning",
+      "autofix": true,
+      "description": "참조 경로가 실제 존재하지 않음"
+    },
+    "empty_reference": {
+      "severity": "minor",
+      "autofix": true,
+      "description": "'→ X 참조'만 있고 내용 없는 줄"
+    },
+    "orphan_file": {
+      "severity": "info",
+      "autofix": false,
+      "description": "어디서도 참조되지 않는 파일"
+    },
+    "stale_memory": {
+      "severity": "info",
+      "autofix": false,
+      "description": "대응 에이전트가 없는 메모리 또는 오래된 엔트리"
+    },
+    "settings_mismatch": {
+      "severity": "warning",
+      "autofix": false,
+      "description": "settings.json 훅 설정과 실제 훅 파일 불일치"
+    }
+  },
+  "autofix_policy": {
+    "auto": ["minor"],
+    "approval_required": ["warning", "critical", "info"]
+  }
+}
