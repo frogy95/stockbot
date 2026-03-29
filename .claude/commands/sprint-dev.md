@@ -62,7 +62,7 @@ Task 실행 체크리스트 (건너뛰기 금지):
 2. ⬜ Step 실행 — sprint{N}.md의 Step 순서대로 (skill별 실행 전략 참조)
 3. ⬜ 검증 통과 — 명시된 검증 명령 실행
 4. ⬜ simplify — Skill("simplify") 실행 (생략 불가)
-5. ⬜ 커밋 — 명시된 커밋 메시지로 (커밋 메시지에 task 제목 포함 필수)
+5. ⬜ 커밋 — 커밋 메시지에 task ID 필수 포함 (예: `feat(phase1-sprint1): task3 — 내용`)
 ```
 
 > **index.json 자동 동기화**: PostToolUse hook(`posttooluse-index-sync.sh`)이 `git commit` 감지 시 자동으로 task.status → completed, progress 갱신, commits[] 기록을 수행합니다. 수동 업데이트 불필요.
@@ -74,8 +74,10 @@ Task 실행 체크리스트 (건너뛰기 금지):
 3. **Step 실행**: sprint{N}.md에 명시된 Step을 순서대로 수행한다.
 4. **검증**: sprint{N}.md에 명시된 검증 명령을 실행하고 결과를 확인한다.
 5. **simplify**: Skill 도구로 `simplify`를 로드하고, 이번 Task에서 수정한 코드를 정리한다.
-6. **커밋**: sprint{N}.md에 명시된 커밋 메시지로 커밋한다. **커밋 메시지에 task 제목을 반드시 포함**해야 hook이 task를 매칭할 수 있다.
-   - hook이 자동으로 index.json을 업데이트한다 (task.status, progress, commits[]).
+6. **커밋**: 커밋 메시지에 **task ID를 반드시 포함**한다. 형식: `feat(phase{P}-sprint{N}): task{N} — 설명`
+   - 예: `feat(phase1-sprint1): task3 — SQLAlchemy 모델 + Alembic 마이그레이션`
+   - sprint{N}.md에 커밋 메시지가 명시되어 있으면 앞에 `task{N} — `를 추가한다.
+   - hook이 task ID(`task1`, `task2` 등)로 매칭하여 index.json을 자동 업데이트한다 (task.status, progress, commits[]).
    - hook이 수정한 index.json은 **다음 커밋에 포함**시킨다 (별도 chore 커밋 불필요, 다음 task 커밋에 함께 stage).
 7. **완료 보고**: 완료 기준 체크리스트를 표시한다.
 
@@ -103,7 +105,7 @@ Task 실행 체크리스트 (건너뛰기 금지):
 1. Skill 도구로 `verification-before-completion`을 로드한다.
 2. sprint{N}.md의 **최종 검증 계획** 섹션에 명시된 검증을 모두 실행한다.
 3. 검증 명령 실행 결과를 **실증(로그/출력)**으로 제시한다. 결과 없이 "통과했다"고 주장하지 않는다.
-4. 결과를 요약 보고한다:
+4. 결과를 요약 보고하고, **사용자에게 다음 단계를 선택**하도록 묻는다:
    ```
    🏁 Sprint {N} 구현 완료
 
@@ -113,8 +115,11 @@ Task 실행 체크리스트 (건너뛰기 금지):
    | 타입체크 | ✅ 에러 없음 |
    | ... | ... |
 
-   다음 단계: `sprint-close` → `sprint-review`
+   다음 단계를 선택해주세요:
+   1. sprint-close 진행 (PR 생성 + 문서 정리)
+   2. 추가 작업 후 마무리
    ```
+   사용자가 1을 선택하면 Agent 도구로 `sprint-close` 에이전트를 호출한다.
 
 ## skill별 실행 전략
 

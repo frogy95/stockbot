@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-29",
+  "lastUpdated": "2026-03-29T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -26,7 +26,13 @@
               "testPlan": "pip install + config import 확인",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "5558af3", "message": "feat(phase0.5-sprint1): 탐색 환경 설정 — 디렉토리 구조, 의존성, 공통 설정", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "5558af3",
+                  "message": "feat(phase0.5-sprint1): 탐색 환경 설정 — 디렉토리 구조, 의존성, 공통 설정",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task2",
@@ -35,7 +41,13 @@
               "testPlan": "토큰/시세/주문/Rate Limit/에러 시나리오 5가지",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "b3a92dd", "message": "feat(phase0.5-sprint1): 한투 API REST 검증 — 토큰/시세/주문/Rate Limit/에러 시나리오", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "b3a92dd",
+                  "message": "feat(phase0.5-sprint1): 한투 API REST 검증 — 토큰/시세/주문/Rate Limit/에러 시나리오",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task3",
@@ -44,7 +56,13 @@
               "testPlan": "30분 연결 유지 + 지연 측정 + 재연결",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "6c4e249", "message": "feat(phase0.5-sprint1): 한투 웹소켓 검증 — 30분 유지/지연 측정/재연결", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "6c4e249",
+                  "message": "feat(phase0.5-sprint1): 한투 웹소켓 검증 — 30분 유지/지연 측정/재연결",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task4",
@@ -53,7 +71,13 @@
               "testPlan": "메시지/버튼/웹훅/지연 측정",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "ee0efaa", "message": "feat(phase0.5-sprint1): 텔레그램 Bot API 검증 — 메시지/버튼/웹훅/지연 측정", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "ee0efaa",
+                  "message": "feat(phase0.5-sprint1): 텔레그램 Bot API 검증 — 메시지/버튼/웹훅/지연 측정",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task5",
@@ -62,7 +86,13 @@
               "testPlan": "뉴스 검색/속보 반영/Rate Limit",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "6b99dd9", "message": "feat(phase0.5-sprint1): 네이버 검색 API 검증 — 뉴스 검색/속보 반영/Rate Limit", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "6b99dd9",
+                  "message": "feat(phase0.5-sprint1): 네이버 검색 API 검증 — 뉴스 검색/속보 반영/Rate Limit",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task6",
@@ -71,7 +101,13 @@
               "testPlan": "재무정보/공시 검색/실시간성",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "ee6f7ad", "message": "feat(phase0.5-sprint1): DART + 공공데이터포털 API 검증", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "ee6f7ad",
+                  "message": "feat(phase0.5-sprint1): DART + 공공데이터포털 API 검증",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task7",
@@ -80,7 +116,13 @@
               "testPlan": "시가총액/갱신 주기/Rate Limit",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "ee6f7ad", "message": "feat(phase0.5-sprint1): DART + 공공데이터포털 API 검증", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "ee6f7ad",
+                  "message": "feat(phase0.5-sprint1): DART + 공공데이터포털 API 검증",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task8",
@@ -89,7 +131,91 @@
               "testPlan": "api-test-report.md + architecture-decisions.md 작성",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "8d7b7b6", "message": "docs(phase0.5-sprint1): API 검증 결과 보고서 + 아키텍처 조정 결정", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "8d7b7b6",
+                  "message": "docs(phase0.5-sprint1): API 검증 결과 보고서 + 아키텍처 조정 결정",
+                  "date": "2026-03-29"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "title": "개발 환경 + 한투 API 기반",
+      "status": "in_progress",
+      "phaseDoc": "docs/phase/phase1/phase1.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "Docker Compose + DB/Redis + 백엔드 스켈레톤",
+          "status": "completed",
+          "branch": "phase1-sprint1",
+          "sprintDoc": "docs/phase/phase1/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/2",
+          "progress": {
+            "total": 7,
+            "completed": 7
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "Docker Compose + Dockerfile 구성",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-1-docker-compose--dockerfile-구성",
+              "testPlan": "docker compose config + 4컨테이너 기동",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task2",
+              "title": "pydantic-settings 환경변수 관리",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-2-pydantic-settings-환경변수-관리",
+              "testPlan": "pytest test_config.py",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task3",
+              "title": "SQLAlchemy 모델 + Alembic 마이그레이션",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-3-sqlalchemy-모델--alembic-마이그레이션",
+              "testPlan": "pytest test_models.py + alembic upgrade head + psql \\dt",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task4",
+              "title": "Redis 연결 풀 + 기본 캐시 유틸",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-4-redis-연결-풀--기본-캐시-유틸",
+              "testPlan": "pytest test_redis.py",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task5",
+              "title": "FastAPI 앱 팩토리 + 헬스체크 API",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-5-fastapi-앱-팩토리--헬스체크-api",
+              "testPlan": "pytest test_health.py + curl /api/v1/health",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task6",
+              "title": "Next.js 플레이스홀더 앱",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-6-nextjs-플레이스홀더-앱",
+              "testPlan": "curl http://localhost:3000 → 200",
+              "testResult": "pass",
+              "status": "completed"
+            },
+            {
+              "id": "task7",
+              "title": "시드 데이터 + 통합 테스트",
+              "path": "docs/phase/phase1/sprint1/sprint1.md#task-7-시드-데이터--통합-테스트",
+              "testPlan": "seed_settings 실행 + pytest test_integration.py",
+              "testResult": "pass",
+              "status": "completed"
             }
           ]
         }
