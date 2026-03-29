@@ -182,6 +182,15 @@ Agent(
 - Phase 번호, 목표, Sprint 분할을 메모리에 기록합니다.
 - 전문가 검토에서 발견된 프로젝트 수준의 주의사항을 기록합니다.
 
+### 9단계: 모든 변경 파일 커밋 (필수)
+
+phase-planner가 생성/수정한 모든 파일을 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`docs/phase/`, `ROADMAP.md`, `.claude/agent-memory/` 등)
+3. 커밋 메시지: `docs(phase{N}): phase{N} 계획 수립`
+4. `git push`로 원격에 반영
+
 ## Phase 문서 작성 규칙
 
 1. **확정 파라미터 표**: 모든 수치 결정은 "원래 설계 vs 확정값" 형식으로 기록

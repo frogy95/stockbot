@@ -166,6 +166,15 @@ git commit -m "feat(phase{P}-sprint{N}): {구체적 설명}"
 - 현재 스프린트 번호와 목표를 메모리에 기록합니다.
 - 코드베이스 분석 중 발견한 주의사항을 기록합니다.
 
+### 6단계: 모든 변경 파일 커밋 (필수)
+
+sprint-planner가 생성/수정한 모든 파일을 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`docs/phase/`, `docs/index.json`, `ROADMAP.md`, `.claude/agent-memory/` 등)
+3. 커밋 메시지: `docs(phase{P}-sprint{N}): sprint{N} 계획 수립`
+4. `git push`로 원격에 반영
+
 ## Task 작성 규칙
 
 1. **정확한 파일 경로**: 와일드카드나 상대 경로 금지. `backend/app/services/example.py` 형식
