@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프로젝트 대시보드</title>
+  <style>
+    /* ==================== 기본 리셋 및 변수 ==================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary:  #21262d;
+      --border:       #30363d;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --text-link:    #58a6ff;
+
+      --status-planned:     #8b949e;
+      --status-in_progress: #f0883e;
+      --status-completed:   #3fb950;
+      --status-deployed:    #58a6ff;
+
+      --bar-bg:     #21262d;
+      --bar-fill:   #3fb950;
+
+      --radius-card: 8px;
+      --radius-badge: 12px;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--text-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ==================== 레이아웃 ==================== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ==================== 헤더 ==================== */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .header-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 섹션 ==================== */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ==================== 카드 ==================== */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 16px;
+    }
+
+    .card + .card { margin-top: 12px; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    /* ==================== 상태 뱃지 ==================== */
+    .badge {
+      display: inline-block;
+      border-radius: var(--radius-badge);
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .badge-planned     { background: #21262d; color: var(--status-planned);     border: 1px solid var(--status-planned); }
+    .badge-in_progress { background: #2d1f0e; color: var(--status-in_progress); border: 1px solid var(--status-in_progress); }
+    .badge-completed   { background: #0d2818; color: var(--status-completed);   border: 1px solid var(--status-completed); }
+    .badge-deployed    { background: #0d1f3c; color: var(--status-deployed);    border: 1px solid var(--status-deployed); }
+
+    /* ==================== 진행률 바 ==================== */
+    .progress-wrap { margin-top: 8px; }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bar-bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--bar-fill);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* ==================== 담당자 태그 ==================== */
+    .assignee-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .assignee-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-badge);
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .assignee-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-in_progress);
+      flex-shrink: 0;
+    }
+
+    /* ==================== 그리드 ==================== */
+    .active-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    /* ==================== 타임라인 ==================== */
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .timeline-item:last-child { margin-bottom: 0; }
+
+    .timeline-dot {
+      position: absolute;
+      left: -20px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-primary);
+    }
+
+    .timeline-dot-sprint  { background: var(--status-deployed); }
+    .timeline-dot-hotfix  { background: var(--status-in_progress); }
+    .timeline-dot-default { background: var(--text-secondary); }
+
+    .timeline-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .timeline-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .timeline-ref  { font-weight: 600; font-size: 13px; }
+    .timeline-desc { font-size: 12px; color: var(--text-secondary); }
+
+    /* ==================== 트리뷰 ==================== */
+    .tree-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 5px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .filter-select:focus { outline: 2px solid var(--text-link); outline-offset: 2px; }
+
+    .tree-node {
+      border-left: 2px solid var(--border);
+      padding-left: 16px;
+      margin-left: 4px;
+    }
+
+    .tree-item { margin-bottom: 4px; }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-wrap: wrap;
+    }
+
+    .tree-row:hover { background: var(--bg-tertiary); }
+
+    .tree-arrow {
+      font-size: 10px;
+      color: var(--text-secondary);
+      width: 12px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+      user-select: none;
+    }
+
+    .tree-arrow.open { transform: rotate(90deg); }
+
+    .tree-label { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+    .tree-label-secondary { font-size: 12px; color: var(--text-secondary); }
+
+    .tree-children { display: none; padding-left: 0; }
+    .tree-children.open { display: block; }
+
+    /* ==================== 경로 복사 ==================== */
+    .path-link {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      cursor: pointer;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .path-link:hover { background: #2d333b; color: var(--text-link); }
+
+    /* ==================== 커밋 히스토리 ==================== */
+    .commit-list { list-style: none; padding: 6px 0 0 8px; }
+
+    .commit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--bg-tertiary);
+      font-size: 12px;
+    }
+
+    .commit-item:last-child { border-bottom: none; }
+
+    .commit-hash {
+      font-family: monospace;
+      color: var(--status-deployed);
+      flex-shrink: 0;
+      font-size: 11px;
+    }
+
+    .commit-msg { color: var(--text-secondary); flex: 1; min-width: 0; word-break: break-word; }
+
+    /* ==================== 기여도 ==================== */
+    .contrib-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .contrib-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+    }
+
+    .contrib-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+
+    .contrib-stat {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ==================== 빈 상태 / 에러 ==================== */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-card);
+      font-size: 14px;
+    }
+
+    .error-banner {
+      background: #2d1010;
+      border: 1px solid #f85149;
+      border-radius: var(--radius-card);
+      padding: 16px;
+      color: #f85149;
+      margin-bottom: 24px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 80px 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* ==================== 토스트 ==================== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 9999;
+    }
+
+    #toast.show { opacity: 1; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    /* ==================== 반응형 ==================== */
+    @media (max-width: 600px) {
+      .active-grid   { grid-template-columns: 1fr; }
+      .contrib-grid  { grid-template-columns: 1fr; }
+      .header        { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading">데이터를 불러오는 중...</div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ==================== 보안: HTML 이스케이프 ==================== */
+/**
+ * 신뢰할 수 없는 문자열을 HTML에 삽입하기 전에 이스케이프합니다.
+ * docs/index.json 의 모든 문자열 값은 이 함수를 거쳐 삽입됩니다.
+ */
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/* ==================== 유틸 ==================== */
+
+/** 상태 코드를 한국어 뱃지 HTML로 변환 */
+function statusBadge(status) {
+  const labels = {
+    planned:     '계획됨',
+    in_progress: '진행 중',
+    completed:   '완료',
+    deployed:    '배포됨',
+  };
+  const safeStatus = esc(status);
+  const label = esc(labels[status] || status || '알 수 없음');
+  const validStatuses = ['planned', 'in_progress', 'completed', 'deployed'];
+  const cls = validStatuses.includes(status) ? 'badge-' + status : 'badge-planned';
+  return '<span class="badge ' + cls + '">' + label + '</span>';
+}
+
+/** 배포 타입에 따른 타임라인 dot CSS 클래스 */
+function dotClass(type) {
+  if (type === 'sprint') return 'timeline-dot-sprint';
+  if (type === 'hotfix') return 'timeline-dot-hotfix';
+  return 'timeline-dot-default';
+}
+
+/** 토스트 메시지 표시 */
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; // textContent 사용으로 XSS 방지
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+
+/** path-link 클릭 시 클립보드 복사 */
+function copyPath(path) {
+  navigator.clipboard.writeText(path).then(
+    function() { showToast('경로 복사됨: ' + path); },
+    function() { showToast('복사 실패'); }
+  );
+}
+
+/** 트리 노드 펼치기/접기 */
+function toggle(id) {
+  var el    = document.getElementById(id);
+  var arrow = document.getElementById('arrow-' + id);
+  if (!el) return;
+  el.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+/* ==================== 섹션 1: 활성 작업 ==================== */
+
+function buildActiveCards(data) {
+  var allWork = [];
+
+  (data.phases || []).forEach(function(phase) {
+    (phase.sprints || []).forEach(function(sprint) {
+      if (sprint.status === 'in_progress') allWork.push({ kind: 'sprint', phase: phase, item: sprint });
+    });
+  });
+
+  (data.hotfixes || []).forEach(function(hf) {
+    if (hf.status === 'in_progress') allWork.push({ kind: 'hotfix', phase: null, item: hf });
+  });
+
+  if (!allWork.length) return null;
+
+  var frag = document.createDocumentFragment();
+  var grid = document.createElement('div');
+  grid.className = 'active-grid';
+
+  allWork.forEach(function(w) {
+    var item   = w.item;
+    var tasks  = item.tasks || [];
+    var total  = tasks.length;
+    var done   = tasks.filter(function(t) { return t.status === 'completed' || t.status === 'deployed'; }).length;
+    var pct    = total > 0 ? Math.round((done / total) * 100) : 0;
+    var active = tasks.filter(function(t) { return t.status === 'in_progress'; });
+    var assignees = [];
+    active.forEach(function(t) { if (t.assignee && assignees.indexOf(t.assignee) === -1) assignees.push(t.assignee); });
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    /* 헤더 행 */
+    var hdr = document.createElement('div');
+    hdr.className = 'card-header';
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'card-title';
+    if (w.phase) {
+      var phSpan = document.createElement('span');
+      phSpan.className = 'tree-label-secondary';
+      phSpan.textContent = 'Phase ' + (w.phase.id || '') + ' · ';
+      titleEl.appendChild(phSpan);
+    }
+    var titleText = document.createTextNode(item.title || item.id || '(제목 없음)');
+    titleEl.appendChild(titleText);
+
+    var badgesDiv = document.createElement('div');
+    badgesDiv.style.cssText = 'display:flex;gap:6px;align-items:center;';
+    var kindBadge = document.createElement('span');
+    kindBadge.className = 'badge badge-in_progress';
+    kindBadge.textContent = w.kind === 'hotfix' ? 'hotfix' : 'sprint';
+    var stBadge = document.createElement('span');
+    stBadge.className = 'badge badge-' + (item.status || 'planned');
+    var stLabels = { planned:'계획됨', in_progress:'진행 중', completed:'완료', deployed:'배포됨' };
+    stBadge.textContent = stLabels[item.status] || item.status || '알 수 없음';
+    badgesDiv.appendChild(kindBadge);
+    badgesDiv.appendChild(stBadge);
+
+    hdr.appendChild(titleEl);
+    hdr.appendChild(badgesDiv);
+    card.appendChild(hdr);
+
+    /* 브랜치 */
+    if (item.branch) {
+      var sub = document.createElement('div');
+      sub.className = 'card-sub';
+      sub.textContent = '브랜치: ' + item.branch;
+      card.appendChild(sub);
+    }
+
+    /* 진행률 바 */
+    if (total > 0) {
+      var pw = document.createElement('div');
+      pw.className = 'progress-wrap';
+      var pl = document.createElement('div');
+      pl.className = 'progress-label';
+      var plLeft  = document.createElement('span');
+      plLeft.textContent = 'Task 진행률';
+      var plRight = document.createElement('span');
+      plRight.textContent = done + ' / ' + total + ' (' + pct + '%)';
+      pl.appendChild(plLeft);
+      pl.appendChild(plRight);
+      var bar = document.createElement('div');
+      bar.className = 'progress-bar';
+      var fill = document.createElement('div');
+      fill.className = 'progress-fill';
+      fill.style.width = pct + '%';
+      bar.appendChild(fill);
+      pw.appendChild(pl);
+      pw.appendChild(bar);
+      card.appendChild(pw);
+    }
+
+    /* 담당자 */
+    if (assignees.length) {
+      var ar = document.createElement('div');
+      ar.className = 'assignee-row';
+      assignees.forEach(function(a) {
+        var chip = document.createElement('span');
+        chip.className = 'assignee-chip';
+        var dot = document.createElement('span');
+        dot.className = 'dot';
+        var name = document.createTextNode(a);
+        chip.appendChild(dot);
+        chip.appendChild(name);
+        ar.appendChild(chip);
+      });
+      card.appendChild(ar);
+    }
+
+    grid.appendChild(card);
+  });
+
+  frag.appendChild(grid);
+  return frag;
+}
+
+/* ==================== 섹션 2: 배포 타임라인 ==================== */
+
+function buildTimeline(data) {
+  var history = (data.deployHistory || []).slice();
+  if (!history.length) return null;
+
+  history.sort(function(a, b) {
+    var da = a.date || a.deployedAt || '';
+    var db = b.date || b.deployedAt || '';
+    return db.localeCompare(da);
+  });
+
+  var wrap = document.createElement('div');
+  wrap.className = 'timeline';
+
+  history.forEach(function(entry) {
+    var date = entry.date || entry.deployedAt || '날짜 없음';
+    var type = entry.type || 'sprint';
+    var ref  = entry.ref || entry.sprint || entry.hotfix || '—';
+    var desc = entry.description || entry.desc || '';
+
+    var item = document.createElement('div');
+    item.className = 'timeline-item';
+
+    var dotEl = document.createElement('div');
+    dotEl.className = 'timeline-dot ' + dotClass(type);
+
+    var dateEl = document.createElement('div');
+    dateEl.className = 'timeline-date';
+    dateEl.textContent = date;
+
+    var content = document.createElement('div');
+    content.className = 'timeline-content';
+
+    var infoDiv = document.createElement('div');
+
+    var refEl = document.createElement('div');
+    refEl.className = 'timeline-ref';
+    refEl.textContent = ref;
+    infoDiv.appendChild(refEl);
+
+    if (desc) {
+      var descEl = document.createElement('div');
+      descEl.className = 'timeline-desc';
+      descEl.textContent = desc;
+      infoDiv.appendChild(descEl);
+    }
+
+    var typeBadge = document.createElement('span');
+    typeBadge.className = 'badge ' + (type === 'hotfix' ? 'badge-in_progress' : 'badge-deployed');
+    typeBadge.textContent = type;
+
+    content.appendChild(infoDiv);
+    content.appendChild(typeBadge);
+
+    item.appendChild(dotEl);
+    item.appendChild(dateEl);
+    item.appendChild(content);
+    wrap.appendChild(item);
+  });
+
+  return wrap;
+}
+
+/* ==================== 섹션 3: 트리뷰 ==================== */
+
+var _filterStatus = 'all';
+var _dashData = null;
+
+function matchesFilter(status) {
+  return _filterStatus === 'all' || status === _filterStatus;
+}
+
+/** 커밋 목록 ul 요소 생성 */
+function buildCommitList(commits) {
+  var ul = document.createElement('ul');
+  ul.className = 'commit-list';
+  (commits || []).forEach(function(c) {
+    var li = document.createElement('li');
+    li.className = 'commit-item';
+    if (c.hash) {
+      var hashEl = document.createElement('span');
+      hashEl.className = 'commit-hash';
+      hashEl.textContent = String(c.hash).substring(0, 7);
+      li.appendChild(hashEl);
+    }
+    var msgEl = document.createElement('span');
+    msgEl.className = 'commit-msg';
+    msgEl.textContent = c.message || c.msg || '';
+    li.appendChild(msgEl);
+    ul.appendChild(li);
+  });
+  return ul;
+}
+
+/** path-link span 생성 */
+function buildPathLink(pathStr) {
+  var el = document.createElement('span');
+  el.className = 'path-link';
+  el.title = '클릭하여 경로 복사';
+  el.textContent = pathStr;
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    copyPath(pathStr);
+  });
+  return el;
+}
+
+/** 화살표 span 생성 */
+function buildArrow(id) {
+  var el = document.createElement('span');
+  el.className = 'tree-arrow';
+  el.id = 'arrow-' + id;
+  el.textContent = '\u25B6'; // ▶
+  return el;
+}
+
+/** 빈 화살표 자리 span */
+function buildArrowPlaceholder() {
+  var el = document.createElement('span');
+  el.style.cssText = 'width:12px;display:inline-block;flex-shrink:0;';
+  return el;
+}
+
+/** 상태 badge span 요소 생성 */
+function buildBadge(status) {
+  var el = document.createElement('span');
+  var validStatuses = ['planned', 'in_progress', 'completed', 'deployed'];
+  el.className = 'badge ' + (validStatuses.includes(status) ? 'badge-' + status : 'badge-planned');
+  var labels = { planned:'계획됨', in_progress:'진행 중', completed:'완료', deployed:'배포됨' };
+  el.textContent = labels[status] || status || '알 수 없음';
+  return el;
+}
+
+/** Task 트리 항목들을 담는 DocumentFragment 생성 */
+function buildTaskNodes(tasks, prefix) {
+  var frag = document.createDocumentFragment();
+  (tasks || []).forEach(function(task, idx) {
+    if (!matchesFilter(task.status)) return;
+
+    var tid = prefix + '-task-' + idx;
+    var hasCommits = task.commits && task.commits.length > 0;
+
+    var item = document.createElement('div');
+    item.className = 'tree-item';
+    item.style.marginLeft = '20px';
+
+    var row = document.createElement('div');
+    row.className = 'tree-row';
+
+    row.appendChild(hasCommits ? buildArrow(tid + '-commits') : buildArrowPlaceholder());
+
+    var label = document.createElement('span');
+    label.className = 'tree-label';
+    label.textContent = task.title || task.id || '(태스크)';
+    row.appendChild(label);
+
+    if (task.assignee) {
+      var aEl = document.createElement('span');
+      aEl.className = 'tree-label-secondary';
+      aEl.style.fontSize = '11px';
+      aEl.textContent = '@' + task.assignee;
+      row.appendChild(aEl);
+    }
+
+    if (task.path) row.appendChild(buildPathLink(task.path));
+    row.appendChild(buildBadge(task.status));
+
+    item.appendChild(row);
+
+    if (hasCommits) {
+      var children = document.createElement('div');
+      children.className = 'tree-children';
+      children.id = tid + '-commits';
+      children.appendChild(buildCommitList(task.commits));
+      row.addEventListener('click', function() { toggle(tid + '-commits'); });
+      item.appendChild(children);
+    }
+
+    frag.appendChild(item);
+  });
+  return frag;
+}
+
+/** Sprint 트리 항목 div 생성 */
+function buildSprintNode(sprint, prefix) {
+  var sid = prefix + '-s-' + (sprint.id || sprint.title || 'x');
+  var tasks = sprint.tasks || [];
+  var visible = _filterStatus === 'all'
+    || sprint.status === _filterStatus
+    || tasks.some(function(t) { return t.status === _filterStatus; });
+  if (!visible) return null;
+
+  var hasChildren = tasks.length > 0 || (sprint.commits && sprint.commits.length > 0);
+
+  var item = document.createElement('div');
+  item.className = 'tree-item';
+
+  var row = document.createElement('div');
+  row.className = 'tree-row';
+  row.appendChild(hasChildren ? buildArrow(sid) : buildArrowPlaceholder());
+
+  var label = document.createElement('span');
+  label.className = 'tree-label';
+  label.textContent = sprint.title || sprint.id || '(스프린트)';
+  row.appendChild(label);
+
+  if (sprint.branch) row.appendChild(buildPathLink(sprint.branch));
+  row.appendChild(buildBadge(sprint.status));
+
+  var children = document.createElement('div');
+  children.className = 'tree-children';
+  children.id = sid;
+
+  if (sprint.commits && sprint.commits.length) {
+    var commitWrap = document.createElement('div');
+    commitWrap.style.marginLeft = '20px';
+    commitWrap.appendChild(buildCommitList(sprint.commits));
+    children.appendChild(commitWrap);
+  }
+
+  if (tasks.length) children.appendChild(buildTaskNodes(tasks, sid));
+
+  row.addEventListener('click', function() { toggle(sid); });
+  item.appendChild(row);
+  item.appendChild(children);
+  return item;
+}
+
+/** Phase 트리 항목 div 생성 */
+function buildPhaseNode(phase, idx) {
+  var pid = 'phase-' + (phase.id || idx);
+  var sprints = phase.sprints || [];
+  var visible = _filterStatus === 'all'
+    || phase.status === _filterStatus
+    || sprints.some(function(s) {
+         return s.status === _filterStatus
+           || (s.tasks || []).some(function(t) { return t.status === _filterStatus; });
+       });
+  if (!visible) return null;
+
+  var hasChildren = sprints.length > 0;
+
+  var item = document.createElement('div');
+  item.className = 'tree-item';
+
+  var row = document.createElement('div');
+  row.className = 'tree-row';
+  row.appendChild(hasChildren ? buildArrow(pid) : buildArrowPlaceholder());
+
+  var label = document.createElement('span');
+  label.className = 'tree-label';
+  label.textContent = 'Phase ' + (phase.id || (idx + 1)) + ': ' + (phase.title || '(제목 없음)');
+  row.appendChild(label);
+  row.appendChild(buildBadge(phase.status));
+
+  var children = document.createElement('div');
+  children.className = 'tree-children';
+  children.id = pid;
+
+  var node = document.createElement('div');
+  node.className = 'tree-node';
+  sprints.forEach(function(s, si) {
+    var sNode = buildSprintNode(s, pid);
+    if (sNode) node.appendChild(sNode);
+  });
+  children.appendChild(node);
+
+  row.addEventListener('click', function() { toggle(pid); });
+  item.appendChild(row);
+  item.appendChild(children);
+  return item;
+}
+
+/** Hotfix 트리 항목 div 생성 */
+function buildHotfixNode(hf, idx) {
+  if (!matchesFilter(hf.status)) return null;
+
+  var hid = 'hotfix-' + idx;
+  var hasCommits = hf.commits && hf.commits.length > 0;
+
+  var item = document.createElement('div');
+  item.className = 'tree-item';
+
+  var row = document.createElement('div');
+  row.className = 'tree-row';
+  row.appendChild(hasCommits ? buildArrow(hid) : buildArrowPlaceholder());
+
+  var label = document.createElement('span');
+  label.className = 'tree-label';
+  label.textContent = hf.title || hf.id || '(핫픽스)';
+  row.appendChild(label);
+
+  if (hf.branch) row.appendChild(buildPathLink(hf.branch));
+
+  var hfBadge = document.createElement('span');
+  hfBadge.className = 'badge badge-in_progress';
+  hfBadge.style.fontSize = '11px';
+  hfBadge.textContent = 'hotfix';
+  row.appendChild(hfBadge);
+  row.appendChild(buildBadge(hf.status));
+
+  item.appendChild(row);
+
+  if (hasCommits) {
+    var children = document.createElement('div');
+    children.className = 'tree-children';
+    children.id = hid;
+    var cw = document.createElement('div');
+    cw.style.paddingLeft = '16px';
+    cw.appendChild(buildCommitList(hf.commits));
+    children.appendChild(cw);
+    row.addEventListener('click', function() { toggle(hid); });
+    item.appendChild(children);
+  }
+
+  return item;
+}
+
+/** 트리 컨테이너 내용을 현재 필터로 재빌드 */
+function rebuildTree(container) {
+  var data = _dashData;
+  if (!data) return;
+
+  var phases   = data.phases   || [];
+  var hotfixes = data.hotfixes || [];
+
+  // 기존 내용 제거
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (!phases.length && !hotfixes.length) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = '아직 등록된 Phase가 없습니다.';
+    container.appendChild(empty);
+    return;
+  }
+
+  var node = document.createElement('div');
+  node.className = 'tree-node';
+  phases.forEach(function(p, i) {
+    var n = buildPhaseNode(p, i);
+    if (n) node.appendChild(n);
+  });
+
+  if (hotfixes.length) {
+    var hfTitle = document.createElement('div');
+    hfTitle.className = 'section-title';
+    hfTitle.style.cssText = 'margin-top:16px;margin-bottom:8px;';
+    hfTitle.textContent = 'Hotfixes';
+    node.appendChild(hfTitle);
+    hotfixes.forEach(function(h, i) {
+      var n = buildHotfixNode(h, i);
+      if (n) node.appendChild(n);
+    });
+  }
+
+  container.appendChild(node);
+}
+
+/** 필터 드롭다운 변경 핸들러 */
+function applyFilter(status) {
+  _filterStatus = status;
+  var container = document.getElementById('tree-container');
+  if (container) rebuildTree(container);
+}
+
+/* ==================== 기여도 ==================== */
+
+function buildContribSection(data) {
+  var map = {};
+  function inc(name, field) {
+    if (!name) return;
+    if (!map[name]) map[name] = { completed: 0, reviews: 0 };
+    map[name][field]++;
+  }
+
+  (data.phases || []).forEach(function(phase) {
+    (phase.sprints || []).forEach(function(sprint) {
+      (sprint.tasks || []).forEach(function(task) {
+        if (task.status === 'completed' || task.status === 'deployed') inc(task.assignee, 'completed');
+        (task.reviewers || []).forEach(function(r) { inc(r, 'reviews'); });
+      });
+    });
+  });
+
+  (data.hotfixes || []).forEach(function(hf) {
+    if (hf.status === 'completed' || hf.status === 'deployed') inc(hf.assignee, 'completed');
+    (hf.reviewers || []).forEach(function(r) { inc(r, 'reviews'); });
+  });
+
+  var entries = Object.entries(map);
+  var grid = document.createElement('div');
+  grid.className = 'contrib-grid';
+
+  if (!entries.length) {
+    var empty = document.createElement('p');
+    empty.style.cssText = 'color:var(--text-secondary);font-size:13px;';
+    empty.textContent = '기여 이력 없음';
+    grid.appendChild(empty);
+    return grid;
+  }
+
+  entries.sort(function(a, b) { return b[1].completed - a[1].completed; });
+
+  entries.forEach(function(e) {
+    var name = e[0];
+    var stat = e[1];
+    var card = document.createElement('div');
+    card.className = 'contrib-card';
+
+    var nm = document.createElement('div');
+    nm.className = 'contrib-name';
+    nm.textContent = '@' + name;
+    card.appendChild(nm);
+
+    [['완료 Task', stat.completed], ['리뷰 이력', stat.reviews]].forEach(function(row) {
+      var d = document.createElement('div');
+      d.className = 'contrib-stat';
+      var l = document.createElement('span');
+      l.textContent = row[0];
+      var r = document.createElement('span');
+      r.textContent = String(row[1]);
+      d.appendChild(l);
+      d.appendChild(r);
+      card.appendChild(d);
+    });
+
+    grid.appendChild(card);
+  });
+
+  return grid;
+}
+
+/* ==================== 전체 UI 조립 ==================== */
+
+function buildDashboard(data) {
+  var container = document.createElement('div');
+  container.className = 'container';
+
+  /* 헤더 */
+  var header = document.createElement('header');
+  header.className = 'header';
+  var titleEl = document.createElement('div');
+  titleEl.className = 'header-title';
+  titleEl.textContent = data.project || '프로젝트 대시보드';
+  header.appendChild(titleEl);
+  if (data.lastUpdated) {
+    var metaEl = document.createElement('div');
+    metaEl.className = 'header-meta';
+    metaEl.textContent = '마지막 업데이트: ' + data.lastUpdated;
+    header.appendChild(metaEl);
+  }
+  container.appendChild(header);
+
+  /* ---- 섹션 1: 활성 작업 ---- */
+  var sec1 = document.createElement('section');
+  sec1.className = 'section';
+  var sec1Title = document.createElement('div');
+  sec1Title.className = 'section-title';
+  sec1Title.textContent = '활성 작업 (Active Work)';
+  sec1.appendChild(sec1Title);
+  var activeContent = buildActiveCards(data);
+  if (activeContent) {
+    sec1.appendChild(activeContent);
+  } else {
+    var emptyActive = document.createElement('div');
+    emptyActive.className = 'empty-state';
+    emptyActive.textContent = '현재 진행 중인 Sprint / Hotfix가 없습니다.';
+    sec1.appendChild(emptyActive);
+  }
+  container.appendChild(sec1);
+
+  /* ---- 섹션 2: 배포 타임라인 ---- */
+  var sec2 = document.createElement('section');
+  sec2.className = 'section';
+  var sec2Title = document.createElement('div');
+  sec2Title.className = 'section-title';
+  sec2Title.textContent = '배포 타임라인 (Deploy Timeline)';
+  sec2.appendChild(sec2Title);
+  var timeline = buildTimeline(data);
+  if (timeline) {
+    sec2.appendChild(timeline);
+  } else {
+    var emptyTL = document.createElement('div');
+    emptyTL.className = 'empty-state';
+    emptyTL.textContent = '아직 배포 이력이 없습니다.';
+    sec2.appendChild(emptyTL);
+  }
+  container.appendChild(sec2);
+
+  /* ---- 섹션 3: 전체 현황 ---- */
+  var sec3 = document.createElement('section');
+  sec3.className = 'section';
+  var sec3Title = document.createElement('div');
+  sec3Title.className = 'section-title';
+  sec3Title.textContent = '전체 현황 (Overview)';
+  sec3.appendChild(sec3Title);
+
+  /* 필터 드롭다운 */
+  var controls = document.createElement('div');
+  controls.className = 'tree-controls';
+
+  var sel = document.createElement('select');
+  sel.className = 'filter-select';
+  sel.id = 'statusFilter';
+  [['all', '전체 상태'], ['planned', '계획됨'], ['in_progress', '진행 중'], ['completed', '완료'], ['deployed', '배포됨']].forEach(function(opt) {
+    var o = document.createElement('option');
+    o.value = opt[0];
+    o.textContent = opt[1];
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', function() { applyFilter(this.value); });
+
+  var hint = document.createElement('span');
+  hint.style.cssText = 'font-size:12px;color:var(--text-secondary);';
+  hint.textContent = '항목 클릭 시 세부 정보 펼침/접기';
+
+  controls.appendChild(sel);
+  controls.appendChild(hint);
+  sec3.appendChild(controls);
+
+  /* 트리 컨테이너 */
+  var treeContainer = document.createElement('div');
+  treeContainer.id = 'tree-container';
+  rebuildTree(treeContainer);
+  sec3.appendChild(treeContainer);
+
+  /* 구분선 */
+  var hr = document.createElement('hr');
+  hr.className = 'divider';
+  sec3.appendChild(hr);
+
+  /* 기여도 */
+  var contribTitle = document.createElement('div');
+  contribTitle.className = 'section-title';
+  contribTitle.style.marginTop = '8px';
+  contribTitle.textContent = '개발자별 기여도';
+  sec3.appendChild(contribTitle);
+  sec3.appendChild(buildContribSection(data));
+
+  container.appendChild(sec3);
+  return container;
+}
+
+/* ==================== 진입점 ==================== */
+async function main() {
+  var app = document.getElementById('app');
+
+  var data;
+  try {
+    var resp = await fetch('../index.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    data = await resp.json();
+  } catch (e) {
+    // 에러 배너를 안전하게 DOM으로 구성
+    while (app.firstChild) app.removeChild(app.firstChild);
+    var wrap = document.createElement('div');
+    wrap.className = 'container';
+
+    var banner = document.createElement('div');
+    banner.className = 'error-banner';
+    banner.textContent = 'index.json을 불러올 수 없습니다. (' + e.message + ')';
+
+    var guide = document.createElement('p');
+    guide.style.cssText = 'color:var(--text-secondary);font-size:13px;margin-top:12px;';
+    guide.textContent = '이 파일을 HTTP 서버를 통해 열거나, docs/ 디렉토리에서 서빙하세요. 예: python3 -m http.server 8080 --directory docs';
+
+    wrap.appendChild(banner);
+    wrap.appendChild(guide);
+    app.appendChild(wrap);
+    return;
+  }
+
+  _dashData = data;
+
+  /* 기존 로딩 텍스트 제거 후 대시보드 삽입 */
+  while (app.firstChild) app.removeChild(app.firstChild);
+  app.appendChild(buildDashboard(data));
+}
+
+main();
+</script>
+</body>
+</html>

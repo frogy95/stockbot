@@ -1,0 +1,123 @@
+{
+  "rules": [
+    {
+      "id": "prd-to-roadmap",
+      "detect": { "created": ["ROADMAP.md"] },
+      "required": ["docs/index.json"],
+      "checks": [
+        {
+          "type": "grep_content",
+          "file": "docs/index.json",
+          "pattern": "\"project\":\\s*\"[^\"]+\"",
+          "msg": "docs/index.json — project 필드가 비어있습니다"
+        }
+      ]
+    },
+    {
+      "id": "phase-planner",
+      "detect": { "created": ["docs/phase/phase*/phase*.md"] },
+      "required": [
+        "ROADMAP.md",
+        "docs/index.json",
+        ".claude/agent-memory/phase-planner/MEMORY.md"
+      ],
+      "checks": [
+        {
+          "type": "glob_min",
+          "glob": "docs/phase/phase*/*-review.md",
+          "min": 1,
+          "msg": "전문가 리뷰 파일이 없습니다 (최소 PO 리뷰 필수)"
+        }
+      ]
+    },
+    {
+      "id": "sprint-planner",
+      "detect": { "created": ["docs/phase/phase*/sprint*/sprint*.md"] },
+      "required": [
+        "ROADMAP.md",
+        "docs/index.json",
+        ".claude/agent-memory/sprint-planner/MEMORY.md"
+      ]
+    },
+    {
+      "id": "sprint-close",
+      "detect": { "modified": ["ROADMAP.md"], "pr_exists": true },
+      "required": [
+        "deploy.md",
+        "docs/index.json",
+        ".claude/agent-memory/sprint-planner/MEMORY.md"
+      ],
+      "checks": [
+        {
+          "type": "archive",
+          "msg": "deploy-history 아카이빙이 누락되었습니다 — deploy.md 기존 완료 기록을 docs/deploy-history/YYYY-MM-DD.md로 이동하세요"
+        },
+        {
+          "type": "pr_target",
+          "expect": "develop",
+          "msg": "PR 대상이 develop이 아닙니다 — sprint-close PR은 반드시 develop 브랜치로 생성하세요"
+        },
+        {
+          "type": "checkbox_remaining",
+          "pattern": "⬜",
+          "file_glob": "docs/phase/phase*/sprint*/sprint*.md",
+          "msg": "sprint.md에 미완료 체크박스(⬜)가 남아있습니다 — 완료 기준을 ✅로 업데이트하세요"
+        }
+      ]
+    },
+    {
+      "id": "sprint-review",
+      "detect": { "modified": ["deploy.md"], "content_match": "자동 검증|pytest|Playwright" },
+      "required": ["deploy.md"],
+      "checks": [
+        {
+          "type": "phase_update",
+          "msg": "phase.md Sprint 반영이 누락되었습니다 — Sprint 분할 테이블, 완료 기준, 리스크 테이블을 업데이트하세요"
+        },
+        {
+          "type": "critical_unresolved",
+          "msg": "🚨 Critical/High 이슈가 미해결 상태입니다. sprint-review를 다시 실행해주세요"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-close",
+      "detect": { "branch": "hotfix/*" },
+      "required": ["deploy.md", "docs/index.json"],
+      "checks": [
+        {
+          "type": "archive",
+          "msg": "deploy-history 아카이빙이 누락되었습니다 — deploy.md 기존 완료 기록을 docs/deploy-history/YYYY-MM-DD.md로 이동하세요"
+        },
+        {
+          "type": "pr_target",
+          "expect": "main",
+          "msg": "PR 대상이 main이 아닙니다 — hotfix PR은 반드시 main 브랜치로 생성하세요"
+        },
+        {
+          "type": "hotfix_scope",
+          "max_files": 3,
+          "max_lines": 50,
+          "msg": "hotfix 범위를 초과합니다 (파일 3개 이하, 50줄 이하) — Sprint 전환을 검토하세요"
+        },
+        {
+          "type": "glob_min",
+          "glob": "docs/hotfix/*/hotfix.md",
+          "min": 1,
+          "msg": "hotfix 문서가 생성되지 않았습니다 — docs/hotfix/{name}/hotfix.md를 생성하세요"
+        }
+      ]
+    },
+    {
+      "id": "deploy-prod",
+      "detect": { "pr_base": "main", "pr_head": "develop" },
+      "required": ["deploy.md", "docs/index.json"],
+      "checks": [
+        {
+          "type": "archive",
+          "msg": "deploy-history 아카이빙이 누락되었습니다 — deploy.md 기존 완료 기록을 docs/deploy-history/YYYY-MM-DD.md로 이동하세요"
+        }
+      ]
+    }
+  ]
+}
