@@ -11,3 +11,7 @@
 - 모든 Sprint는 반드시 Phase를 경유하여 생성
 - index.json: `docs/index.json` — 프로젝트 히스토리 관리
 - Hotfix 문서: `docs/hotfix/{name}/hotfix.md`
+
+## 스프린트 현황 (2026-03-29 업데이트)
+
+- [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, 계획 수립 완료

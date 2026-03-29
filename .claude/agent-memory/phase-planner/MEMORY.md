@@ -8,3 +8,7 @@ Your MEMORY.md is currently empty. When you notice a pattern worth preserving ac
 - 모든 Sprint는 반드시 Phase를 경유하여 생성
 - index.json: `docs/index.json` — 프로젝트 히스토리 관리
 - Hotfix 문서: `docs/hotfix/{name}/hotfix.md`
+
+## Phase 계획 이력
+
+- [Phase 0.5 계획](project_phase0.5.md) — 외부 API 탐색/검증 계획 수립 완료, 전문가 4명 검토 결과 포함

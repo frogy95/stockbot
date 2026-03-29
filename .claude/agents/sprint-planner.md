@@ -154,7 +154,9 @@ git commit -m "feat(phase{P}-sprint{N}): {구체적 설명}"
 ### 4-1단계: index.json 업데이트
 
 - `docs/index.json`을 읽어 해당 phase의 `sprints[]`에 새 sprint와 tasks를 추가합니다.
-- 각 task에 `path`, `testPlan`, `testResult` 경로를 설정합니다.
+- 각 task에 `id`, `title`, `path`, `testPlan`, `testResult`, `status`, `commits` 필드를 설정합니다.
+  - `status`: `"planned"` (초기값)
+  - `commits`: `[]` (빈 배열)
 - sprint의 `status`를 `planned`으로, `progress`를 `{ "total": {N}, "completed": 0 }`으로 설정합니다.
 
 ### 5단계: 에이전트 메모리 업데이트

@@ -56,8 +56,18 @@ cd frontend && npx tsc --noEmit
 │  [PostgreSQL :5432] ◄──├ core/               │  설정, DB, Redis, 인증, 모델
 │  [Redis :6379]     ◄── └ api/                │  REST 엔드포인트
 └─────────────────────────────────────────────┘
- 외부: 한투 API, 네이버 API, DART API, Telegram Bot API
+ 외부: 한투 API, 공공데이터포털 API, DART API, 네이버 API, Telegram Bot API
 ```
+
+### 데이터 수집 흐름
+
+```
+장전(08:00) 공공데이터포털 → 전 종목 일괄 수집 → DB → 1차 스크리닝 → 후보 종목
+장중(09:00) 한투 REST/WS → 후보 종목 실시간 → 2차 스크리닝 → 매매 신호
+장후(15:30) 한투 REST → 체결/잔고 정산 → 일일 리포트 → 텔레그램
+```
+
+> 상세 데이터 흐름: `docs/data-flow.md`
 
 ### 매매 실행 흐름
 
@@ -127,6 +137,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 한국투자증권 (모의) | 개발/테스트 | 초당 ~1건 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET` |
 | 네이버 검색 | 뉴스/트렌드 | 일 25,000건 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
 | Open Dart | 재무/공시 | 일 10,000건 | `DART_API_KEY` |
+| 공공데이터포털 | 시가총액/상장주식수 | 일 1,000건 | `DATA_GO_KR_API_KEY` |
 | Telegram Bot | 알림/승인 | 초당 30건 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 
 ## 경로별 상세 규칙
