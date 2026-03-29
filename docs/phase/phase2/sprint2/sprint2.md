@@ -21,6 +21,8 @@
 - 팩터 가중치 조정 (운영 1개월 후 — Phase 5)
 - 분봉 데이터 수집/저장 (2차 스크리닝은 Redis 실시간 데이터만 사용)
 - 적응형 임계값 (Phase 5 모니터링 후)
+- stocks 마스터 seed 스크립트 (`seed_stocks.py`) — Sprint 1 공공데이터포털 수집기가 stocks 테이블 적재 담당, 별도 seed 불필요
+- collector API 라우터 추가 수정 — Sprint 1에서 구현 완료, Sprint 2에서는 screening 전용 라우터만 신규 생성
 
 ---
 
