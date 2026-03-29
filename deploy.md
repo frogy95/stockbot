@@ -5,33 +5,43 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 1 Sprint 1: Docker Compose + DB/Redis + 백엔드 스켈레톤 (2026-03-29)
+### Phase 1 Sprint 2: 한투 API 연동 + 토큰 관리 + 모의/실전 전환 (2026-03-29)
 
-PR: https://github.com/frogy95/stockbot/pull/2 (phase1-sprint1 → develop)
+PR: https://github.com/frogy95/stockbot/pull/3 (phase1-sprint2 → develop)
 
 #### 코드 리뷰 결과
 
 - ✅ 코드 리뷰 완료 (2026-03-29)
-- Critical/High 이슈: 없음
-- Medium 이슈 1건:
-  - `backend/api/routes/health.py` L20: `except Exception: pass` — DB/Redis 연결 실패 시 예외를 조용히 무시하고 로깅 없음. 다음 Sprint에서 구조화 로깅 도입 시 함께 개선 권장.
+  - Critical/High 이슈: 0건
+  - Medium 이슈: 2건
+    - `kis_ws.py` subscribe/unsubscribe에서 `_ws is None` 미검증 — connect() 없이 호출 시 AttributeError 가능
+    - `docs/index.json` Sprint 2 상태 sprint-close에서 이미 업데이트 완료 확인됨
+  - PR 리뷰 코멘트: https://github.com/frogy95/stockbot/pull/3#issuecomment-4149630345
 
 #### 자동 검증 결과
 
-- ✅ Docker 4컨테이너 정상 기동 (backend, frontend, postgres, redis 모두 Up/healthy)
-- ✅ pytest -v: 24개 테스트 전체 통과 (test_config 4개, test_health 3개, test_integration 7개, test_models 5개, test_redis 4개 + test_get_or_set)
-- ✅ GET /api/v1/health: `{"status": "healthy", "database": "connected", "redis": "connected"}`
-- ✅ Swagger UI (/docs): HTTP 200
-- ✅ 프론트엔드 (http://localhost:3000): HTTP 200
-- ✅ DB 테이블: settings, stocks, market_data, alembic_version (4개)
-- ✅ 시드 데이터: settings 테이블 21개 행 확인
-- ✅ Phase 문서 반영 완료 (docs/phase/phase1/phase1.md Sprint 1 완료 표시)
+- ✅ pytest -v: 95 passed (0 failed) — 2026-03-29
+  - test_kis_config.py: 6 passed
+  - test_throttler.py: 6 passed
+  - test_token_manager.py: 9 passed
+  - test_kis_rest.py: 10 passed
+  - test_kis_ws.py: 9 passed
+  - test_settings_api.py: 6 passed
+  - test_sprint2_integration.py: 5 passed
+  - 기존 Sprint 1 테스트 (24개) 모두 통과 (회귀 없음)
+- ✅ API 엔드포인트 검증
+  - GET /api/v1/health: {"status":"healthy","database":"connected","redis":"connected"}
+  - GET /api/v1/settings: 21개 항목 반환 정상
+  - GET /api/v1/settings/trading_env: {"key":"trading_env","value":"paper",...}
+  - GET /api/v1/kis/status: {"environment":"paper","token_valid":true,"ws_connected":false}
+  - PUT /api/v1/settings/trading_env: 정상 업데이트
+- ✅ 프론트엔드 접속: http://localhost:3000 정상 응답 (Coming Soon 페이지)
+- ⬜ KIS API 실거래 확인: 평일 장중 수동 검증 필요 (모의거래 주문 체결 테스트)
+- ⬜ Playwright UI 검증: 프론트엔드 변경 없음으로 신규 시나리오 해당 없음
 
 #### 수동 검증 필요 항목
 
 - ⬜ 배포 후 develop → main PR 생성 (sprint-review 완료 — deploy-prod 시 실행)
-- ⬜ alembic upgrade head (DB 스키마 변경 있으므로 배포 환경에서 수동 실행 필요)
-- ⬜ UI 디자인/시각적 품질 판단 (브라우저에서 http://localhost:3000 직접 확인)
 
 ---
 

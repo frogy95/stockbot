@@ -120,7 +120,7 @@ graph TB
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
 | 1 ✅ | Docker Compose + DB/Redis + 백엔드 스켈레톤 | Docker 4컨테이너, FastAPI 구조, DB 스키마(3테이블), Redis, Alembic, 헬스체크 | 없음 |
-| 2 | 한투 API 연동 + 토큰 관리 + 모의/실전 전환 | KIS REST/WS 클라이언트, 토큰 자동 갱신, Rate Limit 스로틀러, 환경 전환, 에러 핸들링 | Sprint 1 |
+| 2 ✅ | 한투 API 연동 + 토큰 관리 + 모의/실전 전환 | KIS REST/WS 클라이언트, 토큰 자동 갱신, Rate Limit 스로틀러, 환경 전환, 에러 핸들링 | Sprint 1 |
 
 ---
 
@@ -250,7 +250,9 @@ market_data
 
 ---
 
-## Sprint 2 상세 — 한투 API 연동 + 토큰 관리 + 모의/실전 전환
+## Sprint 2 상세 ✅ 완료 — 한투 API 연동 + 토큰 관리 + 모의/실전 전환
+
+> 완료: PR #3 (phase1-sprint2 → develop), 2026-03-29. 95개 테스트 전체 통과.
 
 ### 백엔드
 
@@ -367,14 +369,20 @@ LIVE = KISEnvironment(
 
 | # | 항목 | 출처 | 심각도 | 대응 | 배치 Sprint |
 |---|------|------|--------|------|------------|
-| 1 | Sprint 2 범위 과다 우려 | 정프로 | 중간 | WS 파싱/구독관리를 Phase 2로 이동하여 범위 축소 | Sprint 2 |
-| 2 | 모의거래 주문 테스트는 평일 장중에만 가능 | 윤에이피 | 중간 | Sprint 2 일정에 평일 장중 테스트 시간 확보 | Sprint 2 |
+| 1 | ~~Sprint 2 범위 과다 우려~~ | 정프로 | 중간 | WS 파싱/구독관리를 Phase 2로 이동하여 범위 축소 | Sprint 2 ✅ 해결 |
+| 2 | 모의거래 주문 테스트는 평일 장중에만 가능 | 윤에이피 | 중간 | KIS 토큰 발급 확인 (paper 환경). 실제 주문 체결 테스트는 평일 장중 수동 검증 필요 | Sprint 2 (수동 미완) |
 | 3 | WS 40종목 구독 제한 | 윤에이피 | 낮음 | Phase 2에서 복수 세션 또는 우선순위 로테이션 검토. Phase 1에서는 인지만 | Phase 2 |
 | 4 | ~~DB 스키마 조기 설계 변경 리스크~~ | 정프로 | 낮음 | 최소 3테이블만. Alembic으로 마이그레이션 관리 | Sprint 1 ✅ 해결 |
 | 5 | 모의거래 체결 로직이 실전과 다름 | 김단타 | 높음 | 코드 주석/문서에 반복 명시. Phase 3 모의거래 2주 운영 후 차이 문서화 | Phase 3 |
 | 6 | ~~settings key-value vs typed columns 트레이드오프~~ | 박퀀트 | 낮음 | key-value + value_type 검증으로 절충. 필요 시 Phase 3에서 전환 | Sprint 1 ✅ 해결 |
 | 7 | ~~Next.js 프로젝트 Phase 4까지 미사용 시 의존성 노후화~~ | 정프로 | 낮음 | 빈 프로젝트 + 헬스체크만. Phase 4 시작 시 의존성 업데이트 | Sprint 1 ✅ 해결 |
-| 8 | 환경변수 > DB 설정 계층에서 TRADING_ENV 전환 시 Docker 재시작 필요 | 최리스크 | 중간 | 환경변수는 안전장치, 런타임 전환은 DB + API 사용. 환경변수 paper면 DB live여도 paper 강제 | Sprint 2 |
+| 8 | ~~환경변수 > DB 설정 계층에서 TRADING_ENV 전환 시 Docker 재시작 필요~~ | 최리스크 | 중간 | 환경변수는 안전장치, 런타임 전환은 DB + API 사용. 환경변수 paper면 DB live여도 paper 강제 | Sprint 2 ✅ 해결 |
+| 9 | WebSocket 데이터 파싱 (시세/호가/체결 → 구조체) | Sprint 2 제외 범위 | 중간 | Sprint 2에서 WS 기본 프레임만 구현, 파싱은 Phase 2 | Phase 2 |
+| 10 | WebSocket 구독 관리 (종목 동적 추가/제거, 40종목 제한 대응) | Sprint 2 제외 범위 | 중간 | 기본 subscribe/unsubscribe만 구현, 고급 관리는 Phase 2 | Phase 2 |
+| 11 | 체결강도 계산 | Sprint 2 제외 범위 | 낮음 | 실시간 데이터 파싱 이후 가능, Phase 2 | Phase 2 |
+| 12 | 장 상태 관리 (시초가/장마감 시간대 로직) | Sprint 2 제외 범위 | 중간 | 운영 시간대 파라미터는 DB에 존재, 로직 구현은 Phase 2 | Phase 2 |
+| 13 | `kis_ws.py` subscribe/unsubscribe에서 `_ws is None` 미검증 | Sprint 2 리뷰 | 중간 | connect() 없이 호출 시 AttributeError 발생 가능. Phase 2 WS 구독 관리 고도화 시 가드 추가 | Phase 2 |
+| 14 | `index.json` sprint2 상태 동기화 | Sprint 2 리뷰 | 중간 | sprint-close가 업데이트 완료. 향후 sprint-close 후 상태 반영 확인 프로세스 유지 | ✅ 해결 |
 
 ---
 
@@ -387,12 +395,12 @@ LIVE = KISEnvironment(
 | 3 | DB 스키마 | settings + stocks + market_data 3테이블 생성 + Alembic 마이그레이션 | ✅ 완료 |
 | 4 | Redis | 연결 + 기본 get/set/delete 동작 확인 | ✅ 완료 |
 | 5 | settings 시드 데이터 | 리스크/매매/스케줄 파라미터 21개 항목 초기 적재 | ✅ 완료 |
-| 6 | KIS REST 클라이언트 | 토큰 발급 + 시세 조회(현재가/호가) + 주문 기본 구조 | ⬜ |
-| 7 | KIS WebSocket 클라이언트 | 연결/인증/구독/수신/재연결 기본 프레임 동작 | ⬜ |
-| 8 | 토큰 자동 갱신 | Redis 캐싱 + APScheduler 6시간 주기 체크 + 만료 2시간 전 갱신 | ⬜ |
-| 9 | Rate Limit 스로틀러 | 토큰 버킷 동작 (모의 1.5초, 실전 0.07초) + 에러 시 지수 백오프 | ⬜ |
-| 10 | 모의/실전 전환 | TRADING_ENV 전환 시 도메인/키/tr_id/WS포트/Rate Limit 일괄 변경 | ⬜ |
-| 11 | 에러 핸들링 | 5가지 에러 시나리오 대응 코드 + 단위 테스트 | ⬜ |
-| 12 | settings CRUD API | 조회/수정 엔드포인트 동작 | ⬜ |
-| 13 | 단위 테스트 | KIS REST/WS, 스로틀러, 토큰 매니저 테스트 통과 | ⬜ |
-| 14 | 모의거래 시세 조회 | 한투 모의거래 환경에서 실제 시세 데이터 조회 성공 | ⬜ |
+| 6 | KIS REST 클라이언트 | 토큰 발급 + 시세 조회(현재가/호가) + 주문 기본 구조 | ✅ 완료 |
+| 7 | KIS WebSocket 클라이언트 | 연결/인증/구독/수신/재연결 기본 프레임 동작 | ✅ 완료 |
+| 8 | 토큰 자동 갱신 | Redis 캐싱 + APScheduler 6시간 주기 체크 + 만료 2시간 전 갱신 | ✅ 완료 |
+| 9 | Rate Limit 스로틀러 | 토큰 버킷 동작 (모의 1.5초, 실전 0.07초) + 에러 시 지수 백오프 | ✅ 완료 |
+| 10 | 모의/실전 전환 | TRADING_ENV 전환 시 도메인/키/tr_id/WS포트/Rate Limit 일괄 변경 | ✅ 완료 |
+| 11 | 에러 핸들링 | 5가지 에러 시나리오 대응 코드 + 단위 테스트 | ✅ 완료 |
+| 12 | settings CRUD API | 조회/수정 엔드포인트 동작 | ✅ 완료 |
+| 13 | 단위 테스트 | KIS REST/WS, 스로틀러, 토큰 매니저 테스트 통과 | ✅ 완료 (95 passed) |
+| 14 | 모의거래 시세 조회 | 한투 모의거래 환경에서 실제 시세 데이터 조회 성공 | ⬜ 수동 (평일 장중) |

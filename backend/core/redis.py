@@ -41,6 +41,11 @@ class RedisClient:
             return False
         return bool(await self._redis.delete(key))
 
+    async def ttl(self, key: str) -> int:
+        if not self._redis:
+            return -2
+        return await self._redis.ttl(key)
+
     async def get_or_set(
         self,
         key: str,
