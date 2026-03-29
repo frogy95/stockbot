@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.redis import redis_client
 from api.routes.health import router as health_router
+from api.routes.settings import router as settings_router
+from api.routes.kis import router as kis_router
 
 
 @asynccontextmanager
@@ -30,6 +32,8 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health_router, prefix="/api/v1")
+    app.include_router(settings_router, prefix="/api/v1")
+    app.include_router(kis_router, prefix="/api/v1")
 
     return app
 
