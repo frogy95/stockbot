@@ -47,7 +47,7 @@ cd frontend && npx tsc --noEmit
 ```
 ┌── Cloudflare (DNS/CDN) ─────────────────────┐
 │                                               │
-│  stockbot.{domain}     api.stockbot.{domain}  │
+│  stockbot.choiji.kr    api.stockbot.choiji.kr  │
 │       │                        │              │
 │       ▼                        ▼              │
 │  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
