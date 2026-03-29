@@ -5,18 +5,43 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Hotfix: Claude Code 설정 파일 컨텍스트 중복/상충 정리 (2026-03-28)
+### Phase 1 Sprint 2: 한투 API 연동 + 토큰 관리 + 모의/실전 전환 (2026-03-29)
 
-PR: https://github.com/frogy95/choiji-guide-big/pull/3
+PR: https://github.com/frogy95/stockbot/pull/3 (phase1-sprint2 → develop)
 
-- ✅ 자동 검증 완료 항목:
-  - pytest: 해당 없음 (설정/문서 파일만 변경)
-  - 타겟 API 검증: 해당 없음 (코드 변경 없음)
-  - Playwright 타겟 검증: 해당 없음 (UI 변경 없음)
+#### 코드 리뷰 결과
 
-- ⬜ 수동 검증 필요 항목:
-  - Docker 미실행으로 자동 검증 미수행 — main merge 후 `docker compose up --build` 로 재시작 시 설정 파일이 정상 로드되는지 확인
-  - restart.md의 `cd /path &&` 패턴 제거 후 `/restart` 커맨드 정상 동작 확인 (Docker 실행 환경에서)
+- ✅ 코드 리뷰 완료 (2026-03-29)
+  - Critical/High 이슈: 0건
+  - Medium 이슈: 2건
+    - `kis_ws.py` subscribe/unsubscribe에서 `_ws is None` 미검증 — connect() 없이 호출 시 AttributeError 가능
+    - `docs/index.json` Sprint 2 상태 sprint-close에서 이미 업데이트 완료 확인됨
+  - PR 리뷰 코멘트: https://github.com/frogy95/stockbot/pull/3#issuecomment-4149630345
+
+#### 자동 검증 결과
+
+- ✅ pytest -v: 95 passed (0 failed) — 2026-03-29
+  - test_kis_config.py: 6 passed
+  - test_throttler.py: 6 passed
+  - test_token_manager.py: 9 passed
+  - test_kis_rest.py: 10 passed
+  - test_kis_ws.py: 9 passed
+  - test_settings_api.py: 6 passed
+  - test_sprint2_integration.py: 5 passed
+  - 기존 Sprint 1 테스트 (24개) 모두 통과 (회귀 없음)
+- ✅ API 엔드포인트 검증
+  - GET /api/v1/health: {"status":"healthy","database":"connected","redis":"connected"}
+  - GET /api/v1/settings: 21개 항목 반환 정상
+  - GET /api/v1/settings/trading_env: {"key":"trading_env","value":"paper",...}
+  - GET /api/v1/kis/status: {"environment":"paper","token_valid":true,"ws_connected":false}
+  - PUT /api/v1/settings/trading_env: 정상 업데이트
+- ✅ 프론트엔드 접속: http://localhost:3000 정상 응답 (Coming Soon 페이지)
+- ⬜ KIS API 실거래 확인: 평일 장중 수동 검증 필요 (모의거래 주문 체결 테스트)
+- ⬜ Playwright UI 검증: 프론트엔드 변경 없음으로 신규 시나리오 해당 없음
+
+#### 수동 검증 필요 항목
+
+- ⬜ 배포 후 develop → main PR 생성 (sprint-review 완료 — deploy-prod 시 실행)
 
 ---
 

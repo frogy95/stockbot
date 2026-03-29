@@ -48,9 +48,12 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
 
 `docs/dev-process.md` 섹션 5의 "Sprint" 컬럼 기준으로 자동 검증을 실행합니다.
 
-**Docker 상태 확인 먼저:**
-- `http://localhost:{BACKEND_PORT}`과 `http://localhost:{FRONTEND_PORT}` 응답 확인
-- 미실행 시: deploy.md에 "⬜ Docker 미실행으로 자동 검증 미수행" 기록 후 수동 검증 안내
+**Docker 상태 확인 및 자동 기동:**
+1. `docker compose ps --format json` 으로 컨테이너 상태 확인
+2. 컨테이너가 미실행이면 `docker compose up -d` 로 자동 기동 시도
+3. 기동 후 최대 30초 대기하며 health check (`http://localhost:8000/docs`, `http://localhost:3000`)
+4. health check 통과 → 자동 검증 진행
+5. `docker compose up -d` 자체가 실패하면 (Docker Desktop 미설치/미실행 등): deploy.md에 "⬜ Docker 환경 없음 — 자동 검증 미수행" 기록 후 수동 검증 안내
 
 **자동 실행 항목** (서버 실행 중인 경우):
 - `docker compose exec backend pytest -v`
@@ -81,6 +84,7 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 2. Sprint 상세 섹션 제목에 `✅ 완료` 추가 + 완료 메모 (PR 번호, 날짜)
 3. 미해결 사항 / 리스크 테이블: 해당 Sprint에서 해결된 항목에 `~~취소선~~` + `✅ 해결` 표시
 4. 완료 기준 테이블: 해당 Sprint 항목의 상태를 `대기` → `✅ 완료`로 변경
+5. **미해결 이슈 → 미해결 사항 추가**: 코드 리뷰에서 발견된 미해결 이슈(Medium/Low)를 Phase 문서의 미해결 사항 테이블에 추가. sprint-planner가 다음 Sprint 계획 시 참조할 수 있도록 severity와 "Sprint {N+1}에서 개선 권장" 표기. Critical/High는 즉시 수정 대상이므로 이 단계에 도달하면 이미 해결된 상태여야 함
 
 모든 업데이트 후 커밋합니다. 이미 반영되어 있으면 "✅ Phase 문서 최신 상태"로 기록합니다.
 
@@ -91,6 +95,14 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 - ⬜ 수동 검증 필요 항목
 - 코드 리뷰 결과 요약
 - Phase 문서 반영 상태
+
+### 5-1단계: 모든 변경 파일 커밋 (필수)
+
+이 단계에서 수정한 모든 파일을 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`deploy.md`, `docs/phase/*/phase*.md`, `docs/index.json`, `agent-memory` 등)
+3. 커밋 메시지: `docs(sprint-review): Phase {P} Sprint {N} 코드 리뷰 + 검증 결과 기록`
 
 ### 6단계: 최종 보고
 
@@ -115,6 +127,7 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 2. 자동 검증 실행 (3단계)
 3. Phase 문서 반영 (4단계)
 4. deploy.md 결과 기록 (5단계)
+5. **모든 변경 파일 커밋** (5-1단계) — 미커밋 종료 금지
 
 > stop hook(`doc-checker`)이 Phase 문서 수정 여부와 Critical/High 미해결 이슈를 자동 검증합니다.
 
@@ -125,5 +138,5 @@ CLAUDE.md의 언어/문서 작성 규칙을 따릅니다.
 ## 에러 처리
 
 - Playwright 실행 실패 시: 실패 이유를 기록하고 수동 검증 필요 항목으로 표시합니다.
-- Docker 미실행 시: deploy.md에 사유 기록 후 수동 검증 안내로 전환합니다.
+- Docker 미실행 시: `docker compose up -d`로 자동 기동을 시도합니다. Docker 환경 자체가 없으면 deploy.md에 사유 기록 후 수동 검증 안내로 전환합니다.
 - Critical 이슈 발견 시: 검증을 중단하고 사용자에게 수정 여부를 확인합니다.

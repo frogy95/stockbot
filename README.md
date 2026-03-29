@@ -17,8 +17,10 @@
 | ORM | SQLAlchemy 2.0 + Alembic |
 | 스케줄러 | APScheduler |
 | 텔레그램 | python-telegram-bot |
-| 컨테이너 | Docker Compose |
-| 인프라 | AWS Lightsail |
+| 컨테이너 | Docker Compose (로컬 개발) |
+| 프론트엔드 배포 | Vercel |
+| 백엔드 배포 | Railway |
+| 도메인/DNS | Cloudflare |
 
 ## 주요 기능
 
@@ -33,26 +35,21 @@
 ## 시스템 아키텍처
 
 ```
-┌─────────────────────────────────────────────┐
-│              AWS Lightsail                    │
-│  ┌────────────────────────────────────────┐  │
-│  │        Docker Compose                  │  │
-│  │                                        │  │
-│  │  [Next.js :3000] ◄──► [FastAPI :8000]  │  │
-│  │                        │               │  │
-│  │                        ├ modules/      │  │
-│  │                        │ ├ trading/    │  │
-│  │                        │ ├ collector/  │  │
-│  │  [Telegram Bot API]◄───│ ├ screening/  │  │
-│  │                        │ ├ notifier/   │  │
-│  │                        │ └ analyzer/   │  │
-│  │  [PostgreSQL :5432]◄───│               │  │
-│  │  [Redis :6379]     ◄───│ ├ core/       │  │
-│  │                        │ └ api/        │  │
-│  └────────────────────────────────────────┘  │
+┌── Cloudflare (DNS/CDN) ─────────────────────┐
+│                                               │
+│  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
+│  │ Next.js   │───►│ FastAPI               │  │
+│  │ Dashboard │    │  ├ modules/trading/    │  │
+│  └───────────┘    │  ├ modules/collector/  │  │
+│                   │  ├ modules/screening/  │  │
+│  [Telegram Bot]◄──│  ├ modules/notifier/   │  │
+│                   │  └ modules/analyzer/   │  │
+│                   │                        │  │
+│                   │ [PostgreSQL] [Redis]    │  │
+│                   └────────────────────────┘  │
 │                                               │
 │  외부: 한투 API, 네이버 API, DART API         │
-└─────────────────────────────────────────────┘
+└───────────────────────────────────────────────┘
 ```
 
 ## 빠른 시작
@@ -173,8 +170,8 @@ Phase 계획 시 도메인 전문가가 설계를 리뷰한다:
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`): PR → pytest, Docker 빌드, TypeScript 체크
-- **CD** (`.github/workflows/deploy.yml`): main push → Docker 이미지 빌드 → GHCR → Lightsail 배포
+- **CI** (`.github/workflows/ci.yml`): PR → pytest, TypeScript 체크
+- **CD**: main merge → Vercel 자동 배포 (프론트엔드) + Railway 자동 배포 (백엔드)
 
 ## 참고 문서
 

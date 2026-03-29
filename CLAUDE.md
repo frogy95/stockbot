@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **원격 저장소**: https://github.com/frogy95/stockbot.git
 - **기술 스택**: Python 3.12(FastAPI) + Next.js(App Router) + PostgreSQL 16 + Redis 7
-- **인프라**: AWS Lightsail 단일 인스턴스, Docker Compose 4컨테이너
+- **인프라**: Vercel (프론트엔드) + Railway (백엔드 + PostgreSQL + Redis) + Cloudflare (도메인/DNS)
 - **PRD**: `docs/prd.md` | **로드맵**: `ROADMAP.md`
 
 ## 언어 및 커뮤니케이션 규칙
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 주요 명령어
 
 ```bash
-# 환경 구성
+# 로컬 개발 환경 (Docker Compose)
 cp .env.example .env            # 환경변수 설정
 docker compose up -d            # 전체 서비스 기동 (FastAPI, Next.js, PostgreSQL, Redis)
 
@@ -45,19 +45,36 @@ cd frontend && npx tsc --noEmit
 ## 시스템 아키텍처
 
 ```
-┌─────────────────────────────────────────────┐
-│              AWS Lightsail                    │
-│  [Next.js :3000] ◄──► [FastAPI :8000]        │
-│                        ├ modules/trading/     │  매매 엔진 (전략, 주문, 포지션)
-│                        ├ modules/collector/   │  데이터 수집 (한투, 네이버, DART)
-│  [Telegram Bot] ◄──── ├ modules/screening/   │  종목 스크리닝/스코어링
-│                        ├ modules/notifier/    │  알림 (텔레그램)
-│                        ├ modules/analyzer/    │  성과 분석/리포트
-│  [PostgreSQL :5432] ◄──├ core/               │  설정, DB, Redis, 인증, 모델
-│  [Redis :6379]     ◄── └ api/                │  REST 엔드포인트
-└─────────────────────────────────────────────┘
- 외부: 한투 API, 네이버 API, DART API, Telegram Bot API
+┌── Cloudflare (DNS/CDN) ─────────────────────┐
+│                                               │
+│  stockbot.{domain}     api.stockbot.{domain}  │
+│       │                        │              │
+│       ▼                        ▼              │
+│  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
+│  │ Next.js   │───►│ FastAPI :8000         │  │
+│  │ Dashboard │    │  ├ modules/trading/    │  │
+│  └───────────┘    │  ├ modules/collector/  │  │
+│                   │  ├ modules/screening/  │  │
+│  [Telegram Bot]◄──│  ├ modules/notifier/   │  │
+│                   │  ├ modules/analyzer/   │  │
+│                   │  ├ core/               │  │
+│                   │  └ api/                │  │
+│                   │                        │  │
+│                   │ [PostgreSQL] [Redis]    │  │
+│                   └────────────────────────┘  │
+└───────────────────────────────────────────────┘
+ 외부: 한투 API, 공공데이터포털 API, DART API, 네이버 API, Telegram Bot API
 ```
+
+### 데이터 수집 흐름
+
+```
+장전(08:00) 공공데이터포털 → 전 종목 일괄 수집 → DB → 1차 스크리닝 → 후보 종목
+장중(09:00) 한투 REST/WS → 후보 종목 실시간 → 2차 스크리닝 → 매매 신호
+장후(15:30) 한투 REST → 체결/잔고 정산 → 일일 리포트 → 텔레그램
+```
+
+> 상세 데이터 흐름: `docs/data-flow.md`
 
 ### 매매 실행 흐름
 
@@ -127,6 +144,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 한국투자증권 (모의) | 개발/테스트 | 초당 ~1건 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET` |
 | 네이버 검색 | 뉴스/트렌드 | 일 25,000건 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
 | Open Dart | 재무/공시 | 일 10,000건 | `DART_API_KEY` |
+| 공공데이터포털 | 시가총액/상장주식수 | 일 1,000건 | `DATA_GO_KR_API_KEY` |
 | Telegram Bot | 알림/승인 | 초당 30건 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 
 ## 경로별 상세 규칙

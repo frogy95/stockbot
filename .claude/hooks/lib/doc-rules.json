@@ -62,6 +62,12 @@
           "pattern": "⬜",
           "file_glob": "docs/phase/phase*/sprint*/sprint*.md",
           "msg": "sprint.md에 미완료 체크박스(⬜)가 남아있습니다 — 완료 기준을 ✅로 업데이트하세요"
+        },
+        {
+          "type": "grep_content",
+          "file": "docs/index.json",
+          "pattern": "\"status\":\\s*\"completed\"",
+          "msg": "index.json — sprint/task status가 completed로 업데이트되지 않았습니다"
         }
       ]
     },

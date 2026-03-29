@@ -13,7 +13,7 @@
 |--------|------|----------|
 | `phase{P}-sprint{N}` | 스프린트 단위 개발 | 로컬 |
 | `develop` | 스테이징 통합 브랜치 | 로컬 Docker |
-| `main` | 프로덕션 브랜치 | 프로덕션 서버 |
+| `main` | 프로덕션 브랜치 | Vercel + Railway |
 | `hotfix/*` | 긴급 운영 패치 | main + develop 역머지 |
 
 ### Sprint 흐름
@@ -119,16 +119,16 @@ PR 검토 후 별도로 실행합니다.
 | SSH 헬스체크 (`/api/v1/health`) | — | — | ✅ | **자동** |
 | Docker 컨테이너 상태 확인 | — | — | ✅ | **자동** |
 | 백엔드 로그 오류 확인 | — | — | ✅ | **자동** |
-| `docker compose up --build` | ⬜ | ⬜ | — | **수동** |
+| `docker compose up --build` | ⬜ | ⬜ | — | **반자동** (미실행 시 자동 기동) |
 | `alembic upgrade head` | ⬜ DB변경시 | — | ⬜ DB변경시 | **수동** |
 | KIS API 실거래 확인 | ⬜ | ⬜ 관련시 | ⬜ 관련시 | **수동** |
 | UI 디자인/시각적 품질 판단 | ⬜ | — | ⬜ | **수동** |
 
 ### 자동 검증 전제 조건
 
-- Docker 컨테이너가 실행 중일 때만 자동 실행
-- 서버가 응답하는지 확인 후 진행 (`http://localhost:3000`, `http://localhost:8000`)
-- Docker가 미실행인 경우: 자동 검증을 건너뛰고, deploy.md에 "⬜ Docker 미실행으로 자동 검증 미수행" 기록 후 수동 검증 항목으로 안내
+- Docker 컨테이너가 미실행이면 `docker compose up -d`로 자동 기동 시도
+- 기동 후 health check (`http://localhost:8000/docs`, `http://localhost:3000`) 통과 시 자동 검증 진행
+- Docker 환경 자체가 없는 경우 (Docker Desktop 미설치 등): deploy.md에 "⬜ Docker 환경 없음 — 자동 검증 미수행" 기록 후 수동 검증 항목으로 안내
 
 ### Playwright 검증 범위
 
@@ -155,70 +155,52 @@ docker compose up --build
 
 ### 6.2 프로덕션 배포 (deploy-prod agent)
 
+배포 대상이 프론트엔드/백엔드로 분리되어 있습니다.
+
+**프론트엔드 (Vercel)**:
+1. main 브랜치에 merge 시 Vercel이 자동 배포
+2. Preview URL로 사전 검증 (PR 생성 시 자동 생성)
+
+**백엔드 (Railway)**:
 1. develop 브랜치 CI 통과 확인
 2. develop → main PR 생성
-3. GitHub Actions 자동 배포 (GHCR 이미지 빌드 → 서버 SSH 배포)
-4. 실서버 자동 검증 (5단계: SSH 헬스체크, 컨테이너 상태, 로그, Playwright)
+3. main merge 시 Railway 자동 배포 (GitHub 연동)
+4. 배포 후 헬스체크 확인
 
-### 6.3 실서버 검증 (SSH 접속 정보)
-
-> TODO: 프로젝트 배포 서버 정보를 이 섹션에 기입하세요.
-
-- **키**: `{SSH_KEY_PATH}` (프로젝트 루트)
-- **호스트**: `{USER}@{SERVER_IP}` (AWS Lightsail 또는 다른 서버)
-- **앱 경로**: `{APP_PATH}`
+### 6.3 실서버 검증
 
 ```bash
-# 헬스체크
-curl -s http://{SERVER_IP}/api/v1/health
+# 백엔드 헬스체크 (Railway)
+curl -s https://api.{DOMAIN}/api/v1/health
 
-# 컨테이너 상태
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml ps"
+# 프론트엔드 접속 확인 (Vercel)
+curl -s -o /dev/null -w "%{http_code}" https://{DOMAIN}
 
-# 백엔드 로그 오류 확인
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml logs backend --tail 30 2>&1 | grep -i 'error\|traceback\|critical' || echo 'No errors found'"
+# Railway 로그 확인
+railway logs --service backend --tail 30
 ```
 
 ### 6.4 롤백 시나리오
 
-#### A. 코드만 롤백 (이미지 태그 변경)
+#### A. 프론트엔드 롤백 (Vercel)
 
+Vercel 대시보드에서 이전 배포를 Promote하거나:
 ```bash
-# 이전 버전 태그 확인
-git log --oneline main -5
-
-# 서버 SSH 접속 후
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP}
-cd {APP_PATH}
-sudo docker compose -f docker-compose.prod.yml down
-sudo docker pull ghcr.io/{GITHUB_ORG}/{PROJECT}-backend:v{이전_버전}
-sudo docker pull ghcr.io/{GITHUB_ORG}/{PROJECT}-frontend:v{이전_버전}
-sudo docker compose -f docker-compose.prod.yml up -d
+vercel rollback
 ```
 
-#### B. DB 포함 롤백 (주의: 데이터 손실 가능)
+#### B. 백엔드 롤백 (Railway)
 
+Railway 대시보드에서 이전 배포를 Rollback하거나:
 ```bash
-# 롤백 전 반드시 DB 백업
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml exec postgres pg_dump -U {DB_USER} {DB_NAME} > /tmp/backup_$(date +%Y%m%d).sql"
-
-# Alembic 다운그레이드
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml exec backend alembic downgrade -1"
+railway rollback --service backend
 ```
 
-#### C. 긴급 서비스 중단
+#### C. DB 포함 롤백 (주의: 데이터 손실 가능)
 
 ```bash
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml down"
-
-# 원인 조사 후 서비스 복구
-ssh -i {SSH_KEY_PATH} {USER}@{SERVER_IP} \
-  "cd {APP_PATH} && sudo docker compose -f docker-compose.prod.yml up -d"
+# Railway PostgreSQL 백업 후 Alembic 다운그레이드
+railway run --service backend alembic downgrade -1
 ```
 
 ---
@@ -307,3 +289,4 @@ sprint-review agent의 2단계 및 hotfix-close agent의 3단계에서 이 체�
 | 에이전트 워크플로우 변경 | `.claude/agents/*.md` 해당 파일 | 직접 수정 |
 | 새 버전 배포 | Notion 릴리즈 노트 (섹션 8.5 참조) | deploy-prod agent |
 | Phase/Sprint/Hotfix 상태 변경 | `docs/index.json` | 해당 에이전트 (phase-planner, sprint-planner, sprint-close, hotfix-close, deploy-prod) |
+| Sprint 구현 시작/Task 완료 시 상태 전환 | `docs/index.json` (sprint/task status, progress) | PostToolUse hook (`posttooluse-index-sync.sh`) — git checkout/commit 감지 시 자동 |
