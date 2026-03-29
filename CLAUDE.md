@@ -56,7 +56,7 @@ cd frontend && npx tsc --noEmit
 │  [PostgreSQL :5432] ◄──├ core/               │  설정, DB, Redis, 인증, 모델
 │  [Redis :6379]     ◄── └ api/                │  REST 엔드포인트
 └─────────────────────────────────────────────┘
- 외부: 한투 API, 네이버 API, DART API, Telegram Bot API
+ 외부: 한투 API, 공공데이터포털 API, DART API, 네이버 API, Telegram Bot API
 ```
 
 ### 매매 실행 흐름

@@ -136,23 +136,23 @@
 
 ### 사전 작업 체크리스트
 
-- ⬜ 한국투자증권 모의거래 계정 발급 (https://openapi.koreainvestment.com)
+- ✅ 한국투자증권 모의거래 계정 발급 (https://openapi.koreainvestment.com)
   - APP_KEY, APP_SECRET 발급
   - 모의거래 계좌번호 확인
-- ⬜ 네이버 개발자센터 애플리케이션 등록 (https://developers.naver.com)
+- ✅ 네이버 개발자센터 애플리케이션 등록 (https://developers.naver.com)
   - Client ID, Client Secret 발급
   - 검색 API 사용 신청
-- ⬜ Open Dart API 키 발급 (https://opendart.fss.or.kr)
+- ✅ Open Dart API 키 발급 (https://opendart.fss.or.kr)
   - API 키 발급
 - ✅ 공공데이터포털 API 키 발급 (https://www.data.go.kr)
   - "금융위원회_주식시세정보" 활용 신청
   - API 키 발급 완료
-- ⬜ Telegram BotFather로 봇 생성
+- ✅ Telegram BotFather로 봇 생성
   - Bot Token 확보
   - Chat ID 확인 (테스트용 개인 채팅)
-- ⬜ `.env.example` 업데이트 (전문가 확정 환경변수 목록 반영)
-- ⬜ `.env` 파일에 실제 키 설정
-- ⬜ `.gitignore`에 `.env` 포함 확인
+- ✅ `.env.example` 업데이트 (전문가 확정 환경변수 목록 반영)
+- ✅ `.env` 파일에 실제 키 설정
+- ✅ `.gitignore`에 `.env` 포함 확인
 
 ### .env.example 추가 항목
 
