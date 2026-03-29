@@ -11,6 +11,7 @@ def test_screening_result_fields():
     expected = {
         "id", "stock_code", "screening_type", "score", "rank",
         "factors", "is_hot", "status", "screened_at", "expires_at",
+        "created_at", "updated_at",
     }
     assert expected.issubset(cols)
 

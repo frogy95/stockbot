@@ -7,6 +7,9 @@ from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
 from modules.collector.sources.data_go_kr import DataGoKrCollector
 from modules.collector.sources.kis_collector import KISCollector
@@ -33,15 +36,15 @@ class CollectorScheduler:
 
     def __init__(
         self,
-        data_go_kr: DataGoKrCollector,
-        kis_collector: KISCollector,
+        session_factory: async_sessionmaker[AsyncSession],
+        rest_client: KISRestClient,
         ws_manager: WSSubscriptionManager,
         trade_strength: TradeStrengthCalculator,
         ws_client: KISWebSocketClient,
         redis: RedisClient,
     ) -> None:
-        self._data_go_kr = data_go_kr
-        self._kis_collector = kis_collector
+        self._session_factory = session_factory
+        self._rest_client = rest_client
         self._ws_manager = ws_manager
         self._trade_strength = trade_strength
         self._ws_client = ws_client
@@ -119,10 +122,12 @@ class CollectorScheduler:
     # ── 스케줄 job ──────────────────────────────────────
 
     async def _premarket_collect(self) -> int:
-        """08:00 공공데이터포털 전 종목 수집."""
+        """08:00 공공데이터포털 전 종목 수집. 매 실행마다 독립 DB 세션 사용."""
         logger.info("장전 수집 시작")
         try:
-            count = await self._data_go_kr.collect_all()
+            async with self._session_factory() as db_session:
+                collector = DataGoKrCollector(db_session)
+                count = await collector.collect_all()
             self._last_premarket = datetime.now()
             logger.info("장전 수집 완료: %d종목", count)
             return count
@@ -131,10 +136,12 @@ class CollectorScheduler:
             return 0
 
     async def _etf_collect(self) -> int:
-        """08:05 ETF 시세 수집."""
+        """08:05 ETF 시세 수집. 매 실행마다 독립 DB 세션 사용."""
         logger.info("ETF 수집 시작")
         try:
-            count = await self._kis_collector.collect_etf_prices()
+            async with self._session_factory() as db_session:
+                collector = KISCollector(self._rest_client, db_session)
+                count = await collector.collect_etf_prices()
             self._last_etf = datetime.now()
             logger.info("ETF 수집 완료: %d종목", count)
             return count

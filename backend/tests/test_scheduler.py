@@ -1,18 +1,22 @@
 """수집 스케줄러 테스트."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
 from modules.collector.scheduler import CollectorScheduler
 
 
 def _make_scheduler():
     """테스트용 CollectorScheduler 생성."""
-    data_go_kr = AsyncMock()
-    data_go_kr.collect_all = AsyncMock(return_value=2800)
+    # session_factory mock: async context manager가 mock db_session 반환
+    mock_db_session = AsyncMock()
+    mock_session_factory = MagicMock()
+    mock_session_ctx = AsyncMock()
+    mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_db_session)
+    mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
+    mock_session_factory.return_value = mock_session_ctx
 
-    kis_collector = AsyncMock()
-    kis_collector.collect_etf_prices = AsyncMock(return_value=20)
+    rest_client = MagicMock()
 
     ws_manager = MagicMock()
     ws_manager.count = 0
@@ -27,8 +31,8 @@ def _make_scheduler():
     redis = AsyncMock()
 
     scheduler = CollectorScheduler(
-        data_go_kr=data_go_kr,
-        kis_collector=kis_collector,
+        session_factory=mock_session_factory,
+        rest_client=rest_client,
         ws_manager=ws_manager,
         trade_strength=trade_strength,
         ws_client=ws_client,
@@ -72,20 +76,32 @@ async def test_scheduler_start_stop():
 async def test_premarket_job():
     """장전 수집 job이 공공데이터포털 수집 호출."""
     scheduler = _make_scheduler()
-    count = await scheduler._premarket_collect()
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_all = AsyncMock(return_value=2800)
+        MockCollector.return_value = mock_instance
+
+        count = await scheduler._premarket_collect()
 
     assert count == 2800
-    scheduler._data_go_kr.collect_all.assert_called_once()
+    mock_instance.collect_all.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_etf_job():
     """ETF 수집 job."""
     scheduler = _make_scheduler()
-    count = await scheduler._etf_collect()
+
+    with patch("modules.collector.scheduler.KISCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_etf_prices = AsyncMock(return_value=20)
+        MockCollector.return_value = mock_instance
+
+        count = await scheduler._etf_collect()
 
     assert count == 20
-    scheduler._kis_collector.collect_etf_prices.assert_called_once()
+    mock_instance.collect_etf_prices.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -112,7 +128,13 @@ async def test_market_close_job():
 async def test_trigger_premarket():
     """수동 트리거."""
     scheduler = _make_scheduler()
-    result = await scheduler.trigger_premarket()
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_all = AsyncMock(return_value=2800)
+        MockCollector.return_value = mock_instance
+
+        result = await scheduler.trigger_premarket()
 
     assert result == {"stocks_collected": 2800}
 
@@ -121,6 +143,12 @@ async def test_trigger_premarket():
 async def test_trigger_etf():
     """수동 ETF 트리거."""
     scheduler = _make_scheduler()
-    result = await scheduler.trigger_etf()
+
+    with patch("modules.collector.scheduler.KISCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_etf_prices = AsyncMock(return_value=20)
+        MockCollector.return_value = mock_instance
+
+        result = await scheduler.trigger_etf()
 
     assert result == {"etfs_collected": 20}
