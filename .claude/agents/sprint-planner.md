@@ -146,18 +146,20 @@ git commit -m "feat(phase{P}-sprint{N}): {구체적 설명}"
 | {기능별 검증} | {curl/Playwright 명령} | {예상 응답} |
 ```
 
-### 4단계: ROADMAP.md 업데이트
-
-- 해당 Phase에 새 스프린트를 `🔄 진행 중` 상태로 추가합니다.
-- 프로젝트 현황 대시보드를 업데이트합니다.
-
-### 4-1단계: index.json 업데이트
+### 4단계: index.json 업데이트 (ROADMAP 전에 먼저 실행)
 
 - `docs/index.json`을 읽어 해당 phase의 `sprints[]`에 새 sprint와 tasks를 추가합니다.
 - 각 task에 `id`, `title`, `path`, `testPlan`, `testResult`, `status`, `commits` 필드를 설정합니다.
   - `status`: `"planned"` (초기값)
   - `commits`: `[]` (빈 배열)
 - sprint의 `status`를 `planned`으로, `progress`를 `{ "total": {N}, "completed": 0 }`으로 설정합니다.
+
+> **중요**: 이 단계를 ROADMAP 업데이트보다 먼저 실행해야 합니다. 이후 sprint-dev가 `git checkout -b`를 실행하면 PostToolUse hook이 sprint status를 자동으로 `in_progress`로 전환합니다. 순서가 바뀌면 hook 변경이 덮어쓰기됩니다.
+
+### 4-1단계: ROADMAP.md 업데이트
+
+- 해당 Phase에 새 스프린트를 `🔄 진행 중` 상태로 추가합니다.
+- 프로젝트 현황 대시보드를 업데이트합니다.
 
 ### 5단계: 에이전트 메모리 업데이트
 
