@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T24:00:00+09:00",
+  "lastUpdated": "2026-03-30T15:10:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -731,6 +731,15 @@
       "version": "v0.2.0",
       "description": "Phase 2 프로덕션 배포 — Phase 2 Sprint 1 (핵심 데이터 수집), Phase 2 Sprint 2 (종목 스크리닝 엔진), Phase 2 Sprint 3 (보조 데이터 + 통합 테스트)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/8",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-30",
+      "type": "sprint",
+      "ref": "phase2.5-sprint1, phase2.6-sprint1",
+      "version": "v0.3.0",
+      "description": "Phase 2.5/2.6 프로덕션 배포 — Phase 2.5 Sprint 1 (ETF 마스터 수집 파이프라인 완성), Phase 2.6 Sprint 1 (KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소, ETF 878종목)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/28",
       "status": "pending-merge"
     }
   ]
