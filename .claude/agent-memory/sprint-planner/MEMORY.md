@@ -15,11 +15,13 @@
 
 - Phase 2.6 Sprint 1 — mst 파서 재작성 + 검증, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/27
 
-- Phase 3 Sprint 1 — 리스크/자금 관리 모듈, 🔄 계획 수립 완료 (2026-03-30)
+- Phase 3 Sprint 1 — 리스크/자금 관리 모듈, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/32
+- Phase 3 Sprint 2 — 매매 전략 + 주문 실행, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/33
+- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인, 🔄 진행 중 (2026-03-30)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 3 Sprint 2 — 매매 전략 + 주문 실행 (Sprint 1 완료 후)
+- Phase 4 Sprint 1 — 웹 대시보드 MVP (Phase 3 완료 후)
 
 ## 핵심 주의사항
 
@@ -54,3 +56,14 @@
 - Phase 3 Sprint 1: KISRestClient에 place_order/cancel_order/get_balance/get_positions 이미 구현 — eod_liquidator에서 직접 사용 가능
 - Phase 3 Sprint 1: main.py lifespan에 모듈 초기화 패턴 정립 — app.state에 인스턴스 저장, shutdown에서 정리
 - Phase 3 Sprint 1: PositionRecord의 UniqueConstraint(stock_code)는 __table_args__ 방식 필수 (Phase 1 학습)
+- Phase 3 Sprint 2: DB 모델(trade_signals, orders, positions, trade_history) 이미 Sprint 1에서 생성 완료 — Alembic 마이그레이션 불필요
+- Phase 3 Sprint 2: KISRestClient에 place_order, cancel_order, get_order_status, get_balance, get_positions 모두 구현 완료
+- Phase 3 Sprint 2: 모의거래(TRADING_ENV=paper)에서는 시장가만 사용, 최우선 지정가 건너뜀 (미해결 사항 #1)
+- Phase 3 Sprint 3: seed_settings.py SEED_DATA 32건, 기존 테스트 4건이 21로 하드코딩 — Task 1에서 수정
+- Phase 3 Sprint 3: engine.py on_order_filled quantity=0 하드코딩, trading.py get_session_factory() 직접 호출, get_engine_status 프라이빗 접근 — Task 2에서 수정
+- Phase 3 Sprint 3: modules/notifier/ 디렉토리에 __init__.py만 존재 (빈 파일) — 4개 모듈 신규 생성 (approval.py, telegram_bot.py, manager.py, commands.py)
+- Phase 3 Sprint 3: python-telegram-bot>=21.0 추가 필요 (requirements.txt)
+- Phase 3 Sprint 3: config.py에 TELEGRAM_WEBHOOK_URL 환경변수 추가 필요
+- Phase 3 Sprint 3: exploration/telegram/02_inline_button.py에 인라인 버튼 패턴 있음 — 참조 가능 (코드 복사 금지)
+- Phase 3 Sprint 3: Redis 승인 키 패턴 `approval:{uuid4}`, TTL로 자동 만료
+- Phase 3 Sprint 3: 텔레그램 웹훅 URL은 Railway 배포 시 TELEGRAM_WEBHOOK_URL 환경변수로 설정, 앱 시작 시 setWebhook 자동 호출 (미해결 사항 #8 대응)

@@ -744,6 +744,125 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "sprint2",
+          "title": "매매 전략 + 주문 실행",
+          "status": "completed",
+          "branch": "phase3-sprint2",
+          "sprintDoc": "docs/phase/phase3/sprint2/sprint2.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/33",
+          "progress": {
+            "total": 8,
+            "completed": 8
+          },
+          "lastUpdated": "2026-03-30T00:00:00+09:00",
+          "tasks": [
+            {"id": "task1", "title": "Strategy ABC 인터페이스", "status": "completed", "commits": []},
+            {"id": "task2", "title": "모멘텀 브레이크아웃 전략", "status": "completed", "commits": []},
+            {"id": "task3", "title": "신호 생성기", "status": "completed", "commits": []},
+            {"id": "task4", "title": "주문 매니저", "status": "completed", "commits": []},
+            {"id": "task5", "title": "포지션 매니저", "status": "completed", "commits": []},
+            {"id": "task6", "title": "매매 엔진 오케스트레이터", "status": "completed", "commits": []},
+            {"id": "task7", "title": "신호/주문 조회 API + main.py 등록", "status": "completed", "commits": []},
+            {"id": "task8", "title": "통합 테스트", "status": "completed", "commits": []}
+          ]
+        },
+        {
+          "id": "sprint3",
+          "title": "텔레그램 봇 + 반자동 승인",
+          "status": "planned",
+          "branch": "phase3-sprint3",
+          "sprintDoc": "docs/phase/phase3/sprint3/sprint3.md",
+          "prUrl": "",
+          "progress": {
+            "total": 9,
+            "completed": 0
+          },
+          "lastUpdated": "2026-03-30T00:00:00+09:00",
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "기존 실패 테스트 4건 수정 (seed count 21->32)",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-1-기존-실패-테스트-4건-수정-seed-count",
+              "testPlan": "pytest test_integration.py test_settings_api.py test_sprint2_integration.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "Sprint 2 코드 리뷰 Medium 이슈 3건 수정",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-2-sprint-2-코드-리뷰-medium-이슈-3건-수정",
+              "testPlan": "pytest -v --tb=short 전체 회귀",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "Redis 승인 토큰 관리 (approval.py)",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-3-redis-승인-토큰-관리-approvalpy",
+              "testPlan": "pytest test_approval.py (5 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "텔레그램 봇 (웹훅 + 콜백 + 포맷팅)",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-4-텔레그램-봇-웹훅-수신--콜백-처리--메시지-포맷팅",
+              "testPlan": "pytest test_telegram_bot.py (6 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "알림 매니저 (manager.py)",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-5-알림-매니저-managerpy",
+              "testPlan": "pytest test_notifier_manager.py (5 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "매매 엔진 승인 흐름 통합",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-6-매매-엔진-승인-흐름-통합",
+              "testPlan": "pytest test_engine_approval.py (6 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "텔레그램 웹훅 API + main.py 등록",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-7-텔레그램-웹훅-api--mainpy-모듈-등록",
+              "testPlan": "pytest test_telegram_webhook.py (4 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "텔레그램 조회 명령어",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-8-텔레그램-조회-명령어",
+              "testPlan": "pytest test_telegram_commands.py (4 케이스)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task9",
+              "title": "Phase 3 전체 흐름 통합 테스트",
+              "path": "docs/phase/phase3/sprint3/sprint3.md#task-9-phase-3-전체-흐름-통합-테스트",
+              "testPlan": "pytest test_phase3_integration.py (7 시나리오) + pytest -v 전체",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     }
