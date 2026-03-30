@@ -5,6 +5,7 @@ import json
 import logging
 from collections import defaultdict
 from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -144,7 +145,8 @@ class RealtimeScreener:
 
     def _is_no_signal_period(self) -> bool:
         """시초가 구간(09:00~09:30) 판단."""
-        now = datetime.now()
+        from core.config import settings
+        now = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
         no_signal_time = self.filters.no_signal_before.split(":")
         no_signal_hour = int(no_signal_time[0])
         no_signal_minute = int(no_signal_time[1])
