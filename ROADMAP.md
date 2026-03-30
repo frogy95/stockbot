@@ -23,7 +23,7 @@
 
 - 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 1 완료
 - 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 2 예정 (매매 전략 + 주문 실행)
+- 현재 Sprint: Phase 3 Sprint 2 🔄 (매매 전략 + 주문 실행)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
 - 다음 마일스톤: Phase 3 Sprint 2 — 매매 전략 + 주문 실행
@@ -364,7 +364,9 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 - settings 리스크 파라미터 시드
 - 리스크 설정 장중 잠금
 
-#### Sprint 2: 매매 전략 + 주문 실행
+#### Sprint 2: 매매 전략 + 주문 실행 🔄
+> Sprint 계획: `docs/phase/phase3/sprint2/sprint2.md` (2026-03-30)
+
 - Strategy ABC 인터페이스 + 모멘텀 브레이크아웃 전략
 - 신호 생성 (5분봉 전일 고가 돌파 + 거래량 200%+ + 체결강도 70+)
 - 신뢰도 다팩터 가중 평균 (모멘텀30/거래량30/체결강도20/호가20), 최소 0.6
