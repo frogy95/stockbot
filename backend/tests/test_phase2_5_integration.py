@@ -11,21 +11,15 @@ from modules.collector.sources.kis_master import KISMasterCollector
 from modules.collector.sources.kis_collector import KISCollector
 
 
-def _make_mst_record(stock_code: str, stock_name: str, etp_prod_type: str = "1") -> bytes:
-    record = bytearray(200)
-    record[0:9] = stock_code.encode("cp949").ljust(9)
-    record[9:21] = ("KR7" + stock_code + "0007").encode("cp949").ljust(12)[:12]
-    record[21:61] = stock_name.encode("cp949").ljust(40)[:40]
-    record[121:122] = etp_prod_type.encode("cp949")
-    return bytes(record)
+from tests.test_kis_master import _make_mst_line, _make_mst_bytes
 
 
 def _build_valid_mst() -> bytes:
     """sanity check 통과하는 mst 데이터 생성."""
     spot_codes = ["069500", "122630", "114800", "252670", "102110"]
-    data = b"".join(_make_mst_record(c, f"ETF_{c}", "1") for c in spot_codes)
-    data += b"".join(_make_mst_record(f"{i:06d}", f"ETF_{i}", "1") for i in range(250))
-    return data
+    lines = [_make_mst_line(c, f"ETF_{c}", "EF") for c in spot_codes]
+    lines += [_make_mst_line(f"{i:06d}", f"ETF_{i}", "EF") for i in range(250)]
+    return _make_mst_bytes(lines)
 
 
 def _new_session() -> AsyncSession:
