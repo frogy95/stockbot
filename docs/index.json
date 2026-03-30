@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T15:10:00+09:00",
+  "lastUpdated": "2026-03-30T23:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -660,6 +660,13 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase3",
+      "title": "매매 엔진 + 기본 알림",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase3/phase3.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [
