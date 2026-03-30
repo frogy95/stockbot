@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T18:00:00+09:00",
+  "lastUpdated": "2026-03-30T19:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -516,6 +516,15 @@
       "version": "v0.1.0",
       "description": "첫 프로덕션 배포 — Phase 0.5 Sprint 1 (외부 API 탐색), Phase 1 Sprint 1 (Docker + 백엔드 스켈레톤), Phase 1 Sprint 2 (한투 API 연동 + 토큰 관리)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/4",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-30",
+      "type": "sprint",
+      "ref": "phase2-sprint1, phase2-sprint2, phase2-sprint3",
+      "version": "v0.2.0",
+      "description": "Phase 2 프로덕션 배포 — Phase 2 Sprint 1 (핵심 데이터 수집), Phase 2 Sprint 2 (종목 스크리닝 엔진), Phase 2 Sprint 3 (보조 데이터 + 통합 테스트)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/8",
       "status": "pending-merge"
     }
   ]
