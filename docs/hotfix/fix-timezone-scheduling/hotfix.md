@@ -3,7 +3,7 @@
 **브랜치:** `hotfix/fix-timezone-scheduling`
 **담당자:** frogy95
 **리뷰어:** hotfix-close agent
-**상태:** ⬜ 진행 중
+**상태:** ✅ PR 생성 완료 (배포 대기)
 **배포일:** 2026-03-30
 
 ---
@@ -66,6 +66,6 @@ Railway 서버가 UTC 타임존으로 동작하는데, APScheduler CronTrigger�
 
 ## PR
 
-- **URL:** (PR 생성 후 기입)
+- **URL:** https://github.com/frogy95/stockbot/pull/23
 - **대상:** main
 - **역머지:** ⬜ develop에 역머지 필요
