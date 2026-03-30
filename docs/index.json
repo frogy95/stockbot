@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T21:00:00+09:00",
+  "lastUpdated": "2026-03-30T23:59:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -492,6 +492,103 @@
               "testResult": "pass",
               "status": "completed",
               "commits": [{"hash": "4921917", "message": "feat(phase2-sprint3): task5 -- Phase 2 전체 파이프라인 통합 테스트", "date": "2026-03-30"}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2.5",
+      "title": "ETF 데이터 수집 파이프라인 완성",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase2.5/phase2.5.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "ETF 마스터 수집 + 스케줄러 통합",
+          "status": "completed",
+          "branch": "phase2.5-sprint1",
+          "sprintDoc": "docs/phase/phase2.5/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/26",
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KIS_MST_BASE_URL 환경변수 추가",
+              "path": "docs/phase/phase2.5/sprint1/sprint1.md#task-1-kis_mst_base_url-환경변수-추가",
+              "testPlan": "Settings.KIS_MST_BASE_URL 기본값 출력 확인",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "ff64a8f",
+                  "message": "feat(phase2.5-sprint1): task1 -- KIS_MST_BASE_URL 환경변수 추가",
+                  "date": "2026-03-30"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "KIS 마스터 수집기 (mst 파싱 + ETF 필터링 + DB upsert + sanity check)",
+              "path": "docs/phase/phase2.5/sprint1/sprint1.md#task-2-kis-마스터-수집기",
+              "testPlan": "pytest tests/test_kis_master.py — mst 파싱 + ETF 필터링 + sanity check + 폴백",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "5da7bbc",
+                  "message": "feat(phase2.5-sprint1): task2 -- KIS 마스터 수집기 (mst 파싱 + ETF 필터링 + DB upsert + sanity check)",
+                  "date": "2026-03-30"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "시드 ETF 50종목 스크립트",
+              "path": "docs/phase/phase2.5/sprint1/sprint1.md#task-3-시드-etf-50종목-스크립트",
+              "testPlan": "pytest tests/test_seed_etf.py — 50종목 + 5계열 커버 + 필수 필드",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "65416ec",
+                  "message": "feat(phase2.5-sprint1): task3 -- 시드 ETF 50종목 (최초 설치용)",
+                  "date": "2026-03-30"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "스케줄러 통합 + 수동 트리거 API",
+              "path": "docs/phase/phase2.5/sprint1/sprint1.md#task-4-스케줄러-통합--수동-트리거-api",
+              "testPlan": "pytest tests/test_etf_master_api.py — 스케줄러 job 등록 + API 동작 + 회귀",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "2dedb40",
+                  "message": "feat(phase2.5-sprint1): task4 -- 스케줄러 ETF 마스터 08:10 job + 시세 08:15 조정 + 트리거 API",
+                  "date": "2026-03-30"
+                }
+              ]
+            },
+            {
+              "id": "task5",
+              "title": "통합 테스트 + 회귀 검증",
+              "path": "docs/phase/phase2.5/sprint1/sprint1.md#task-5-통합-테스트--회귀-검증",
+              "testPlan": "pytest tests/test_phase2_5_integration.py + pytest -v 전체 회귀",
+              "testResult": "pass (340 passed, 1 failed — 기존 이슈)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "30b6b63",
+                  "message": "feat(phase2.5-sprint1): task5 -- Phase 2.5 통합 테스트 + 전체 회귀 검증",
+                  "date": "2026-03-30"
+                }
+              ]
             }
           ]
         }
