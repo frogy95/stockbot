@@ -18,7 +18,7 @@ async def test_get_all_settings(app):
             resp = await client.get("/api/v1/settings")
     assert resp.status_code == 200
     data = resp.json()
-    assert len(data) == 21
+    assert len(data) == 32
 
 
 @pytest.mark.asyncio
