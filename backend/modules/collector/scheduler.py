@@ -20,6 +20,7 @@ from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
 from modules.collector.sources.data_go_kr import DataGoKrCollector
 from modules.collector.sources.kis_collector import KISCollector
+from modules.collector.sources.kis_master import KISMasterCollector
 from modules.collector.sources.kis_realtime import (
     parse_raw_message,
     parse_execution,
@@ -68,6 +69,7 @@ class CollectorScheduler:
         self._last_secondary_screen: datetime | None = None
         self._last_dart: datetime | None = None
         self._last_sentiment: datetime | None = None
+        self._last_etf_master: datetime | None = None
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
@@ -79,8 +81,14 @@ class CollectorScheduler:
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
+            self._etf_master_collect,
+            CronTrigger(hour=8, minute=10, timezone=tz),
+            id="etf_master_collect",
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
+        self._scheduler.add_job(
             self._etf_collect,
-            CronTrigger(hour=8, minute=5, timezone=tz),
+            CronTrigger(hour=8, minute=15, timezone=tz),
             id="etf_collect",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
@@ -154,6 +162,7 @@ class CollectorScheduler:
             "ws_subscriptions": self._ws_manager.count,
             "last_premarket": self._last_premarket.isoformat() if self._last_premarket else None,
             "last_etf": self._last_etf.isoformat() if self._last_etf else None,
+            "last_etf_master": self._last_etf_master.isoformat() if self._last_etf_master else None,
             "last_dart": self._last_dart.isoformat() if self._last_dart else None,
             "last_sentiment": self._last_sentiment.isoformat() if self._last_sentiment else None,
         }
@@ -190,6 +199,10 @@ class CollectorScheduler:
         if self._realtime_screener is None:
             return {"candidates": 0, "passed": 0}
         return await self._secondary_screen()
+
+    async def trigger_etf_master(self) -> dict:
+        """수동 ETF 마스터 갱신 트리거."""
+        return await self._etf_master_collect()
 
     async def trigger_dart(self) -> dict:
         """수동 DART 재무 수집 트리거."""
@@ -240,6 +253,27 @@ class CollectorScheduler:
         except Exception:
             logger.exception("ETF 수집 실패")
             return 0
+
+    async def _etf_master_collect(self) -> dict:
+        """08:10 KIS 마스터파일에서 ETF/ETN 종목 적재. 실패 시 기존 DB 유지."""
+        logger.info("ETF 마스터 수집 시작")
+        try:
+            async with self._session_factory() as db_session:
+                collector = KISMasterCollector(db_session)
+                result = await collector.collect()
+
+            if result["source"] == "seed":
+                pass  # seed 폴백은 _etf_master_collect 내부가 아닌 최초 설치 스크립트에서 처리
+
+            self._last_etf_master = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            logger.info(
+                "ETF 마스터 수집 완료: ETF=%d, ETN=%d, source=%s",
+                result["etf_count"], result["etn_count"], result["source"],
+            )
+            return result
+        except Exception:
+            logger.exception("ETF 마스터 수집 실패")
+            return {"etf_count": 0, "etn_count": 0, "source": "error", "sanity_passed": False}
 
     async def _market_open(self) -> None:
         """09:00 WS 연결 + 구독 시작 + 2차 스크리닝 활성화."""
