@@ -5,6 +5,16 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Phase 2 Sprint 3 — 보조 데이터 + 통합 테스트 (2026-03-30)
+
+Sprint 브랜치: `phase2-sprint3` → `develop`
+PR: https://github.com/frogy95/stockbot/pull/7
+
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+
+---
+
 ### Phase 2 Sprint 2 — 종목 스크리닝 엔진 (2026-03-29)
 
 Sprint 브랜치: `phase2-sprint2` → `develop`

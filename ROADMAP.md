@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~1 완료, v0.1.0 프로덕션 배포 완료 (2/6 Phase), Phase 2 진행 중
-- 현재 Phase: Phase 2 (데이터 수집 + 종목 스크리닝) 🔄
-- 현재 Sprint: Phase 2 Sprint 3 (보조 데이터 + 통합 테스트) 📋 예정
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29)
+- 전체 진행률: Phase 0~2 완료, v0.1.0 프로덕션 배포 완료 (3/6 Phase)
+- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 예정
+- 현재 Sprint: Phase 2 완료 — Phase 3 Sprint 1 계획 중
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 2 Sprint 3 — 보조 데이터 + 통합 테스트 (DART 재무 + 네이버 센티멘트)
+- 다음 마일스톤: Phase 3 — 매매 엔진 + 기본 알림 (매매 신호 생성 + 텔레그램 알림)
 
 ## 기술 아키텍처 결정 사항
 
@@ -228,7 +228,7 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 
 ---
 
-## Phase 2: 데이터 수집 + 종목 스크리닝 (Sprint 1~3) 🔄
+## Phase 2: 데이터 수집 + 종목 스크리닝 (Sprint 1~3) ✅
 
 ### 목표
 장전 전 종목 일괄 수집(공공데이터포털) + 장중 실시간 수집(한투 API) 2단계 수집 체계 구축. 체결강도 직접 계산 모듈 구현. 종목 스크리닝 엔진 및 스코어링. 보조 데이터(DART 재무, 네이버 센티멘트) 연동.
@@ -257,7 +257,9 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 - 스크리닝 결과 DB + Redis 캐싱
 - stocks 마스터 관리 + 스크리닝/수집 API
 
-#### Sprint 3: 보조 데이터 + 통합 테스트
+#### Sprint 3: 보조 데이터 + 통합 테스트 ✅ (2026-03-30 완료)
+> Sprint 계획: `docs/phase/phase2/sprint3/sprint3.md` (2026-03-30)
+
 - DART 재무 기초 데이터 연동 (corp_code 매핑 + 매출/영업이익)
 - 네이버 뉴스 센티멘트 배치 수집 (보조 팩터, 일 1~2회)
 - 전체 파이프라인 통합 테스트 (수집 → 1차 → WS → 2차 → 스코어링)

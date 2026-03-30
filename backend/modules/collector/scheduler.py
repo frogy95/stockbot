@@ -8,7 +8,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from core.models.screening_result import ScreeningResult
+from core.models.stock import Stock
 
 from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
@@ -60,6 +64,8 @@ class CollectorScheduler:
         self._last_etf: datetime | None = None
         self._last_primary_screen: datetime | None = None
         self._last_secondary_screen: datetime | None = None
+        self._last_dart: datetime | None = None
+        self._last_sentiment: datetime | None = None
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
@@ -95,6 +101,19 @@ class CollectorScheduler:
                 id="primary_screen",
                 misfire_grace_time=MISFIRE_GRACE_TIME,
             )
+        # 보조 데이터: 08:15 DART 재무, 08:20 네이버 센티멘트 (1차 스크리닝 후)
+        self._scheduler.add_job(
+            self._dart_collect,
+            CronTrigger(hour=8, minute=15),
+            id="dart_collect",
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
+        self._scheduler.add_job(
+            self._sentiment_collect,
+            CronTrigger(hour=8, minute=20),
+            id="sentiment_collect",
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 2차 스크리닝: 09:30~15:30 30초 주기
         if self._realtime_screener:
             self._scheduler.add_job(
@@ -132,6 +151,15 @@ class CollectorScheduler:
             "ws_subscriptions": self._ws_manager.count,
             "last_premarket": self._last_premarket.isoformat() if self._last_premarket else None,
             "last_etf": self._last_etf.isoformat() if self._last_etf else None,
+            "last_dart": self._last_dart.isoformat() if self._last_dart else None,
+            "last_sentiment": self._last_sentiment.isoformat() if self._last_sentiment else None,
+        }
+
+    def get_auxiliary_status(self) -> dict:
+        """보조 데이터 수집 상태 조회."""
+        return {
+            "last_dart": self._last_dart.isoformat() if self._last_dart else None,
+            "last_sentiment": self._last_sentiment.isoformat() if self._last_sentiment else None,
         }
 
     def get_screening_status(self) -> dict:
@@ -159,6 +187,16 @@ class CollectorScheduler:
         if self._realtime_screener is None:
             return {"candidates": 0, "passed": 0}
         return await self._secondary_screen()
+
+    async def trigger_dart(self) -> dict:
+        """수동 DART 재무 수집 트리거."""
+        count = await self._dart_collect()
+        return {"financials_collected": count}
+
+    async def trigger_sentiment(self) -> dict:
+        """수동 네이버 센티멘트 수집 트리거."""
+        count = await self._sentiment_collect()
+        return {"sentiments_collected": count}
 
     async def trigger_premarket(self) -> dict:
         """수동 장전 수집 트리거."""
@@ -260,25 +298,8 @@ class CollectorScheduler:
         """장중 30초 주기 2차 스크리닝: 실시간 필터 + 팩터 스코어링."""
         logger.info("2차 스크리닝 시작")
         try:
-            # 1차 통과 종목 코드 가져오기 (최신 1차 결과에서)
             async with self._session_factory() as db_session:
-                from sqlalchemy import select, func
-                from core.models.screening_result import ScreeningResult
-
-                latest_q = select(func.max(ScreeningResult.screened_at)).where(
-                    ScreeningResult.screening_type == "primary"
-                )
-                latest_result = await db_session.execute(latest_q)
-                latest_at = latest_result.scalar()
-
-                candidate_codes = []
-                if latest_at:
-                    stmt = select(ScreeningResult.stock_code).where(
-                        ScreeningResult.screening_type == "primary",
-                        ScreeningResult.screened_at == latest_at,
-                    )
-                    code_result = await db_session.execute(stmt)
-                    candidate_codes = [row[0] for row in code_result.all()]
+                candidate_codes = await self._get_latest_primary_codes(db_session)
 
                 if not candidate_codes:
                     return {"candidates": 0, "passed": 0}
@@ -292,6 +313,86 @@ class CollectorScheduler:
         except Exception:
             logger.exception("2차 스크리닝 실패")
             return {"candidates": 0, "passed": 0}
+
+    async def _dart_collect(self) -> int:
+        """08:15 DART 재무 데이터 수집 — 1차 스크리닝 통과 종목 대상."""
+        logger.info("DART 재무 수집 시작")
+        try:
+            from modules.collector.sources.dart import DartCollector
+
+            async with self._session_factory() as db_session:
+                stock_codes = await self._get_latest_primary_codes(db_session)
+
+                if not stock_codes:
+                    logger.info("DART 재무 수집 대상 없음")
+                    return 0
+
+                collector = DartCollector(db_session)
+                count = await collector.collect_financials(stock_codes)
+
+            self._last_dart = datetime.now()
+            logger.info("DART 재무 수집 완료: %d건", count)
+            return count
+        except Exception:
+            logger.exception("DART 재무 수집 실패")
+            return 0
+
+    async def _sentiment_collect(self) -> int:
+        """08:20 네이버 뉴스 센티멘트 수집 — 1차 스크리닝 통과 종목 대상."""
+        logger.info("네이버 센티멘트 수집 시작")
+        try:
+            from modules.collector.sources.naver import NaverCollector
+
+            async with self._session_factory() as db_session:
+                stock_info = await self._get_latest_primary_stock_info(db_session)
+
+                if not stock_info:
+                    logger.info("네이버 센티멘트 수집 대상 없음")
+                    return 0
+
+                collector = NaverCollector(db_session)
+                count = await collector.collect_sentiments(stock_info)
+
+            self._last_sentiment = datetime.now()
+            logger.info("네이버 센티멘트 수집 완료: %d건", count)
+            return count
+        except Exception:
+            logger.exception("네이버 센티멘트 수집 실패")
+            return 0
+
+    # ── 내부 헬퍼 ────────────────────────────────────────
+
+    async def _get_latest_primary_codes(self, db_session: AsyncSession) -> list[str]:
+        """최신 1차 스크리닝 통과 종목 코드 목록을 반환한다 (단일 쿼리)."""
+        latest_subq = (
+            select(func.max(ScreeningResult.screened_at))
+            .where(ScreeningResult.screening_type == "primary")
+            .scalar_subquery()
+        )
+        stmt = select(ScreeningResult.stock_code).where(
+            ScreeningResult.screening_type == "primary",
+            ScreeningResult.screened_at == latest_subq,
+        )
+        result = await db_session.execute(stmt)
+        return [row[0] for row in result.all()]
+
+    async def _get_latest_primary_stock_info(self, db_session: AsyncSession) -> list[dict]:
+        """최신 1차 스크리닝 통과 종목의 코드+종목명을 반환한다 (단일 쿼리)."""
+        latest_subq = (
+            select(func.max(ScreeningResult.screened_at))
+            .where(ScreeningResult.screening_type == "primary")
+            .scalar_subquery()
+        )
+        stmt = (
+            select(ScreeningResult.stock_code, Stock.stock_name)
+            .join(Stock, Stock.stock_code == ScreeningResult.stock_code)
+            .where(
+                ScreeningResult.screening_type == "primary",
+                ScreeningResult.screened_at == latest_subq,
+            )
+        )
+        result = await db_session.execute(stmt)
+        return [{"stock_code": row[0], "stock_name": row[1]} for row in result.all()]
 
     # ── WS 수신 콜백 ───────────────────────────────────
 

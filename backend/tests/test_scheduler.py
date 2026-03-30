@@ -49,13 +49,15 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 4
+    assert status["job_count"] == 6  # premarket, etf, market_open, market_close, dart, sentiment
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_collect" in job_ids
     assert "etf_collect" in job_ids
     assert "market_open" in job_ids
     assert "market_close" in job_ids
+    assert "dart_collect" in job_ids
+    assert "sentiment_collect" in job_ids
 
     await scheduler.stop()
 

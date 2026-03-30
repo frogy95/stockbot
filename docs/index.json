@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-29T23:00:00+09:00",
+  "lastUpdated": "2026-03-30T18:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -294,7 +294,7 @@
     {
       "id": "phase2",
       "title": "데이터 수집 + 종목 스크리닝",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase2/phase2.md",
       "sprints": [
         {
@@ -433,6 +433,65 @@
               "testResult": "pass (227 passed)",
               "status": "completed",
               "commits": [{"hash": "001cefa", "message": "feat(phase2-sprint2): task7 -- 통합 테스트 + 회귀 검증", "date": "2026-03-29"}]
+            }
+          ]
+        },
+        {
+          "id": "sprint3",
+          "title": "보조 데이터 + 통합 테스트",
+          "status": "completed",
+          "branch": "phase2-sprint3",
+          "sprintDoc": "docs/phase/phase2/sprint3/sprint3.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/7",
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "보조 데이터 테이블 3종 + Alembic 마이그레이션",
+              "path": "docs/phase/phase2/sprint3/sprint3.md#task-1-보조-데이터-테이블--alembic-마이그레이션",
+              "testPlan": "pytest tests/test_auxiliary_models.py — 3개 테이블 모델 + Alembic 마이그레이션",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [{"hash": "226c41e", "message": "feat(phase2-sprint3): task1 -- 보조 데이터 테이블 3종 (corp_codes, financial_data, news_sentiments)", "date": "2026-03-30"}]
+            },
+            {
+              "id": "task2",
+              "title": "DART 재무 수집기",
+              "path": "docs/phase/phase2/sprint3/sprint3.md#task-2-dart-재무-수집기",
+              "testPlan": "pytest tests/test_dart.py — XML 파싱 + 재무 조회 + DB 저장 + ETF 스킵",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [{"hash": "6f27b9d", "message": "feat(phase2-sprint3): task2 -- DART 재무 수집기 (corp_code 매핑 + 재무 기초 데이터)", "date": "2026-03-30"}]
+            },
+            {
+              "id": "task3",
+              "title": "네이버 뉴스 센티멘트 수집기",
+              "path": "docs/phase/phase2/sprint3/sprint3.md#task-3-네이버-뉴스-센티멘트-수집기",
+              "testPlan": "pytest tests/test_naver.py — 뉴스 검색 + 센티멘트 계산 + DB 저장",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [{"hash": "db04315", "message": "feat(phase2-sprint3): task3 -- 네이버 뉴스 센티멘트 수집기 (키워드 기반 간이 점수)", "date": "2026-03-30"}]
+            },
+            {
+              "id": "task4",
+              "title": "스케줄러 연동 + 보조 데이터 API",
+              "path": "docs/phase/phase2/sprint3/sprint3.md#task-4-스케줄러-연동--보조-데이터-api",
+              "testPlan": "pytest tests/test_auxiliary_api.py — API 3종 + 스케줄러 job 등록",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [{"hash": "af255d2", "message": "feat(phase2-sprint3): task4 -- 스케줄러 보조 데이터 job + 조회 API 3종", "date": "2026-03-30"}]
+            },
+            {
+              "id": "task5",
+              "title": "Phase 2 전체 파이프라인 통합 테스트",
+              "path": "docs/phase/phase2/sprint3/sprint3.md#task-5-phase-2-전체-파이프라인-통합-테스트",
+              "testPlan": "pytest tests/test_phase2_integration.py + pytest -v 전체 회귀",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [{"hash": "4921917", "message": "feat(phase2-sprint3): task5 -- Phase 2 전체 파이프라인 통합 테스트", "date": "2026-03-30"}]
             }
           ]
         }
