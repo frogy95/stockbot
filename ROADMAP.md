@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.6 완료, Phase 3 계획 수립 완료
+- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 1 완료
 - 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 1 🔄 (리스크/자금 관리 모듈)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30)
+- 현재 Sprint: Phase 3 Sprint 2 예정 (매매 전략 + 주문 실행)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 3 Sprint 1 — 리스크/자금 관리 모듈
+- 다음 마일스톤: Phase 3 Sprint 2 — 매매 전략 + 주문 실행
 
 ## 기술 아키텍처 결정 사항
 
@@ -352,7 +352,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 리스크/자금 관리 규칙 구현, 모멘텀 브레이크아웃 전략 기반 매매 신호 생성, 주문 실행(반자동), 포지션 관리, 텔레그램 기본 알림 및 매매 승인. 데이트레이딩 전용 당일 청산 강제.
 
 ### 작업 목록
-#### Sprint 1: 리스크/자금 관리 모듈 🔄
+#### Sprint 1: 리스크/자금 관리 모듈 ✅ (2026-03-30 완료)
 > Sprint 계획: `docs/phase/phase3/sprint1/sprint1.md` (2026-03-30)
 
 - 리스크 매니저 (일일 손실 한도 -3%, 비상 정지 -4%, 연속 3회 손절, 쿨다운)

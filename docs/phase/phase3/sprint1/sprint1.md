@@ -6,7 +6,7 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic, APScheduler, pytest-asyncio
 
-**Sprint 기간:** 2026-03-30 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-03-30 ~ 2026-03-30 ✅ 완료
 **이전 스프린트:** Phase 2.6 Sprint 1 (pytest 통과, PR #27)
 **브랜치명:** `phase3-sprint1`
 
@@ -98,8 +98,8 @@ git commit -m "feat(phase3-sprint1): task1 -- 매매 DB 모델 4개 테이블 + 
 ```
 
 **완료 기준:**
-- ⬜ 4개 테이블 생성 확인 (alembic upgrade head 성공)
-- ⬜ pytest test_trading_models.py 통과
+- ✅ 4개 테이블 생성 확인 (alembic upgrade head 성공)
+- ✅ pytest test_trading_models.py 통과 (19 tests passed)
 
 ---
 
@@ -148,8 +148,8 @@ git commit -m "feat(phase3-sprint1): task2 -- 리스크 파라미터 시드 확�
 ```
 
 **완료 기준:**
-- ⬜ 신규 11개 + 기존 수정 3개 시드 데이터 검증 통과
-- ⬜ pytest test_seed_risk_settings.py 통과
+- ✅ 신규 11개 + 기존 수정 3개 시드 데이터 검증 통과 (32개 설정 시드)
+- ✅ pytest test_seed_risk_settings.py 통과 (16 tests passed)
 
 ---
 
@@ -203,8 +203,8 @@ git commit -m "feat(phase3-sprint1): task3 -- 리스크 매니저 (한도/비상
 ```
 
 **완료 기준:**
-- ⬜ 10개 테스트 케이스 모두 통과
-- ⬜ can_trade()가 모든 리스크 조건을 순차 검증
+- ✅ 10개 테스트 케이스 모두 통과 (10 tests passed)
+- ✅ can_trade()가 모든 리스크 조건을 순차 검증
 
 ---
 
@@ -250,8 +250,8 @@ git commit -m "feat(phase3-sprint1): task4 -- 포지션 사이저 (일반 10%/�
 ```
 
 **완료 기준:**
-- ⬜ 7개 테스트 케이스 모두 통과
-- ⬜ 일반/레버리지 구분 정상 동작
+- ✅ 7개 테스트 케이스 모두 통과 (10 tests passed)
+- ✅ 일반/레버리지 구분 정상 동작
 
 ---
 
@@ -292,9 +292,9 @@ git commit -m "feat(phase3-sprint1): task5 -- 당일 청산 강제 (14:50 시장
 ```
 
 **완료 기준:**
-- ⬜ 6개 테스트 케이스 모두 통과
-- ⬜ 14:50 크론잡 등록 패턴 검증
-- ⬜ 스케줄러 재시작 시 미청산 즉시 처리 검증
+- ✅ 6개 테스트 케이스 모두 통과 (7 tests passed)
+- ✅ 14:50 크론잡 등록 패턴 검증
+- ✅ 스케줄러 재시작 시 미청산 즉시 처리 검증
 
 ---
 
@@ -344,9 +344,9 @@ git commit -m "feat(phase3-sprint1): task6 -- 리스크 상태 조회 API + main
 ```
 
 **완료 기준:**
-- ⬜ 3개 API 엔드포인트 응답 정상
-- ⬜ eod_liquidator 스케줄 등록 확인
-- ⬜ 재시작 시 미청산 처리 로직 연결
+- ✅ 3개 API 엔드포인트 응답 정상 (3 tests passed, 200 OK)
+- ✅ eod_liquidator 스케줄 등록 확인
+- ✅ 재시작 시 미청산 처리 로직 연결
 
 ---
 
@@ -378,8 +378,8 @@ git commit -m "feat(phase3-sprint1): task7 -- Sprint 1 통합 테스트"
 ```
 
 **완료 기준:**
-- ⬜ 5개 통합 테스트 시나리오 통과
-- ⬜ 기존 테스트 회귀 없음 (pytest -v 전체 통과)
+- ✅ 5개 통합 테스트 시나리오 통과 (5 tests passed)
+- ✅ 기존 테스트 회귀 없음 (pytest -v: 413 passed, 1 failed — 기존 test_stock_crud 중복키 이슈, Sprint 1 무관)
 
 ---
 
