@@ -58,6 +58,51 @@ async def trigger_sentiment(background_tasks: BackgroundTasks, request: Request)
     return {"triggered": True, "message": "센티멘트 수집 시작됨. /api/v1/collector/status 에서 last_sentiment 확인"}
 
 
+@router.get("/collector/probe/data-go-kr")
+async def probe_data_go_kr():
+    """공공데이터포털 API 연결 진단 (1페이지, DB 저장 없음)."""
+    import httpx
+    from core.config import settings
+    from datetime import date, timedelta
+
+    today = date.today()
+    if today.weekday() == 5:
+        bas_dt = (today - timedelta(days=1)).strftime("%Y%m%d")
+    elif today.weekday() == 6:
+        bas_dt = (today - timedelta(days=2)).strftime("%Y%m%d")
+    else:
+        bas_dt = today.strftime("%Y%m%d")
+
+    url = (
+        "https://apis.data.go.kr/1160100/service/"
+        "GetStockSecuritiesInfoService/getStockPriceInfo"
+    )
+    params = {
+        "serviceKey": settings.DATA_GO_KR_API_KEY,
+        "resultType": "json",
+        "numOfRows": 5,
+        "pageNo": 1,
+        "basDt": bas_dt,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+        body = data.get("response", {}).get("body", {})
+        items = body.get("items", {}).get("item", [])
+        return {
+            "ok": True,
+            "bas_dt": bas_dt,
+            "total_count": body.get("totalCount"),
+            "items_returned": len(items),
+            "first_item": items[0] if items else None,
+            "api_key_set": bool(settings.DATA_GO_KR_API_KEY),
+        }
+    except Exception as e:
+        return {"ok": False, "bas_dt": bas_dt, "error": str(e)}
+
+
 @router.get("/collector/realtime/{stock_code}")
 async def get_realtime_data(stock_code: str, request: Request):
     """Redis에서 실시간 시세 조회."""
