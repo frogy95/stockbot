@@ -127,15 +127,26 @@ class TradingEngine:
             await asyncio.sleep(interval)
 
     async def on_order_filled(
-        self, order_id: int, filled_price: int, signal: object
+        self, order_id: int, filled_price: int, signal: object, quantity: int = 0
     ) -> None:
         """매수 주문 체결 콜백 — 포지션 생성."""
         from modules.trading.strategy import TradeSignalData
 
         if isinstance(signal, TradeSignalData):
             await self._position_manager.open_position(
-                signal, 0, filled_price
+                signal, quantity, filled_price
             )
+
+    def get_status(self) -> dict:
+        """엔진 상태 조회용 공개 메서드."""
+        monitor_active = (
+            self._monitor_task is not None and not self._monitor_task.done()
+        )
+        return {
+            "is_running": self._running,
+            "queue_size": self._order_manager.get_queue_size(),
+            "monitor_active": monitor_active,
+        }
 
     @staticmethod
     def _get_approval_timeout_static(now: datetime) -> int:

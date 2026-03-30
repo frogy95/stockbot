@@ -2,10 +2,11 @@
 
 from datetime import date, datetime, time
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import get_session_factory
+from api.deps import get_db
 from core.models.trading import Order, PositionRecord, TradeHistory, TradeSignal
 
 router = APIRouter(prefix="/trading", tags=["trading"])
@@ -19,12 +20,10 @@ async def get_risk_status(request: Request):
 
 
 @router.get("/positions")
-async def get_positions():
+async def get_positions(session: AsyncSession = Depends(get_db)):
     """활성 포지션 목록."""
-    factory = get_session_factory()
-    async with factory() as session:
-        result = await session.execute(select(PositionRecord))
-        positions = result.scalars().all()
+    result = await session.execute(select(PositionRecord))
+    positions = result.scalars().all()
 
     return [
         {
@@ -45,7 +44,10 @@ async def get_positions():
 
 
 @router.get("/history")
-async def get_history(target_date: date = Query(default=None)):
+async def get_history(
+    session: AsyncSession = Depends(get_db),
+    target_date: date = Query(default=None),
+):
     """매매 이력 조회 (날짜 필터)."""
     if target_date is None:
         target_date = date.today()
@@ -53,14 +55,12 @@ async def get_history(target_date: date = Query(default=None)):
     day_start = datetime.combine(target_date, time.min)
     day_end = datetime.combine(target_date, time.max)
 
-    factory = get_session_factory()
-    async with factory() as session:
-        stmt = select(TradeHistory).where(
-            TradeHistory.exit_time >= day_start,
-            TradeHistory.exit_time <= day_end,
-        )
-        result = await session.execute(stmt)
-        histories = result.scalars().all()
+    stmt = select(TradeHistory).where(
+        TradeHistory.exit_time >= day_start,
+        TradeHistory.exit_time <= day_end,
+    )
+    result = await session.execute(stmt)
+    histories = result.scalars().all()
 
     return [
         {
@@ -83,27 +83,26 @@ async def get_history(target_date: date = Query(default=None)):
 
 @router.get("/signals")
 async def get_signals(
+    session: AsyncSession = Depends(get_db),
     target_date: date = Query(default=None),
     status: str = Query(default=None),
 ):
     """매매 신호 목록 조회."""
-    factory = get_session_factory()
-    async with factory() as session:
-        stmt = select(TradeSignal)
+    stmt = select(TradeSignal)
 
-        if target_date:
-            day_start = datetime.combine(target_date, time.min)
-            day_end = datetime.combine(target_date, time.max)
-            stmt = stmt.where(
-                TradeSignal.created_at >= day_start,
-                TradeSignal.created_at <= day_end,
-            )
+    if target_date:
+        day_start = datetime.combine(target_date, time.min)
+        day_end = datetime.combine(target_date, time.max)
+        stmt = stmt.where(
+            TradeSignal.created_at >= day_start,
+            TradeSignal.created_at <= day_end,
+        )
 
-        if status:
-            stmt = stmt.where(TradeSignal.status == status)
+    if status:
+        stmt = stmt.where(TradeSignal.status == status)
 
-        result = await session.execute(stmt)
-        signals = result.scalars().all()
+    result = await session.execute(stmt)
+    signals = result.scalars().all()
 
     return [
         {
@@ -125,27 +124,26 @@ async def get_signals(
 
 @router.get("/orders")
 async def get_orders(
+    session: AsyncSession = Depends(get_db),
     target_date: date = Query(default=None),
     status: str = Query(default=None),
 ):
     """주문 목록 조회."""
-    factory = get_session_factory()
-    async with factory() as session:
-        stmt = select(Order)
+    stmt = select(Order)
 
-        if target_date:
-            day_start = datetime.combine(target_date, time.min)
-            day_end = datetime.combine(target_date, time.max)
-            stmt = stmt.where(
-                Order.created_at >= day_start,
-                Order.created_at <= day_end,
-            )
+    if target_date:
+        day_start = datetime.combine(target_date, time.min)
+        day_end = datetime.combine(target_date, time.max)
+        stmt = stmt.where(
+            Order.created_at >= day_start,
+            Order.created_at <= day_end,
+        )
 
-        if status:
-            stmt = stmt.where(Order.status == status)
+    if status:
+        stmt = stmt.where(Order.status == status)
 
-        result = await session.execute(stmt)
-        orders = result.scalars().all()
+    result = await session.execute(stmt)
+    orders = result.scalars().all()
 
     return [
         {
@@ -166,24 +164,22 @@ async def get_orders(
 
 
 @router.get("/engine-status")
-async def get_engine_status(request: Request):
+async def get_engine_status(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+):
     """매매 엔진 상태 조회."""
     engine = getattr(request.app.state, "trading_engine", None)
 
-    running = False
-    queue_size = 0
+    engine_status = {"is_running": False, "queue_size": 0, "monitor_active": False}
     if engine:
-        running = engine._running
-        if hasattr(engine, "_order_manager") and hasattr(engine._order_manager, "_queue"):
-            queue_size = engine._order_manager._queue.qsize()
+        engine_status = engine.get_status()
 
-    factory = get_session_factory()
-    async with factory() as session:
-        result = await session.execute(select(func.count(PositionRecord.id)))
-        active_positions = result.scalar_one()
+    result = await session.execute(select(func.count(PositionRecord.id)))
+    active_positions = result.scalar_one()
 
     return {
-        "running": running,
-        "queue_size": queue_size,
+        "running": engine_status["is_running"],
+        "queue_size": engine_status["queue_size"],
         "active_positions": active_positions,
     }
