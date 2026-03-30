@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 1 완료
+- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 2 완료
 - 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 2 🔄 (매매 전략 + 주문 실행)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30)
+- 현재 Sprint: Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인) 📋
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 3 Sprint 2 — 매매 전략 + 주문 실행
+- 다음 마일스톤: Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인
 
 ## 기술 아키텍처 결정 사항
 
@@ -364,7 +364,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 - settings 리스크 파라미터 시드
 - 리스크 설정 장중 잠금
 
-#### Sprint 2: 매매 전략 + 주문 실행 🔄
+#### Sprint 2: 매매 전략 + 주문 실행 ✅ (2026-03-30 완료)
 > Sprint 계획: `docs/phase/phase3/sprint2/sprint2.md` (2026-03-30)
 
 - Strategy ABC 인터페이스 + 모멘텀 브레이크아웃 전략
