@@ -2,7 +2,7 @@
 
 import json
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, BackgroundTasks, Request
 
 from core.redis import redis_client
 
@@ -19,23 +19,43 @@ async def get_collector_status(request: Request):
 
 
 @router.post("/collector/trigger/premarket")
-async def trigger_premarket(request: Request):
-    """수동 장전 수집 트리거."""
+async def trigger_premarket(background_tasks: BackgroundTasks, request: Request):
+    """수동 장전 수집 트리거 (백그라운드 실행, /collector/status 로 완료 확인)."""
     scheduler = getattr(request.app.state, "collector_scheduler", None)
     if scheduler is None:
         return {"triggered": False, "message": "스케줄러 미초기화"}
-    result = await scheduler.trigger_premarket()
-    return {"triggered": True, "result": result}
+    background_tasks.add_task(scheduler.trigger_premarket)
+    return {"triggered": True, "message": "수집 시작됨. /api/v1/collector/status 에서 last_premarket 확인"}
 
 
 @router.post("/collector/trigger/etf")
-async def trigger_etf(request: Request):
-    """수동 ETF 수집 트리거."""
+async def trigger_etf(background_tasks: BackgroundTasks, request: Request):
+    """수동 ETF 수집 트리거 (백그라운드 실행)."""
     scheduler = getattr(request.app.state, "collector_scheduler", None)
     if scheduler is None:
         return {"triggered": False, "message": "스케줄러 미초기화"}
-    result = await scheduler.trigger_etf()
-    return {"triggered": True, "result": result}
+    background_tasks.add_task(scheduler.trigger_etf)
+    return {"triggered": True, "message": "ETF 수집 시작됨. /api/v1/collector/status 에서 last_etf 확인"}
+
+
+@router.post("/collector/trigger/dart")
+async def trigger_dart(background_tasks: BackgroundTasks, request: Request):
+    """수동 DART 재무 수집 트리거 (1차 스크리닝 통과 종목 대상, 백그라운드 실행)."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    background_tasks.add_task(scheduler.trigger_dart)
+    return {"triggered": True, "message": "DART 수집 시작됨. /api/v1/collector/status 에서 last_dart 확인"}
+
+
+@router.post("/collector/trigger/sentiment")
+async def trigger_sentiment(background_tasks: BackgroundTasks, request: Request):
+    """수동 네이버 센티멘트 수집 트리거 (1차 스크리닝 통과 종목 대상, 백그라운드 실행)."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    background_tasks.add_task(scheduler.trigger_sentiment)
+    return {"triggered": True, "message": "센티멘트 수집 시작됨. /api/v1/collector/status 에서 last_sentiment 확인"}
 
 
 @router.post("/collector/trigger/dart")
