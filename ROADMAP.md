@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 2 완료
-- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인) 📋
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30)
-- 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인
+- 전체 진행률: Phase 0~3 완료, Phase 4 계획 수립 완료
+- 현재 Phase: Phase 4 (웹 대시보드 MVP) 🔄
+- 현재 Sprint: Phase 4 Sprint 1 (대시보드 기본 구조 + 핵심 페이지) 📋
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31)
+- 프로덕션 배포: v0.4.0 (2026-03-31) — Vercel + Railway
+- 다음 마일스톤: Phase 4 Sprint 1 — 대시보드 기본 구조 + 핵심 페이지 (MVP 완성 향해)
 
 ## 기술 아키텍처 결정 사항
 
@@ -431,7 +431,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 
 ---
 
-## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) 📋
+## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) 🔄
 
 ### 목표
 Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/신호/스크리닝 페이지, 설정 페이지, 웹 매매 승인 기능 포함. MVP 완성.
@@ -467,7 +467,8 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - HTTPS 적용 (Cloudflare SSL + Vercel 자동 SSL)
 - 모바일 반응형은 Phase 6에서 고도화
 
-> Phase 상세 계획: `docs/phase/phase4/phase4.md` (phase-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase4/phase4.md` ✅ 생성 완료 (2026-03-31)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 한유엑(UX), 윤에이피(API) -- 4명 검토 완료
 > Sprint 문서: `docs/phase/phase4/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
 
 ---
