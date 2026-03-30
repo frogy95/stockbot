@@ -15,18 +15,18 @@ PR: https://github.com/frogy95/stockbot/pull/8
 
 #### 배포 후 자동 검증 필요 항목
 
-- ⬜ /api/v1/health 헬스체크 확인
-- ⬜ /api/v1/screening/status 스크리닝 상태 확인
-- ⬜ /api/v1/collector/status 수집기 상태 확인
-- ⬜ 프론트엔드 접속 확인 (https://stockbot-blush.vercel.app)
-- ⬜ Railway 배포 로그 확인 (alembic 신규 마이그레이션 3종 적용 확인)
+- ✅ /api/v1/health 헬스체크 확인
+- ✅ /api/v1/screening/status 스크리닝 상태 확인
+- ✅ /api/v1/collector/status 수집기 상태 확인
+- ✅ 프론트엔드 접속 확인 (https://stockbot-blush.vercel.app)
+- ✅ Railway 배포 로그 확인 (alembic 신규 마이그레이션 3종 적용 확인)
 
 #### 수동 검증 필요 항목
 
 - ⬜ KIS API 실거래 확인: 평일 장중 수동 검증 필요 (모의거래 시세 조회 + 주문 체결 테스트)
-- ⬜ 공공데이터포털 수집기 실데이터 확인: 평일 08:10 이후 실행 확인
-- ⬜ DART 재무 수집기 실데이터 확인: 08:15 스케줄 실행 + corp_code 매핑 확인
-- ⬜ 네이버 센티멘트 수집기 실데이터 확인: 08:20 스케줄 실행 + 점수 산출 확인
+- ✅ 공공데이터포털 수집기 실데이터 확인: 2,913 종목 수집 완료 (basDt=20260327)
+- ✅ DART 재무 수집기 실데이터 확인: corp_code 115,603건 초기화 + 재무 22건 수집 완료
+- ✅ 네이버 센티멘트 수집기 실데이터 확인: 300건 수집 완료 (1차 스크리닝 30종목 대상)
 
 ---
 

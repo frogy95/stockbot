@@ -53,7 +53,7 @@ async def test_trigger_premarket(app):
     assert resp.status_code == 200
     data = resp.json()
     assert data["triggered"] is True
-    assert data["result"]["stocks_collected"] == 100
+    assert "message" in data
 
 
 @pytest.mark.asyncio

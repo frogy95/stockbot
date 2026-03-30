@@ -1,7 +1,7 @@
 """공공데이터포털 수집기 — 전 종목 일괄 OHLCV/시총/상장주식수 수집."""
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import httpx
 from sqlalchemy import select
@@ -29,13 +29,29 @@ class DataGoKrCollector:
     def __init__(self, db_session: AsyncSession) -> None:
         self._db = db_session
 
+    @staticmethod
+    def _latest_trading_date() -> str:
+        """가장 최근 완료된 거래일을 YYYYMMDD 문자열로 반환한다.
+
+        공공데이터포털 API는 당일 데이터를 제공하지 않으므로 항상 직전 평일을 반환한다.
+        월요일 → 금요일, 화~금 → 전날, 주말 → 금요일.
+        """
+        target = date.today() - timedelta(days=1)
+        if target.weekday() == 6:    # 일요일(전일이 일요일이면 토요일) → 금요일
+            target -= timedelta(days=2)
+        elif target.weekday() == 5:  # 토요일 → 금요일
+            target -= timedelta(days=1)
+        return target.strftime("%Y%m%d")
+
     async def collect_all(self, retry_delay: float = RETRY_DELAY) -> int:
         """전 종목 일괄 수집. 수집된 종목 수를 반환한다."""
+        bas_dt = self._latest_trading_date()
+        logger.info("공공데이터포털 수집 기준일: %s", bas_dt)
         total_collected = 0
         page = 1
 
         while True:
-            items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay)
+            items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay, bas_dt)
             if not items:
                 break
 
@@ -57,7 +73,7 @@ class DataGoKrCollector:
         return total_collected
 
     async def _fetch_page(
-        self, page: int, num_rows: int, retry_delay: float = RETRY_DELAY
+        self, page: int, num_rows: int, retry_delay: float = RETRY_DELAY, bas_dt: str | None = None
     ) -> list[dict]:
         """단일 페이지 호출. 실패 시 최대 3회 재시도."""
         params = {
@@ -66,6 +82,8 @@ class DataGoKrCollector:
             "numOfRows": num_rows,
             "pageNo": page,
         }
+        if bas_dt:
+            params["basDt"] = bas_dt
 
         for attempt in range(MAX_RETRIES):
             try:

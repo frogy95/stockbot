@@ -290,9 +290,9 @@ class CollectorScheduler:
             self._last_primary_screen = datetime.now()
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
-        except Exception:
+        except Exception as e:
             logger.exception("1차 스크리닝 실패")
-            return {"candidates": 0, "passed": 0}
+            return {"candidates": 0, "passed": 0, "error": str(e)}
 
     async def _secondary_screen(self) -> dict:
         """장중 30초 주기 2차 스크리닝: 실시간 필터 + 팩터 스코어링."""
