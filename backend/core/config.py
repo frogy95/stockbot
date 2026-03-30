@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     # Telegram
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
+    TELEGRAM_WEBHOOK_URL: str = ""
 
     @property
     def database_url(self) -> str:

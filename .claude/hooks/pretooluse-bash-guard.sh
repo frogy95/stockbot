@@ -62,4 +62,17 @@ if echo "$CMD" | grep -qE 'git\s+checkout\s+-b\s+'; then
   fi
 fi
 
+# 패턴 7: develop/main 브랜치에서 sprint 관련 커밋 차단
+if echo "$CMD" | grep -qE 'git\s+commit\s'; then
+  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+  if [[ "$CURRENT_BRANCH" == "develop" || "$CURRENT_BRANCH" == "main" ]]; then
+    # 커밋 메시지에서 sprint/phase 키워드 감지 (-m "..." 또는 -m '...' 또는 heredoc)
+    if echo "$CMD" | grep -qiE '(sprint|phase[0-9])'; then
+      echo "❌ $CURRENT_BRANCH 브랜치에서 sprint/phase 관련 커밋 금지."
+      echo "먼저 sprint 브랜치를 생성하세요: git checkout -b phase{P}-sprint{N}"
+      exit 2
+    fi
+  fi
+fi
+
 exit 0

@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-03-30 업데이트)
+## 스프린트 현황 (2026-03-31 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -15,9 +15,12 @@
 
 - Phase 2.6 Sprint 1 — mst 파서 재작성 + 검증, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/27
 
+- Phase 3 Sprint 1 — 리스크/자금 관리 모듈, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/32
+- Phase 3 Sprint 2 — 매매 전략 + 주문 실행, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/33
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 3 Sprint 1 — 리스크/자금 관리 모듈 (Phase 3 계획 필요, phase-planner 실행 권장)
+- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인 (즉시 착수 가능)
 
 ## 핵심 주의사항
 
@@ -45,3 +48,17 @@
 - Phase 2.6 Sprint 1 완료: 바이트 슬라이싱이 핵심 — CP949 한글 2바이트로 decode 후 문자 슬라이싱 시 offset 불일치. 반드시 `data[start:end].decode("cp949").strip()` 방식 사용
 - Phase 2.6 Sprint 1 완료: KOSDAQ mst에는 ETF 없음 확인, ETN은 해당 URL mst 미포함(별도 URL 가능성)
 - Phase 2.6 Sprint 1 완료: sanity_passed=True, ETF=878종목 (KOSPI mst 기준)
+- Phase 3 Sprint 1: 사용자 확정 — 레버리지 손절 -1.5%, 익절 +3%, 트레일링 활성화 +2% (phase3.md와 일치)
+- Phase 3 Sprint 1: 기존 seed_settings.py에 leverage_etf_size_pct=7.0 → 확정 5.0으로 변경 필요
+- Phase 3 Sprint 1: 기존 seed_settings.py에 force_close_start=15:00 → 확정 14:50으로 변경 필요
+- Phase 3 Sprint 1: modules/trading/ 디렉토리에 __init__.py만 존재 (빈 파일) — 새 모듈 생성 가능
+- Phase 3 Sprint 1: KISRestClient에 place_order/cancel_order/get_balance/get_positions 이미 구현 — eod_liquidator에서 직접 사용 가능
+- Phase 3 Sprint 1: main.py lifespan에 모듈 초기화 패턴 정립 — app.state에 인스턴스 저장, shutdown에서 정리
+- Phase 3 Sprint 1: PositionRecord의 UniqueConstraint(stock_code)는 __table_args__ 방식 필수 (Phase 1 학습)
+- Phase 3 Sprint 2: DB 모델(trade_signals, orders, positions, trade_history) 이미 Sprint 1에서 생성 완료 — Alembic 마이그레이션 불필요
+- Phase 3 Sprint 2: KISRestClient에 place_order, cancel_order, get_order_status, get_balance, get_positions 모두 구현 완료
+- Phase 3 Sprint 2: TokenBucketThrottler에 bypass 옵션 없음 — 주문 시 bypass 필요하면 throttler 확장 필요
+- Phase 3 Sprint 2: RealtimeScreener.screen()이 반환하는 dict 구조 — stock_code, stock_name, stock_type, trade_strength, orderbook_ratio, volume, prev_volume, current_price, change_rate, total_bid/ask_volume
+- Phase 3 Sprint 2: factors.py의 calc_volatility_factor(highs, lows, closes) -> ATR 값 반환, 이미 구현되어 있어 전략에서 재사용
+- Phase 3 Sprint 2: main.py lifespan에 session_factory, rest_client, redis_client, throttler 이미 생성됨 — 추가 모듈은 이후에 초기화
+- Phase 3 Sprint 2: 모의거래(TRADING_ENV=paper)에서는 시장가만 사용, 최우선 지정가 건너뜀 (미해결 사항 #1)
