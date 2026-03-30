@@ -5,6 +5,22 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### 프로덕션 배포 - v0.3.0 (2026-03-30)
+
+포함 스프린트: Phase 2.5 Sprint 1, Phase 2.6 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/28
+
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+- ⬜ /api/v1/health 헬스체크 확인
+- ⬜ 프론트엔드 접속 확인 (Vercel)
+- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 시 sanity_passed=True 확인
+- ⬜ Railway 배포 후 stocks 테이블 ETF 878종목 적재 확인
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+---
+
 ### Phase 2.6 Sprint 1: KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/27
