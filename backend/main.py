@@ -21,6 +21,10 @@ from api.routes.collector import router as collector_router
 from api.routes.screening import router as screening_router
 from modules.screening.screener import PrimaryScreener
 from modules.screening.realtime_screener import RealtimeScreener
+from modules.trading.risk_manager import RiskManager
+from modules.trading.position_sizer import PositionSizer
+from modules.trading.eod_liquidator import EodLiquidator
+from api.routes.trading import router as trading_router
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +81,20 @@ async def lifespan(app: FastAPI):
     await collector_scheduler.start()
     logger.info("수집 스케줄러 초기화 완료")
 
+    # 매매 모듈 초기화
+    risk_manager = RiskManager(session_factory, redis_client)
+    await risk_manager.load_settings()
+    position_sizer = PositionSizer(session_factory)
+    await position_sizer.load_settings()
+    eod_liquidator = EodLiquidator(session_factory, rest_client, redis_client)
+    await eod_liquidator.check_and_liquidate_on_startup()
+    await eod_liquidator.register_schedule(collector_scheduler._scheduler)
+
+    app.state.risk_manager = risk_manager
+    app.state.position_sizer = position_sizer
+    app.state.eod_liquidator = eod_liquidator
+    logger.info("매매 모듈 초기화 완료 (리스크 매니저, 포지션 사이저, 당일 청산)")
+
     yield
 
     # Shutdown
@@ -107,6 +125,7 @@ def create_app() -> FastAPI:
     app.include_router(kis_router, prefix="/api/v1")
     app.include_router(collector_router, prefix="/api/v1")
     app.include_router(screening_router, prefix="/api/v1")
+    app.include_router(trading_router, prefix="/api/v1")
 
     return app
 
