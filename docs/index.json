@@ -744,6 +744,93 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "sprint2",
+          "title": "매매 전략 + 주문 실행",
+          "status": "completed",
+          "branch": "phase3-sprint2",
+          "sprintDoc": "docs/phase/phase3/sprint2/sprint2.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/33",
+          "progress": {
+            "total": 8,
+            "completed": 8
+          },
+          "lastUpdated": "2026-03-30T00:00:00+09:00",
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "Strategy ABC 인터페이스",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-1-strategy-abc-인터페이스",
+              "testPlan": "pytest test_strategy_abc.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "모멘텀 브레이크아웃 전략",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-2-모멘텀-브레이크아웃-전략",
+              "testPlan": "pytest test_momentum_breakout.py (10 케이스)",
+              "testResult": "pass (10 tests)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "신호 생성기",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-3-신호-생성기",
+              "testPlan": "pytest test_signal_generator.py (5 케이스)",
+              "testResult": "pass (5 tests)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "주문 매니저",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-4-주문-매니저",
+              "testPlan": "pytest test_order_manager.py (7 케이스)",
+              "testResult": "pass (7 tests + _reconcile_timeout 보완)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "포지션 매니저",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-5-포지션-매니저",
+              "testPlan": "pytest test_position_manager.py (9 케이스)",
+              "testResult": "pass (9 tests)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "매매 엔진 오케스트레이터",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-6-매매-엔진-오케스트레이터",
+              "testPlan": "pytest test_trading_engine.py (6 케이스)",
+              "testResult": "pass (6 tests)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "신호/주문 조회 API + main.py 등록",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-7-신호주문-조회-api-확장--mainpy-등록",
+              "testPlan": "pytest test_trading_api_sprint2.py (4 케이스)",
+              "testResult": "pass (4 tests)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "통합 테스트",
+              "path": "docs/phase/phase3/sprint2/sprint2.md#task-8-통합-테스트",
+              "testPlan": "pytest test_phase3_sprint2_integration.py (5 시나리오) + pytest -v 전체",
+              "testResult": "pass (49 sprint2 tests, 462 total passed)",
+              "status": "completed",
+              "commits": []
+            }
+          ]
         }
       ]
     }
