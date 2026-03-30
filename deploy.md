@@ -12,12 +12,10 @@ PR: https://github.com/frogy95/stockbot/pull/28
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
-- ⬜ /api/v1/health 헬스체크 확인
-- ⬜ 프론트엔드 접속 확인 (Vercel)
+- ✅ /api/v1/health 헬스체크 확인 — {"status":"healthy","database":"connected","redis":"connected"}
+- ✅ 프론트엔드 접속 확인 (Vercel) — HTTP 200
 - ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 시 sanity_passed=True 확인
 - ⬜ Railway 배포 후 stocks 테이블 ETF 878종목 적재 확인
-
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 
 ---
 
