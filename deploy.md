@@ -7,7 +7,7 @@
 
 ### Hotfix: 공공데이터포털 ETF 잘못 분류 버그 수정 (2026-03-30)
 
-PR: (생성 예정)
+PR: https://github.com/frogy95/stockbot/pull/25
 
 - ✅ 자동 검증 완료 항목:
   - pytest: 302 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 수정과 무관)
