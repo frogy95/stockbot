@@ -5,6 +5,21 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: 공공데이터포털 ETF 잘못 분류 버그 수정 (2026-03-30)
+
+PR: (생성 예정)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest: 302 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 수정과 무관)
+  - 회귀 없음 확인
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - Railway 배포 후 수집기 로그에서 ETF 500 에러 미발생 확인
+  - 다음 장전(08:00 KST) premarket_collect 정상 실행 후 종목 분류 확인
+
+---
+
 ### Hotfix: APScheduler KST 타임존 설정 누락 수정 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/23
