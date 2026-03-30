@@ -24,6 +24,11 @@ from modules.screening.realtime_screener import RealtimeScreener
 from modules.trading.risk_manager import RiskManager
 from modules.trading.position_sizer import PositionSizer
 from modules.trading.eod_liquidator import EodLiquidator
+from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+from modules.trading.signal_generator import SignalGenerator
+from modules.trading.order_manager import OrderManager
+from modules.trading.position_manager import PositionManager
+from modules.trading.engine import TradingEngine
 from api.routes.trading import router as trading_router
 
 logger = logging.getLogger(__name__)
@@ -95,9 +100,28 @@ async def lifespan(app: FastAPI):
     app.state.eod_liquidator = eod_liquidator
     logger.info("매매 모듈 초기화 완료 (리스크 매니저, 포지션 사이저, 당일 청산)")
 
+    # 매매 엔진 초기화
+    strategy = MomentumBreakoutStrategy()
+    signal_generator = SignalGenerator(session_factory, redis_client, strategy)
+    order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
+    position_manager = PositionManager(session_factory, redis_client, risk_manager)
+    trading_engine = TradingEngine(
+        signal_generator=signal_generator,
+        order_manager=order_manager,
+        position_manager=position_manager,
+        risk_manager=risk_manager,
+        position_sizer=position_sizer,
+        eod_liquidator=eod_liquidator,
+        redis_client=redis_client,
+    )
+    await trading_engine.start()
+    app.state.trading_engine = trading_engine
+    logger.info("매매 엔진 초기화 완료")
+
     yield
 
     # Shutdown
+    await trading_engine.stop()
     await collector_scheduler.stop()
     await rest_client.close()
     await ws_client.disconnect()

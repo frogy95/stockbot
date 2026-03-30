@@ -1,12 +1,12 @@
-"""매매 관련 API 라우터 — 리스크 상태, 포지션, 매매 이력 조회."""
+"""매매 관련 API 라우터 — 리스크 상태, 포지션, 매매 이력, 신호, 주문, 엔진 상태 조회."""
 
 from datetime import date, datetime, time
 
 from fastapi import APIRouter, Query, Request
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from core.database import get_session_factory
-from core.models.trading import PositionRecord, TradeHistory
+from core.models.trading import Order, PositionRecord, TradeHistory, TradeSignal
 
 router = APIRouter(prefix="/trading", tags=["trading"])
 
@@ -79,3 +79,111 @@ async def get_history(target_date: date = Query(default=None)):
         }
         for h in histories
     ]
+
+
+@router.get("/signals")
+async def get_signals(
+    target_date: date = Query(default=None),
+    status: str = Query(default=None),
+):
+    """매매 신호 목록 조회."""
+    factory = get_session_factory()
+    async with factory() as session:
+        stmt = select(TradeSignal)
+
+        if target_date:
+            day_start = datetime.combine(target_date, time.min)
+            day_end = datetime.combine(target_date, time.max)
+            stmt = stmt.where(
+                TradeSignal.created_at >= day_start,
+                TradeSignal.created_at <= day_end,
+            )
+
+        if status:
+            stmt = stmt.where(TradeSignal.status == status)
+
+        result = await session.execute(stmt)
+        signals = result.scalars().all()
+
+    return [
+        {
+            "id": s.id,
+            "stock_code": s.stock_code,
+            "signal_type": s.signal_type,
+            "strategy_name": s.strategy_name,
+            "confidence": float(s.confidence) if s.confidence else None,
+            "reason": s.reason,
+            "entry_price": int(s.entry_price),
+            "stop_loss": int(s.stop_loss),
+            "take_profit": int(s.take_profit),
+            "status": s.status,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+        }
+        for s in signals
+    ]
+
+
+@router.get("/orders")
+async def get_orders(
+    target_date: date = Query(default=None),
+    status: str = Query(default=None),
+):
+    """주문 목록 조회."""
+    factory = get_session_factory()
+    async with factory() as session:
+        stmt = select(Order)
+
+        if target_date:
+            day_start = datetime.combine(target_date, time.min)
+            day_end = datetime.combine(target_date, time.max)
+            stmt = stmt.where(
+                Order.created_at >= day_start,
+                Order.created_at <= day_end,
+            )
+
+        if status:
+            stmt = stmt.where(Order.status == status)
+
+        result = await session.execute(stmt)
+        orders = result.scalars().all()
+
+    return [
+        {
+            "id": o.id,
+            "signal_id": o.signal_id,
+            "stock_code": o.stock_code,
+            "order_type": o.order_type,
+            "order_no": o.order_no,
+            "quantity": o.quantity,
+            "price": int(o.price),
+            "order_division": o.order_division,
+            "status": o.status,
+            "submitted_at": o.submitted_at.isoformat() if o.submitted_at else None,
+            "filled_at": o.filled_at.isoformat() if o.filled_at else None,
+        }
+        for o in orders
+    ]
+
+
+@router.get("/engine-status")
+async def get_engine_status(request: Request):
+    """매매 엔진 상태 조회."""
+    engine = getattr(request.app.state, "trading_engine", None)
+
+    running = False
+    queue_size = 0
+    if engine:
+        running = engine._running
+        if hasattr(engine, "_order_manager") and hasattr(engine._order_manager, "_queue"):
+            queue_size = engine._order_manager._queue.qsize()
+
+    factory = get_session_factory()
+    async with factory() as session:
+        result = await session.execute(select(func.count(PositionRecord.id)))
+        active_positions = result.scalar_one()
+
+    return {
+        "running": running,
+        "queue_size": queue_size,
+        "active_positions": active_positions,
+    }
