@@ -31,14 +31,17 @@ class DataGoKrCollector:
 
     @staticmethod
     def _latest_trading_date() -> str:
-        """가장 최근 거래일(평일)을 YYYYMMDD 문자열로 반환한다. 오늘이 평일이면 오늘, 주말이면 직전 금요일."""
-        today = date.today()
-        # 월요일=0, 일요일=6
-        if today.weekday() == 5:   # 토요일
-            return (today - timedelta(days=1)).strftime("%Y%m%d")
-        if today.weekday() == 6:   # 일요일
-            return (today - timedelta(days=2)).strftime("%Y%m%d")
-        return today.strftime("%Y%m%d")
+        """가장 최근 완료된 거래일을 YYYYMMDD 문자열로 반환한다.
+
+        공공데이터포털 API는 당일 데이터를 제공하지 않으므로 항상 직전 평일을 반환한다.
+        월요일 → 금요일, 화~금 → 전날, 주말 → 금요일.
+        """
+        target = date.today() - timedelta(days=1)
+        if target.weekday() == 6:    # 일요일(전일이 일요일이면 토요일) → 금요일
+            target -= timedelta(days=2)
+        elif target.weekday() == 5:  # 토요일 → 금요일
+            target -= timedelta(days=1)
+        return target.strftime("%Y%m%d")
 
     async def collect_all(self, retry_delay: float = RETRY_DELAY) -> int:
         """전 종목 일괄 수집. 수집된 종목 수를 반환한다."""
