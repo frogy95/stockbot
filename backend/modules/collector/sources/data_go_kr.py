@@ -122,7 +122,8 @@ class DataGoKrCollector:
             return
 
         market_type = item.get("mrktCtg", "KOSPI").strip()
-        stock_type = "ETF" if item.get("srtnCd", "").startswith("4") else "STOCK"
+        # 공공데이터포털 GetStockSecuritiesInfoService는 일반 주식만 제공 (ETF 미포함)
+        stock_type = "STOCK"
 
         stmt = pg_insert(Stock).values(
             stock_code=stock_code,

@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T19:30:00+09:00",
+  "lastUpdated": "2026-03-30T21:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -508,6 +508,24 @@
     }
   ],
   "hotfixes": [
+    {
+      "id": "hotfix-fix-etf-stock-type",
+      "name": "공공데이터포털 ETF 잘못 분류 버그 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/fix-etf-stock-type/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/25",
+      "deployedAt": "2026-03-30",
+      "description": "공공데이터포털 수집기에서 종목코드가 '4'로 시작하면 ETF로 분류하는 잘못된 로직으로 SK스퀘어·쏘카 등 일반 주식 266개가 ETF로 잘못 태깅되어 KIS REST API 500 에러를 유발하던 버그 수정. stock_type을 항상 STOCK으로 고정.",
+      "commits": [
+        {
+          "hash": "6ffc101",
+          "message": "fix(collector): 공공데이터포털 ETF 잘못 분류 버그 수정",
+          "date": "2026-03-30"
+        }
+      ]
+    },
     {
       "id": "hotfix-fix-timezone-scheduling",
       "name": "APScheduler KST 타임존 설정 누락 수정",
