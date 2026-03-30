@@ -5,6 +5,39 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Phase 3 Sprint 3: 텔레그램 봇 + 반자동 승인 (2026-03-30)
+
+PR: https://github.com/frogy95/stockbot/pull/34
+
+#### 코드 리뷰 결과 (2026-03-30)
+- ✅ 코드 리뷰 완료 (재검토) — PR #34 코멘트 작성 (https://github.com/frogy95/stockbot/pull/34#issuecomment-4153417317)
+- Critical/High 이슈: 없음
+- Medium 이슈: 없음
+- 이전 버그 2건 수정 확인
+  - ✅ stats 키 불일치 수정 (total_pnl → realized_pnl)
+  - ✅ win_rate 이중 곱 수정 (0~100% → 0.0~1.0 범위, telegram_bot.py에서 *100 처리)
+
+#### 자동 검증 결과 (2026-03-30)
+- ✅ pytest -v 전체: 510 passed, 0 failed
+- ✅ GET /api/v1/health: {"status":"healthy","database":"connected","redis":"connected"}
+- ✅ POST /api/v1/telegram/webhook: {"ok": true}
+- ✅ GET /api/v1/trading/engine-status: {"running":true,"queue_size":0,"active_positions":0}
+- ✅ GET /api/v1/trading/risk-status: 정상 응답
+- ✅ 프론트엔드 접속 정상 (http://localhost:3000 200 OK)
+
+#### Phase 문서 반영 (2026-03-30)
+- ✅ Sprint 분할 계획 테이블 Sprint 3에 완료 표시
+- ✅ Sprint 3 상세 섹션 제목에 완료 표시 추가
+- ✅ 미해결 사항 3번(텔레그램 폴백), 8번(웹훅 URL 변경) 해결 표시
+- ✅ 완료 기준 테이블 Sprint 3 항목 상태 업데이트
+
+#### 수동 검증 필요 항목
+- ⬜ 주문 실행 지연 < 1초 실전 환경 측정
+- ⬜ 알림 지연 < 3초 실전 환경 측정
+- ⬜ Railway 배포 후 실제 텔레그램 봇 동작 확인 (웹훅 등록, 승인/거부 버튼)
+
+---
+
 ### Phase 3 Sprint 2: 매매 전략 + 주문 실행 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/33

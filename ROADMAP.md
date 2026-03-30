@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 2 완료
-- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인) 📋
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30)
+- 전체 진행률: Phase 0~3 완료 (Phase 3 Sprint 3까지)
+- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) ✅
+- 현재 Sprint: Phase 4 Sprint 1 (웹 대시보드) 📋
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인
+- 다음 마일스톤: Phase 4 Sprint 1 — 웹 대시보드 기본 구조 + 핵심 페이지
 
 ## 기술 아키텍처 결정 사항
 
@@ -346,7 +346,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 
 ---
 
-## Phase 3: 매매 엔진 + 기본 알림 (Sprint 1~3) 🔄
+## Phase 3: 매매 엔진 + 기본 알림 (Sprint 1~3) ✅
 
 ### 목표
 리스크/자금 관리 규칙 구현, 모멘텀 브레이크아웃 전략 기반 매매 신호 생성, 주문 실행(반자동), 포지션 관리, 텔레그램 기본 알림 및 매매 승인. 데이트레이딩 전용 당일 청산 강제.
@@ -376,12 +376,15 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 - 매매 엔진 오케스트레이터 (스크리닝 -> 전략 -> 리스크 체크 -> 주문)
 - 주문 큐(asyncio.Queue) 순차 실행 + 스로틀러 주문 bypass
 
-#### Sprint 3: 텔레그램 봇 + 반자동 승인
+#### Sprint 3: 텔레그램 봇 + 반자동 승인 ✅ (2026-03-30 완료)
+> Sprint 계획: `docs/phase/phase3/sprint3/sprint3.md` (2026-03-30)
+
 - 텔레그램 웹훅 (FastAPI 엔드포인트 직접 처리)
 - 인라인 버튼 승인/거부 + Redis 승인 키(TTL 30초/15초) + 일회용 토큰
 - 알림 발송 (신호 알림, 체결 완료, 일일 마감 리포트) — HTML 형식
 - 조회 명령어 (/status, /today, /mode, /help)
 - Chat ID 화이트리스트 + 앱 시작 시 setWebhook 자동 호출
+- pytest 510 passed, 0 failed
 
 ### 전문가 확정 파라미터 (2026-03-30, 5명 검토)
 
