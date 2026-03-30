@@ -114,13 +114,13 @@ class NotifierManager:
             records = result.scalars().all()
 
         total_trades = len(records)
-        total_pnl = sum(r.realized_pnl for r in records)
+        realized_pnl = sum(r.realized_pnl for r in records)
         win_count = sum(1 for r in records if r.realized_pnl > 0)
-        win_rate = (win_count / total_trades * 100) if total_trades > 0 else 0.0
+        win_rate = (win_count / total_trades) if total_trades > 0 else 0.0
 
         stats = {
             "total_trades": total_trades,
-            "total_pnl": total_pnl,
+            "realized_pnl": realized_pnl,
             "win_rate": win_rate,
         }
 

@@ -198,8 +198,8 @@ async def test_send_daily_report(manager, mock_telegram):
     call_args = mock_telegram.format_daily_report.call_args
     stats = call_args[0][0]
     assert stats["total_trades"] == 3
-    assert stats["total_pnl"] == 6000  # 5000 - 2000 + 3000
-    assert abs(stats["win_rate"] - 66.666) < 0.1  # 2/3 승
+    assert stats["realized_pnl"] == 6000  # 5000 - 2000 + 3000
+    assert abs(stats["win_rate"] - 0.6666) < 0.01  # 2/3 승 (0.0~1.0 범위)
 
     # send_notification 발송 확인
     mock_telegram.send_notification.assert_awaited_once_with("일일 리포트 텍스트")
