@@ -26,7 +26,6 @@ SEED_ETFS: list[dict] = [
     {"stock_code": "102110", "stock_name": "TIGER 200", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": "KOSPI200"},
     {"stock_code": "143460", "stock_name": "TIGER 코스닥150", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": "KOSDAQ150"},
     {"stock_code": "360750", "stock_name": "TIGER 미국S&P500", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": "SP500"},
-    {"stock_code": "133690", "stock_name": "TIGER 미국나스닥100", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": "NASDAQ100"},
     {"stock_code": "381170", "stock_name": "TIGER 차이나전기차SOLACTIVE", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": ""},
     {"stock_code": "305720", "stock_name": "TIGER 2차전지테마", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": ""},
     {"stock_code": "148020", "stock_name": "TIGER 농산물선물(H)", "stock_type": "ETF", "market_type": "KOSPI", "etf_type": "normal", "leverage_ratio": 1, "underlying_index": ""},
