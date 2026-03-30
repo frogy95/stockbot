@@ -49,11 +49,17 @@ async def db_stats():
             screening = (await session.execute(
                 text("SELECT COUNT(*) FROM screening_results")
             )).scalar()
+        corp_codes = (await session.execute(text("SELECT COUNT(*) FROM corp_codes"))).scalar()
+        financial_data = (await session.execute(text("SELECT COUNT(*) FROM financial_data"))).scalar()
+        news_sentiment = (await session.execute(text("SELECT COUNT(*) FROM news_sentiment"))).scalar()
         return {
             "stocks_count": stocks,
             "market_data_count": market_data,
             "market_data_latest_date": str(latest_date) if latest_date else None,
             "screening_results_count": screening,
+            "corp_codes_count": corp_codes,
+            "financial_data_count": financial_data,
+            "news_sentiment_count": news_sentiment,
         }
     except Exception as e:
         return {"error": str(e)}
