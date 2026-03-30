@@ -46,6 +46,15 @@ class RedisClient:
             return -2
         return await self._redis.ttl(key)
 
+    async def scan_keys(self, pattern: str) -> list[str]:
+        """패턴에 매칭되는 키 목록을 반환한다 (SCAN 사용)."""
+        if not self._redis:
+            return []
+        keys = []
+        async for key in self._redis.scan_iter(match=pattern):
+            keys.append(key)
+        return keys
+
     async def get_or_set(
         self,
         key: str,
