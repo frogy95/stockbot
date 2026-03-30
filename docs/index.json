@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T23:59:00+09:00",
+  "lastUpdated": "2026-03-30T24:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -597,18 +597,19 @@
     {
       "id": "phase2.6",
       "title": "KIS mst 파서 올바른 구현",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase2.6/phase2.6.md",
       "sprints": [
         {
           "id": "sprint1",
           "title": "mst 파서 재작성 + 검증",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase2.6-sprint1",
           "sprintDoc": "docs/phase/phase2.6/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/27",
           "progress": {
             "total": 3,
-            "completed": 0
+            "completed": 3
           },
           "tasks": [
             {
@@ -616,27 +617,45 @@
               "title": "테스트 fixture + 테스트 재작성 (줄바꿈 기반)",
               "path": "docs/phase/phase2.6/sprint1/sprint1.md#task-1-테스트-fixture--테스트-재작성",
               "testPlan": "테스트 파일 컴파일 정상 + FAIL 사유가 프로덕션 코드 불일치",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "5bfba1e",
+                  "message": "feat(phase2.6-sprint1): task1 -- 테스트 fixture 줄바꿈 기반 재작성",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task2",
               "title": "상수 교체 + _parse_mst 재작성 + filter_etf 수정",
               "path": "docs/phase/phase2.6/sprint1/sprint1.md#task-2-상수-교체--_parse_mst-재작성--filter_etf-수정",
               "testPlan": "pytest tests/test_kis_master.py 전체 PASS + pytest -v 회귀 없음",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "e6722f9",
+                  "message": "feat(phase2.6-sprint1): task2 -- 상수 교체 + _parse_mst 줄바꿈 재작성 + filter_etf 수정",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task3",
               "title": "실제 mst 다운로드 검증",
               "path": "docs/phase/phase2.6/sprint1/sprint1.md#task-3-실제-mst-다운로드-검증",
               "testPlan": "sanity_check 통과 + ETF >= 200 + KOSDAQ offset 확인 + ETN 구분값 확인",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "7d8e40d",
+                  "message": "fix(phase2.6-sprint1): task3 -- 바이트 슬라이싱 기반 파서로 수정 (한글 종목명 offset 불일치 해소)",
+                  "date": "2026-03-30"
+                }
+              ]
             }
           ]
         }

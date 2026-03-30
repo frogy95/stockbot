@@ -13,9 +13,11 @@
 - Phase 2 Sprint 3 — 보조 데이터 + 통합 테스트 (DART 재무 + 네이버 센티멘트), ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/7
 - Phase 2.5 Sprint 1 — ETF 마스터 수집 + 스케줄러 통합, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/26
 
+- Phase 2.6 Sprint 1 — mst 파서 재작성 + 검증, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/27
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 3 Sprint 1 — 리스크/자금 관리 모듈 (Phase 2.5 완료, Phase 3 계획 필요)
+- Phase 3 Sprint 1 — 리스크/자금 관리 모듈 (Phase 3 계획 필요, phase-planner 실행 권장)
 
 ## 핵심 주의사항
 
@@ -37,3 +39,9 @@
 - Phase 2.5 Sprint 1: bash-guard 정규식이 소수점 브랜치명(phase2.5-*)을 차단 — .claude/hooks/pretooluse-bash-guard.sh 수정 완료
 - Phase 2.5 Sprint 1: asyncio.gather 병렬 다운로드로 KOSPI+KOSDAQ mst 동시 처리 — httpx.AsyncClient 사용
 - Phase 2.5 Sprint 1: func.count()로 DB ETF 종목 수 조회 후 prev_count 전달하여 sanity check ±10% 변동 감지
+- Phase 2.6: mst 파서 버그 — 고정길이 200바이트 offset이 아닌 줄바꿈(\n) split 방식이 정답. ETF 판별: offset 61:63 = 'EF', ETN = 'EN'(추정)
+- Phase 2.6: 수정 대상 파일 2개만: kis_master.py + test_kis_master.py. 외부 인터페이스(collect, sanity_check 등) 변경 없음
+- Phase 2.6: KOSPI/KOSDAQ mst 필드 구조 동일 확인 필요 (Phase 2.5에서는 "다름"이라 했으나, Phase 2.6 검토에서 동일 offset으로 확정)
+- Phase 2.6 Sprint 1 완료: 바이트 슬라이싱이 핵심 — CP949 한글 2바이트로 decode 후 문자 슬라이싱 시 offset 불일치. 반드시 `data[start:end].decode("cp949").strip()` 방식 사용
+- Phase 2.6 Sprint 1 완료: KOSDAQ mst에는 ETF 없음 확인, ETN은 해당 URL mst 미포함(별도 URL 가능성)
+- Phase 2.6 Sprint 1 완료: sanity_passed=True, ETF=878종목 (KOSPI mst 기준)
