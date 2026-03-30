@@ -58,26 +58,6 @@ async def trigger_sentiment(background_tasks: BackgroundTasks, request: Request)
     return {"triggered": True, "message": "센티멘트 수집 시작됨. /api/v1/collector/status 에서 last_sentiment 확인"}
 
 
-@router.post("/collector/trigger/dart")
-async def trigger_dart(request: Request):
-    """수동 DART 재무 수집 트리거 (1차 스크리닝 통과 종목 대상)."""
-    scheduler = getattr(request.app.state, "collector_scheduler", None)
-    if scheduler is None:
-        return {"triggered": False, "message": "스케줄러 미초기화"}
-    result = await scheduler.trigger_dart()
-    return {"triggered": True, "result": result}
-
-
-@router.post("/collector/trigger/sentiment")
-async def trigger_sentiment(request: Request):
-    """수동 네이버 센티멘트 수집 트리거 (1차 스크리닝 통과 종목 대상)."""
-    scheduler = getattr(request.app.state, "collector_scheduler", None)
-    if scheduler is None:
-        return {"triggered": False, "message": "스케줄러 미초기화"}
-    result = await scheduler.trigger_sentiment()
-    return {"triggered": True, "result": result}
-
-
 @router.get("/collector/realtime/{stock_code}")
 async def get_realtime_data(stock_code: str, request: Request):
     """Redis에서 실시간 시세 조회."""
