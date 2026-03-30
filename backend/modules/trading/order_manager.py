@@ -50,6 +50,10 @@ class OrderManager:
         self._queue: asyncio.Queue = asyncio.Queue()
         self._worker_task: asyncio.Task | None = None
 
+    def get_queue_size(self) -> int:
+        """주문 큐 대기 건수를 반환한다."""
+        return self._queue.qsize()
+
     # ------------------------------------------------------------------
     # 라이프사이클
     # ------------------------------------------------------------------

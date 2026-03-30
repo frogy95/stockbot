@@ -28,7 +28,7 @@ async def test_seed_data_count(session_factory):
     async with session_factory() as session:
         result = await session.execute(select(func.count()).select_from(SystemSetting))
         count = result.scalar()
-    assert count == 21
+    assert count == 32
 
 
 @pytest.mark.asyncio
@@ -55,8 +55,8 @@ async def test_max_loss_value_type(session_factory):
 async def test_stock_crud(session_factory):
     async with session_factory() as session:
         stock = Stock(
-            stock_code="005930",
-            stock_name="삼성전자",
+            stock_code="999999",
+            stock_name="테스트CRUD종목",
             market="kr",
             market_type="KOSPI",
             stock_type="stock",
@@ -65,10 +65,10 @@ async def test_stock_crud(session_factory):
         await session.commit()
 
         result = await session.execute(
-            select(Stock).where(Stock.stock_code == "005930")
+            select(Stock).where(Stock.stock_code == "999999")
         )
         found = result.scalar_one()
-        assert found.stock_name == "삼성전자"
+        assert found.stock_name == "테스트CRUD종목"
 
         await session.delete(found)
         await session.commit()

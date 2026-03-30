@@ -31,6 +31,7 @@ class TradingEngine:
         position_sizer: PositionSizer,
         eod_liquidator: EodLiquidator,
         redis_client: RedisClient,
+        notifier_manager=None,
     ):
         self._signal_generator = signal_generator
         self._order_manager = order_manager
@@ -39,6 +40,7 @@ class TradingEngine:
         self._position_sizer = position_sizer
         self._eod_liquidator = eod_liquidator
         self._redis = redis_client
+        self._notifier = notifier_manager
         self._running = False
         self._monitor_task: asyncio.Task | None = None
 
@@ -97,14 +99,28 @@ class TradingEngine:
                 logger.info("주문 수량 0 — 스킵: %s", signal.stock_code)
                 continue
 
-            # 주문 제출
-            await self._order_manager.submit_order(signal, position_size)
-            logger.info(
-                "주문 제출: %s %d주 @%d",
-                signal.stock_code,
-                position_size.quantity,
-                signal.entry_price,
-            )
+            # 반자동 모드: 승인 요청 / 자동 모드: 즉시 주문
+            if self._notifier:
+                timeout = self._get_approval_timeout()
+                token = await self._notifier.notify_signal(
+                    signal, position_size.quantity, timeout
+                )
+                logger.info(
+                    "승인 요청: %s %d주 @%d (token=%s, timeout=%ds)",
+                    signal.stock_code,
+                    position_size.quantity,
+                    signal.entry_price,
+                    token,
+                    timeout,
+                )
+            else:
+                await self._order_manager.submit_order(signal, position_size)
+                logger.info(
+                    "주문 제출: %s %d주 @%d",
+                    signal.stock_code,
+                    position_size.quantity,
+                    signal.entry_price,
+                )
 
     async def monitor_positions(self) -> list[dict]:
         """포지션 모니터링: 청산 조건 확인 및 처리."""
@@ -126,16 +142,59 @@ class TradingEngine:
                 logger.exception("포지션 모니터링 오류")
             await asyncio.sleep(interval)
 
+    async def approve_signal(self, token: str) -> bool:
+        """승인 콜백 — 토큰 검증 후 주문 실행."""
+        from modules.trading.position_sizer import PositionSize
+        from modules.trading.strategy import TradeSignalData
+
+        if not self._notifier:
+            return False
+        result = await self._notifier.handle_approval(token, "approve")
+        if result is None:
+            return False
+        signal = TradeSignalData(**result["signal"])
+        quantity = result["quantity"]
+        position_size = PositionSize(
+            invest_amount=signal.entry_price * quantity,
+            quantity=quantity,
+            is_leverage=False,
+            size_pct=0,
+        )
+        await self._order_manager.submit_order(signal, position_size)
+        logger.info("승인 주문 실행: %s %d주", signal.stock_code, quantity)
+        return True
+
+    async def reject_signal(self, token: str) -> bool:
+        """거부 콜백 — 토큰 검증 후 알림."""
+        if not self._notifier:
+            return False
+        result = await self._notifier.handle_approval(token, "reject")
+        if result is None:
+            return False
+        logger.info("신호 거부: token=%s", token)
+        return True
+
     async def on_order_filled(
-        self, order_id: int, filled_price: int, signal: object
+        self, order_id: int, filled_price: int, signal: object, quantity: int = 0
     ) -> None:
         """매수 주문 체결 콜백 — 포지션 생성."""
         from modules.trading.strategy import TradeSignalData
 
         if isinstance(signal, TradeSignalData):
             await self._position_manager.open_position(
-                signal, 0, filled_price
+                signal, quantity, filled_price
             )
+
+    def get_status(self) -> dict:
+        """엔진 상태 조회용 공개 메서드."""
+        monitor_active = (
+            self._monitor_task is not None and not self._monitor_task.done()
+        )
+        return {
+            "is_running": self._running,
+            "queue_size": self._order_manager.get_queue_size(),
+            "monitor_active": monitor_active,
+        }
 
     @staticmethod
     def _get_approval_timeout_static(now: datetime) -> int:
