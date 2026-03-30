@@ -169,6 +169,7 @@ class OrderManager:
             filled = await self._poll_fill_status(order_no)
             if not filled:
                 await self._update_order_status(order_id, "timeout")
+                await self._reconcile_timeout(order_id)
             else:
                 await self._update_order_status(
                     order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
@@ -236,6 +237,7 @@ class OrderManager:
             filled = await self._poll_fill_status(market_order_no)
             if not filled:
                 await self._update_order_status(order_id, "timeout")
+                await self._reconcile_timeout(order_id)
             else:
                 await self._update_order_status(
                     order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
@@ -297,6 +299,37 @@ class OrderManager:
             return int(first.get("tot_ccld_qty", 0)) > 0
         except (ValueError, TypeError):
             return False
+
+    async def _reconcile_timeout(self, order_id: int) -> None:
+        """timeout 주문에 대해 한투 잔고와 positions를 비교하여 불일치 시 경고.
+
+        다음 잔고 조회 시 호출하여 미해결 사항 #2 기본 처리를 수행한다.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(Order).where(Order.id == order_id)
+            )
+            order = result.scalar_one_or_none()
+            if order is None or order.status != "timeout":
+                return
+
+        try:
+            positions = await self._rest_client.get_positions()
+            for pos in positions:
+                if pos.stock_code == order.stock_code and pos.quantity > 0:
+                    logger.warning(
+                        "timeout 주문 reconciliation: %s — 한투 잔고에 %d주 존재, "
+                        "positions 테이블과 동기화 필요",
+                        order.stock_code,
+                        pos.quantity,
+                    )
+                    return
+            logger.info(
+                "timeout 주문 reconciliation: %s — 한투 잔고에 없음, 주문 미체결 확정",
+                order.stock_code,
+            )
+        except Exception:
+            logger.exception("reconciliation 실패: order_id=%d", order_id)
 
     async def _update_order_status(
         self,
