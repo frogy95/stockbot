@@ -15,6 +15,9 @@
 <!-- 대상: skill | agent | hook | rule | claude.md -->
 <!-- 예시: - [agent] sprint-planner가 task 의존성 순서를 잘못 잡음 → 의존성 검증 단계 추가 필요 (2026-03-30) -->
 
+- [rule] backend.md — 새 환경변수를 config.py에 추가할 때 .env.example에도 반드시 추가하는 규칙 없음 → 명시 필요 (2026-03-30)
+- [rule] backend.md 또는 sprint-workflow.md — 신규 환경변수가 프로덕션(Railway 등) 수동 설정이 필요한 경우 deploy.md 수동 검증 항목에 기록하는 규칙 없음 → sprint-close/sprint-review 체크리스트에 추가 필요 (2026-03-30)
+
 ## 반영 완료
 
 <!-- 형식: - [대상] 내용 (기록일 → 반영일) -->

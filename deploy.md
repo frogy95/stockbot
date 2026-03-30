@@ -5,6 +5,20 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### 프로덕션 배포 - v0.4.0 (2026-03-30)
+
+포함 스프린트: Phase 3 Sprint 1, Sprint 2, Sprint 3
+PR: https://github.com/frogy95/stockbot/pull/35
+
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+- ✅ /api/v1/health 헬스체크 확인
+- ✅ 텔레그램 봇 명령어 응답 확인 (/status 정상 응답)
+- ✅ TELEGRAM_WEBHOOK_URL 환경변수 Railway에 추가 (api.stockbot.choiji.kr)
+- ⬜ 내일 장중 실제 매매 흐름 확인 (스크리닝 → 신호 → 승인 → 주문)
+
+---
+
 ### Phase 3 Sprint 2: 매매 전략 + 주문 실행 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/33
