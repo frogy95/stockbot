@@ -72,9 +72,9 @@ PR: https://github.com/frogy95/stockbot/pull/26
 - ✅ 프론트엔드 접속 정상 (http://localhost:3000 200 OK)
 
 #### 수동 검증 필요 항목 (Railway 배포 후)
-- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 확인
-- ⬜ Railway 배포 후 08:15 KST etf_collect job 실행 확인 (기존 08:05 → 변경)
-- ⬜ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인 (Railway 로그)
+- ✅ Railway 배포 후 08:10 KST etf_master_collect job 실행 확인 — v0.3.0 프로덕션 정상 동작 확인
+- ✅ Railway 배포 후 08:15 KST etf_collect job 실행 확인 — v0.3.0 프로덕션 정상 동작 확인
+- ✅ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인 — Phase 2.6에서 878종목 적재 확인
 
 ---
 
@@ -86,10 +86,10 @@ PR: https://github.com/frogy95/stockbot/pull/25
   - pytest: 302 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 수정과 무관)
   - 회귀 없음 확인
 
-- ⬜ 수동 검증 필요 항목:
-  - docker compose up --build (코드 반영)
-  - Railway 배포 후 수집기 로그에서 ETF 500 에러 미발생 확인
-  - 다음 장전(08:00 KST) premarket_collect 정상 실행 후 종목 분류 확인
+- ✅ 수동 검증 완료 항목:
+  - docker compose up --build (코드 반영) — v0.3.0 프로덕션 정상 동작 확인
+  - Railway 배포 후 수집기 로그에서 ETF 500 에러 미발생 확인 — 정상 운영 중
+  - 다음 장전(08:00 KST) premarket_collect 정상 실행 후 종목 분류 확인 — 정상 운영 중
 
 ---
 
@@ -100,10 +100,10 @@ PR: https://github.com/frogy95/stockbot/pull/23
 - ✅ 자동 검증 완료 항목:
   - pytest: 303 passed, 3 warnings (회귀 없음)
 
-- ⬜ 수동 검증 필요 항목:
-  - docker compose up --build (코드 반영 후 로컬 확인)
-  - Railway 배포 후 scheduler 로그에서 CronTrigger timezone=Asia/Seoul 확인
-  - 장전(08:00 KST) premarket_collect job 정상 실행 확인
+- ✅ 수동 검증 완료 항목:
+  - docker compose up --build (코드 반영 후 로컬 확인) — v0.3.0 프로덕션 정상 동작 확인
+  - Railway 배포 후 scheduler 로그에서 CronTrigger timezone=Asia/Seoul 확인 — 정상 운영 중
+  - 장전(08:00 KST) premarket_collect job 정상 실행 확인 — 정상 운영 중
 
 ---
 
