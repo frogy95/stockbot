@@ -15,11 +15,11 @@ PR: https://github.com/frogy95/stockbot/pull/8
 
 #### 배포 후 자동 검증 필요 항목
 
-- ⬜ /api/v1/health 헬스체크 확인
-- ⬜ /api/v1/screening/status 스크리닝 상태 확인
-- ⬜ /api/v1/collector/status 수집기 상태 확인
-- ⬜ 프론트엔드 접속 확인 (https://stockbot-blush.vercel.app)
-- ⬜ Railway 배포 로그 확인 (alembic 신규 마이그레이션 3종 적용 확인)
+- ✅ /api/v1/health 헬스체크 확인
+- ✅ /api/v1/screening/status 스크리닝 상태 확인
+- ✅ /api/v1/collector/status 수집기 상태 확인
+- ✅ 프론트엔드 접속 확인 (https://stockbot-blush.vercel.app)
+- ✅ Railway 배포 로그 확인 (alembic 신규 마이그레이션 3종 적용 확인)
 
 #### 수동 검증 필요 항목
 
