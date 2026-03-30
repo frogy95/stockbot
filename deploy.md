@@ -5,6 +5,18 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Phase 2.5 Sprint 1: ETF 마스터 수집 + 스케줄러 통합 (2026-03-30)
+
+PR: https://github.com/frogy95/stockbot/pull/26
+
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 확인
+- ⬜ Railway 배포 후 08:15 KST etf_collect job 실행 확인 (기존 08:05 → 변경)
+- ⬜ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인
+
+---
+
 ### Hotfix: 공공데이터포털 ETF 잘못 분류 버그 수정 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/25
