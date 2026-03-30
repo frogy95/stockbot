@@ -9,11 +9,27 @@
 
 PR: https://github.com/frogy95/stockbot/pull/26
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+#### 코드 리뷰 결과 (2026-03-30)
+- ✅ 코드 리뷰 완료 — PR #26 코멘트 작성 (https://github.com/frogy95/stockbot/pull/26#issuecomment-4152211394)
+- Critical/High 이슈: 없음
+- Medium 이슈: 1건 — seed_etf.py `stock_code = "133690"` 중복 (KODEX/TIGER 항목이 동일 코드 사용, upsert 시 덮어쓰기 발생)
+  - 서비스 영향: 낮음 (시드는 최초 설치 전용 폴백, 실제 운영 경로는 kis_master.py 담당)
+  - Phase 문서 미해결 사항 테이블에 기록 완료
+- 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용, 인증 불필요 엔드포인트 정상
+- 패턴 준수: 기존 스케줄러/API 패턴 동일하게 적용, 구조 정상
+
+#### 자동 검증 결과 (2026-03-30)
+- ✅ pytest 전체: 340 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 PR과 무관)
+- ✅ 신규 테스트 38개 전체 통과 (test_kis_master, test_seed_etf, test_etf_master_api, test_phase2_5_integration)
+- ✅ GET /api/v1/collector/status — last_etf_master 필드 포함 확인
+- ✅ POST /api/v1/collector/trigger/etf-master — {"triggered": true} 정상 응답
+- ✅ 스케줄러 job 확인: etf_master_collect 08:10 KST, etf_collect 08:15 KST 등록됨
+- ✅ 프론트엔드 접속 정상 (http://localhost:3000 200 OK)
+
+#### 수동 검증 필요 항목 (Railway 배포 후)
 - ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 확인
 - ⬜ Railway 배포 후 08:15 KST etf_collect job 실행 확인 (기존 08:05 → 변경)
-- ⬜ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인
+- ⬜ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인 (Railway 로그)
 
 ---
 

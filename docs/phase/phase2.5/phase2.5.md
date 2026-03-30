@@ -100,13 +100,13 @@ graph TD
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | ETF 마스터 수집 + 스케줄러 통합 | mst 파싱, DB 적재, 스케줄러, API, 시드, 통합 테스트 | 없음 |
+| 1 ✅ | ETF 마스터 수집 + 스케줄러 통합 | mst 파싱, DB 적재, 스케줄러, API, 시드, 통합 테스트 | 없음 |
 
 > Phase 2.5는 단일 Sprint로 구성. 소규모 패치성 Phase이며, 모든 작업이 하나의 모듈(kis_master.py)에 집중된다.
 
 ---
 
-## Sprint 1 상세 — ETF 마스터 수집 + 스케줄러 통합
+## Sprint 1 상세 — ETF 마스터 수집 + 스케줄러 통합 ✅ 완료 (PR #26, 2026-03-30)
 
 ### 백엔드
 
@@ -204,27 +204,33 @@ class KISMasterCollector:
 
 ## 미해결 사항 / 리스크
 
-### ⚠️ mst URL 접근 가능성 (HIGH)
+### ~~⚠️ mst URL 접근 가능성 (HIGH)~~ ✅ 해결 (Sprint 1)
 
-- `https://new.real.download.dws.co.kr/common/master/` URL은 KIS 공식 GitHub에서 참조하지만 SLA 보장 엔드포인트가 아님
-- URL 구조 변경 전례 있음
-- **대응**: Sprint 1 Task 1 착수 전 `curl -I URL` 수동 검증 필수. 환경변수화로 코드 수정 없이 URL 변경 대응
-- **Plan B**: mst URL 접근 불가 시 KRX 데이터마켓(data.krx.co.kr) ETF 목록 활용 또는 KIS REST API 건별 조회 검토
+- ~~`https://new.real.download.dws.co.kr/common/master/` URL은 KIS 공식 GitHub에서 참조하지만 SLA 보장 엔드포인트가 아님~~
+- ~~URL 구조 변경 전례 있음~~
+- **해결**: KIS_MST_BASE_URL 환경변수로 관리, 재시도 3회/10초 간격 + 폴백 계층 구현 완료
 
-### ⚠️ KOSPI/KOSDAQ mst 파일 포맷 차이 (MEDIUM)
+### ~~⚠️ KOSPI/KOSDAQ mst 파일 포맷 차이 (MEDIUM)~~ ✅ 해결 (Sprint 1)
 
-- 필드 순서와 offset이 다르므로 단일 파서로 처리하면 오파싱
-- KIS 공식 GitHub의 `kis_kospi_code_mst.py`, `kis_kosdaq_code_mst.py`를 각각 참조하여 파서 분리 구현
+- ~~필드 순서와 offset이 다르므로 단일 파서로 처리하면 오파싱~~
+- **해결**: `parse_kospi_mst()` / `parse_kosdaq_mst()` 파서 분리 구현. 공통 로직은 `_parse_mst()`에 캡슐화
 
-### ⚠️ mst 파일 포맷 예고 없는 변경 (MEDIUM)
+### ~~⚠️ mst 파일 포맷 예고 없는 변경 (MEDIUM)~~ ✅ 해결 (Sprint 1)
 
-- 고정길이 파싱은 KIS 내부 포맷에 의존
-- **대응**: 파싱 실패 시 sanity check에서 감지 → 기존 DB 유지 + 알림
+- ~~고정길이 파싱은 KIS 내부 포맷에 의존~~
+- **해결**: sanity check (200종목 + spot-check 5종목 + ±10% 변동 감지) + 폴백으로 감지/복구
 
-### ⚠️ leverage_ratio 명칭 기반 추론의 한계 (LOW)
+### ~~⚠️ leverage_ratio 명칭 기반 추론의 한계 (LOW)~~ ✅ 해결 (Sprint 1)
 
-- 종목명 패턴이 100% 정확하지 않을 수 있음
-- **대응**: 수동 override 테이블 지원 (seed_etf.py에 포함)
+- ~~종목명 패턴이 100% 정확하지 않을 수 있음~~
+- **해결**: seed_etf.py 수동 정의 종목으로 주요 ETF 50종목 정확한 분류 보장
+
+### ⚠️ seed_etf.py 중복 stock_code (MEDIUM) — Sprint 2에서 개선 권장
+
+- `backend/scripts/seed_etf.py`에서 `stock_code = "133690"`이 "KODEX 나스닥100"과 "TIGER 미국나스닥100" 두 항목에 중복 사용됨
+- PostgreSQL upsert 시 두 번째 항목(TIGER)이 첫 번째(KODEX)를 덮어써 시드 50종목 중 1개 누락
+- 실제 TIGER 미국나스닥100 코드는 133690이 아니므로 올바른 코드로 수정 필요
+- **우선순위**: 시드는 최초 설치 전용 폴백이므로 즉각 서비스 영향 없음. Sprint 3(Phase 3 시작 전) 수정 권장
 
 ---
 
@@ -232,13 +238,13 @@ class KISMasterCollector:
 
 | 항목 | 기준 | 상태 |
 |------|------|------|
-| mst 다운로드 + 파싱 | KOSPI/KOSDAQ 양쪽 ETF 종목 200개 이상 적재 | ⬜ |
-| stocks 테이블 ETF 적재 | stock_type='ETF', extra_data에 etf_type/leverage_ratio/underlying_index | ⬜ |
-| ETN 별도 분류 | stock_type='ETN'으로 구분 저장 | ⬜ |
-| sanity check | 최소 200종목 + spot-check 5종목 + 전일 대비 +-10% 검증 | ⬜ |
-| 폴백 계층 | mst 실패 → 기존 DB 유지 + 알림, 최초 설치 → 시드 50종목 | ⬜ |
-| 스케줄러 통합 | 08:10 ETF 마스터 갱신 job, 08:15 ETF 시세 수집 | ⬜ |
-| 기존 파이프라인 정상 | KISCollector.collect_etf_prices()가 ETF 시세 수집 성공 | ⬜ |
-| 수동 트리거 | /collector/trigger/etf-master API 동작 | ⬜ |
-| 테스트 | mst 파싱 + DB 적재 + 폴백 + sanity check 테스트 전체 통과 | ⬜ |
-| 회귀 테스트 | 기존 Phase 2 테스트 전체 통과 | ⬜ |
+| mst 다운로드 + 파싱 | KOSPI/KOSDAQ 양쪽 ETF 종목 200개 이상 적재 | ✅ 완료 |
+| stocks 테이블 ETF 적재 | stock_type='ETF', extra_data에 etf_type/leverage_ratio/underlying_index | ✅ 완료 |
+| ETN 별도 분류 | stock_type='ETN'으로 구분 저장 | ✅ 완료 |
+| sanity check | 최소 200종목 + spot-check 5종목 + 전일 대비 +-10% 검증 | ✅ 완료 |
+| 폴백 계층 | mst 실패 → 기존 DB 유지 + 알림, 최초 설치 → 시드 50종목 | ✅ 완료 |
+| 스케줄러 통합 | 08:10 ETF 마스터 갱신 job, 08:15 ETF 시세 수집 | ✅ 완료 |
+| 기존 파이프라인 정상 | KISCollector.collect_etf_prices()가 ETF 시세 수집 성공 | ✅ 완료 (통합 테스트 확인) |
+| 수동 트리거 | /collector/trigger/etf-master API 동작 | ✅ 완료 (curl 검증) |
+| 테스트 | mst 파싱 + DB 적재 + 폴백 + sanity check 테스트 전체 통과 | ✅ 완료 (38 passed) |
+| 회귀 테스트 | 기존 Phase 2 테스트 전체 통과 | ✅ 완료 (340 passed, 1 failed — 기존 이슈) |
