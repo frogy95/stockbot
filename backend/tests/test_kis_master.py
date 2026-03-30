@@ -17,23 +17,32 @@ def _make_zip(filename: str, content: bytes) -> bytes:
     return buf.getvalue()
 
 
-def _make_mst_record(
+def _make_mst_line(
     stock_code: str,
     stock_name: str,
-    etp_prod_type: str = "1",
-) -> bytes:
-    """mst 레코드 바이트 생성 (CP949 고정길이 포맷, _RECORD_LEN=200)."""
-    record = bytearray(200)
-    record[0:9] = stock_code.encode("cp949").ljust(9)
-    record[9:21] = ("KR7" + stock_code + "0007").encode("cp949").ljust(12)[:12]
-    record[21:61] = stock_name.encode("cp949").ljust(40)[:40]
-    record[121:122] = etp_prod_type.encode("cp949")
-    return bytes(record)
+    sec_type: str = "EF",
+    total_len: int = 288,
+) -> str:
+    """CP949 고정길이 라인 문자열 생성.
+
+    offset 0:9 종목코드(ljust 9), 9:21 ISIN 더미(12자),
+    21:61 종목명(ljust 40), 61:63 증권구분(ljust 2), 나머지 공백 패딩.
+    """
+    code_part = stock_code.ljust(9)[:9]
+    isin_part = ("KR7" + stock_code + "0007").ljust(12)[:12]
+    name_part = stock_name.ljust(40)[:40]
+    sec_part = sec_type.ljust(2)[:2]
+    header = code_part + isin_part + name_part + sec_part  # 63 chars
+    return header + " " * (total_len - len(header))
+
+
+def _make_mst_bytes(lines: list[str]) -> bytes:
+    """라인 목록을 줄바꿈으로 결합하여 CP949 바이트 반환."""
+    return "\n".join(lines).encode("cp949")
 
 
 def _new_collector() -> KISMasterCollector:
     session = AsyncMock(spec=AsyncSession)
-    # scalar()는 동기 호출이므로 MagicMock으로 None 반환
     mock_result = MagicMock()
     mock_result.scalar.return_value = None
     session.execute = AsyncMock(return_value=mock_result)
@@ -45,25 +54,50 @@ def _new_collector() -> KISMasterCollector:
 @pytest.mark.asyncio
 async def test_parse_kospi_mst_etf():
     collector = _new_collector()
-    raw = _make_mst_record("069500", "KODEX 200", "1")
+    raw = _make_mst_bytes([_make_mst_line("069500", "KODEX 200", "EF")])
     records = collector.parse_kospi_mst(raw)
 
     etf = next((r for r in records if r["stock_code"] == "069500"), None)
     assert etf is not None
     assert etf["stock_name"] == "KODEX 200"
     assert etf["market_type"] == "KOSPI"
-    assert etf["etp_prod_type"] == "1"
+    assert etf["sec_type"] == "EF"
 
 
 @pytest.mark.asyncio
 async def test_parse_kospi_mst_normal_stock():
     collector = _new_collector()
-    raw = _make_mst_record("005930", "삼성전자", " ")
+    raw = _make_mst_bytes([_make_mst_line("005930", "삼성전자", "  ")])
     records = collector.parse_kospi_mst(raw)
 
     samsung = next((r for r in records if r["stock_code"] == "005930"), None)
     assert samsung is not None
-    assert samsung["etp_prod_type"].strip() == ""
+    assert samsung["sec_type"].strip() == ""
+
+
+@pytest.mark.asyncio
+async def test_parse_mst_skips_invalid_stock_code():
+    """stock_code가 6자리 숫자가 아닌 라인은 파싱 결과에서 제외된다."""
+    collector = _new_collector()
+    valid_line = _make_mst_line("069500", "KODEX 200", "EF")
+    invalid_line = _make_mst_line("ABCDEF", "잘못된종목", "EF")
+    empty_line = ""
+    raw = _make_mst_bytes([valid_line, invalid_line, empty_line])
+    records = collector.parse_kospi_mst(raw)
+
+    assert len(records) == 1
+    assert records[0]["stock_code"] == "069500"
+
+
+@pytest.mark.asyncio
+async def test_parse_mst_skips_short_line():
+    """최소 라인 길이(63자) 미달 라인은 스킵된다."""
+    collector = _new_collector()
+    short_line = "069500" + " " * 56  # 62자 — _MIN_LINE_LEN=63 미달
+    raw = _make_mst_bytes([short_line])
+    records = collector.parse_kospi_mst(raw)
+
+    assert records == []
 
 
 # ── parse_kosdaq_mst ─────────────────────────────────────────────────────────
@@ -71,7 +105,7 @@ async def test_parse_kospi_mst_normal_stock():
 @pytest.mark.asyncio
 async def test_parse_kosdaq_mst_etf():
     collector = _new_collector()
-    raw = _make_mst_record("122630", "KODEX 레버리지", "1")
+    raw = _make_mst_bytes([_make_mst_line("122630", "KODEX 레버리지", "EF")])
     records = collector.parse_kosdaq_mst(raw)
 
     etf = next((r for r in records if r["stock_code"] == "122630"), None)
@@ -84,8 +118,8 @@ async def test_parse_kosdaq_mst_etf():
 def test_filter_etf_keeps_etf():
     collector = _new_collector()
     records = [
-        {"stock_code": "069500", "stock_name": "KODEX 200", "etp_prod_type": "1", "market_type": "KOSPI"},
-        {"stock_code": "005930", "stock_name": "삼성전자", "etp_prod_type": " ", "market_type": "KOSPI"},
+        {"stock_code": "069500", "stock_name": "KODEX 200", "sec_type": "EF", "market_type": "KOSPI"},
+        {"stock_code": "005930", "stock_name": "삼성전자", "sec_type": " ", "market_type": "KOSPI"},
     ]
     result = collector.filter_etf(records)
     assert len(result) == 1
@@ -95,7 +129,7 @@ def test_filter_etf_keeps_etf():
 
 def test_filter_etf_keeps_etn():
     collector = _new_collector()
-    records = [{"stock_code": "500001", "stock_name": "신한 레버리지 WTI원유 ETN", "etp_prod_type": "2", "market_type": "KOSPI"}]
+    records = [{"stock_code": "500001", "stock_name": "신한 레버리지 WTI원유 ETN", "sec_type": "EN", "market_type": "KOSPI"}]
     result = collector.filter_etf(records)
     assert len(result) == 1
     assert result[0]["stock_type"] == "ETN"
@@ -104,9 +138,16 @@ def test_filter_etf_keeps_etn():
 def test_filter_etf_excludes_normal():
     collector = _new_collector()
     records = [
-        {"stock_code": "005930", "stock_name": "삼성전자", "etp_prod_type": " ", "market_type": "KOSPI"},
-        {"stock_code": "000660", "stock_name": "SK하이닉스", "etp_prod_type": "", "market_type": "KOSPI"},
+        {"stock_code": "005930", "stock_name": "삼성전자", "sec_type": " ", "market_type": "KOSPI"},
+        {"stock_code": "000660", "stock_name": "SK하이닉스", "sec_type": "", "market_type": "KOSPI"},
     ]
+    assert collector.filter_etf(records) == []
+
+
+def test_filter_etf_skips_unknown_sec_type():
+    """알 수 없는 증권구분(예: 'XX')은 결과에서 제외된다."""
+    collector = _new_collector()
+    records = [{"stock_code": "999999", "stock_name": "알수없는종목", "sec_type": "XX", "market_type": "KOSPI"}]
     assert collector.filter_etf(records) == []
 
 
@@ -242,9 +283,12 @@ async def test_download_mst_all_fail():
 async def test_collect_normal_flow():
     collector = _new_collector()
     spot_codes = ["069500", "122630", "114800", "252670", "102110"]
-    kospi_data = b"".join(_make_mst_record(c, f"ETF_{c}", "1") for c in spot_codes)
-    kospi_data += b"".join(_make_mst_record(f"{i:06d}", f"ETF_{i}", "1") for i in range(250))
-    kosdaq_data = b"".join(_make_mst_record(f"{i:06d}", f"KOSDAQ_ETF_{i}", "1") for i in range(10))
+    kospi_lines = [_make_mst_line(c, f"ETF_{c}", "EF") for c in spot_codes]
+    kospi_lines += [_make_mst_line(f"{i:06d}", f"ETF_{i}", "EF") for i in range(250)]
+    kospi_data = _make_mst_bytes(kospi_lines)
+
+    kosdaq_lines = [_make_mst_line(f"{i:06d}", f"KOSDAQ_ETF_{i}", "EF") for i in range(10)]
+    kosdaq_data = _make_mst_bytes(kosdaq_lines)
 
     async def fake_download(market: str, retry_delay: float = 10.0) -> bytes:
         return kospi_data if market == "kospi" else kosdaq_data
