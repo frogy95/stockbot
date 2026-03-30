@@ -106,6 +106,7 @@ class PrimaryScreener:
                 "volatility_factor": volatility_factor,
                 "trade_strength_factor": trade_strength_factor,
                 "orderbook_ratio_factor": orderbook_ratio_factor,
+                "tracking_error_factor": 0.0,  # 1차 스크리닝 시 NAV 없음 → 중립값
             })
         return candidates
 
