@@ -51,7 +51,7 @@ async def db_stats():
             )).scalar()
         corp_codes = (await session.execute(text("SELECT COUNT(*) FROM corp_codes"))).scalar()
         financial_data = (await session.execute(text("SELECT COUNT(*) FROM financial_data"))).scalar()
-        news_sentiment = (await session.execute(text("SELECT COUNT(*) FROM news_sentiment"))).scalar()
+        news_sentiment = (await session.execute(text("SELECT COUNT(*) FROM news_sentiments"))).scalar()
         return {
             "stocks_count": stocks,
             "market_data_count": market_data,
