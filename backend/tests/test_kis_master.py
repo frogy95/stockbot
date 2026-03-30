@@ -22,23 +22,25 @@ def _make_mst_line(
     stock_name: str,
     sec_type: str = "EF",
     total_len: int = 288,
-) -> str:
-    """CP949 고정길이 라인 문자열 생성.
+) -> bytes:
+    """CP949 고정길이 라인 바이트 생성 (바이트 offset 기준).
 
-    offset 0:9 종목코드(ljust 9), 9:21 ISIN 더미(12자),
-    21:61 종목명(ljust 40), 61:63 증권구분(ljust 2), 나머지 공백 패딩.
+    bytes 0:9 종목코드(ljust 9), 9:21 ISIN 더미(12바이트),
+    21:61 종목명(CP949 ljust 40바이트), 61:63 증권구분(ljust 2바이트), 나머지 공백.
     """
-    code_part = stock_code.ljust(9)[:9]
-    isin_part = ("KR7" + stock_code + "0007").ljust(12)[:12]
-    name_part = stock_name.ljust(40)[:40]
-    sec_part = sec_type.ljust(2)[:2]
-    header = code_part + isin_part + name_part + sec_part  # 63 chars
-    return header + " " * (total_len - len(header))
+    buf = bytearray(total_len)
+    for i in range(total_len):
+        buf[i] = 0x20  # space
+    buf[0:9] = stock_code.encode("cp949").ljust(9)[:9]
+    buf[9:21] = ("KR7" + stock_code + "0007").encode("cp949").ljust(12)[:12]
+    buf[21:61] = stock_name.encode("cp949").ljust(40)[:40]
+    buf[61:63] = sec_type.encode("cp949").ljust(2)[:2]
+    return bytes(buf)
 
 
-def _make_mst_bytes(lines: list[str]) -> bytes:
-    """라인 목록을 줄바꿈으로 결합하여 CP949 바이트 반환."""
-    return "\n".join(lines).encode("cp949")
+def _make_mst_bytes(lines: list[bytes]) -> bytes:
+    """라인 바이트 목록을 줄바꿈으로 결합하여 반환."""
+    return b"\n".join(lines)
 
 
 def _new_collector() -> KISMasterCollector:
@@ -81,8 +83,7 @@ async def test_parse_mst_skips_invalid_stock_code():
     collector = _new_collector()
     valid_line = _make_mst_line("069500", "KODEX 200", "EF")
     invalid_line = _make_mst_line("ABCDEF", "잘못된종목", "EF")
-    empty_line = ""
-    raw = _make_mst_bytes([valid_line, invalid_line, empty_line])
+    raw = _make_mst_bytes([valid_line, invalid_line, b""])
     records = collector.parse_kospi_mst(raw)
 
     assert len(records) == 1
@@ -91,9 +92,9 @@ async def test_parse_mst_skips_invalid_stock_code():
 
 @pytest.mark.asyncio
 async def test_parse_mst_skips_short_line():
-    """최소 라인 길이(63자) 미달 라인은 스킵된다."""
+    """최소 라인 길이(63바이트) 미달 라인은 스킵된다."""
     collector = _new_collector()
-    short_line = "069500" + " " * 56  # 62자 — _MIN_LINE_LEN=63 미달
+    short_line = b"069500" + b" " * 56  # 62바이트 — _MIN_LINE_LEN=63 미달
     raw = _make_mst_bytes([short_line])
     records = collector.parse_kospi_mst(raw)
 

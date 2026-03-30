@@ -191,20 +191,25 @@ class KISMasterCollector:
         return len(values)
 
     def _parse_mst(self, data: bytes, market_type: str) -> list[dict]:
+        # 바이트 기반 슬라이싱: CP949에서 한글은 2바이트이므로
+        # 디코딩 후 문자 슬라이싱 시 offset이 틀어짐. 각 필드를 개별 디코딩한다.
         records = []
-        try:
-            text = data.decode("cp949")
-        except UnicodeDecodeError:
-            logger.warning("mst 디코딩 실패 (market=%s)", market_type)
-            return records
-        for line in text.splitlines():
-            if len(line) < _MIN_LINE_LEN:
+        for line_bytes in data.split(b"\n"):
+            line_bytes = line_bytes.rstrip(b"\r")
+            if len(line_bytes) < _MIN_LINE_LEN:
                 continue
-            stock_code = line[_CODE_SLICE].strip()
+            try:
+                stock_code = line_bytes[_CODE_SLICE].decode("cp949").strip()
+            except UnicodeDecodeError:
+                continue
             if not _STOCK_CODE_RE.match(stock_code):
                 continue
-            stock_name = line[_NAME_SLICE].strip()
-            sec_type = line[_SEC_TYPE_SLICE]
+            try:
+                stock_name = line_bytes[_NAME_SLICE].decode("cp949").strip()
+                sec_type = line_bytes[_SEC_TYPE_SLICE].decode("cp949")
+            except UnicodeDecodeError:
+                logger.debug("mst 라인 디코딩 스킵 (code=%s)", stock_code)
+                continue
             records.append({
                 "stock_code": stock_code,
                 "stock_name": stock_name,
