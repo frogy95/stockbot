@@ -751,7 +751,7 @@
           "status": "completed",
           "branch": "phase3-sprint2",
           "sprintDoc": "docs/phase/phase3/sprint2/sprint2.md",
-          "prUrl": "",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/33",
           "progress": {
             "total": 8,
             "completed": 8

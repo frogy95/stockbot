@@ -16,11 +16,11 @@
 - Phase 2.6 Sprint 1 — mst 파서 재작성 + 검증, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/27
 
 - Phase 3 Sprint 1 — 리스크/자금 관리 모듈, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/32
-- Phase 3 Sprint 2 — 매매 전략 + 주문 실행, 🔄 계획 수립 완료 (2026-03-30)
+- Phase 3 Sprint 2 — 매매 전략 + 주문 실행, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/33
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인 (Sprint 2 완료 후)
+- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인 (즉시 착수 가능)
 
 ## 핵심 주의사항
 

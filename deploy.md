@@ -7,7 +7,7 @@
 
 ### Phase 3 Sprint 2: 매매 전략 + 주문 실행 (2026-03-30)
 
-PR: (생성 중)
+PR: https://github.com/frogy95/stockbot/pull/33
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

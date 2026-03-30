@@ -10,7 +10,7 @@
 **상태:** ✅ 완료 (2026-03-30)
 **이전 스프린트:** Sprint 1 (pytest 통과, PR #32)
 **브랜치명:** `phase3-sprint2`
-**PR:** (생성 예정)
+**PR:** https://github.com/frogy95/stockbot/pull/33
 
 ---
 
