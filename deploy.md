@@ -12,10 +12,15 @@ PR: https://github.com/frogy95/stockbot/pull/23
 - ✅ 자동 검증 완료 항목:
   - pytest: 303 passed, 3 warnings (회귀 없음)
 
+- ✅ 수동 검증 완료 항목:
+  - Railway 배포 완료 + health check (database/redis connected)
+  - scheduler next_run 타임스탬프 전체 +09:00(KST) 확인 (2026-03-30 장중)
+
 - ⬜ 수동 검증 필요 항목:
-  - docker compose up --build (코드 반영 후 로컬 확인)
-  - Railway 배포 후 scheduler 로그에서 CronTrigger timezone=Asia/Seoul 확인
-  - 장전(08:00 KST) premarket_collect job 정상 실행 확인
+  - docker compose up --build → 로컬 scheduler next_run +09:00(KST) 확인 (2026-03-30)
+
+- ⬜ 수동 검증 필요 항목:
+  - 장전(08:00 KST) premarket_collect job 정상 실행 확인 (내일 확인)
 
 ---
 
@@ -35,7 +40,7 @@ PR: https://github.com/frogy95/stockbot/pull/8
 - ✅ DART 재무 수집기 실데이터 확인: corp_code 115,603건 초기화 + 재무 22건
 - ✅ 네이버 센티멘트 수집기 실데이터 확인: 300건 수집 완료
 
-- ⬜ KIS API 실거래 확인: 평일 장중 수동 검증 필요 (모의거래 시세 조회 + 주문 체결 테스트)
+- ✅ KIS API 모의거래 시세 조회 확인: 삼성전자(005930) 174,900원 / -2.67% 정상 응답 (2026-03-30 장중)
 
 ---
 
