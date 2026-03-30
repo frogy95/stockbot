@@ -152,6 +152,12 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 - 스프린트 워크플로우: `.claude/rules/sprint-workflow.md`
 - Notion 문서 관리: Notion 설정 시 `.claude/rules/notion.md` 생성 예정
 
+## 하네스 피드백 수집
+
+- **피드백 파일**: `.claude/feedback.md` — skill/agent/hook/rule 개선 백로그
+- 세션 중 "피드백 기록해줘: ~~" 라고 하면 해당 파일 `미반영` 섹션에 추가
+- 반영은 사용자가 수동으로 진행, 반영 후 `반영 완료` 섹션으로 이동
+
 ## 훅 시스템
 
 - **PreToolUse (bash-guard)**: 위험 명령 차단 (force push, hard reset, 잘못된 브랜치명 등)
