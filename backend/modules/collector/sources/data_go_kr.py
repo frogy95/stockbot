@@ -2,6 +2,7 @@
 
 import logging
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
 from sqlalchemy import select
@@ -36,7 +37,9 @@ class DataGoKrCollector:
         공공데이터포털 API는 당일 데이터를 제공하지 않으므로 항상 직전 평일을 반환한다.
         월요일 → 금요일, 화~금 → 전날, 주말 → 금요일.
         """
-        target = date.today() - timedelta(days=1)
+        from core.config import settings
+        today_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        target = today_kst - timedelta(days=1)
         if target.weekday() == 6:    # 일요일(전일이 일요일이면 토요일) → 금요일
             target -= timedelta(days=2)
         elif target.weekday() == 5:  # 토요일 → 금요일

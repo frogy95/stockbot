@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change-me-to-random-jwt-secret"
     TRADING_ENV: str = "paper"
 
+    # 시장 타임존 (APScheduler, datetime 계산에 사용)
+    MARKET_TIMEZONE: str = "Asia/Seoul"
+
     # PostgreSQL
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
