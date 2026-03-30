@@ -3,6 +3,7 @@
 import json
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -11,6 +12,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from core.config import settings
 from core.models.screening_result import ScreeningResult
 from core.models.stock import Stock
 
@@ -69,27 +71,28 @@ class CollectorScheduler:
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
+        tz = ZoneInfo(settings.MARKET_TIMEZONE)
         self._scheduler.add_job(
             self._premarket_collect,
-            CronTrigger(hour=8, minute=0),
+            CronTrigger(hour=8, minute=0, timezone=tz),
             id="premarket_collect",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
             self._etf_collect,
-            CronTrigger(hour=8, minute=5),
+            CronTrigger(hour=8, minute=5, timezone=tz),
             id="etf_collect",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
             self._market_open,
-            CronTrigger(hour=9, minute=0),
+            CronTrigger(hour=9, minute=0, timezone=tz),
             id="market_open",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
             self._market_close,
-            CronTrigger(hour=15, minute=30),
+            CronTrigger(hour=15, minute=30, timezone=tz),
             id="market_close",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
@@ -97,20 +100,20 @@ class CollectorScheduler:
         if self._primary_screener:
             self._scheduler.add_job(
                 self._primary_screen,
-                CronTrigger(hour=8, minute=10),
+                CronTrigger(hour=8, minute=10, timezone=tz),
                 id="primary_screen",
                 misfire_grace_time=MISFIRE_GRACE_TIME,
             )
         # 보조 데이터: 08:15 DART 재무, 08:20 네이버 센티멘트 (1차 스크리닝 후)
         self._scheduler.add_job(
             self._dart_collect,
-            CronTrigger(hour=8, minute=15),
+            CronTrigger(hour=8, minute=15, timezone=tz),
             id="dart_collect",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
             self._sentiment_collect,
-            CronTrigger(hour=8, minute=20),
+            CronTrigger(hour=8, minute=20, timezone=tz),
             id="sentiment_collect",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
@@ -217,7 +220,7 @@ class CollectorScheduler:
             async with self._session_factory() as db_session:
                 collector = DataGoKrCollector(db_session)
                 count = await collector.collect_all()
-            self._last_premarket = datetime.now()
+            self._last_premarket = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("장전 수집 완료: %d종목", count)
             return count
         except Exception:
@@ -231,7 +234,7 @@ class CollectorScheduler:
             async with self._session_factory() as db_session:
                 collector = KISCollector(self._rest_client, db_session)
                 count = await collector.collect_etf_prices()
-            self._last_etf = datetime.now()
+            self._last_etf = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("ETF 수집 완료: %d종목", count)
             return count
         except Exception:
@@ -287,7 +290,7 @@ class CollectorScheduler:
                 )
 
             passed = [r for r in results if r.get("is_passed")]
-            self._last_primary_screen = datetime.now()
+            self._last_primary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
         except Exception as e:
@@ -307,7 +310,7 @@ class CollectorScheduler:
                 results = await self._realtime_screener.screen(candidate_codes, db_session)
 
             passed = [r for r in results if r.get("is_passed")]
-            self._last_secondary_screen = datetime.now()
+            self._last_secondary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
             return {"candidates": len(candidate_codes), "passed": len(passed)}
         except Exception:
@@ -330,7 +333,7 @@ class CollectorScheduler:
                 collector = DartCollector(db_session)
                 count = await collector.collect_financials(stock_codes)
 
-            self._last_dart = datetime.now()
+            self._last_dart = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("DART 재무 수집 완료: %d건", count)
             return count
         except Exception:
@@ -353,7 +356,7 @@ class CollectorScheduler:
                 collector = NaverCollector(db_session)
                 count = await collector.collect_sentiments(stock_info)
 
-            self._last_sentiment = datetime.now()
+            self._last_sentiment = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("네이버 센티멘트 수집 완료: %d건", count)
             return count
         except Exception:

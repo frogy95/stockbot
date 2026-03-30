@@ -84,9 +84,10 @@ async def probe_data_go_kr():
     """공공데이터포털 API 연결 진단 (1페이지, DB 저장 없음)."""
     import httpx
     from core.config import settings
-    from datetime import date, timedelta
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
 
-    today = date.today()
+    today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
     if today.weekday() == 5:
         bas_dt = (today - timedelta(days=1)).strftime("%Y%m%d")
     elif today.weekday() == 6:

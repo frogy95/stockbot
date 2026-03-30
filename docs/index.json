@@ -507,7 +507,31 @@
       "createdAt": "2026-03-29"
     }
   ],
-  "hotfixes": [],
+  "hotfixes": [
+    {
+      "id": "hotfix-fix-timezone-scheduling",
+      "name": "APScheduler KST 타임존 설정 누락 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/fix-timezone-scheduling/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/23",
+      "deployedAt": "2026-03-30",
+      "description": "Railway(UTC) 서버에서 APScheduler CronTrigger timezone 미설정으로 모든 스케줄 job이 KST 기준 +9시간 늦게 실행되던 버그 수정. MARKET_TIMEZONE 설정 추가 및 datetime.now() timezone-aware 수정.",
+      "commits": [
+        {
+          "hash": "fbab51c",
+          "message": "fix(scheduler): APScheduler CronTrigger에 KST timezone 설정 + datetime.now() timezone-aware 수정",
+          "date": "2026-03-30"
+        },
+        {
+          "hash": "4130887",
+          "message": "docs(hotfix): fix-timezone-scheduling 핫픽스 문서 추가",
+          "date": "2026-03-30"
+        }
+      ]
+    }
+  ],
   "deployHistory": [
     {
       "date": "2026-03-29",
