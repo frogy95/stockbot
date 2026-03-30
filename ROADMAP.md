@@ -23,7 +23,7 @@
 
 - 전체 진행률: Phase 0~3 완료, Phase 4 계획 수립 완료
 - 현재 Phase: Phase 4 (웹 대시보드 MVP) 🔄
-- 현재 Sprint: Phase 4 Sprint 1 (대시보드 기본 구조 + 핵심 페이지) 📋
+- 현재 Sprint: Phase 4 Sprint 1 (대시보드 기본 구조 + 핵심 페이지) 🔄
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31)
 - 프로덕션 배포: v0.4.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 4 Sprint 1 — 대시보드 기본 구조 + 핵심 페이지 (MVP 완성 향해)

@@ -837,9 +837,104 @@
     {
       "id": "phase4",
       "title": "웹 대시보드 (MVP)",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase4/phase4.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "대시보드 기본 구조 + 핵심 페이지",
+          "status": "planned",
+          "branch": "phase4-sprint1",
+          "sprintDoc": "docs/phase/phase4/sprint1/sprint1.md",
+          "progress": {
+            "total": 9,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "백엔드: 환경변수 + CORS + JWT 인증 API",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-1-백엔드----환경변수--cors--jwt-인증-api",
+              "testPlan": "pytest test_auth.py — 로그인/실패잠금/토큰갱신/인증제외경로",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "백엔드: 대시보드 집계 API",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-2-백엔드----대시보드-집계-api",
+              "testPlan": "pytest test_dashboard_api.py — 손익합계/포지션수/거래건수 집계",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "프론트엔드: shadcn/ui + SWR + API 클라이언트 + 색상 상수",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-3-프론트엔드----shadcnui--swr--api-클라이언트--색상-상수",
+              "testPlan": "npx tsc --noEmit 에러 없음 + shadcn/ui 컴포넌트 8종 설치",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "프론트엔드: 인증 (로그인 페이지 + AuthProvider + 미들웨어)",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-4-프론트엔드----인증-로그인-페이지--authprovider--미들웨어",
+              "testPlan": "npx tsc --noEmit + 미인증 /login 리다이렉트 + 로그인 성공 진입",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "프론트엔드: 대시보드 레이아웃 (사이드바 + 모드배너)",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-5-프론트엔드----대시보드-레이아웃-사이드바--모드배너",
+              "testPlan": "npx tsc --noEmit + 사이드바 8메뉴 + 모드배너 색상 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "프론트엔드: 메인 대시보드 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-6-프론트엔드----메인-대시보드-페이지",
+              "testPlan": "npx tsc --noEmit + 4개 카드 데이터 표시 + 5초 폴링",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "프론트엔드: 포지션 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-7-프론트엔드----포지션-페이지",
+              "testPlan": "npx tsc --noEmit + 포지션 테이블 + 손익 색상 + 빈 상태",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "프론트엔드: 주문 현황 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-8-프론트엔드----주문-현황-페이지",
+              "testPlan": "npx tsc --noEmit + 주문 테이블 + 상태 필터 탭",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task9",
+              "title": "통합 테스트 + 회귀 검증",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-9-통합-테스트--회귀-검증",
+              "testPlan": "pytest 전체 + npx tsc --noEmit + 수동 검증 체크리스트",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

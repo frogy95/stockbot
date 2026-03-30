@@ -18,9 +18,12 @@
 - Phase 3 Sprint 1 — 리스크/자금 관리 모듈, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/32
 - Phase 3 Sprint 2 — 매매 전략 + 주문 실행, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/33
 
+- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인, ✅ 완료 (2026-03-31)
+- [Phase 4 Sprint 1](phase4-sprint1-status.md) — 대시보드 기본 구조 + 핵심 페이지, 🔄 계획 수립 완료 (2026-03-31)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인 (즉시 착수 가능)
+- Phase 4 Sprint 1 — 대시보드 기본 구조 + 핵심 페이지 (즉시 착수 가능)
 
 ## 핵심 주의사항
 
@@ -62,3 +65,11 @@
 - Phase 3 Sprint 2: factors.py의 calc_volatility_factor(highs, lows, closes) -> ATR 값 반환, 이미 구현되어 있어 전략에서 재사용
 - Phase 3 Sprint 2: main.py lifespan에 session_factory, rest_client, redis_client, throttler 이미 생성됨 — 추가 모듈은 이후에 초기화
 - Phase 3 Sprint 2: 모의거래(TRADING_ENV=paper)에서는 시장가만 사용, 최우선 지정가 건너뜀 (미해결 사항 #1)
+- Phase 4 Sprint 1: 기존 frontend/app/layout.tsx에 `dark` 클래스 + zinc-950 배경 이미 적용 — shadcn/ui 다크모드와 호환
+- Phase 4 Sprint 1: frontend/package.json에 Next.js 16.2.1, React 19, Tailwind 4 설치됨 — swr, shadcn/ui 추가 필요
+- Phase 4 Sprint 1: 기존 trading API 6개 재활용 — positions, orders, history, signals, risk-status, engine-status
+- Phase 4 Sprint 1: main.py CORS origins 하드코딩 ["http://localhost:3000"] -> 환경변수 ALLOWED_ORIGINS 전환 필요
+- Phase 4 Sprint 1: JWT_SECRET은 core/config.py에 이미 존재 — PyJWT로 HS256 서명에 재활용
+- Phase 4 Sprint 1: api/deps.py에 get_db, get_redis만 존재 — get_current_user 추가 필요
+- Phase 4 Sprint 1: 인증은 Depends(get_current_user) 방식 (글로벌 미들웨어 아님) — health, auth/login, telegram/webhook 제외 용이
+- Phase 4 Sprint 1: Next.js 16 미들웨어 파일명 변경 가능성 확인 필요 (middleware.ts vs proxy.ts)
