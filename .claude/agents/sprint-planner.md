@@ -166,6 +166,15 @@ git commit -m "feat(phase{P}-sprint{N}): {구체적 설명}"
 - 현재 스프린트 번호와 목표를 메모리에 기록합니다.
 - 코드베이스 분석 중 발견한 주의사항을 기록합니다.
 
+### 6단계: 모든 변경 파일 커밋 (필수)
+
+sprint-planner가 생성/수정한 모든 파일을 **반드시 커밋**합니다. 이 단계를 건너뛰면 안 됩니다.
+
+1. `git status`로 변경 파일 확인
+2. 변경된 파일을 모두 stage (`docs/phase/`, `docs/index.json`, `ROADMAP.md`, `.claude/agent-memory/` 등)
+3. 커밋 메시지: `docs(phase{P}-sprint{N}): sprint{N} 계획 수립`
+4. `git push`로 원격에 반영
+
 ## Task 작성 규칙
 
 1. **정확한 파일 경로**: 와일드카드나 상대 경로 금지. `backend/app/services/example.py` 형식
@@ -257,12 +266,14 @@ Task별 `skill:` 헤더를 작성할 때 **판단 플로우차트**를 위에서
 작업 완료 시 사용자에게 다음을 안내합니다:
 
 ```
-📋 사용자 다음 단계:
-1. docs/phase/phase{P}/sprint{N}/sprint{N}.md를 검토해주세요 (실행 플랜, Task 목록, 도구 매칭)
-2. 수정이 필요하면 알려주세요
-3. 확정되면 → "구현 시작해" 또는 "sprint{N}.md 검토 완료. 구현 시작해"
-   (병렬 실행 시 → "Phase 2를 팀으로 실행해줘")
-   브랜치: git checkout -b phase{P}-sprint{N}
+📋 다음 단계를 선택해주세요:
+1. sprint-dev로 구현 시작 (/sprint-dev {P}-{N})
+2. 검토 후 수동 진행
+
+docs/phase/phase{P}/sprint{N}/sprint{N}.md를 먼저 검토하세요 (실행 플랜, Task 목록, 도구 매칭).
+수정이 필요하면 진행 전에 알려주세요.
+
+반드시 사용자 응답을 기다린 후 진행합니다. sprint-dev를 자동으로 호출하지 않습니다.
 ```
 
 ## 에러 처리

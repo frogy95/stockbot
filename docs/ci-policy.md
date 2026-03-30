@@ -1,52 +1,7 @@
-> **개발 프로세스/검증 절차**: [`docs/dev-process.md`](dev-process.md) 참조
-> **롤백 시나리오 상세(DB 백업 포함)**: [`docs/dev-process.md` 섹션 6.4](dev-process.md#64-롤백-시나리오) 참조
+> **Git 브랜치 전략/배포 흐름/롤백 시나리오**: [`docs/dev-process.md`](dev-process.md) §1, §6 참조
+> **검증 매트릭스/코드 리뷰 체크리스트**: [`docs/dev-process.md`](dev-process.md) §5, §7 참조
 
-## Git 브랜치 전략 & 배포 흐름
-
-### 브랜치 구조
-
-| 브랜치 | 역할 | 배포 환경 |
-|--------|------|----------|
-| `phase{P}-sprint{N}` | 스프린트 단위 개발 작업 | 로컬 |
-| `develop` | 스테이징 통합 브랜치 | 로컬 Docker |
-| `main` | 프로덕션 브랜치 | Vercel + Railway |
-| `hotfix/*` | 긴급 운영 패치 | main + develop 동시 반영 |
-
----
-
-### 배포 흐름
-
-```
-phase{P}-sprint{N}
-  ↓ PR & merge (스프린트 완료 시)
-develop ──────────────→ 로컬 docker compose up --build 로 스테이징 검증
-  ↓ PR & merge (QA 통과 후)
-main    ──────────────→ Vercel 자동 배포 (프론트엔드)
-                        Railway 자동 배포 (백엔드)
-  ↓ tag
-v1.0.0, v1.1.0 ...
-```
-
-### Hotfix 배포 흐름
-
-```
-hotfix/*
-  ↓ PR & merge (긴급 패치)
-main    ──────────────→ Vercel + Railway 자동 배포
-  ↓ 역머지
-develop ──────────────→ main 변경사항 동기화
-```
-
----
-
-### 핵심 규칙
-
-- `main` 직접 push 금지 — 반드시 PR + 리뷰 후 merge
-- `develop` → `main` merge는 QA 통과 후 진행
-- 긴급 패치는 **`main` 기반**으로 `hotfix/*` 브랜치를 생성하여 작업
-- hotfix PR은 **`main`으로 직접** 생성 (develop 거치지 않음)
-- main merge 후 반드시 `develop`에 역머지하여 동기화
-- hotfix 범위 제한: 파일 3개 이하, 코드 50줄 이하, DB 변경 없음, 새 의존성 없음
+이 문서는 **인프라/CI 설정** 전용입니다. 개발 프로세스/워크플로우는 위 참조를 따릅니다.
 
 ---
 
@@ -115,36 +70,6 @@ docker compose up --build
 | `KIS_APP_KEY` / `KIS_APP_SECRET` | 한투 API 키 |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | 텔레그램 봇 |
 | `CORS_ORIGINS` | Vercel 프론트엔드 도메인 |
-
----
-
-## 롤백 절차
-
-> 시나리오별 상세 절차(DB 백업 포함)는 [docs/dev-process.md 섹션 6.4](dev-process.md#64-롤백-시나리오) 참조.
-
-### 프론트엔드 롤백 (Vercel)
-
-```bash
-vercel rollback
-```
-
-또는 Vercel 대시보드에서 이전 배포를 Promote.
-
-### 백엔드 롤백 (Railway)
-
-```bash
-railway rollback --service backend
-```
-
-또는 Railway 대시보드에서 이전 배포를 Rollback.
-
-### DB 마이그레이션 롤백
-
-```bash
-railway run --service backend alembic downgrade -1
-```
-
-> DB 마이그레이션 롤백은 데이터 손실이 발생할 수 있습니다. 롤백 전 반드시 DB 백업을 수행하세요.
 
 ---
 
