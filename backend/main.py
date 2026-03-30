@@ -34,6 +34,7 @@ from api.routes.telegram import router as telegram_router
 from modules.notifier.approval import ApprovalManager
 from modules.notifier.telegram_bot import TelegramBot
 from modules.notifier.manager import NotifierManager
+from modules.notifier.commands import CommandHandler
 from core.config import settings as app_settings
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,8 @@ async def lifespan(app: FastAPI):
         app.state.approval_manager = approval_manager
         app.state.telegram_bot = telegram_bot
         app.state.notifier_manager = notifier_manager
+        command_handler = CommandHandler(session_factory, redis_client, telegram_bot)
+        app.state.command_handler = command_handler
         logger.info("텔레그램 알림 모듈 초기화 완료")
 
     # 매매 엔진 초기화
