@@ -59,13 +59,13 @@ async def trigger_sentiment(background_tasks: BackgroundTasks, request: Request)
 
 
 @router.post("/collector/trigger/dart-corp-code")
-async def trigger_dart_corp_code(background_tasks: BackgroundTasks):
-    """DART corp_code ZIP 초기화 (최초 1회 실행 필요, 백그라운드 실행)."""
+async def trigger_dart_corp_code():
+    """DART corp_code ZIP 초기화 (최초 1회 실행 필요, 동기 실행)."""
     from core.database import get_session_factory
     from modules.collector.sources.dart import DartCollector
-    import zipfile, io, logging
+    import zipfile, io
 
-    async def _init_corp_codes():
+    try:
         factory = get_session_factory()
         async with factory() as db_session:
             collector = DartCollector(db_session)
@@ -74,10 +74,9 @@ async def trigger_dart_corp_code(background_tasks: BackgroundTasks):
                 xml_bytes = z.read("CORPCODE.xml")
             records = collector.parse_corp_code_xml(xml_bytes)
             saved = await collector.save_corp_codes(records)
-            logging.getLogger(__name__).info("corp_code 초기화 완료: %d건", saved)
-
-    background_tasks.add_task(_init_corp_codes)
-    return {"triggered": True, "message": "corp_code 초기화 시작됨 (수분 소요)"}
+        return {"ok": True, "corp_codes_saved": saved}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "error_type": type(e).__name__}
 
 
 @router.get("/collector/probe/data-go-kr")
