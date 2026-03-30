@@ -3,6 +3,7 @@
 import asyncio
 import io
 import logging
+import re
 import zipfile
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -24,22 +25,20 @@ MST_FILENAMES = {
 
 SPOT_CHECK_CODES = {"069500", "122630", "114800", "252670", "102110"}
 
-ETP_ETF = "1"
-ETP_ETN = "2"
+_CODE_SLICE = slice(0, 9)        # 종목코드 6자리 + 공백3
+_NAME_SLICE = slice(21, 61)      # 종목명 40자
+_SEC_TYPE_SLICE = slice(61, 63)  # 증권구분 2자
+_MIN_LINE_LEN = 63               # 파싱 필수 최소 길이
+_STOCK_CODE_RE = re.compile(r"^\d{6}$")
 
-_CODE_START = 0
-_CODE_LEN = 9
-_NAME_START = 21
-_NAME_LEN = 40
-_ETP_START = 121
-_ETP_LEN = 1
-_RECORD_LEN = 200
+SEC_TYPE_ETF = "EF"
+SEC_TYPE_ETN = "EN"
 
 
 class KISMasterCollector:
     """KIS 종목 마스터파일 기반 ETF/ETN 수집기.
 
-    KOSPI/KOSDAQ .mst.zip 병렬 다운로드 → CP949 고정길이 파싱 → ETF/ETN 필터링
+    KOSPI/KOSDAQ .mst.zip 병렬 다운로드 → CP949 줄바꿈 분리 파싱 → ETF/ETN 필터링
     → 메타데이터 보강 → sanity check → stocks 테이블 bulk upsert
     """
 
@@ -109,11 +108,13 @@ class KISMasterCollector:
     def filter_etf(self, records: list[dict]) -> list[dict]:
         result = []
         for r in records:
-            etp = r.get("etp_prod_type", "").strip()
-            if etp == ETP_ETF:
+            sec = r.get("sec_type", "").strip()
+            if sec == SEC_TYPE_ETF:
                 result.append({**r, "stock_type": "ETF"})
-            elif etp == ETP_ETN:
+            elif sec == SEC_TYPE_ETN:
                 result.append({**r, "stock_type": "ETN"})
+            elif sec:
+                logger.debug("알 수 없는 증권구분: %s (종목=%s)", sec, r.get("stock_code"))
         return result
 
     def enrich_etf_metadata(self, records: list[dict]) -> list[dict]:
@@ -190,24 +191,31 @@ class KISMasterCollector:
         return len(values)
 
     def _parse_mst(self, data: bytes, market_type: str) -> list[dict]:
+        # 바이트 기반 슬라이싱: CP949에서 한글은 2바이트이므로
+        # 디코딩 후 문자 슬라이싱 시 offset이 틀어짐. 각 필드를 개별 디코딩한다.
         records = []
-        offset = 0
-        while offset + _RECORD_LEN <= len(data):
-            chunk = data[offset: offset + _RECORD_LEN]
+        for line_bytes in data.split(b"\n"):
+            line_bytes = line_bytes.rstrip(b"\r")
+            if len(line_bytes) < _MIN_LINE_LEN:
+                continue
             try:
-                stock_code = chunk[_CODE_START: _CODE_START + _CODE_LEN].decode("cp949").strip()
-                stock_name = chunk[_NAME_START: _NAME_START + _NAME_LEN].decode("cp949").strip()
-                etp_prod_type = chunk[_ETP_START: _ETP_START + _ETP_LEN].decode("cp949")
-                if stock_code:
-                    records.append({
-                        "stock_code": stock_code,
-                        "stock_name": stock_name,
-                        "market_type": market_type,
-                        "etp_prod_type": etp_prod_type,
-                    })
-            except (UnicodeDecodeError, IndexError):
-                logger.debug("mst 레코드 파싱 스킵 (offset=%d)", offset)
-            offset += _RECORD_LEN
+                stock_code = line_bytes[_CODE_SLICE].decode("cp949").strip()
+            except UnicodeDecodeError:
+                continue
+            if not _STOCK_CODE_RE.match(stock_code):
+                continue
+            try:
+                stock_name = line_bytes[_NAME_SLICE].decode("cp949").strip()
+                sec_type = line_bytes[_SEC_TYPE_SLICE].decode("cp949")
+            except UnicodeDecodeError:
+                logger.debug("mst 라인 디코딩 스킵 (code=%s)", stock_code)
+                continue
+            records.append({
+                "stock_code": stock_code,
+                "stock_name": stock_name,
+                "market_type": market_type,
+                "sec_type": sec_type,
+            })
         return records
 
     @staticmethod

@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.5 완료
-- 현재 Phase: Phase 2.5 (ETF 데이터 수집 파이프라인 완성) 완료
-- 현재 Sprint: Phase 3 Sprint 1 (리스크/자금 관리 모듈) 준비 중
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30)
+- 전체 진행률: Phase 0~2.6 완료
+- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 예정
+- 현재 Sprint: Phase 2.6 Sprint 1 완료, Phase 3 계획 필요
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30)
 - 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
 - 다음 마일스톤: Phase 3 — 매매 엔진 + 기본 알림
 
@@ -50,7 +50,8 @@ Phase 0 (완료)
         └─> Phase 1: 개발 환경 + 한투 API 기반
               └─> Phase 2: 데이터 수집 + 종목 스크리닝
                     └─> Phase 2.5: ETF 데이터 수집 파이프라인 완성
-                          └─> Phase 3: 매매 엔진 + 기본 알림
+                          └─> Phase 2.6: KIS mst 파서 올바른 구현
+                                └─> Phase 3: 매매 엔진 + 기본 알림
                           ├─> Phase 4: 웹 대시보드 (MVP)
                           └─> Phase 5: 완전 자동 모드 + 성과 분석
                                 └─> Phase 6: 고도화 + 안정화
@@ -60,7 +61,8 @@ Phase 0 (완료)
 - Phase 0.5 -> 1: 검증된 API 스펙 + 데이터 수집 전략(공공데이터포털 일괄 + 한투 실시간) 기반 설계
 - Phase 1 -> 2: 한투 API 연동 + 공공데이터포털 수집이 스크리닝의 전제
 - Phase 2 -> 2.5: 공공데이터포털 ETF 미포함 → KIS mst 파일로 ETF 마스터 적재
-- Phase 2.5 -> 3: ETF 포함 완전한 수집 파이프라인이 매매 전략의 전제
+- Phase 2.5 -> 2.6: mst 파서 구현 오류 수정 (sanity check 항상 실패 블로커)
+- Phase 2.6 -> 3: ETF 포함 완전한 수집 파이프라인이 매매 전략의 전제
 - Phase 3 -> 4: 매매 데이터(포지션, 주문, 신호)가 대시보드 표시 대상
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
 - Phase 4, 5 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
@@ -321,6 +323,25 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 
 > Phase 문서: `docs/phase/phase2.5/phase2.5.md`
 > Sprint 계획: `docs/phase/phase2.5/sprint1/sprint1.md`
+> 전문가 검토: 정프로(PO), 최리스크(리스크), 윤에이피(API) — 3명 검토 완료
+
+---
+
+## Phase 2.6: KIS mst 파서 올바른 구현 (Sprint 1) ✅
+
+### 목표
+Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 파일 구조와 다르게 구현되어 sanity check가 항상 실패하는 문제를 수정한다. 고정길이(200바이트) offset 방식을 줄바꿈 분리 방식으로, ETF 판별 필드를 offset 121 -> 61:63('EF')으로 전면 재작성한다.
+
+### 작업 목록
+#### Sprint 1: mst 파서 재작성 + 검증 ✅ (2026-03-30 완료)
+- ✅ _parse_mst() 줄바꿈 분리 방식 재작성 + 상수 전체 교체
+- ✅ filter_etf() 증권구분 61:63 / 'EF'/'EN' 적용
+- ✅ stock_code 6자리 숫자 패턴 검증 추가
+- ✅ test_kis_master.py fixture 줄바꿈 기반 재작성
+- ✅ 실제 KIS mst 다운로드 sanity check 통과 검증 (sanity_passed=True, ETF=878종목)
+- ✅ KOSDAQ mst offset 검증 (ETF 없음 확인) + ETN 구분값 확인 (해당 URL mst에 ETN 미포함)
+
+> Phase 문서: `docs/phase/phase2.6/phase2.6.md`
 > 전문가 검토: 정프로(PO), 최리스크(리스크), 윤에이피(API) — 3명 검토 완료
 
 ---

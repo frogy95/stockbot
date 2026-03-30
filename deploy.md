@@ -5,6 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Phase 2.6 Sprint 1: KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소 (2026-03-30)
+
+PR: https://github.com/frogy95/stockbot/pull/27
+
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+
+#### 수동 검증 필요 항목 (Railway 배포 후)
+- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 시 sanity_passed=True 확인
+- ⬜ Railway 배포 후 mst 다운로드 성공 + stocks 테이블 ETF 878종목 적재 확인
+
+---
+
 ### Phase 2.5 Sprint 1: ETF 마스터 수집 + 스케줄러 통합 (2026-03-30)
 
 PR: https://github.com/frogy95/stockbot/pull/26
