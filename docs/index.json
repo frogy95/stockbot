@@ -1054,6 +1054,100 @@
             }
           ],
           "prUrl": "https://github.com/frogy95/stockbot/pull/36"
+        },
+        {
+          "id": "sprint2",
+          "title": "신호/스크리닝/설정 + 웹 매매 승인",
+          "status": "planned",
+          "branch": "phase4-sprint2",
+          "sprintDoc": "docs/phase/phase4/sprint2/sprint2.md",
+          "progress": {
+            "total": 9,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "감사 로그 모델 + 마이그레이션",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-1-감사-로그-모델--마이그레이션",
+              "testPlan": "pytest test_audit_log.py — AuditLog 모델 생성/조회 + alembic upgrade head",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "웹 승인/거부 API + 대기 신호 조회",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-2-웹-승인거부-api--대기-신호-조회",
+              "testPlan": "pytest test_web_approval.py — 승인/거부/만료 토큰/대기 목록",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "모드 전환 보호 API + 감사 로그 기록",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-3-모드-전환-보호-api--감사-로그-기록",
+              "testPlan": "pytest test_mode_switch.py — 비밀번호/장중차단/포지션체크/감사로그",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "매매 신호 페이지 (승인 카드 + 카운트다운)",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-4-매매-신호-페이지-승인-카드--카운트다운",
+              "testPlan": "npx tsc --noEmit + 승인 카드 카운트다운 + 폴링 3초/5초 전환",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "스크리닝 페이지 (1차/2차 탭)",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-5-스크리닝-페이지-1차2차-탭",
+              "testPlan": "npx tsc --noEmit + 탭 전환 + 데이터 표시",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "매매 이력 페이지 (날짜 필터)",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-6-매매-이력-페이지-날짜-필터",
+              "testPlan": "npx tsc --noEmit + 날짜 필터 + 손익 색상",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "성과 분석 페이지 (기본 일별 손익 테이블)",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-7-성과-분석-페이지-기본-일별-손익-테이블",
+              "testPlan": "npx tsc --noEmit + 일별 손익 테이블 + 기간 합계",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "설정 페이지 (모드 전환 + 리스크 잠금)",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-8-설정-페이지-모드-전환--리스크-잠금",
+              "testPlan": "npx tsc --noEmit + 이중 확인 모달 + 장중 잠금 UI",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task9",
+              "title": "통합 테스트 + 회귀 검증",
+              "path": "docs/phase/phase4/sprint2/sprint2.md#task-9-통합-테스트--회귀-검증",
+              "testPlan": "pytest 전체 + tsc + npm run build + 8개 페이지 접근",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     }

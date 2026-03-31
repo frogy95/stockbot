@@ -142,3 +142,4 @@ exploration/**/.token_cache.json
 *.ppt
 *.pem
 todo.md
+*.lock
