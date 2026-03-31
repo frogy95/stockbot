@@ -9,8 +9,8 @@
 
 PR: https://github.com/frogy95/stockbot/pull/36
 
-#### 코드 리뷰 결과 (2026-03-31)
-- ✅ 코드 리뷰 완료 — PR #36 코멘트 작성 (https://github.com/frogy95/stockbot/pull/36)
+#### 코드 리뷰 결과 (2026-03-31, 재검증)
+- ✅ 코드 리뷰 완료 — PR #36 코멘트 작성 (https://github.com/frogy95/stockbot/pull/36#issuecomment-4159611506)
 - Critical 이슈: 1건 → ✅ 수정 완료
   - `/login` 페이지에서 401 무한 리다이렉트 루프 (`apiFetch`에서 pathname 체크로 수정, commit ea10f19)
 - High 이슈: 없음
@@ -19,15 +19,16 @@ PR: https://github.com/frogy95/stockbot/pull/36
 - 보안: 하드코딩 시크릿 없음, 로그인 실패 5회 잠금(Redis), CORS 환경변수 기반
 - 패턴 준수: App Router Route Groups, shadcn/ui, SWR 폴링 패턴 정상
 
-#### 자동 검증 결과 (2026-03-31)
+#### 자동 검증 결과 (2026-03-31, 재검증)
 - ✅ pytest -v 전체: 522 passed, 20 warnings
 - ✅ npx tsc --noEmit: exit 0 (사용자 확인)
 - ✅ npm run build: 성공 (사용자 확인)
 - ✅ GET /api/v1/health: {"status":"healthy","database":"connected","redis":"connected"}
 - ✅ POST /api/v1/auth/login (비밀번호 미설정): 401 "비밀번호가 설정되지 않았습니다" — 정상
-- ✅ GET /api/v1/dashboard/summary (invalid token): 401 "유효하지 않은 토큰입니다" — 인증 가드 정상
+- ✅ GET /api/v1/dashboard/summary (invalid token): 401 — 인증 가드 정상
 - ✅ GET /api/v1/trading/positions (invalid token): 401 — trading API 인증 정상
 - ✅ 프론트엔드 접속: http://localhost:3000 → 307 리다이렉트 → /login 200 OK
+- ✅ Playwright: 로그인 페이지 UI 정상 렌더링 확인 (스크린샷: docs/phase/phase4/sprint1/login-page.png)
 
 #### Phase 문서 반영 (2026-03-31)
 - ✅ Phase 4 Sprint 분할 테이블: Sprint 1 ✅ 표시
