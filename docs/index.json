@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-31T00:00:00+09:00",
+  "lastUpdated": "2026-03-31T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1136,6 +1136,24 @@
       "version": "v0.3.0",
       "description": "Phase 2.5/2.6 프로덕션 배포 — Phase 2.5 Sprint 1 (ETF 마스터 수집 파이프라인 완성), Phase 2.6 Sprint 1 (KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소, ETF 878종목)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/28",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-30",
+      "type": "sprint",
+      "ref": "phase3-sprint1, phase3-sprint2, phase3-sprint3",
+      "version": "v0.4.0",
+      "description": "Phase 3 프로덕션 배포 — Phase 3 Sprint 1 (리스크/자금 관리 모듈), Phase 3 Sprint 2 (매매 전략 + 주문 실행), Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인 시스템)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/35",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-31",
+      "type": "sprint",
+      "ref": "phase4-sprint1",
+      "version": "v0.5.0",
+      "description": "Phase 4 Sprint 1 프로덕션 배포 — JWT 인증 API, 대시보드 집계 API, trading API 인증 보호, 로그인 페이지, 대시보드 레이아웃, 메인/포지션/주문 페이지",
+      "prUrl": "",
       "status": "pending-merge"
     }
   ]
