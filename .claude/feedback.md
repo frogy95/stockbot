@@ -21,6 +21,7 @@
 - [rule] dev-process.md §4 — Hotfix 흐름이 `main을 develop에 역머지`로만 기술되어 있으나, GitHub branch protection으로 직접 push 불가. PR 기반 역머지 절차 명시 필요 (2026-03-31)
 - [agent] hotfix-close — hotfix 완료 후 업데이트된 문서(예: docs/hotfix/market-open-recovery/hotfix.md)가 커밋되지 않은 채 남아있음. hotfix-close가 PR 생성 전 변경된 문서 파일을 자동으로 스테이징·커밋하는 단계가 누락된 것으로 보임 → 문서 변경사항 커밋 단계 추가 필요 (2026-03-31)
 - [hook] bash-guard — 운영 로그성 문서(docs/hotfix/**, docs/deploy-history/**, deploy.md)는 소스 변경 없이 develop에 직접 커밋/push해도 무방하나, 현재 bash-guard가 파일 종류 구분 없이 develop 직접 push를 일괄 차단함 → docs 전용 커밋에 한해 develop 직접 push 예외 허용. 단 main 직접 push는 계속 차단 유지. 에이전트 소비 문서(CLAUDE.md, .claude/rules/*, .claude/agents/*, docs/index.json 등)는 예외 대상에서 제외 (2026-03-31)
+- [agent] sprint-review, hotfix-close — 완료 후 "머지 대기" 상태로 안내만 하고 종료함. 대신 사용자에게 객관식으로 머지 여부를 물어보고(예: 1) 지금 머지, 2) 나중에 머지, 3) 머지 안 함), 선택에 따라 직접 머지(PR approve + merge)까지 수행하는 흐름으로 변경 필요 (2026-03-31)
 
 ## 반영 완료
 
