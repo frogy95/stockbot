@@ -5,19 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Hotfix: Railway 장중 재시작 시 market_open 누락 버그 수정 (2026-03-31)
+### Hotfix: 2차 스크리닝 → 매매 엔진 연결 누락 수정 (2026-03-31)
 
-PR: https://github.com/frogy95/stockbot/pull/47
+PR: https://github.com/frogy95/stockbot/pull/50
 
 - ✅ 자동 검증 완료 항목:
-  - pytest: 539 passed, 38 warnings, 0 failed
-  - 신규 테스트 3건 통과 (장중/장전/장후 케이스)
-  - 코드 리뷰: Critical/High 이슈 없음 (Medium 1건 — 함수 내 import, 배포 차단 사유 아님)
+  - pytest: 539 passed, 0 failed
+  - 관련 테스트(test_scheduler.py, test_trading_engine.py, test_engine_approval.py): 23 passed
+  - 코드 리뷰: Critical/High 이슈 없음
 
 - ⬜ 수동 검증 필요 항목:
   - docker compose up --build (코드 반영)
-  - Railway 배포 후 장중 재시작 시 로그에서 "장중 재시작 감지" 메시지 확인
-  - Railway 배포 후 ws_subscriptions > 0 확인 (WS 연결 성공)
+  - Railway 배포 후 장중 2차 스크리닝 로그에서 `process_screening_results` 호출 확인
+  - Railway 배포 후 매매 신호 생성 확인 (스크리닝 통과 종목 존재 시)
 
 ---
 

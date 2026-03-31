@@ -71,10 +71,15 @@ class CollectorScheduler:
         self._last_sentiment: datetime | None = None
         self._last_etf_master: datetime | None = None
         self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
+        self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
 
     def set_telegram_bot(self, bot) -> None:
         """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
         self._telegram_bot = bot
+
+    def set_trading_engine(self, engine) -> None:
+        """매매 엔진 참조 설정 (main.py에서 후속 주입)."""
+        self._trading_engine = engine
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
@@ -412,6 +417,11 @@ class CollectorScheduler:
             passed = [r for r in results if r.get("is_passed")]
             self._last_secondary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
+
+            # 통과 종목을 매매 엔진에 전달
+            if passed and self._trading_engine:
+                await self._trading_engine.process_screening_results(passed)
+
             return {"candidates": len(candidate_codes), "passed": len(passed)}
         except Exception:
             logger.exception("2차 스크리닝 실패")

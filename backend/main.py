@@ -145,6 +145,7 @@ async def lifespan(app: FastAPI):
     )
     await trading_engine.start()
     app.state.trading_engine = trading_engine
+    collector_scheduler.set_trading_engine(trading_engine)
     logger.info("매매 엔진 초기화 완료")
 
     # 텔레그램 웹훅 설정
