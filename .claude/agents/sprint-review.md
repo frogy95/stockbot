@@ -114,17 +114,19 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 
 ```
 📋 다음 단계를 선택해주세요:
-1. deploy-prod로 진행 (프로덕션 배포)
-2. 검토 후 수동 진행
-3. 재실행 (Critical 이슈 수정 후)
+1. develop PR 지금 머지 + deploy-prod로 프로덕션 배포 진행
+2. develop PR 지금 머지 (배포는 나중에)
+3. 나중에 머지 (PR URL만 전달하고 종료)
+4. 재실행 (Critical 이슈 수정 후)
 
 수동 검증 항목: {수동 검증 항목 목록}
 Notion 업데이트 필요 여부: {판단 결과}
 
 반드시 사용자 응답을 기다린 후 진행합니다.
 ```
-사용자가 1을 선택하면 Agent 도구로 `deploy-prod` 에이전트를 호출한다.
-사용자가 3을 선택하면 Agent 도구로 `sprint-review` 에이전트를 재호출한다.
+- 사용자가 1을 선택하면: `gh pr merge {번호} --merge` 실행 후 Agent 도구로 `deploy-prod` 에이전트를 호출한다.
+- 사용자가 2를 선택하면: `gh pr merge {번호} --merge` 실행 후 종료한다.
+- 사용자가 4를 선택하면: Agent 도구로 `sprint-review` 에이전트를 재호출한다.
 
 ## 완료 전 자기 검증
 
