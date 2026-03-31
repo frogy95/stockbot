@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-31T12:00:00+09:00",
+  "lastUpdated": "2026-03-31T14:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1106,6 +1106,24 @@
           "hash": "4130887",
           "message": "docs(hotfix): fix-timezone-scheduling 핫픽스 문서 추가",
           "date": "2026-03-30"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-market-open-recovery",
+      "name": "market_open 미실행 장애 복구",
+      "status": "deployed",
+      "path": "docs/hotfix/market-open-recovery/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/40",
+      "deployedAt": "2026-03-31",
+      "description": "Railway 재시작 지연으로 market_open 잡이 misfire_grace_time(60초) 초과 시 스킵되어 장중 2차 스크리닝 완전 무력화되던 장애 복구. MISFIRE_GRACE_TIME 300초로 확대, 09:05 market_open_recovery 자동 복구 잡 추가, 텔레그램 복구 알림 연동.",
+      "commits": [
+        {
+          "hash": "ba7f86a",
+          "message": "fix(hotfix): market_open 미실행 장애 복구 (misfire_grace_time + 09:05 자동 복구)",
+          "date": "2026-03-31"
         }
       ]
     }

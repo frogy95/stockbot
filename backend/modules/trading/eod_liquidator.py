@@ -16,7 +16,7 @@ from core.redis import RedisClient
 
 logger = logging.getLogger(__name__)
 
-MISFIRE_GRACE_TIME = 60
+MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 
 
 class EodLiquidator:
