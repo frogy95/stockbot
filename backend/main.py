@@ -33,6 +33,7 @@ from modules.trading.position_manager import PositionManager
 from modules.trading.engine import TradingEngine
 from api.routes.trading import router as trading_router
 from api.routes.telegram import router as telegram_router
+from api.routes.audit import router as audit_router
 from modules.notifier.approval import ApprovalManager
 from modules.notifier.telegram_bot import TelegramBot
 from modules.notifier.manager import NotifierManager
@@ -188,6 +189,7 @@ def create_app() -> FastAPI:
     app.include_router(screening_router, prefix="/api/v1")
     app.include_router(trading_router, prefix="/api/v1")
     app.include_router(telegram_router, prefix="/api/v1")
+    app.include_router(audit_router, prefix="/api/v1")
 
     return app
 
