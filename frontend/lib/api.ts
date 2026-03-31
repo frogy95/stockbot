@@ -1,16 +1,20 @@
-const TOKEN_KEY = "stockbot_token";
+export const TOKEN_COOKIE = "stockbot_token";
+
+const COOKIE_MAX_AGE = 86400;
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_COOKIE);
 }
 
 export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_COOKIE, token);
+  document.cookie = `${TOKEN_COOKIE}=${token}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 export function removeToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_COOKIE);
+  document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0`;
 }
 
 export async function apiFetch(
