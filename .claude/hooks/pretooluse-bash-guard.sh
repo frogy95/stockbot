@@ -31,10 +31,23 @@ if echo "$CMD" | grep -qE 'git\s+push\s+origin\s+main(\s|$)'; then
   exit 2
 fi
 
-# 패턴 3: git push origin develop
+# 패턴 3: git push origin develop — docs 전용 커밋은 예외 허용
 if echo "$CMD" | grep -qE 'git\s+push\s+origin\s+develop(\s|$)'; then
-  echo '❌ develop 브랜치 직접 push 금지. PR을 통해 merge하세요.'
-  exit 2
+  # 원격 develop 대비 변경된 파일 목록 확인
+  CHANGED=$(git diff origin/develop..HEAD --name-only 2>/dev/null || echo "")
+  if [[ -z "$CHANGED" ]]; then
+    echo '❌ develop 브랜치 직접 push 금지. PR을 통해 merge하세요.'
+    exit 2
+  fi
+  # docs/, deploy.md, MEMORY.md 외 코드/설정 파일이 있으면 차단
+  NON_DOCS=$(echo "$CHANGED" | grep -vE '^(docs/|deploy\.md$|MEMORY\.md$)' || true)
+  if [[ -n "$NON_DOCS" ]]; then
+    echo '❌ develop 브랜치 직접 push 금지. PR을 통해 merge하세요.'
+    echo "코드/설정 변경 파일 감지: $(echo "$NON_DOCS" | head -5)"
+    exit 2
+  fi
+  # docs 전용 커밋 → 허용
+  exit 0
 fi
 
 # 패턴 4: git push --force

@@ -18,6 +18,7 @@ paths:
 - **worktree 사용 금지**
 - 커밋 메시지에 **task ID 필수** (PostToolUse hook이 index.json 자동 동기화)
 - Hotfix vs Sprint 판단: `docs/dev-process.md` §2 기준
+- **신규 환경변수**: 프로덕션(Railway) 수동 설정이 필요한 환경변수를 추가했다면 sprint-close/hotfix-close 마무리 시 deploy.md 수동 검증 항목에 `Railway 환경변수 추가 확인: VAR_NAME` 형식으로 기록
 
 ## 에이전트 역할 분담
 
@@ -28,7 +29,7 @@ paths:
 | 마무리 | sprint-close | **develop** | PR + ROADMAP 업데이트 |
 | 리뷰 | sprint-review | — | deploy.md 검증 결과 |
 | 배포 | deploy-prod | **main** | develop→main PR |
-| 핫픽스 | hotfix-close | **main** | main PR + develop 역머지 안내 |
+| 핫픽스 | hotfix-close | **main** | main PR 자동 머지 + develop 역머지 자동 머지 |
 
 ## 문서 구조
 

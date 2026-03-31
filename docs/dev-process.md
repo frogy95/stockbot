@@ -25,7 +25,7 @@ phase{P}-sprint{N}  →  PR to develop  →  로컬 Docker 스테이징 검증  
 ### Hotfix 흐름
 
 ```
-hotfix/*  →  PR to main  →  서버 자동 배포  →  main을 develop에 역머지
+hotfix/*  →  PR to main (자동 머지)  →  서버 자동 배포  →  main→develop PR (자동 머지)
 ```
 
 ---
@@ -100,11 +100,16 @@ PR 검토 후 별도로 실행합니다.
 
 ### 4.2 마무리 (hotfix-close agent)
 
-1. hotfix/* → **main** PR 생성
-2. 변경 파일만 대상으로 경량 코드 리뷰
-3. 섹션 5 검증 매트릭스의 "Hotfix" 컬럼 기준으로 타겟 검증 실행
-4. `docs/deploy-history/YYYY-MM-DD.md`에 이전 기록 이동 후 deploy.md 업데이트
-5. develop 역머지 안내
+1. 미커밋 문서 파일(docs/hotfix/**, deploy.md, docs/index.json) 커밋
+2. hotfix/* → **main** PR 생성 + 즉시 자동 머지
+3. 변경 파일만 대상으로 경량 코드 리뷰
+4. 섹션 5 검증 매트릭스의 "Hotfix" 컬럼 기준으로 타겟 검증 실행
+5. `docs/deploy-history/YYYY-MM-DD.md`에 이전 기록 이동 후 deploy.md 업데이트
+6. develop 역머지 PR 생성 + 즉시 자동 머지 (GitHub branch protection — 직접 push 불가)
+   ```bash
+   gh pr create --base develop --head main --title "chore: hotfix/{설명} develop 역머지"
+   gh pr merge {번호} --merge
+   ```
 
 ---
 
