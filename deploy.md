@@ -14,10 +14,42 @@ PR: https://github.com/frogy95/stockbot/pull/50
   - 관련 테스트(test_scheduler.py, test_trading_engine.py, test_engine_approval.py): 23 passed
   - 코드 리뷰: Critical/High 이슈 없음
 
-- ⬜ 수동 검증 필요 항목:
-  - docker compose up --build (코드 반영)
-  - Railway 배포 후 장중 2차 스크리닝 로그에서 `process_screening_results` 호출 확인
-  - Railway 배포 후 매매 신호 생성 확인 (스크리닝 통과 종목 존재 시)
+- ✅ 배포 확인 (2026-03-31):
+  - PR #51 (develop→main) 머지 완료
+  - Railway 자동 배포 완료 (`Application startup complete`)
+  - 스케줄러 11개 잡 등록 확인 (`railway logs` + `/api/v1/collector/status`)
+  - `secondary_screen` next_run=null (장중 외 일시정지) 정상 확인
+
+- ⬜ 내일 아침 순차 체크 (`railway logs --tail 200`):
+
+  **08:00 ~ 08:20 수집 단계**
+  ```
+  railway logs --tail 200
+  ```
+  - ⬜ `장전 수집 완료: N종목` (08:00, 공공데이터포털)
+  - ⬜ `ETF 마스터 수집 완료: ETF=N, ETN=N, source=download` (08:10)
+  - ⬜ `1차 스크리닝 완료: N후보, N통과` (08:10)
+  - ⬜ `DART 재무 수집 완료: N건` (08:15)
+  - ⬜ `ETF 수집 완료: N종목` (08:15)
+  - ⬜ `네이버 센티멘트 수집 완료: N건` (08:20)
+
+  **09:00 ~ 09:10 장 시작 단계**
+  - ⬜ `장중 시작: WS 연결` + `WS 연결 완료` (09:00)
+  - ⬜ `2차 스크리닝 30초 주기 활성화` (09:00)
+  - ⬜ ws_subscriptions > 0 확인:
+    ```
+    curl https://api.stockbot.choiji.kr/api/v1/collector/status
+    ```
+  - ⬜ 09:05 `market_open 복구 불필요: ws_subscriptions=N` 로그 (정상 시)
+
+  **09:30 이후 매매 파이프라인 (이번 hotfix 핵심)**
+  - ⬜ `2차 스크리닝 완료: N후보, N통과` 로그 30초마다 반복 확인
+  - ⬜ 통과 종목 존재 시 `승인 요청: XXXXXX N주 @NNNNN` 로그 확인 (반자동 모드)
+  - ⬜ 텔레그램 매매 신호 알림 수신 확인
+
+  **이상 발생 시**
+  - WS 미연결: `railway logs` 에서 에러 확인 후 텔레그램 복구 알림 대기
+  - 수집 0종목: 공공데이터포털 API 키 만료 여부 확인 (`DATA_GO_KR_API_KEY`)
 
 ---
 
