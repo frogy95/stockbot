@@ -3,7 +3,10 @@
 import useSWR from "swr";
 import { apiGet } from "@/lib/api";
 
-export function usePolling<T>(path: string, intervalMs = 5000) {
+export function usePolling<T>(
+  path: string,
+  intervalMs: number | ((data: T | undefined) => number) = 5000
+) {
   const { data, error, isLoading, mutate } = useSWR<T>(path, apiGet, {
     refreshInterval: intervalMs,
     revalidateOnFocus: false,
