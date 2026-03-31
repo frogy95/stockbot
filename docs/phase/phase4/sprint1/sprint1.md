@@ -10,6 +10,7 @@
 **상태:** ✅ 완료 (2026-03-31)
 **이전 스프린트:** Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인, PR: https://github.com/frogy95/stockbot/pull/35 등)
 **브랜치명:** `phase4-sprint1`
+**PR:** https://github.com/frogy95/stockbot/pull/36
 
 ---
 

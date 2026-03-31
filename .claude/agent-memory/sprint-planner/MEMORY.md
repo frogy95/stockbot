@@ -19,11 +19,11 @@
 - Phase 3 Sprint 2 — 매매 전략 + 주문 실행, ✅ 완료 (2026-03-30) / PR: https://github.com/frogy95/stockbot/pull/33
 
 - Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인, ✅ 완료 (2026-03-31)
-- [Phase 4 Sprint 1](phase4-sprint1-status.md) — 대시보드 기본 구조 + 핵심 페이지, 🔄 계획 수립 완료 (2026-03-31)
+- [Phase 4 Sprint 1](phase4-sprint1-status.md) — 대시보드 기본 구조 + 핵심 페이지, ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/36
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4 Sprint 1 — 대시보드 기본 구조 + 핵심 페이지 (즉시 착수 가능)
+- Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (즉시 착수 가능)
 
 ## 핵심 주의사항
 
