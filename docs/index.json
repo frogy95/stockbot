@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-31T14:30:00+09:00",
+  "lastUpdated": "2026-03-31T15:40:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -957,7 +957,7 @@
     {
       "id": "phase4",
       "title": "웹 대시보드 (MVP)",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase4/phase4.md",
       "sprints": [
         {
@@ -1268,6 +1268,15 @@
       "version": "v0.5.0",
       "description": "Phase 4 Sprint 1 프로덕션 배포 — JWT 인증 API, 대시보드 집계 API, trading API 인증 보호, 로그인 페이지, 대시보드 레이아웃, 메인/포지션/주문 페이지",
       "prUrl": "https://github.com/frogy95/stockbot/pull/38",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-31",
+      "type": "sprint",
+      "ref": "phase4-sprint2",
+      "version": "v0.6.0",
+      "description": "Phase 4 Sprint 2 프로덕션 배포 — 감사 로그 API, 웹 승인/거부 API, 모드 전환 보호 API, 매매 신호/스크리닝/이력/분석/설정 5개 페이지 신규, MVP 완성",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/45",
       "status": "pending-merge"
     }
   ]
