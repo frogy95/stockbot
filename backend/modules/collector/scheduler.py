@@ -32,7 +32,7 @@ from core.clients.kis_ws import KISWebSocketClient
 
 logger = logging.getLogger(__name__)
 
-MISFIRE_GRACE_TIME = 60  # 초
+MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 REALTIME_CACHE_TTL = 5  # 초
 
 
@@ -70,6 +70,11 @@ class CollectorScheduler:
         self._last_dart: datetime | None = None
         self._last_sentiment: datetime | None = None
         self._last_etf_master: datetime | None = None
+        self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
+
+    def set_telegram_bot(self, bot) -> None:
+        """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
+        self._telegram_bot = bot
 
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
@@ -102,6 +107,12 @@ class CollectorScheduler:
             self._market_close,
             CronTrigger(hour=15, minute=30, timezone=tz),
             id="market_close",
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
+        self._scheduler.add_job(
+            self._market_open_recovery,
+            CronTrigger(hour=9, minute=5, timezone=tz),
+            id="market_open_recovery",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         # 1차 스크리닝: 08:10 (공공데이터포털 수집 완료 후)
@@ -289,6 +300,25 @@ class CollectorScheduler:
             logger.info("WS 연결 완료, 구독 대기")
         except Exception:
             logger.exception("WS 연결 실패")
+
+    async def _market_open_recovery(self) -> None:
+        """09:05 WS 연결 상태 확인 — 미연결 시 _market_open 재시도 + 텔레그램 경고."""
+        if self._ws_manager.count > 0:
+            logger.info("market_open 복구 불필요: ws_subscriptions=%d", self._ws_manager.count)
+            return
+        logger.warning("market_open 복구 시작: ws_subscriptions=0")
+        if self._telegram_bot:
+            await self._telegram_bot.send_notification(
+                "<b>[장애 복구]</b> market_open 미실행 감지\n"
+                "ws_subscriptions=0 → 자동 재시도 중..."
+            )
+        await self._market_open()
+        if self._telegram_bot:
+            subs = self._ws_manager.count
+            status = "복구 성공" if subs > 0 else "복구 실패"
+            await self._telegram_bot.send_notification(
+                f"<b>[장애 복구]</b> {status}\nws_subscriptions={subs}"
+            )
 
     async def _market_close(self) -> None:
         """15:30 WS 구독 해제 + 연결 종료 + 2차 스크리닝 중지."""
