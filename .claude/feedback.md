@@ -15,14 +15,15 @@
 <!-- 대상: skill | agent | hook | rule | claude.md -->
 <!-- 예시: - [agent] sprint-planner가 task 의존성 순서를 잘못 잡음 → 의존성 검증 단계 추가 필요 (2026-03-30) -->
 
-- [rule] backend.md — 새 환경변수를 config.py에 추가할 때 .env.example에도 반드시 추가하는 규칙 없음 → 명시 필요 (2026-03-30)
-- [rule] backend.md 또는 sprint-workflow.md — 신규 환경변수가 프로덕션(Railway 등) 수동 설정이 필요한 경우 deploy.md 수동 검증 항목에 기록하는 규칙 없음 → sprint-close/sprint-review 체크리스트에 추가 필요 (2026-03-30)
-- [agent] hotfix-close — develop 역머지 시 GitHub 저장소 규칙(PR 필수)을 고려하지 않음. `git merge main` 직접 push 안내 대신 역머지 PR 생성 절차로 변경 필요 (2026-03-31)
-- [rule] dev-process.md §4 — Hotfix 흐름이 `main을 develop에 역머지`로만 기술되어 있으나, GitHub branch protection으로 직접 push 불가. PR 기반 역머지 절차 명시 필요 (2026-03-31)
-- [agent] hotfix-close — hotfix 완료 후 업데이트된 문서(예: docs/hotfix/market-open-recovery/hotfix.md)가 커밋되지 않은 채 남아있음. hotfix-close가 PR 생성 전 변경된 문서 파일을 자동으로 스테이징·커밋하는 단계가 누락된 것으로 보임 → 문서 변경사항 커밋 단계 추가 필요 (2026-03-31)
-- [hook] bash-guard — 운영 로그성 문서(docs/hotfix/**, docs/deploy-history/**, deploy.md)는 소스 변경 없이 develop에 직접 커밋/push해도 무방하나, 현재 bash-guard가 파일 종류 구분 없이 develop 직접 push를 일괄 차단함 → docs 전용 커밋에 한해 develop 직접 push 예외 허용. 단 main 직접 push는 계속 차단 유지. 에이전트 소비 문서(CLAUDE.md, .claude/rules/*, .claude/agents/*, docs/index.json 등)는 예외 대상에서 제외 (2026-03-31)
-- [agent] sprint-review, hotfix-close — 완료 후 "머지 대기" 상태로 안내만 하고 종료함. 대신 사용자에게 객관식으로 머지 여부를 물어보고(예: 1) 지금 머지, 2) 나중에 머지, 3) 머지 안 함), 선택에 따라 직접 머지(PR approve + merge)까지 수행하는 흐름으로 변경 필요 (2026-03-31)
-
 ## 반영 완료
 
 <!-- 형식: - [대상] 내용 (기록일 → 반영일) -->
+
+- [rule] backend.md — 새 환경변수를 config.py에 추가할 때 .env.example에도 반드시 추가하는 규칙 없음 → 핵심 규칙 섹션에 추가 (2026-03-30 → 2026-03-31)
+- [rule] sprint-workflow.md — 신규 환경변수가 프로덕션 수동 설정이 필요한 경우 deploy.md 기록 규칙 없음 → 핵심 규칙 섹션에 추가 (2026-03-30 → 2026-03-31)
+- [agent] hotfix-close — develop 역머지 시 GitHub PR 필수를 고려하지 않음 → 5.5단계 역머지 PR 자동 생성·머지로 변경 (2026-03-31 → 2026-03-31)
+- [rule] dev-process.md §4 — Hotfix 흐름 PR 기반 역머지 절차 미명시 → §4.2 6번 항목에 gh pr 명령어 포함 절차 추가 (2026-03-31 → 2026-03-31)
+- [agent] hotfix-close — 문서 변경사항 커밋 단계 누락 → 1.5단계 추가 (2026-03-31 → 2026-03-31)
+- [hook] bash-guard — docs 전용 커밋은 develop 직접 push 예외 허용 필요 → 패턴 3에 변경 파일 검사 로직 추가 (2026-03-31 → 2026-03-31)
+- [agent] hotfix-close — 완료 후 머지 대기 안내만 함 → main PR + 역머지 PR 즉시 자동 머지로 변경 (2026-03-31 → 2026-03-31)
+- [agent] sprint-review — 완료 후 선택지 3개(deploy-prod/수동/재실행) → 4개(머지+배포/머지만/나중에/재실행)로 확장, 선택 시 직접 머지 실행 (2026-03-31 → 2026-03-31)

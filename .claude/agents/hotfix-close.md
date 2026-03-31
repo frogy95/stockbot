@@ -12,11 +12,13 @@ maxTurns: 30
 
 핫픽스 완료 후 다음 마무리 작업을 순서대로 수행합니다:
 1. 현재 상태 파악 (hotfix/* 브랜치 확인, 변경 범위 점검)
-2. PR 생성 (hotfix → **main**)
+1.5. 문서 변경사항 커밋 (PR 생성 전)
+2. main PR 생성 + **즉시 자동 머지**
 3. 경량 코드 리뷰 (변경 파일만)
 4. 타겟 검증 (pytest + 해당 페이지/API만)
 5. deploy.md 업데이트 (아카이빙 포함)
-6. 최종 보고 (PR URL, 수동 필요 항목, develop 역머지 안내)
+5.5. develop 역머지 PR 생성 + **즉시 자동 머지**
+6. 최종 보고 (두 PR URL, 수동 필요 항목)
 
 > **sprint-close와의 차이**: ROADMAP.md 업데이트 없음, PR 대상이 main, 검증 범위가 변경 파일 관련으로만 한정, sprint 문서 작성 없음.
 
@@ -30,7 +32,19 @@ maxTurns: 30
 - `deploy.md`를 읽어 기존 미완료 항목을 파악합니다.
 - hotfix 문서가 없는 경우 `docs/hotfix/{name}/hotfix.md`를 생성합니다. (docs/templates/EXAMPLE-hotfix.md 참조)
 
-### 2단계: PR 생성
+### 1.5단계: 문서 변경사항 커밋
+
+PR 생성 전, 이 세션에서 생성한 문서 파일이 미커밋 상태인지 확인합니다.
+
+- `git status`로 `docs/hotfix/**`, `deploy.md`, `docs/index.json`, `docs/deploy-history/**` 등 변경 파일 확인
+- 미커밋 문서 파일이 있으면 커밋합니다:
+  ```bash
+  git add docs/ deploy.md
+  git commit -m "docs(hotfix): {설명} 핫픽스 문서 및 배포 기록 추가"
+  ```
+- 이미 모두 커밋된 상태라면 이 단계를 건너뜁니다.
+
+### 2단계: main PR 생성 + 즉시 자동 머지
 
 - 현재 hotfix 브랜치에서 **main** 브랜치로 PR을 생성합니다. (develop이 아닌 main)
 - PR 제목: `fix: {핫픽스 설명} (hotfix)`
@@ -39,7 +53,11 @@ maxTurns: 30
   - 수정 내용 요약
   - 변경 파일 목록
   - 검증 결과 요약
-- **참고**: main merge 후 `develop`에 역머지가 필요합니다. (6단계에서 안내)
+- PR 생성 즉시 머지합니다:
+  ```bash
+  gh pr create --base main --head hotfix/{설명} --title "fix: {설명} (hotfix)" --body "..."
+  gh pr merge {PR번호} --merge
+  ```
 
 ### 3단계: 경량 코드 리뷰
 
@@ -89,22 +107,25 @@ PR: {PR URL}
 - `commits[]`에 핫픽스 커밋 해시/메시지/날짜를 기록합니다.
 - `lastUpdated`를 현재 시각으로 갱신합니다.
 
+### 5.5단계: develop 역머지 PR 생성 + 즉시 자동 머지
+
+main 머지 완료 후 develop에 역머지합니다. GitHub branch protection 규칙으로 직접 push는 불가하므로 PR을 통해 처리합니다.
+
+```bash
+gh pr create --base develop --head main \
+  --title "chore: hotfix/{설명} develop 역머지" \
+  --body "hotfix/{설명} 핫픽스를 develop에 반영합니다."
+gh pr merge {PR번호} --merge
+```
+
 ### 6단계: 최종 보고
 
 사용자에게 다음을 보고합니다:
-- PR URL (main 브랜치로의 PR)
+- main PR URL + 머지 완료 확인
+- develop 역머지 PR URL + 머지 완료 확인
 - 코드 리뷰 결과 요약 (Critical/High 이슈 여부)
 - 자동 검증 결과 (통과/실패 항목)
 - 사용자가 직접 수행해야 하는 남은 수동 검증 항목
-- **develop 역머지 안내**: main merge 후 아래 명령어로 develop을 동기화해야 합니다:
-
-```bash
-git checkout develop
-git pull origin main
-git push origin develop
-# 또는 GitHub에서 main → develop PR 생성
-```
-
 - 배포 후 실서버 검증이 필요하면 deploy-prod agent 사용을 안내합니다.
 
 ## 언어 및 문서 작성 규칙
