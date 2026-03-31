@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~2.6 완료, Phase 3 Sprint 2 완료
-- 현재 Phase: Phase 3 (매매 엔진 + 기본 알림) 🔄
-- 현재 Sprint: Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인) 📋
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30)
-- 프로덕션 배포: v0.1.0 (2026-03-29) — Vercel + Railway
-- 다음 마일스톤: Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인
+- 전체 진행률: Phase 0~4 Sprint 1 완료
+- 현재 Phase: Phase 4 (웹 대시보드 MVP) 🔄
+- 현재 Sprint: Phase 4 Sprint 2 (신호/스크리닝/설정 + 웹 매매 승인) 📋
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31)
+- 프로덕션 배포: v0.4.0 (2026-03-31) — Vercel + Railway
+- 다음 마일스톤: Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성)
 
 ## 기술 아키텍처 결정 사항
 
@@ -346,7 +346,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 
 ---
 
-## Phase 3: 매매 엔진 + 기본 알림 (Sprint 1~3) 🔄
+## Phase 3: 매매 엔진 + 기본 알림 (Sprint 1~3) ✅
 
 ### 목표
 리스크/자금 관리 규칙 구현, 모멘텀 브레이크아웃 전략 기반 매매 신호 생성, 주문 실행(반자동), 포지션 관리, 텔레그램 기본 알림 및 매매 승인. 데이트레이딩 전용 당일 청산 강제.
@@ -376,12 +376,14 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 - 매매 엔진 오케스트레이터 (스크리닝 -> 전략 -> 리스크 체크 -> 주문)
 - 주문 큐(asyncio.Queue) 순차 실행 + 스로틀러 주문 bypass
 
-#### Sprint 3: 텔레그램 봇 + 반자동 승인
-- 텔레그램 웹훅 (FastAPI 엔드포인트 직접 처리)
-- 인라인 버튼 승인/거부 + Redis 승인 키(TTL 30초/15초) + 일회용 토큰
-- 알림 발송 (신호 알림, 체결 완료, 일일 마감 리포트) — HTML 형식
-- 조회 명령어 (/status, /today, /mode, /help)
-- Chat ID 화이트리스트 + 앱 시작 시 setWebhook 자동 호출
+#### Sprint 3: 텔레그램 봇 + 반자동 승인 ✅ (2026-03-31 완료)
+> Sprint 계획: `docs/phase/phase3/sprint3/sprint3.md` (2026-03-31)
+
+- ✅ 텔레그램 웹훅 (FastAPI 엔드포인트 직접 처리)
+- ✅ 인라인 버튼 승인/거부 + Redis 승인 키(TTL 30초/15초) + 일회용 토큰
+- ✅ 알림 발송 (신호 알림, 체결 완료, 일일 마감 리포트) — HTML 형식
+- ✅ 조회 명령어 (/status, /today, /mode, /help)
+- ✅ Chat ID 화이트리스트 + 앱 시작 시 setWebhook 자동 호출
 
 ### 전문가 확정 파라미터 (2026-03-30, 5명 검토)
 
@@ -431,20 +433,24 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 
 ---
 
-## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) 📋
+## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) 🔄
 
 ### 목표
 Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/신호/스크리닝 페이지, 설정 페이지, 웹 매매 승인 기능 포함. MVP 완성.
 
 ### 작업 목록
-#### Sprint 1: 대시보드 기본 구조 + 핵심 페이지
-- Next.js 프로젝트 셋업 (App Router, 다크 모드 기본)
-- 인증 (환경변수 기반 토큰 인증)
-- 메인 대시보드 (오늘 손익, 보유 종목 수, 거래 건수)
-- 포지션 페이지 (보유 종목, 평균가, 현재가, 미실현 손익)
-- 주문 현황 페이지 (대기/체결/취소)
-- 실시간 업데이트 (폴링 5초 또는 SSE)
-- 실전/모의 모드 표시 (빨간/초록 배지)
+#### Sprint 1: 대시보드 기본 구조 + 핵심 페이지 ✅ (2026-03-31 완료)
+> Sprint 계획: `docs/phase/phase4/sprint1/sprint1.md` (2026-03-31)
+
+- ✅ JWT 인증 API + CORS 환경변수화 + 로그인 실패 잠금 (PyJWT)
+- ✅ 대시보드 집계 API (/dashboard/summary)
+- ✅ shadcn/ui + SWR + API 클라이언트 + 색상 상수
+- ✅ 로그인 페이지 + AuthProvider + proxy.ts (Next.js 16)
+- ✅ 사이드바 + 모드배너
+- ✅ 메인 대시보드 페이지 (손익/포지션/거래/리스크 카드)
+- ✅ 포지션 페이지 (보유 종목 테이블 + 5초 폴링)
+- ✅ 주문 현황 페이지 (상태별 필터 탭)
+- ✅ 통합 테스트 + 회귀 검증 (pytest 522 passed, tsc 에러 없음, 프로덕션 빌드 성공)
 
 #### Sprint 2: 신호/스크리닝/설정 + 웹 매매 승인
 - 매매 신호 페이지 (승인 대기 목록 + 웹 승인/거부)
@@ -467,7 +473,8 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - HTTPS 적용 (Cloudflare SSL + Vercel 자동 SSL)
 - 모바일 반응형은 Phase 6에서 고도화
 
-> Phase 상세 계획: `docs/phase/phase4/phase4.md` (phase-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase4/phase4.md` ✅ 생성 완료 (2026-03-31)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 한유엑(UX), 윤에이피(API) -- 4명 검토 완료
 > Sprint 문서: `docs/phase/phase4/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
 
 ---

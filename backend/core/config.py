@@ -25,6 +25,9 @@ class Settings(BaseSettings):
 
     # 프론트엔드
     NEXT_PUBLIC_API_URL: str = "http://localhost:8000"
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ADMIN_PASSWORD: str = ""
+    JWT_EXPIRY_HOURS: int = 24
 
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"

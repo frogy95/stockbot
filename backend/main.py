@@ -14,6 +14,8 @@ from core.database import get_session_factory
 from modules.collector.ws_manager import WSSubscriptionManager
 from modules.collector.trade_strength import TradeStrengthCalculator
 from modules.collector.scheduler import CollectorScheduler
+from api.routes.auth import router as auth_router
+from api.routes.dashboard import router as dashboard_router
 from api.routes.health import router as health_router
 from api.routes.settings import router as settings_router
 from api.routes.kis import router as kis_router
@@ -170,12 +172,14 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=app_settings.ALLOWED_ORIGINS.split(","),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(dashboard_router, prefix="/api/v1")
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(settings_router, prefix="/api/v1")
     app.include_router(kis_router, prefix="/api/v1")
