@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -165,6 +165,40 @@ async def get_orders(
         }
         for o in orders
     ]
+
+
+@router.get("/signals/pending")
+async def get_pending_signals(request: Request):
+    """승인 대기 중인 매매 신호 목록 조회."""
+    approval_manager = getattr(request.app.state, "approval_manager", None)
+    if not approval_manager:
+        return {"pending": [], "count": 0}
+
+    items = await approval_manager.list_pending()
+    return {"pending": items, "count": len(items)}
+
+
+async def _handle_signal_action(token: str, request: Request, action: str) -> dict:
+    engine = getattr(request.app.state, "trading_engine", None)
+    if not engine:
+        raise HTTPException(status_code=503, detail="매매 엔진이 초기화되지 않았습니다")
+    method = engine.approve_signal if action == "approve" else engine.reject_signal
+    success = await method(token)
+    if not success:
+        raise HTTPException(status_code=404, detail="유효하지 않거나 만료된 토큰입니다")
+    return {"result": "approved" if action == "approve" else "rejected"}
+
+
+@router.post("/signals/{token}/approve")
+async def approve_signal(token: str, request: Request):
+    """매매 신호 웹 승인."""
+    return await _handle_signal_action(token, request, "approve")
+
+
+@router.post("/signals/{token}/reject")
+async def reject_signal(token: str, request: Request):
+    """매매 신호 웹 거부."""
+    return await _handle_signal_action(token, request, "reject")
 
 
 @router.get("/engine-status")
