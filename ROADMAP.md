@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4 Sprint 1 완료
-- 현재 Phase: Phase 4 (웹 대시보드 MVP) 🔄
-- 현재 Sprint: Phase 4 Sprint 2 (신호/스크리닝/설정 + 웹 매매 승인) 🔄
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31)
-- 프로덕션 배포: v0.4.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성)
+- 전체 진행률: Phase 0~4 Sprint 2 완료 (MVP 완성)
+- 현재 Phase: Phase 4 (웹 대시보드 MVP) ✅ 완료
+- 현재 Sprint: Phase 5 준비 중
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31)
+- 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
+- 다음 마일스톤: Phase 5 Sprint 1 — 완전 자동 모드 + 성과 분석
 
 ## 기술 아키텍처 결정 사항
 
@@ -433,7 +433,7 @@ Phase 2.5에서 구현한 KIS 종목 마스터파일(.mst) 파서가 실제 mst 
 
 ---
 
-## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) 🔄
+## Phase 4: 웹 대시보드 (MVP) (Sprint 1~2) ✅
 
 ### 목표
 Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/신호/스크리닝 페이지, 설정 페이지, 웹 매매 승인 기능 포함. MVP 완성.
@@ -452,18 +452,18 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - ✅ 주문 현황 페이지 (상태별 필터 탭)
 - ✅ 통합 테스트 + 회귀 검증 (pytest 522 passed, tsc 에러 없음, 프로덕션 빌드 성공)
 
-#### Sprint 2: 신호/스크리닝/설정 + 웹 매매 승인 🔄
+#### Sprint 2: 신호/스크리닝/설정 + 웹 매매 승인 ✅ (2026-03-31 완료)
 > Sprint 계획: `docs/phase/phase4/sprint2/sprint2.md` (2026-03-31)
 
-- ⬜ 감사 로그 모델 + Alembic 마이그레이션 (audit_logs 테이블)
-- ⬜ 웹 승인/거부 API + 대기 신호 조회 (기존 ApprovalManager 활용)
-- ⬜ 모드 전환 보호 API (이중 확인 + 장중 차단 + 포지션 체크 + 감사 로그)
-- ⬜ 매매 신호 페이지 (승인 카드 + 카운트다운 + 3초/5초 동적 폴링)
-- ⬜ 스크리닝 페이지 (1차/2차 탭 + 수동 트리거)
-- ⬜ 매매 이력 페이지 (날짜 필터 + 손익 색상)
-- ⬜ 성과 분석 페이지 (기본 일별 손익 테이블)
-- ⬜ 설정 페이지 (모드 전환 이중 확인 모달 + 리스크 장중 잠금 + 감사 로그)
-- ⬜ 통합 테스트 + 회귀 검증
+- ✅ 감사 로그 모델 + Alembic 마이그레이션 (audit_logs 테이블)
+- ✅ 웹 승인/거부 API + 대기 신호 조회 (기존 ApprovalManager 활용)
+- ✅ 모드 전환 보호 API (이중 확인 + 장중 차단 + 포지션 체크 + 감사 로그)
+- ✅ 매매 신호 페이지 (승인 카드 + 카운트다운 + 3초/5초 동적 폴링)
+- ✅ 스크리닝 페이지 (1차/2차 탭 + 수동 트리거)
+- ✅ 매매 이력 페이지 (날짜 필터 + 손익 색상)
+- ✅ 성과 분석 페이지 (기본 일별 손익 테이블)
+- ✅ 설정 페이지 (모드 전환 이중 확인 모달 + 리스크 장중 잠금 + 감사 로그)
+- ✅ 통합 테스트 + 회귀 검증 (pytest 536 passed, tsc 에러 없음, npm run build 성공)
 
 ### 완료 기준 (Definition of Done)
 - 모든 Must 페이지 (8개) 접근 가능 및 데이터 표시
