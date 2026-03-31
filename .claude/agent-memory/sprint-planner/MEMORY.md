@@ -21,11 +21,11 @@
 - Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인, ✅ 완료 (2026-03-31)
 - [Phase 4 Sprint 1](phase4-sprint1-status.md) — 대시보드 기본 구조 + 핵심 페이지, ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/36
 
-- Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성), 🔄 계획 수립 완료 (2026-03-31)
+- Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성), ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/44
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 이후 — Phase 4 완료 후 착수
+- Phase 5 Sprint 1 — Phase 4 완료됨, 착수 가능
 
 ## 핵심 주의사항
 

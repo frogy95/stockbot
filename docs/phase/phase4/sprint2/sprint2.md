@@ -9,6 +9,7 @@
 **Sprint 기간:** 2026-03-31 ~ 2026-03-31 ✅ 완료
 **이전 스프린트:** Phase 4 Sprint 1 (대시보드 기본 구조 + 핵심 페이지, PR #36)
 **브랜치명:** `phase4-sprint2`
+**PR:** https://github.com/frogy95/stockbot/pull/44
 
 ---
 
