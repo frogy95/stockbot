@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from api.deps import get_db
+from api.deps import get_db, get_current_user, UserInfo
 from main import create_app
 
 
@@ -25,6 +25,9 @@ def app(mock_session):
         yield mock_session
 
     test_app.dependency_overrides[get_db] = override_get_db
+    test_app.dependency_overrides[get_current_user] = lambda: UserInfo(
+        username="admin", trading_env="paper"
+    )
     yield test_app
     test_app.dependency_overrides.clear()
 

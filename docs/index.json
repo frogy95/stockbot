@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-30T00:00:00+09:00",
+  "lastUpdated": "2026-03-31T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -313,49 +313,97 @@
               "id": "task1",
               "title": "screening_results 테이블 + Alembic 마이그레이션",
               "status": "completed",
-              "commits": [{"hash": "5e812e1", "message": "feat(phase2-sprint1): task1 -- screening_results 테이블 모델 + 마이그레이션", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "5e812e1",
+                  "message": "feat(phase2-sprint1): task1 -- screening_results 테이블 모델 + 마이그레이션",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task2",
               "title": "공공데이터포털 수집기",
               "status": "completed",
-              "commits": [{"hash": "0cc5c8a", "message": "feat(phase2-sprint1): task2 -- 공공데이터포털 수집기 (전 종목 일괄 OHLCV/시총)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "0cc5c8a",
+                  "message": "feat(phase2-sprint1): task2 -- 공공데이터포털 수집기 (전 종목 일괄 OHLCV/시총)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task3",
               "title": "한투 WS 데이터 파서 (체결/호가)",
               "status": "completed",
-              "commits": [{"hash": "304a6b0", "message": "feat(phase2-sprint1): task3 -- 한투 WS 체결/호가 파서 (H0STCNT0, H0STASP0)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "304a6b0",
+                  "message": "feat(phase2-sprint1): task3 -- 한투 WS 체결/호가 파서 (H0STCNT0, H0STASP0)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task4",
               "title": "체결강도 계산 모듈",
               "status": "completed",
-              "commits": [{"hash": "82947a8", "message": "feat(phase2-sprint1): task4 -- 체결강도 계산 모듈 (5분 윈도우, 매수/매도 누적 비율)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "82947a8",
+                  "message": "feat(phase2-sprint1): task4 -- 체결강도 계산 모듈 (5분 윈도우, 매수/매도 누적 비율)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task5",
               "title": "WS 구독 매니저",
               "status": "completed",
-              "commits": [{"hash": "655f096", "message": "feat(phase2-sprint1): task5 -- WS 구독 매니저 (35종목 상한, 우선순위 로테이션, Lock)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "655f096",
+                  "message": "feat(phase2-sprint1): task5 -- WS 구독 매니저 (35종목 상한, 우선순위 로테이션, Lock)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task6",
               "title": "한투 REST ETF 수집기",
               "status": "completed",
-              "commits": [{"hash": "f12ab99", "message": "feat(phase2-sprint1): task6 -- 한투 REST ETF 수집기 (개별 시세 조회 + DB 저장)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "f12ab99",
+                  "message": "feat(phase2-sprint1): task6 -- 한투 REST ETF 수집기 (개별 시세 조회 + DB 저장)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task7",
               "title": "수집 스케줄러 + 수집 API",
               "status": "completed",
-              "commits": [{"hash": "60e0273", "message": "feat(phase2-sprint1): task7 -- 수집 스케줄러 (APScheduler) + 수집 상태/트리거 API", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "60e0273",
+                  "message": "feat(phase2-sprint1): task7 -- 수집 스케줄러 (APScheduler) + 수집 상태/트리거 API",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task8",
               "title": "통합 테스트 + main.py 연동",
               "status": "completed",
-              "commits": [{"hash": "42a0efd", "message": "feat(phase2-sprint1): task8 -- 통합 테스트 + main.py 스케줄러 연동", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "42a0efd",
+                  "message": "feat(phase2-sprint1): task8 -- 통합 테스트 + main.py 스케줄러 연동",
+                  "date": "2026-03-29"
+                }
+              ]
             }
           ]
         },
@@ -378,7 +426,13 @@
               "testPlan": "pytest tests/test_filters.py — PrimaryFilters/SecondaryFilters 기본값 + passes_primary_filter + is_hot_stock",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "4d798ec", "message": "feat(phase2-sprint2): task1 -- 필터 조건 정의 모듈 (1차/2차 필터 + 핫 종목 판정)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "4d798ec",
+                  "message": "feat(phase2-sprint2): task1 -- 필터 조건 정의 모듈 (1차/2차 필터 + 핫 종목 판정)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task2",
@@ -387,7 +441,13 @@
               "testPlan": "pytest tests/test_factors.py — 주식 5팩터 + ETF 괴리율 계산 정확성",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "46c8279", "message": "feat(phase2-sprint2): task2 -- 팩터 계산기 모듈 (주식 5팩터 + ETF 괴리율)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "46c8279",
+                  "message": "feat(phase2-sprint2): task2 -- 팩터 계산기 모듈 (주식 5팩터 + ETF 괴리율)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task3",
@@ -396,7 +456,13 @@
               "testPlan": "pytest tests/test_scorer.py — 순위 백분위 + 5팩터 가중 합산 + ETF 역순위",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "28f7c16", "message": "feat(phase2-sprint2): task3 -- 팩터 스코어링 엔진 (순위 백분위 + 5팩터 가중 합산)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "28f7c16",
+                  "message": "feat(phase2-sprint2): task3 -- 팩터 스코어링 엔진 (순위 백분위 + 5팩터 가중 합산)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task4",
@@ -405,7 +471,13 @@
               "testPlan": "pytest tests/test_screener.py — DB 정적 필터 + 후보 30종목 상한 + 핫 종목 플래그",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "98d4eee", "message": "feat(phase2-sprint2): task4 -- 1차 스크리닝 엔진 (DB 정적 필터 + 팩터 스코어링)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "98d4eee",
+                  "message": "feat(phase2-sprint2): task4 -- 1차 스크리닝 엔진 (DB 정적 필터 + 팩터 스코어링)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task5",
@@ -414,7 +486,13 @@
               "testPlan": "pytest tests/test_realtime_screener.py — 실시간 동적 필터 + 시초가 구간 제외",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "e2e0f19", "message": "feat(phase2-sprint2): task5 -- 2차 스크리닝 엔진 (실시간 동적 필터 + 시초가 구간 제외)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "e2e0f19",
+                  "message": "feat(phase2-sprint2): task5 -- 2차 스크리닝 엔진 (실시간 동적 필터 + 시초가 구간 제외)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task6",
@@ -423,7 +501,13 @@
               "testPlan": "pytest tests/test_screening_api.py — API 5개 엔드포인트 + 스케줄러 job 등록",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "a897112", "message": "feat(phase2-sprint2): task6 -- 스크리닝 API + 스케줄러 연동 (1차 08:10, 2차 30초 주기)", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "a897112",
+                  "message": "feat(phase2-sprint2): task6 -- 스크리닝 API + 스케줄러 연동 (1차 08:10, 2차 30초 주기)",
+                  "date": "2026-03-29"
+                }
+              ]
             },
             {
               "id": "task7",
@@ -432,7 +516,13 @@
               "testPlan": "pytest -v 전체 통과 (기존 Sprint 1 포함 회귀 검증)",
               "testResult": "pass (227 passed)",
               "status": "completed",
-              "commits": [{"hash": "001cefa", "message": "feat(phase2-sprint2): task7 -- 통합 테스트 + 회귀 검증", "date": "2026-03-29"}]
+              "commits": [
+                {
+                  "hash": "001cefa",
+                  "message": "feat(phase2-sprint2): task7 -- 통합 테스트 + 회귀 검증",
+                  "date": "2026-03-29"
+                }
+              ]
             }
           ]
         },
@@ -455,7 +545,13 @@
               "testPlan": "pytest tests/test_auxiliary_models.py — 3개 테이블 모델 + Alembic 마이그레이션",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "226c41e", "message": "feat(phase2-sprint3): task1 -- 보조 데이터 테이블 3종 (corp_codes, financial_data, news_sentiments)", "date": "2026-03-30"}]
+              "commits": [
+                {
+                  "hash": "226c41e",
+                  "message": "feat(phase2-sprint3): task1 -- 보조 데이터 테이블 3종 (corp_codes, financial_data, news_sentiments)",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task2",
@@ -464,7 +560,13 @@
               "testPlan": "pytest tests/test_dart.py — XML 파싱 + 재무 조회 + DB 저장 + ETF 스킵",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "6f27b9d", "message": "feat(phase2-sprint3): task2 -- DART 재무 수집기 (corp_code 매핑 + 재무 기초 데이터)", "date": "2026-03-30"}]
+              "commits": [
+                {
+                  "hash": "6f27b9d",
+                  "message": "feat(phase2-sprint3): task2 -- DART 재무 수집기 (corp_code 매핑 + 재무 기초 데이터)",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task3",
@@ -473,7 +575,13 @@
               "testPlan": "pytest tests/test_naver.py — 뉴스 검색 + 센티멘트 계산 + DB 저장",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "db04315", "message": "feat(phase2-sprint3): task3 -- 네이버 뉴스 센티멘트 수집기 (키워드 기반 간이 점수)", "date": "2026-03-30"}]
+              "commits": [
+                {
+                  "hash": "db04315",
+                  "message": "feat(phase2-sprint3): task3 -- 네이버 뉴스 센티멘트 수집기 (키워드 기반 간이 점수)",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task4",
@@ -482,7 +590,13 @@
               "testPlan": "pytest tests/test_auxiliary_api.py — API 3종 + 스케줄러 job 등록",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "af255d2", "message": "feat(phase2-sprint3): task4 -- 스케줄러 보조 데이터 job + 조회 API 3종", "date": "2026-03-30"}]
+              "commits": [
+                {
+                  "hash": "af255d2",
+                  "message": "feat(phase2-sprint3): task4 -- 스케줄러 보조 데이터 job + 조회 API 3종",
+                  "date": "2026-03-30"
+                }
+              ]
             },
             {
               "id": "task5",
@@ -491,7 +605,13 @@
               "testPlan": "pytest tests/test_phase2_integration.py + pytest -v 전체 회귀",
               "testResult": "pass",
               "status": "completed",
-              "commits": [{"hash": "4921917", "message": "feat(phase2-sprint3): task5 -- Phase 2 전체 파이프라인 통합 테스트", "date": "2026-03-30"}]
+              "commits": [
+                {
+                  "hash": "4921917",
+                  "message": "feat(phase2-sprint3): task5 -- Phase 2 전체 파이프라인 통합 테스트",
+                  "date": "2026-03-30"
+                }
+              ]
             }
           ]
         }
@@ -833,6 +953,109 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4",
+      "title": "웹 대시보드 (MVP)",
+      "status": "in_progress",
+      "phaseDoc": "docs/phase/phase4/phase4.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "대시보드 기본 구조 + 핵심 페이지",
+          "status": "completed",
+          "branch": "phase4-sprint1",
+          "sprintDoc": "docs/phase/phase4/sprint1/sprint1.md",
+          "progress": {
+            "total": 9,
+            "completed": 9
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "백엔드: 환경변수 + CORS + JWT 인증 API",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-1-백엔드----환경변수--cors--jwt-인증-api",
+              "testPlan": "pytest test_auth.py — 로그인/실패잠금/토큰갱신/인증제외경로",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "백엔드: 대시보드 집계 API",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-2-백엔드----대시보드-집계-api",
+              "testPlan": "pytest test_dashboard_api.py — 손익합계/포지션수/거래건수 집계",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "프론트엔드: shadcn/ui + SWR + API 클라이언트 + 색상 상수",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-3-프론트엔드----shadcnui--swr--api-클라이언트--색상-상수",
+              "testPlan": "npx tsc --noEmit 에러 없음 + shadcn/ui 컴포넌트 8종 설치",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "프론트엔드: 인증 (로그인 페이지 + AuthProvider + 미들웨어)",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-4-프론트엔드----인증-로그인-페이지--authprovider--미들웨어",
+              "testPlan": "npx tsc --noEmit + 미인증 /login 리다이렉트 + 로그인 성공 진입",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "프론트엔드: 대시보드 레이아웃 (사이드바 + 모드배너)",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-5-프론트엔드----대시보드-레이아웃-사이드바--모드배너",
+              "testPlan": "npx tsc --noEmit + 사이드바 8메뉴 + 모드배너 색상 확인",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "프론트엔드: 메인 대시보드 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-6-프론트엔드----메인-대시보드-페이지",
+              "testPlan": "npx tsc --noEmit + 4개 카드 데이터 표시 + 5초 폴링",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "프론트엔드: 포지션 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-7-프론트엔드----포지션-페이지",
+              "testPlan": "npx tsc --noEmit + 포지션 테이블 + 손익 색상 + 빈 상태",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "프론트엔드: 주문 현황 페이지",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-8-프론트엔드----주문-현황-페이지",
+              "testPlan": "npx tsc --noEmit + 주문 테이블 + 상태 필터 탭",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task9",
+              "title": "통합 테스트 + 회귀 검증",
+              "path": "docs/phase/phase4/sprint1/sprint1.md#task-9-통합-테스트--회귀-검증",
+              "testPlan": "pytest 전체 + npx tsc --noEmit + 수동 검증 체크리스트",
+              "testResult": "",
+              "status": "completed",
+              "commits": []
+            }
+          ],
+          "prUrl": "https://github.com/frogy95/stockbot/pull/36"
+        }
+      ]
     }
   ],
   "sharedDocs": [
@@ -913,6 +1136,24 @@
       "version": "v0.3.0",
       "description": "Phase 2.5/2.6 프로덕션 배포 — Phase 2.5 Sprint 1 (ETF 마스터 수집 파이프라인 완성), Phase 2.6 Sprint 1 (KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소, ETF 878종목)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/28",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-30",
+      "type": "sprint",
+      "ref": "phase3-sprint1, phase3-sprint2, phase3-sprint3",
+      "version": "v0.4.0",
+      "description": "Phase 3 프로덕션 배포 — Phase 3 Sprint 1 (리스크/자금 관리 모듈), Phase 3 Sprint 2 (매매 전략 + 주문 실행), Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인 시스템)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/35",
+      "status": "completed"
+    },
+    {
+      "date": "2026-03-31",
+      "type": "sprint",
+      "ref": "phase4-sprint1",
+      "version": "v0.5.0",
+      "description": "Phase 4 Sprint 1 프로덕션 배포 — JWT 인증 API, 대시보드 집계 API, trading API 인증 보호, 로그인 페이지, 대시보드 레이아웃, 메인/포지션/주문 페이지",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/38",
       "status": "pending-merge"
     }
   ]

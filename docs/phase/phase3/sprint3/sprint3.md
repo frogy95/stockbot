@@ -562,3 +562,82 @@ git commit -m "feat(phase3-sprint3): task9 -- Phase 3 전체 흐름 통합 테�
 | 명령어 API | `curl -s -X POST http://localhost:8000/api/v1/telegram/webhook -H "Content-Type: application/json" -d '{"update_id":1,"message":{"message_id":1,"chat":{"id":CHAT_ID},"text":"/status","from":{"id":CHAT_ID}}}'` | 200 OK |
 | 리스크 상태 | `curl -s http://localhost:8000/api/v1/trading/risk-status \| jq .` | 정상 응답 |
 | 엔진 상태 | `curl -s http://localhost:8000/api/v1/trading/engine-status \| jq .` | `get_status()` 기반 응답 |
+
+---
+
+## 프로덕션 장애 기록: 2026-03-31 market_open 미실행
+
+### 현상
+
+- **발견 시각**: 09:07 (모니터링 시작 후 즉시)
+- **영향 시간**: 09:00 ~ 장 마감 (전일 장중)
+- **증상**:
+  - `GET /api/v1/collector/status` → `ws_subscriptions: 0`
+  - `GET /api/v1/screening/secondary` → `results: [], screened_at: null`
+  - 2차 스크리닝 스케줄러는 30초 간격으로 정상 실행되나 전 종목 skip
+  - `market_open` 잡의 `next_run` = 2026-04-01 09:00 (오늘 실행 누락)
+
+### 근본 원인 분석
+
+#### 실행 흐름 (정상)
+
+```
+08:00 premarket_collect → 전 종목 시세 수집
+08:10 primary_screen → 1차 스크리닝 + ws_manager.subscribe() ← WS 구독 등록
+09:00 market_open → ws_client.connect() + 2차 스크리닝 활성화
+09:30~ secondary_screen (30초 주기) → Redis 실시간 데이터 기반 필터링
+```
+
+#### 장애 경로
+
+1. **08:10 `primary_screen()` 실행 → 1차 스크리닝 30개 후보 도출 → DB 저장 성공**
+   - 08:10 KST `screened_at` 확인됨 → 1차 스크리닝 자체는 성공
+
+2. **WS 구독 등록 경로** (`scheduler.py:310-332`):
+   ```python
+   # _primary_screen() 내부
+   for item in results:
+       await self._ws_manager.subscribe(item["stock_code"], priority=...)
+   ```
+   - **ws_manager.subscribe()는 WS 연결 전 구독 목록만 등록**
+   - 실제 WS 구독은 `_market_open()` → `ws_client.connect()` 이후 발생
+
+3. **09:00 `_market_open()` 미실행 추정 원인**:
+   - APScheduler `CronTrigger(hour=9, minute=0)` + `misfire_grace_time=60`
+   - 09:00:00~09:01:00 사이 실행 불가 시 자동 skip → `next_run` = 내일
+   - **가능 원인 A**: 이전 작업(08:00~08:20 수집 잡들) 장시간 실행으로 스케줄러 blocking
+   - **가능 원인 B**: Railway 컨테이너 재시작/sleep으로 09:00 시점 인스턴스 미응답
+   - **가능 원인 C**: NTP 시간 보정으로 시계 점프 (60초 grace 초과)
+
+4. **`_market_open()` 미실행 → WS 미연결 → Redis 실시간 데이터 없음**:
+   ```python
+   # realtime_screener.py:160-179
+   execution_raw = await self.redis_client.get(f"realtime:{code}:execution")
+   if execution_raw is None:  # ← WS 데이터 없으면 None
+       return None  # ← 해당 종목 skip
+   ```
+
+5. **결과**: 2차 스크리닝 30개 후보 전량 skip → `results: []` 지속
+
+### 영향
+
+- 장중 2차 스크리닝 완전 무력화 (09:00~15:30)
+- 매매 신호 0건 발생 → 자동 매매 미작동
+- 수동 복구 API(`POST /collector/trigger/market-open`) 존재하나 프로덕션 쓰기 권한 미확보로 미조치
+
+### 개선 필요사항
+
+| 우선순위 | 항목 | 설명 |
+|----------|------|------|
+| P0 | `misfire_grace_time` 확대 | 현재 60초 → 300초 이상으로 확대하여 실행 누락 가능성 축소 |
+| P0 | `market_open` 실행 검증 | 09:05 시점에 `ws_subscriptions == 0`이면 재시도하는 자체 복구 로직 |
+| P1 | WebSocket 구독 상태 알림 | `ws_subscriptions: 0` 상태가 09:05 이후 지속 시 텔레그램 경고 발송 |
+| P1 | `_market_open` 재시도 잡 | 09:00 실패 시 09:05, 09:10에 재시도하는 fallback cron 등록 |
+| P2 | Railway 로그 확인 | 09:00 전후 컨테이너 상태/스케줄러 로그 분석 → 정확한 원인 특정 |
+| P2 | lifespan 시작 시 장중 감지 | 서버 재시작이 09:00~15:30 사이면 `_market_open()` 자동 호출 |
+
+### 모니터링 로그
+
+- 09:07~10:52 총 22회 5분 간격 점검 (CronCreate `*/5 * * * *`)
+- 전 구간 `ws_subscriptions: 0`, `secondary results: 0`
+- `secondary_last_run`은 5분 간격으로 정상 갱신 확인 → 스케줄러 자체는 정상

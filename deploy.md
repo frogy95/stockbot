@@ -5,114 +5,55 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 3 Sprint 2: 매매 전략 + 주문 실행 (2026-03-30)
+### 프로덕션 배포 - v0.5.0 (2026-03-31)
 
-PR: https://github.com/frogy95/stockbot/pull/33
-
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
-
----
-
-### 프로덕션 배포 - v0.3.0 (2026-03-30)
-
-포함 스프린트: Phase 2.5 Sprint 1, Phase 2.6 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/28
+포함 스프린트: Phase 4 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/38
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
-- ✅ /api/v1/health 헬스체크 확인 — {"status":"healthy","database":"connected","redis":"connected"}
-- ✅ 프론트엔드 접속 확인 (Vercel) — HTTP 200
-- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 시 sanity_passed=True 확인
-- ⬜ Railway 배포 후 stocks 테이블 ETF 878종목 적재 확인
+
+자동 검증 및 수동 검증 필요 항목은 배포 완료 후 업데이트합니다.
+
+#### 수동 검증 필요 항목 (Railway 배포 후)
+- ⬜ Railway 환경변수 추가 확인 (ADMIN_PASSWORD, ALLOWED_ORIGINS, JWT_EXPIRY_HOURS)
+- ⬜ 프로덕션 로그인 페이지 접속 확인 (stockbot.choiji.kr)
+- ⬜ 프로덕션 JWT 인증 흐름 확인 (로그인 → 대시보드 → API 응답)
+- ⬜ CORS 프로덕션 origin 허용 확인 (stockbot.choiji.kr → api.stockbot.choiji.kr)
 
 ---
 
-### Phase 2.6 Sprint 1: KIS mst 파서 줄바꿈 기반 재작성 + sanity check 블로커 해소 (2026-03-30)
+### Phase 4 Sprint 1: 대시보드 기본 구조 + 핵심 페이지 (2026-03-31)
 
-PR: https://github.com/frogy95/stockbot/pull/27
+PR: https://github.com/frogy95/stockbot/pull/36
 
-#### 코드 리뷰 결과 (2026-03-30)
-- ✅ 코드 리뷰 완료 — PR #27 코멘트 작성 (https://github.com/frogy95/stockbot/pull/27#issuecomment-4152472628)
-- Critical/High 이슈: 없음
-- Medium 이슈: 없음
-- 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용
-- 패턴 준수: 바이트 슬라이싱 방식 정확, UnicodeDecodeError 처리 올바름, 모듈 레벨 정규식 컴파일 정상
+#### 코드 리뷰 결과 (2026-03-31, 재검증)
+- ✅ 코드 리뷰 완료 — PR #36 코멘트 작성 (https://github.com/frogy95/stockbot/pull/36#issuecomment-4159611506)
+- Critical 이슈: 1건 → ✅ 수정 완료
+  - `/login` 페이지에서 401 무한 리다이렉트 루프 (`apiFetch`에서 pathname 체크로 수정, commit ea10f19)
+- High 이슈: 없음
+- Medium 이슈: 1건 (기록만)
+  - JWT HMAC 키 길이 경고: 테스트 환경에서 JWT_SECRET이 26바이트로 RFC 7518 최소 권장(32바이트) 미만. 프로덕션 환경변수 32자 이상 설정 시 해소. Phase 문서 미해결 사항 9번에 기록
+- 보안: 하드코딩 시크릿 없음, 로그인 실패 5회 잠금(Redis), CORS 환경변수 기반
+- 패턴 준수: App Router Route Groups, shadcn/ui, SWR 폴링 패턴 정상
 
-#### 자동 검증 결과 (2026-03-30)
-- ✅ pytest tests/test_kis_master.py: 25 passed
-- ✅ pytest -v 전체: 343 passed, 1 failed (test_stock_crud — DB 유니크 제약 충돌, 기존 이슈, 이번 PR과 무관)
+#### 자동 검증 결과 (2026-03-31, 재검증)
+- ✅ pytest -v 전체: 522 passed, 20 warnings
+- ✅ npx tsc --noEmit: exit 0 (사용자 확인)
+- ✅ npm run build: 성공 (사용자 확인)
 - ✅ GET /api/v1/health: {"status":"healthy","database":"connected","redis":"connected"}
-- ✅ POST /api/v1/collector/trigger/etf-master: {"triggered": true}
-- ✅ GET /api/v1/collector/status: etf_master_collect job 08:10 KST 등록 확인, last_etf_master 필드 정상
-- ✅ 프론트엔드 접속 정상 (http://localhost:3000 200 OK)
+- ✅ POST /api/v1/auth/login (비밀번호 미설정): 401 "비밀번호가 설정되지 않았습니다" — 정상
+- ✅ GET /api/v1/dashboard/summary (invalid token): 401 — 인증 가드 정상
+- ✅ GET /api/v1/trading/positions (invalid token): 401 — trading API 인증 정상
+- ✅ 프론트엔드 접속: http://localhost:3000 → 307 리다이렉트 → /login 200 OK
+- ✅ Playwright: 로그인 페이지 UI 정상 렌더링 확인 (스크린샷: docs/phase/phase4/sprint1/login-page.png)
 
-#### Phase 문서 반영 (2026-03-30)
-- ✅ Phase 2.6 Sprint 분할 테이블: Sprint 1 ✅ 표시
-- ✅ Phase 2.6 Sprint 1 상세 섹션: ✅ 완료 (PR #27, 2026-03-30) 추가
-- ✅ 미해결 사항 1, 2, 4번: ✅ 해결 표시 (ETN 'EN' 미포함 확인, KOSDAQ offset 확인, 헤더 스킵 구현)
-- ✅ 완료 기준 테이블: 전체 7개 항목 ✅ 완료로 변경
-
-#### 수동 검증 필요 항목 (Railway 배포 후)
-- ⬜ Railway 배포 후 08:10 KST etf_master_collect job 실행 시 sanity_passed=True 확인
-- ⬜ Railway 배포 후 mst 다운로드 성공 + stocks 테이블 ETF 878종목 적재 확인
-
----
-
-### Phase 2.5 Sprint 1: ETF 마스터 수집 + 스케줄러 통합 (2026-03-30)
-
-PR: https://github.com/frogy95/stockbot/pull/26
-
-#### 코드 리뷰 결과 (2026-03-30)
-- ✅ 코드 리뷰 완료 — PR #26 코멘트 작성 (https://github.com/frogy95/stockbot/pull/26#issuecomment-4152211394)
-- Critical/High 이슈: 없음
-- Medium 이슈: 1건 — seed_etf.py `stock_code = "133690"` 중복 (KODEX/TIGER 항목이 동일 코드 사용, upsert 시 덮어쓰기 발생)
-  - 서비스 영향: 낮음 (시드는 최초 설치 전용 폴백, 실제 운영 경로는 kis_master.py 담당)
-  - Phase 문서 미해결 사항 테이블에 기록 완료
-- 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용, 인증 불필요 엔드포인트 정상
-- 패턴 준수: 기존 스케줄러/API 패턴 동일하게 적용, 구조 정상
-
-#### 자동 검증 결과 (2026-03-30)
-- ✅ pytest 전체: 340 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 PR과 무관)
-- ✅ 신규 테스트 38개 전체 통과 (test_kis_master, test_seed_etf, test_etf_master_api, test_phase2_5_integration)
-- ✅ GET /api/v1/collector/status — last_etf_master 필드 포함 확인
-- ✅ POST /api/v1/collector/trigger/etf-master — {"triggered": true} 정상 응답
-- ✅ 스케줄러 job 확인: etf_master_collect 08:10 KST, etf_collect 08:15 KST 등록됨
-- ✅ 프론트엔드 접속 정상 (http://localhost:3000 200 OK)
-
-#### 수동 검증 필요 항목 (Railway 배포 후)
-- ✅ Railway 배포 후 08:10 KST etf_master_collect job 실행 확인 — v0.3.0 프로덕션 정상 동작 확인
-- ✅ Railway 배포 후 08:15 KST etf_collect job 실행 확인 — v0.3.0 프로덕션 정상 동작 확인
-- ✅ KIS mst 다운로드 성공 시 stocks 테이블 ETF 적재 확인 — Phase 2.6에서 878종목 적재 확인
-
----
-
-### Hotfix: 공공데이터포털 ETF 잘못 분류 버그 수정 (2026-03-30)
-
-PR: https://github.com/frogy95/stockbot/pull/25
-
-- ✅ 자동 검증 완료 항목:
-  - pytest: 302 passed, 1 failed (test_stock_crud — DB 데이터 충돌, 기존 이슈, 이번 수정과 무관)
-  - 회귀 없음 확인
-
-- ✅ 수동 검증 완료 항목:
-  - docker compose up --build (코드 반영) — v0.3.0 프로덕션 정상 동작 확인
-  - Railway 배포 후 수집기 로그에서 ETF 500 에러 미발생 확인 — 정상 운영 중
-  - 다음 장전(08:00 KST) premarket_collect 정상 실행 후 종목 분류 확인 — 정상 운영 중
-
----
-
-### Hotfix: APScheduler KST 타임존 설정 누락 수정 (2026-03-30)
-
-PR: https://github.com/frogy95/stockbot/pull/23
-
-- ✅ 자동 검증 완료 항목:
-  - pytest: 303 passed, 3 warnings (회귀 없음)
-
-- ✅ 수동 검증 완료 항목:
-  - docker compose up --build (코드 반영 후 로컬 확인) — v0.3.0 프로덕션 정상 동작 확인
-  - Railway 배포 후 scheduler 로그에서 CronTrigger timezone=Asia/Seoul 확인 — 정상 운영 중
-  - 장전(08:00 KST) premarket_collect job 정상 실행 확인 — 정상 운영 중
+#### Phase 문서 반영 (2026-03-31)
+- ✅ Phase 4 Sprint 분할 테이블: Sprint 1 ✅ 표시
+- ✅ Sprint 1 상세 섹션: ✅ 완료 (PR #36, 2026-03-31) 추가
+- ✅ 미해결 사항 1번(CORS), 3번(색상), 7번(shadcn/ui): ✅ 해결 표시
+- ✅ 미해결 사항 9번(JWT 키 길이): Medium 이슈 추가 (Sprint 2 개선 권장)
+- ✅ 완료 기준 테이블: 인증, CORS, 색상 관례 ✅ 완료로 변경
 
 ---
 

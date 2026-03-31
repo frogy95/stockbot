@@ -6,10 +6,14 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_db
+from api.deps import get_db, get_current_user
 from core.models.trading import Order, PositionRecord, TradeHistory, TradeSignal
 
-router = APIRouter(prefix="/trading", tags=["trading"])
+router = APIRouter(
+    prefix="/trading",
+    tags=["trading"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/risk-status")
