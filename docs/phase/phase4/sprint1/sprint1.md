@@ -6,7 +6,8 @@
 
 **Tech Stack:** Next.js 16 (App Router) + React 19 + shadcn/ui + SWR + Tailwind CSS 4 + PyJWT + FastAPI
 
-**Sprint 기간:** 2026-03-31 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-03-31 ~ 2026-03-31
+**상태:** ✅ 완료 (2026-03-31)
 **이전 스프린트:** Phase 3 Sprint 3 (텔레그램 봇 + 반자동 승인, PR: https://github.com/frogy95/stockbot/pull/35 등)
 **브랜치명:** `phase4-sprint1`
 
@@ -123,9 +124,9 @@ git commit -m "feat(phase4-sprint1): task1 -- JWT 인증 API + CORS 환경변수
 ```
 
 **완료 기준:**
-- ⬜ pytest test_auth.py 전체 통과
-- ⬜ CORS origins 환경변수 반영 확인
-- ⬜ 인증 제외 경로 정상 동작
+- ✅ pytest test_auth.py 전체 통과
+- ✅ CORS origins 환경변수 반영 확인
+- ✅ 인증 제외 경로 정상 동작
 
 ---
 
@@ -177,8 +178,8 @@ git commit -m "feat(phase4-sprint1): task2 -- 대시보드 집계 API (/dashboar
 ```
 
 **완료 기준:**
-- ⬜ pytest test_dashboard_api.py 전체 통과
-- ⬜ /dashboard/summary 응답에 모든 필수 필드 포함
+- ✅ pytest test_dashboard_api.py 전체 통과
+- ✅ /dashboard/summary 응답에 모든 필수 필드 포함
 
 ---
 
@@ -248,9 +249,9 @@ git commit -m "feat(phase4-sprint1): task3 -- shadcn/ui + SWR + API 클라이언
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ shadcn/ui 컴포넌트 8종 설치 확인
-- ⬜ SWR 폴링 훅 타입 정상
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ shadcn/ui 컴포넌트 8종 설치 확인
+- ✅ SWR 폴링 훅 타입 정상
 
 ---
 
@@ -310,10 +311,10 @@ git commit -m "feat(phase4-sprint1): task4 -- 로그인 페이지 + AuthProvider
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 미인증 접근 시 /login 리다이렉트
-- ⬜ 로그인 성공 시 대시보드 진입
-- ⬜ 잘못된 비밀번호 에러 메시지 표시
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 미인증 접근 시 /login 리다이렉트
+- ✅ 로그인 성공 시 대시보드 진입
+- ✅ 잘못된 비밀번호 에러 메시지 표시
 
 ---
 
@@ -369,10 +370,10 @@ git commit -m "feat(phase4-sprint1): task5 -- 대시보드 레이아웃 (사이�
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 사이드바 8개 메뉴 항목 표시 + 접기/펼치기
-- ⬜ 모드배너 40px 고정, 환경별 색상 정확
-- ⬜ 사이드바 하단 모드 배지 + 로그아웃
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 사이드바 8개 메뉴 항목 표시 + 접기/펼치기
+- ✅ 모드배너 40px 고정, 환경별 색상 정확
+- ✅ 사이드바 하단 모드 배지 + 로그아웃
 
 ---
 
@@ -412,10 +413,10 @@ git commit -m "feat(phase4-sprint1): task6 -- 메인 대시보드 페이지 (손
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 4개 카드에 데이터 표시
-- ⬜ 5초 폴링 동작
-- ⬜ 로딩/에러 상태 처리
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 4개 카드에 데이터 표시
+- ✅ 5초 폴링 동작
+- ✅ 로딩/에러 상태 처리
 
 ---
 
@@ -451,10 +452,10 @@ git commit -m "feat(phase4-sprint1): task7 -- 포지션 페이지 (보유 종목
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 테이블에 포지션 데이터 표시
-- ⬜ 미실현 손익 색상 (빨강/파랑) 정확
-- ⬜ 빈 상태 + 로딩 상태 처리
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 테이블에 포지션 데이터 표시
+- ✅ 미실현 손익 색상 (빨강/파랑) 정확
+- ✅ 빈 상태 + 로딩 상태 처리
 
 ---
 
@@ -490,10 +491,10 @@ git commit -m "feat(phase4-sprint1): task8 -- 주문 현황 페이지 (상태별
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 테이블에 주문 데이터 표시
-- ⬜ 상태별 필터 탭 동작
-- ⬜ 빈 상태 + 로딩 상태 처리
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 테이블에 주문 데이터 표시
+- ✅ 상태별 필터 탭 동작
+- ✅ 빈 상태 + 로딩 상태 처리
 
 ---
 
@@ -520,14 +521,14 @@ git commit -m "feat(phase4-sprint1): task8 -- 주문 현황 페이지 (상태별
 - 예상: 에러 없음
 
 **Step 4: 수동 검증 체크리스트**
-- ⬜ 로그인 -> 대시보드 진입 플로우
-- ⬜ 메인 대시보드 4개 카드 데이터 표시
-- ⬜ 포지션 페이지 테이블
-- ⬜ 주문 현황 페이지 + 필터 탭
-- ⬜ 사이드바 네비게이션 + 접기
-- ⬜ 모드배너 색상 (TRADING_ENV별)
-- ⬜ 5초 폴링 동작 (Network 탭 확인)
-- ⬜ 탭 비활성화 시 폴링 중단
+- ✅ 로그인 -> 대시보드 진입 플로우
+- ✅ 메인 대시보드 4개 카드 데이터 표시
+- ✅ 포지션 페이지 테이블
+- ✅ 주문 현황 페이지 + 필터 탭
+- ✅ 사이드바 네비게이션 + 접기
+- ✅ 모드배너 색상 (TRADING_ENV별)
+- ✅ 5초 폴링 동작 (Network 탭 확인)
+- ✅ 탭 비활성화 시 폴링 중단
 
 **Step 5: 커밋**
 ```
@@ -536,9 +537,9 @@ git commit -m "feat(phase4-sprint1): task9 -- Phase 4 Sprint 1 통합 테스트 
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 통과
-- ⬜ `npx tsc --noEmit` 에러 없음
-- ⬜ 수동 검증 체크리스트 전체 통과
+- ✅ pytest 전체 통과 (522 passed, 0 failed)
+- ✅ `npx tsc --noEmit` 에러 없음
+- ✅ 수동 검증 체크리스트 전체 통과
 
 ---
 
