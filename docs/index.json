@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-31T16:30:00+09:00",
+  "lastUpdated": "2026-03-31T17:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1237,6 +1237,24 @@
         {
           "hash": "8ccef64",
           "message": "fix(scheduler): 장중 서버 재시작 시 market_open 자동 복구",
+          "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-secondary-screen-engine-link",
+      "name": "2차 스크리닝 → 매매 엔진 연결 누락 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/secondary-screen-engine-link/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/50",
+      "deployedAt": "2026-03-31",
+      "description": "CollectorScheduler._secondary_screen()이 실시간 스크리닝 결과를 DB에 저장하지만 TradingEngine.process_screening_results()를 호출하지 않아 장중 매매 신호가 전혀 생성되지 않던 버그 수정. _trading_engine 속성과 set_trading_engine() setter를 추가하고 main.py lifespan에서 매매 엔진 주입.",
+      "commits": [
+        {
+          "hash": "1956e55",
+          "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
         }
       ]
