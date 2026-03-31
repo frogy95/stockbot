@@ -93,6 +93,7 @@ async def lifespan(app: FastAPI):
     app.state.collector_scheduler = collector_scheduler
 
     await collector_scheduler.start()
+    await collector_scheduler.check_and_recover_market_open()
     logger.info("수집 스케줄러 초기화 완료")
 
     # 매매 모듈 초기화

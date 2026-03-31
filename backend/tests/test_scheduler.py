@@ -1,6 +1,8 @@
 """수집 스케줄러 테스트."""
 
 import pytest
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
 from modules.collector.scheduler import CollectorScheduler
@@ -156,3 +158,48 @@ async def test_trigger_etf():
         result = await scheduler.trigger_etf()
 
     assert result == {"etfs_collected": 20}
+
+
+@pytest.mark.asyncio
+async def test_check_and_recover_market_open_during_market_hours():
+    """장중(09:00~15:30) 재시작 시 _market_open 자동 호출."""
+    scheduler = _make_scheduler()
+
+    market_time = datetime(2026, 3, 31, 10, 30, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+    with patch("modules.collector.scheduler.datetime") as mock_dt:
+        mock_dt.now.return_value = market_time
+
+        result = await scheduler.check_and_recover_market_open()
+
+    assert result is True
+    scheduler._ws_client.connect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_check_and_recover_market_open_before_market():
+    """장전(09:00 이전) 재시작 시 _market_open 미호출."""
+    scheduler = _make_scheduler()
+
+    before_market = datetime(2026, 3, 31, 8, 0, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+    with patch("modules.collector.scheduler.datetime") as mock_dt:
+        mock_dt.now.return_value = before_market
+
+        result = await scheduler.check_and_recover_market_open()
+
+    assert result is False
+    scheduler._ws_client.connect.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_check_and_recover_market_open_after_market():
+    """장후(15:30 이후) 재시작 시 _market_open 미호출."""
+    scheduler = _make_scheduler()
+
+    after_market = datetime(2026, 3, 31, 16, 0, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+    with patch("modules.collector.scheduler.datetime") as mock_dt:
+        mock_dt.now.return_value = after_market
+
+        result = await scheduler.check_and_recover_market_open()
+
+    assert result is False
+    scheduler._ws_client.connect.assert_not_called()

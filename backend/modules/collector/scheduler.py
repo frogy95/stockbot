@@ -233,6 +233,26 @@ class CollectorScheduler:
             "ws_subscriptions": self._ws_manager.count,
         }
 
+    async def check_and_recover_market_open(self) -> bool:
+        """서버 시작 시 장중 여부를 확인하고, 장중이면 _market_open을 자동 호출한다.
+
+        Railway 재시작이 09:00~15:30 사이에 발생하면 market_open 스케줄 job이
+        이미 지나쳐 WS 연결이 누락될 수 있다. lifespan에서 이 메서드를 호출하여 복구한다.
+        """
+        from datetime import time as dtime
+
+        tz = ZoneInfo(settings.MARKET_TIMEZONE)
+        now = datetime.now(tz)
+        now_time = now.time()
+        if dtime(9, 0) <= now_time < dtime(15, 30):
+            logger.warning(
+                "장중 재시작 감지 (%s) — market_open 자동 호출",
+                now.strftime("%H:%M:%S"),
+            )
+            await self._market_open()
+            return True
+        return False
+
     async def trigger_market_open_recovery(self) -> dict:
         """수동 market_open_recovery 트리거."""
         await self._market_open_recovery()

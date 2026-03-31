@@ -5,26 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v0.6.0 (2026-03-31)
+### Hotfix: Railway 장중 재시작 시 market_open 누락 버그 수정 (2026-03-31)
 
-포함 스프린트: Phase 4 Sprint 2
-PR: https://github.com/frogy95/stockbot/pull/45
+PR: https://github.com/frogy95/stockbot/pull/47
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ✅ 자동 검증 완료 항목:
+  - pytest: 539 passed, 38 warnings, 0 failed
+  - 신규 테스트 3건 통과 (장중/장전/장후 케이스)
+  - 코드 리뷰: Critical/High 이슈 없음 (Medium 1건 — 함수 내 import, 배포 차단 사유 아님)
 
-#### 자동 검증 완료 항목 (배포 후 업데이트 예정)
-
-- ⬜ /api/v1/health 헬스체크 확인
-- ⬜ 프론트엔드 접속 확인 (stockbot.choiji.kr)
-
-#### 수동 검증 필요 항목 (Railway 배포 후)
-
-- ⬜ 8개 페이지 전체 접속 확인 (대시보드/포지션/주문/신호/스크리닝/이력/분석/설정)
-- ⬜ 웹 승인 API 동작 확인 (POST /signals/{token}/approve|reject)
-- ⬜ 모드 전환 보호 API 동작 확인 — 장중 차단 + 비밀번호 재확인
-- ⬜ 감사 로그 조회 확인 (GET /audit/logs)
-- ⬜ Railway alembic 마이그레이션 실행 확인 (`audit_logs` 테이블 생성)
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - Railway 배포 후 장중 재시작 시 로그에서 "장중 재시작 감지" 메시지 확인
+  - Railway 배포 후 ws_subscriptions > 0 확인 (WS 연결 성공)
 
 ---
 
