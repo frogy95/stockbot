@@ -8,7 +8,7 @@
 ### 프로덕션 배포 - v0.5.0 (2026-03-31)
 
 포함 스프린트: Phase 4 Sprint 1
-PR: (생성 예정)
+PR: https://github.com/frogy95/stockbot/pull/38
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
