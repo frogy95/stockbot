@@ -68,6 +68,26 @@ async def trigger_sentiment(background_tasks: BackgroundTasks, request: Request)
     return {"triggered": True, "message": "센티멘트 수집 시작됨. /api/v1/collector/status 에서 last_sentiment 확인"}
 
 
+@router.post("/collector/trigger/market-open")
+async def trigger_market_open(background_tasks: BackgroundTasks, request: Request):
+    """수동 market_open 트리거 (WS 연결 + 2차 스크리닝 활성화)."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    background_tasks.add_task(scheduler.trigger_market_open)
+    return {"triggered": True, "message": "market_open 시작됨. /api/v1/kis/status 에서 ws_connected 확인"}
+
+
+@router.post("/collector/trigger/market-open-recovery")
+async def trigger_market_open_recovery(background_tasks: BackgroundTasks, request: Request):
+    """수동 market_open_recovery 트리거 (WS 미연결 시 복구)."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    background_tasks.add_task(scheduler.trigger_market_open_recovery)
+    return {"triggered": True, "message": "market_open_recovery 시작됨. /api/v1/kis/status 에서 ws_connected 확인"}
+
+
 @router.post("/collector/trigger/dart-corp-code")
 async def trigger_dart_corp_code():
     """DART corp_code ZIP 초기화 (최초 1회 실행 필요, 동기 실행)."""
