@@ -17,14 +17,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface ScreeningResult {
-  id: number;
   stock_code: string;
+  screening_type?: string;
   rank?: number;
   score: number;
   is_hot?: boolean;
   status?: string;
   factors?: Record<string, unknown>;
   screened_at?: string | null;
+}
+
+interface ScreeningResponse {
+  results: ScreeningResult[];
+  screened_at?: string | null;
+  total: number;
 }
 
 type TabKey = "primary" | "secondary";
@@ -62,10 +68,11 @@ interface ScreeningTableProps {
 function ScreeningTable({ tab }: ScreeningTableProps) {
   const [triggering, setTriggering] = useState(false);
 
-  const { data: results, isLoading, error } = usePolling<ScreeningResult[]>(
+  const { data, isLoading, error } = usePolling<ScreeningResponse>(
     DATA_PATHS[tab],
     5000
   );
+  const results = data?.results;
 
   async function handleTrigger() {
     setTriggering(true);
@@ -142,7 +149,7 @@ function ScreeningTable({ tab }: ScreeningTableProps) {
               </TableRow>
             )}
             {results?.map((item) => (
-              <TableRow key={item.id} className="border-border/30 hover:bg-accent/30">
+              <TableRow key={item.stock_code} className="border-border/30 hover:bg-accent/30">
                 <TableCell className="font-mono tabular-nums text-sm text-muted-foreground">
                   {item.rank ?? "—"}
                 </TableCell>
