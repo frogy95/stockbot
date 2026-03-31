@@ -31,7 +31,7 @@ export async function apiFetch(
 
   const resp = await fetch(path, { ...options, headers });
 
-  if (resp.status === 401) {
+  if (resp.status === 401 && window.location.pathname !== "/login") {
     removeToken();
     window.location.href = "/login";
   }
