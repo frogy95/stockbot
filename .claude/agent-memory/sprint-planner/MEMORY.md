@@ -21,9 +21,11 @@
 - Phase 3 Sprint 3 — 텔레그램 봇 + 반자동 승인, ✅ 완료 (2026-03-31)
 - [Phase 4 Sprint 1](phase4-sprint1-status.md) — 대시보드 기본 구조 + 핵심 페이지, ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/36
 
+- Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성), 🔄 계획 수립 완료 (2026-03-31)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (즉시 착수 가능)
+- Phase 5 Sprint 1 이후 — Phase 4 완료 후 착수
 
 ## 핵심 주의사항
 
@@ -73,3 +75,10 @@
 - Phase 4 Sprint 1: api/deps.py에 get_db, get_redis만 존재 — get_current_user 추가 필요
 - Phase 4 Sprint 1: 인증은 Depends(get_current_user) 방식 (글로벌 미들웨어 아님) — health, auth/login, telegram/webhook 제외 용이
 - Phase 4 Sprint 1: Next.js 16 미들웨어 파일명 변경 가능성 확인 필요 (middleware.ts vs proxy.ts)
+- Phase 4 Sprint 2: settings.py 라우터에 인증 미적용 상태 — dependencies=[Depends(get_current_user)] 추가 필요
+- Phase 4 Sprint 2: ApprovalManager.validate_approval()은 일회용(조회 후 삭제) — 대기 목록 조회는 Redis scan_keys로 별도 구현 필요 (validate 호출하면 토큰 소멸)
+- Phase 4 Sprint 2: TradingEngine.approve_signal/reject_signal은 NotifierManager.handle_approval 경유 — app.state.trading_engine에서 직접 호출
+- Phase 4 Sprint 2: seed_settings.py에 trading_env 키 존재 (category=system) — 모드 전환 시 이 키의 value를 paper/live로 업데이트
+- Phase 4 Sprint 2: approval 토큰 TTL은 승인 타임아웃과 동일 (기본 30초/15초/60초) — expires_in_sec는 Redis TTL 명령으로 조회
+- Phase 4 Sprint 2: frontend/lib/api.ts에 apiPut 미존재 — 추가 필요 (apiPost 패턴 복사, method="PUT")
+- Phase 4 Sprint 2: 프론트엔드 use-polling.ts의 refreshInterval은 정수만 지원 — 동적 전환은 상태값으로 interval 변경하여 usePolling에 전달
