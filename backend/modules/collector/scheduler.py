@@ -225,6 +225,22 @@ class CollectorScheduler:
         count = await self._sentiment_collect()
         return {"sentiments_collected": count}
 
+    async def trigger_market_open(self) -> dict:
+        """수동 market_open 트리거 (WS 연결 + 2차 스크리닝 활성화)."""
+        await self._market_open()
+        return {
+            "ws_connected": self._ws_client.connected,
+            "ws_subscriptions": self._ws_manager.count,
+        }
+
+    async def trigger_market_open_recovery(self) -> dict:
+        """수동 market_open_recovery 트리거."""
+        await self._market_open_recovery()
+        return {
+            "ws_connected": self._ws_client.connected,
+            "ws_subscriptions": self._ws_manager.count,
+        }
+
     async def trigger_premarket(self) -> dict:
         """수동 장전 수집 트리거."""
         count = await self._premarket_collect()
