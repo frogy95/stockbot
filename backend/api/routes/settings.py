@@ -1,16 +1,50 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timezone, time as dt_time
+from zoneinfo import ZoneInfo
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_db
+from api.deps import get_db, get_current_user, UserInfo
+from core.config import settings
+from core.models.audit_log import AuditLog
 from core.models.settings import SystemSetting
+from core.models.trading import PositionRecord
 
-router = APIRouter(prefix="/settings", tags=["settings"])
+_KST = ZoneInfo(settings.MARKET_TIMEZONE)
+_MARKET_OPEN = dt_time(9, 0)
+_MARKET_CLOSE = dt_time(15, 30)
+
+router = APIRouter(
+    prefix="/settings",
+    tags=["settings"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 class SettingUpdate(BaseModel):
     value: str
+
+
+class ModeSwitchRequest(BaseModel):
+    target_env: str
+    password: str
+
+
+def _is_market_hours() -> bool:
+    """현재 KST 시각이 평일 장중(09:00~15:30)이면 True."""
+    now_kst = datetime.now(timezone.utc).astimezone(_KST)
+    if now_kst.weekday() >= 5:  # 토요일(5)/일요일(6)은 장외
+        return False
+    return _MARKET_OPEN <= now_kst.time() <= _MARKET_CLOSE
+
+
+def _get_client_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else None
 
 
 @router.get("")
@@ -51,9 +85,56 @@ async def get_setting(key: str, db: AsyncSession = Depends(get_db)):
     }
 
 
+@router.put("/mode")
+async def switch_trading_mode(
+    body: ModeSwitchRequest,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """거래 모드 전환 (비밀번호 재확인 + 장중 차단 + 포지션 체크)."""
+    if body.password != settings.ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="비밀번호가 올바르지 않습니다")
+
+    if _is_market_hours():
+        raise HTTPException(status_code=423, detail="장중(09:00~15:30)에는 모드를 전환할 수 없습니다")
+
+    position_count_result = await db.execute(select(func.count(PositionRecord.id)))
+    if position_count_result.scalar_one() > 0:
+        raise HTTPException(status_code=409, detail="활성 포지션이 있어 전환할 수 없습니다")
+
+    setting_result = await db.execute(
+        select(SystemSetting).where(SystemSetting.key == "trading_env")
+    )
+    row = setting_result.scalar_one_or_none()
+    old_value = row.value if row else None
+
+    if row:
+        row.value = body.target_env
+    else:
+        db.add(SystemSetting(key="trading_env", value=body.target_env, value_type="str", category="trading"))
+
+    db.add(AuditLog(
+        action="mode_switch",
+        target_key="trading_env",
+        old_value=old_value,
+        new_value=body.target_env,
+        actor=current_user.username,
+        ip_address=_get_client_ip(request),
+    ))
+    await db.commit()
+
+    switched_at = datetime.now(timezone.utc).isoformat()
+    return {"trading_env": body.target_env, "switched_at": switched_at}
+
+
 @router.put("/{key}")
 async def update_setting(
-    key: str, body: SettingUpdate, db: AsyncSession = Depends(get_db)
+    key: str,
+    body: SettingUpdate,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(SystemSetting).where(SystemSetting.key == key)
@@ -61,7 +142,25 @@ async def update_setting(
     row = result.scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail=f"설정 '{key}'을(를) 찾을 수 없습니다")
+
+    if row.category == "risk" and _is_market_hours():
+        lock_result = await db.execute(
+            select(SystemSetting).where(SystemSetting.key == "risk_lock_during_trading")
+        )
+        lock_row = lock_result.scalar_one_or_none()
+        if lock_row and lock_row.value.lower() == "true":
+            raise HTTPException(status_code=423, detail="장중에는 리스크 설정을 변경할 수 없습니다")
+
+    old_value = row.value
     row.value = body.value
+    db.add(AuditLog(
+        action="setting_update",
+        target_key=key,
+        old_value=old_value,
+        new_value=body.value,
+        actor=current_user.username,
+        ip_address=_get_client_ip(request),
+    ))
     await db.commit()
     await db.refresh(row)
     return {
