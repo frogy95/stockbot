@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-03-31T15:40:00+09:00",
+  "lastUpdated": "2026-03-31T16:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1219,6 +1219,24 @@
         {
           "hash": "ba7f86a",
           "message": "fix(hotfix): market_open 미실행 장애 복구 (misfire_grace_time + 09:05 자동 복구)",
+          "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-lifespan-market-open-detection",
+      "name": "Railway 장중 재시작 시 market_open 누락 버그 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/lifespan-market-open-detection/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/47",
+      "deployedAt": "2026-03-31",
+      "description": "Railway 서버가 장중(09:00~15:30) 재시작 시 lifespan에서 market_open CronTrigger가 이미 지나쳐 _market_open()이 호출되지 않아 WS 연결 미수립 및 2차 스크리닝 비활성화되던 버그 수정. check_and_recover_market_open() 메서드를 추가하여 lifespan 시작 시 장중 여부를 감지하고 자동 복구.",
+      "commits": [
+        {
+          "hash": "8ccef64",
+          "message": "fix(scheduler): 장중 서버 재시작 시 market_open 자동 복구",
           "date": "2026-03-31"
         }
       ]
