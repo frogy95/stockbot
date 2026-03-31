@@ -42,3 +42,22 @@ class ApprovalManager:
         """대기 중인 승인 토큰 개수를 반환한다."""
         keys = await self._redis.scan_keys("approval:*")
         return len(keys)
+
+    async def list_pending(self, limit: int = 100) -> list[dict]:
+        """대기 중인 승인 항목 목록을 반환한다 (최대 limit건)."""
+        keys = await self._redis.scan_keys("approval:*")
+        items = []
+        for key in keys[:limit]:
+            token = key.removeprefix("approval:")
+            raw = await self._redis.get(key)
+            if raw is None:
+                continue
+            ttl = await self._redis.ttl(key)
+            data = json.loads(raw)
+            items.append({
+                "token": token,
+                "signal": data["signal"],
+                "quantity": data["quantity"],
+                "expires_in_sec": max(ttl, 0),
+            })
+        return items

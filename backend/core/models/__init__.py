@@ -13,3 +13,4 @@ from core.models.corp_code import CorpCode  # noqa: E402, F401
 from core.models.financial_data import FinancialData  # noqa: E402, F401
 from core.models.news_sentiment import NewsSentiment  # noqa: E402, F401
 from core.models.trading import TradeSignal, Order, PositionRecord, TradeHistory  # noqa: E402, F401
+from core.models.audit_log import AuditLog  # noqa: E402, F401

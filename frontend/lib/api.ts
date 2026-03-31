@@ -53,3 +53,12 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   if (!resp.ok) throw new Error(`POST ${path} failed: ${resp.status}`);
   return resp.json() as Promise<T>;
 }
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const resp = await apiFetch(path, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error(`PUT ${path} failed: ${resp.status}`);
+  return resp.json() as Promise<T>;
+}

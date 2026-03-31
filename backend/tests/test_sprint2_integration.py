@@ -21,23 +21,23 @@ async def test_health_api_still_works(app):
 
 
 @pytest.mark.asyncio
-async def test_settings_list_32_items(app):
+async def test_settings_list_32_items(app, auth_headers):
     async with app.router.lifespan_context(app):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-            resp = await client.get("/api/v1/settings")
+            resp = await client.get("/api/v1/settings", headers=auth_headers)
     assert resp.status_code == 200
     assert len(resp.json()) == 32
 
 
 @pytest.mark.asyncio
-async def test_settings_category_filter(app):
+async def test_settings_category_filter(app, auth_headers):
     async with app.router.lifespan_context(app):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-            resp = await client.get("/api/v1/settings?category=risk")
+            resp = await client.get("/api/v1/settings?category=risk", headers=auth_headers)
     data = resp.json()
     assert all(item["category"] == "risk" for item in data)
 

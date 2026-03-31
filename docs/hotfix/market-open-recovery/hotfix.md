@@ -3,7 +3,7 @@
 **브랜치:** `hotfix/market-open-recovery`
 **담당자:** frogy95
 **리뷰어:** —
-**상태:** ⬜ 배포 대기 (PR #40 merge 필요)
+**상태:** ✅ 배포 완료 + 실서버 검증 완료
 **배포일:** 2026-03-31
 
 ---
@@ -59,9 +59,11 @@ APScheduler의 `MISFIRE_GRACE_TIME`이 60초로 설정되어 있었음. Railway 
 
 ### 수동 검증
 
-- ⬜ docker compose up --build (코드 반영)
-- ⬜ Railway 배포 후 다음 장 09:05 KST market_open_recovery 잡 정상 실행 확인
-- ⬜ Railway 배포 후 ws_subscriptions > 0 확인 (WS 연결 성공)
+- ✅ docker compose up --build (코드 반영)
+- ✅ Railway 배포 후 POST /collector/trigger/market-open → ws_connected: true 확인 (2026-03-31 14:02 KST)
+- ✅ secondary_screen 30초 주기 활성화 확인 (secondary_last_run: 14:04:18 KST)
+- ⬜ 내일(04/01) 09:00 market_open 자동 실행 확인 (스케줄 등록 완료)
+- ⬜ 내일(04/01) ws_subscriptions > 0 확인 (1차 스크리닝 후 구독 종목 필요)
 
 ---
 
@@ -69,4 +71,5 @@ APScheduler의 `MISFIRE_GRACE_TIME`이 60초로 설정되어 있었음. Railway 
 
 - **URL:** https://github.com/frogy95/stockbot/pull/40
 - **대상:** main
-- **역머지:** ⬜ develop에 역머지 필요 (main merge 후)
+- **역머지:** ✅ PR #41 (hotfix 역머지) + PR #43 (수동 트리거 API 역머지) 완료
+- **추가 PR:** https://github.com/frogy95/stockbot/pull/42 (market_open 수동 트리거 API)

@@ -105,8 +105,8 @@ class TestRegressionSprint1:
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_settings_200(self, app):
+    async def test_settings_200(self, app, auth_headers):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            resp = await ac.get("/api/v1/settings")
+            resp = await ac.get("/api/v1/settings", headers=auth_headers)
         assert resp.status_code == 200
