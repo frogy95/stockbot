@@ -1156,9 +1156,86 @@
     {
       "id": "phase4.5",
       "title": "스케줄러 안정화 + 장애 복구",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase4.5/phase4.5.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인)",
+          "status": "planned",
+          "branch": "phase4.5-sprint1",
+          "sprintDoc": "docs/phase/phase4.5/sprint1/sprint1.md",
+          "progress": {
+            "total": 7,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "Redis 상태 영속화",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-1-redis-상태-영속화",
+              "testPlan": "scheduler _last_* Redis 저장/복원 + TTL 86400 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "스케줄 의존성 체인 + pipeline_healthy 플래그",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-2-스케줄-의존성-체인--pipeline_healthy-플래그",
+              "testPlan": "선행 실패 시 후속 스킵 + pipeline_healthy 전환 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "매매 엔진 pipeline_healthy 차단",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-3-매매-엔진-pipeline_healthy-차단",
+              "testPlan": "pipeline_healthy=false 시 신호 처리 스킵 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "ETF sanity check 조건부 완화",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-4-etf-sanity-check-조건부-완화",
+              "testPlan": "prev<200 변동률 스킵 + +-30% 허용 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "health/readiness + 수동 파이프라인 API",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-5-healthreadiness--수동-파이프라인-api",
+              "testPlan": "readiness 엔드포인트 + premarket-pipeline API + 중복 방지 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "텔레그램 장애 알림",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-6-텔레그램-장애-알림",
+              "testPlan": "실패/복구 시 텔레그램 알림 발송 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "통합 테스트",
+              "path": "docs/phase/phase4.5/sprint1/sprint1.md#task-7-통합-테스트--기존-테스트-회귀-확인",
+              "testPlan": "파이프라인 성공/실패/복구 시나리오 + 전체 pytest 회귀",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

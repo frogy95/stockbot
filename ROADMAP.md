@@ -23,7 +23,7 @@
 
 - 전체 진행률: Phase 0~4 Sprint 2 완료 (MVP 완성)
 - 현재 Phase: Phase 4.5 (스케줄러 안정화 + 장애 복구) 🔄 진행 중
-- 현재 Sprint: Phase 4.5 Sprint 1 준비 중
+- 현재 Sprint: Phase 4.5 Sprint 1 🔄 진행 중
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 4.5 Sprint 1 — 백엔드 안정화 (스케줄 의존성, Redis 영속화, 수동 파이프라인)
@@ -492,7 +492,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 2026-04-01 장전 테스트 장애 근본 해결. 스케줄 의존성 체인(선행 실패 시 후속 중지 + 매매 엔진 차단), 상태값 Redis 영속화, 수동 파이프라인 재실행 API + 대시보드 UI, ETF sanity check 조건부 완화, health/readiness 강화.
 
 ### 작업 목록
-#### Sprint 1: 백엔드 안정화 📋
+#### Sprint 1: 백엔드 안정화 🔄
 - ⬜ Redis 상태 영속화 (scheduler:* 키, TTL 24h)
 - ⬜ 스케줄 의존성 가드 (선행 단계 상태 확인 → 실패 시 스킵)
 - ⬜ pipeline_healthy 플래그 (장전 시 false 초기화 → 핵심 완료 시 true)
