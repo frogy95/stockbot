@@ -123,7 +123,7 @@ async def lifespan(app: FastAPI):
         app.state.approval_manager = approval_manager
         app.state.telegram_bot = telegram_bot
         app.state.notifier_manager = notifier_manager
-        command_handler = CommandHandler(session_factory, redis_client, telegram_bot)
+        command_handler = CommandHandler(session_factory, redis_client, telegram_bot, collector_scheduler)
         app.state.command_handler = command_handler
         logger.info("텔레그램 알림 모듈 초기화 완료")
         collector_scheduler.set_telegram_bot(telegram_bot)

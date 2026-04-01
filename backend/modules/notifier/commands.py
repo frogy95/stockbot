@@ -1,6 +1,7 @@
 """텔레그램 조회 명령어 핸들러."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import date, datetime, time
 
@@ -8,6 +9,7 @@ from sqlalchemy import select
 
 from core.config import settings
 from core.models.trading import PositionRecord, TradeHistory
+from modules.collector.scheduler import PIPELINE_HEALTHY_KEY, PIPELINE_RUNNING_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +17,11 @@ logger = logging.getLogger(__name__)
 class CommandHandler:
     """텔레그램 조회 명령어를 처리한다."""
 
-    def __init__(self, session_factory, redis_client, telegram_bot):
+    def __init__(self, session_factory, redis_client, telegram_bot, collector_scheduler=None):
         self._session_factory = session_factory
         self._redis = redis_client
         self._bot = telegram_bot
+        self._scheduler = collector_scheduler
 
     async def handle_status(self, chat_id: int) -> str:
         """활성 포지션 요약."""
@@ -81,6 +84,62 @@ class CommandHandler:
             f"매매: {approval_mode} 모드"
         )
 
+    async def handle_pipeline(self, chat_id: int) -> str:
+        """파이프라인 단계별 상태 조회."""
+        if self._scheduler is None:
+            return "⚠️ 스케줄러 미초기화"
+
+        pipeline_status = await self._scheduler.get_pipeline_status()
+        healthy = await self._redis.get(PIPELINE_HEALTHY_KEY)
+        running = await self._redis.get(PIPELINE_RUNNING_KEY)
+
+        status_emoji = {"success": "✅", "failed": "❌", "skipped": "⏭️", "pending": "⏳"}
+        healthy_label = "🟢 정상" if healthy == "true" else "🔴 비정상"
+
+        lines = [f"🔧 <b>파이프라인 상태</b>  {healthy_label}"]
+        if running == "true":
+            lines.append("⚙️ <i>현재 실행 중...</i>")
+        lines.append("")
+
+        step_labels = {
+            "premarket": "장전 수집",
+            "etf_master": "ETF 마스터",
+            "primary_screen": "1차 스크리닝",
+            "etf": "ETF 시세",
+            "dart": "DART 재무",
+            "sentiment": "뉴스 센티멘트",
+        }
+        for step, label in step_labels.items():
+            info = pipeline_status.get(step, {})
+            status = info.get("status", "—")
+            emoji = status_emoji.get(status, "❓")
+            ts = info.get("timestamp", "")
+            time_str = ts[11:19] if ts else ""
+            lines.append(f"{emoji} {label}  <code>{time_str}</code>")
+
+        lines.append("\n/recover — 장전 파이프라인 수동 복구")
+        return "\n".join(lines)
+
+    async def handle_recover(self, chat_id: int) -> str:
+        """장전 파이프라인 수동 복구 트리거."""
+        if self._scheduler is None:
+            return "⚠️ 스케줄러 미초기화"
+
+        running = await self._redis.get(PIPELINE_RUNNING_KEY)
+        if running == "true":
+            return "⚙️ 파이프라인이 이미 실행 중입니다.\n/pipeline 으로 진행 상황을 확인하세요."
+
+        # 락 선점 후 백그라운드 실행
+        await self._redis.set(PIPELINE_RUNNING_KEY, "true", ttl=600)
+        asyncio.create_task(self._scheduler.run_premarket_pipeline())
+
+        return (
+            "🚀 <b>장전 파이프라인 복구 시작</b>\n\n"
+            "단계: 수집 → ETF → 스크리닝 → DART → 뉴스\n"
+            "약 7~10분 소요됩니다.\n\n"
+            "/pipeline 으로 진행 상황 확인"
+        )
+
     async def handle_help(self, chat_id: int) -> str:
         """명령어 목록."""
         return (
@@ -88,6 +147,8 @@ class CommandHandler:
             "/status — 활성 포지션 현황\n"
             "/today — 오늘 매매 요약\n"
             "/mode — 현재 거래 모드\n"
+            "/pipeline — 파이프라인 단계별 상태\n"
+            "/recover — 장전 파이프라인 수동 복구\n"
             "/help — 명령어 목록"
         )
 
@@ -97,6 +158,8 @@ class CommandHandler:
             "/status": self.handle_status,
             "/today": self.handle_today,
             "/mode": self.handle_mode,
+            "/pipeline": self.handle_pipeline,
+            "/recover": self.handle_recover,
             "/help": self.handle_help,
         }
         handler = handlers.get(command, self.handle_help)
