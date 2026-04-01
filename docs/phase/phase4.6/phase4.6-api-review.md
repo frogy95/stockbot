@@ -1,7 +1,7 @@
 # Phase 4.6 API 개발자 검토 리포트 — 윤에이피
 
-> **검토일**: 2026-04-02
-> **대상**: 데이터 수집 파이프라인 근본 수리 계획 초안
+> **검토일**: 2026-04-02 (수정안 검토)
+> **대상**: 데이터 수집 파이프라인 근본 수리 계획 — KIS 조회/매매 도메인 분리 반영 수정안
 
 ---
 
@@ -9,90 +9,95 @@
 
 | 항목 | 판정 |
 |------|------|
-| Dockerfile --reload 문제 | ❌ 재검토 — 프로덕션에서 --reload는 심각한 결함, 즉시 수정 |
-| data_go_kr 수집일 로직 | ⚠️ 주의 — 논리적으로 맞지만 공휴일/임시공휴일 미처리 |
-| ETF HTTP 500 | ⚠️ 주의 — 모의투자 서버 한계, 코드 문제 아닌 환경 문제 |
-| on_conflict_do_nothing | ⚠️ 주의 — 동일 날짜 재수집 시 건수=0 but "새 데이터 없음" ≠ "수집 실패" |
-| stocks 테이블 주식 0건 | ❌ 재검토 — premarket이 한 번도 성공적으로 실행되지 않은 증거 |
+| tr_id 패턴 분석 정확성 | ✅ 통과 — 조회 tr_id는 환경 무관 고정값 |
+| 도메인 분리 구현 방안 | ✅ 통과 — inquiry_client/trading_client 분리 합리적 |
+| TokenManager 이중 인스턴스 | ✅ 통과 — 기존 구조가 env별 독립이므로 자연스러운 확장 |
+| KISRestClient 수정 범위 | ✅ 통과 — 클래스 내부 변경 없음, 인스턴스만 2개 |
+| main.py 초기화 변경 | ✅ 통과 — 파급 범위 관리 가능 |
+| Dockerfile --reload | ❌ 재검토 — 즉시 제거 필수 (기존 판정 유지) |
 
 ## 2. 항목별 검증 결과
 
-### Dockerfile --reload 분석
+### tr_id 패턴 분석 — ✅ 정확
 
-`backend/Dockerfile` 라인 13:
-```
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-```
+한투 API tr_id 규칙:
+- **조회** (시세/호가/종목정보): `FHKST01010100`, `FHKST01010200` 등 -> 환경 prefix 없음, 고정값
+- **매매** (주문/취소): `{V/T}TTC0802U`, `{V/T}TTC0801U` -> V=모의, T=실전
+- **잔고/체결**: `{V/T}TTS3320R`, `{V/T}TTC8001R` -> V=모의, T=실전
 
-`--reload` 옵션은 uvicorn이 WatchFiles(기본) 또는 watchdog를 사용하여 파일 변경을 감지하고 프로세스를 재시작한다. Railway에서는:
-1. 배포 시 코드가 변경되면 watchfiles가 트리거
-2. 로그 파일, __pycache__, .pyc 파일 생성도 트리거 가능
-3. APScheduler가 실행 중인 job을 갖고 있는 상태에서 SIGTERM → 비정상 종료
-4. 재시작 후 lifespan이 다시 실행되면서 스케줄러 재등록 → 이전 job 상태 유실
+실전 도메인으로 조회 tr_id를 보내면 정상 동작한다. 모의 도메인이 일부 조회(ETF 포함)에서 HTTP 500을 반환하는 것은 문서에 없는 실전 이슈.
 
-**AttributeError: 'CollectorScheduler' object has no attribute '_market_open_recovery'** 는 reload 과정에서 모듈 로드가 불완전한 상태에서 접근했을 가능성이 높다. 정상 로드에서는 메서드가 존재하지만, reload 중간에 클래스가 부분적으로 재정의되는 타이밍 이슈.
-
-해결: `--reload` 제거. 프로덕션 Dockerfile과 개발용 docker-compose에서 분리.
-
-### data_go_kr _latest_trading_date() 분석
+### 구현 방안 — ✅ 합리적
 
 ```python
-today_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
-target = today_kst - timedelta(days=1)  # 항상 전일
+# 현재 구조 (단일 환경)
+env = get_current_environment()  # paper or live
+token_manager = KISTokenManager(env=env, redis=redis_client)
+rest_client = KISRestClient(env=env, token_manager=token_manager, throttler=throttler)
+
+# 수정 구조 (이중 환경)
+inquiry_env = get_environment("live")  # 조회는 항상 LIVE
+trading_env = get_current_environment()  # 매매는 TRADING_ENV 따름
+
+inquiry_token = KISTokenManager(env=inquiry_env, redis=redis_client)
+trading_token = KISTokenManager(env=trading_env, redis=redis_client)
+
+inquiry_throttler = TokenBucketThrottler(interval=inquiry_env.rate_limit_interval)
+trading_throttler = TokenBucketThrottler(interval=trading_env.rate_limit_interval)
+
+inquiry_client = KISRestClient(env=inquiry_env, token_manager=inquiry_token, throttler=inquiry_throttler)
+trading_client = KISRestClient(env=trading_env, token_manager=trading_token, throttler=trading_throttler)
 ```
 
-**문제 1**: 공공데이터포털은 당일 데이터를 T+1(또는 T+2)에 제공한다. 4/1(화)에 수집하면 3/31(월) 데이터를 요청하는데, 3/31 데이터가 아직 API에 올라오지 않았을 수 있다. API가 빈 응답을 주면 0건 수집 → success.
+**장점**: KISRestClient 내부 코드 변경 없음. 인스턴스만 2개.
+**참고**: `TRADING_ENV=live`일 때 inquiry_env == trading_env -> 동일 환경 2개 인스턴스. 토큰은 Redis 키가 같아서 (`kis:live:access_token`) 공유됨. 문제없음.
 
-**문제 2**: 공휴일 처리 없음. 토/일만 건너뛰지만, 대체공휴일/임시공휴일은 미처리. 공휴일에 해당하는 날짜 데이터를 요청하면 0건 반환.
+### TokenManager 이중 인스턴스 — ✅ 자연스러운 확장
 
-**문제 3**: `on_conflict_do_nothing`으로 이미 수집된 날짜는 0건 INSERT. collect_all()이 total_collected=0을 반환해도 "이미 있는 데이터"와 "없는 데이터"를 구분할 수 없다.
+기존 `KISTokenManager`는 `_token_key()`를 `kis:{env.name}:access_token`으로 생성:
+- inquiry용: `kis:live:access_token`
+- trading용 (paper): `kis:paper:access_token`
 
-해결:
-1. 수집 전에 DB에서 해당 날짜 데이터 존재 여부 확인
-2. 0건 수집이되 DB에도 해당 날짜가 없으면 → warning + 2일 전, 3일 전 순차 시도
-3. 공휴일 캘린더(한국거래소 휴장일) 도입 (Nice-to-have, Sprint 2)
+Redis 키가 자연스럽게 분리. 코드 수정 불필요.
 
-### ETF HTTP 500 분석
+### 파급 범위 분석
 
-모의투자 서버(`openapivts.koreainvestment.com`)에서 ETF 시세 조회 시 HTTP 500은 **알려진 한계**다.
-- 모의투자 서버는 실전 대비 기능 제한이 있음
-- 일부 ETF 종목(특히 신규 상장, 해외 지수 연동)은 모의에서 시세 미제공
-- 전체 881개가 전부 500이면 모의 서버 자체 장애일 가능성
+| 파일 | 변경 | 설명 |
+|------|------|------|
+| `kis_config.py` | 수정 | `get_inquiry_environment()` 헬퍼 추가 |
+| `main.py` | 수정 | lifespan에서 inquiry/trading 이중 초기화, app.state 분리 |
+| `scheduler.py` | 수정 | `__init__`에 `inquiry_client` 파라미터 추가, ETF 수집에 inquiry_client 사용 |
+| `kis_collector.py` | 변경 없음 | 이미 `rest_client`를 외부에서 받으므로 inquiry_client 넘기면 됨 |
+| `kis_rest.py` | 변경 없음 | 인스턴스 2개, 클래스 자체 수정 불필요 |
+| `token_manager.py` | 변경 없음 | 이미 env별 독립 |
 
-해결:
-1. `TRADING_ENV=paper`일 때 ETF 시세 수집을 **optional**로 처리 (실패해도 pipeline_healthy에 영향 없음)
-2. 실전 전환 시 ETF 시세 수집을 필수로 전환
-3. KISCollector에 수집 성공률 반환 + 임계값 검증
+**app.state 권고**: 기존 `app.state.kis_rest`를 매매용으로 유지하고 `app.state.kis_inquiry` 추가 -> 기존 코드 파급 최소화.
 
-### stocks 테이블 주식 0건 분석
+### Shutdown 순서
 
-`_upsert_stock`에서 `stock_type="STOCK"`으로 설정하는데, stocks에 주식이 0건이라는 것은:
-1. premarket(`data_go_kr.collect_all()`)이 **한 번도 데이터를 성공적으로 가져오지 못했거나**
-2. 가져왔지만 upsert가 실패했거나 (FK 제약 등)
-3. 또는 가져온 데이터의 `srtnCd` 파싱이 실패했거나
+inquiry_client `.close()` + trading_client `.close()` 각각 호출 필요. inquiry_token_manager도 `.close()` 필요.
 
-가장 가능성 높은 원인: WatchFiles 재시작 루프로 08:00 스케줄이 실행 도중 중단되어 commit이 안 됨.
+### WS 클라이언트 — 변경 없음
+
+WS(웹소켓)는 실시간 체결/호가 수신용. WS 연결 URL은 모의/실전이 다르므로 현재 구조 유지.
 
 ## 3. 파라미터 조정 권고
 
-| 항목 | 원래 | 권고 | 근거 |
-|------|------|------|------|
-| Dockerfile CMD | --reload 포함 | **`--reload` 제거, `--workers 1`** | 프로덕션 안정성 |
-| docker-compose.yml backend | Dockerfile 공유 | **command override로 --reload 추가** (개발만) | 개발 편의 유지 |
-| data_go_kr 날짜 폴백 | 전일만 시도 | **전일 → 2일 전 → 3일 전 순차 시도** (최대 7일) | 공휴일/데이터 지연 대응 |
-| collect_all 반환값 | 수집 건수만 | **{collected: int, skipped: int, date: str}** | 수집 품질 판단 근거 |
-| KIS ETF 수집 | paper/live 동일 | **paper 환경 optional, live 환경 required** | 모의 서버 한계 인정 |
-| updated_at 컬럼 | onupdate=func.now() (ORM 레벨) | **on_conflict_do_update에서 명시적 설정** | pg_insert는 ORM onupdate 무시 |
+| # | 항목 | 기존 확정값 | 권고 수정값 | 근거 |
+|---|------|-----------|-----------|------|
+| 5 | ETF 시세 (모의) | optional | **required** | LIVE 도메인 조회로 정상 수집 |
+| 신규 | inquiry Rate Limit | 미정 | **LIVE 기준 0.07초** | 실전 도메인 Rate Limit |
+| 신규 | Throttler 분리 | 미정 | **inquiry/trading 각각 독립 Throttler** | Rate Limit 간섭 방지 |
+| 기존 | Dockerfile, 에러 전파, 날짜 폴백 등 | 유지 | 유지 | 기존 분석 정확 |
 
 ## 4. 리스크 및 대안
 
-### 즉시 해결 (Sprint 1)
-1. Dockerfile --reload 제거 → Railway 재배포만으로 WatchFiles 무한루프 해결
-2. data_go_kr 수집 건수 검증 + 날짜 폴백
-3. ETF 수집 에러 전파 수정 (0건 = failed)
-4. stocks.updated_at NULL 수정 (upsert 시 명시적 타임스탬프)
+### TRADING_ENV=live 시 Rate Limit 공유
+inquiry와 trading이 동일 LIVE 환경 -> 서버 측에서 앱키 기준 Rate Limit. 두 Throttler 합산이 실제 한도를 초과할 수 있다. -> 단, 조회는 장전 08:00 집중, 매매는 장중 09:00~15:30이므로 시간대 분리. 리스크 수용 가능. Phase 5 범위에서 Throttler 공유/분할 검토.
 
-### 구조적 개선 (Sprint 2)
-1. 한국거래소 휴장일 캘린더 (공공API 또는 하드코딩 2026년)
-2. 수집 결과 상세 로깅 (건수, 날짜, 소스별)
-3. 모의/실전 환경별 파이프라인 단계 활성화 분리
+### CI 환경
+실전 앱키가 없는 CI에서 서버 시작 실패 -> 테스트 시 mock 필수. 기존 테스트가 mock 기반이므로 문제없음.
+
+## 최종 판단
+
+**수정안 승인**. KISRestClient를 인스턴스 2개로 분리하는 방식은 기존 코드 변경이 최소화되면서 문제를 근본적으로 해결한다. 클래스 내부 수정 없이 초기화 시점에서만 분리하는 것이 핵심.
