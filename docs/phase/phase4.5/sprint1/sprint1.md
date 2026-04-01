@@ -6,9 +6,11 @@
 
 **Tech Stack:** Python 3.12, FastAPI, APScheduler, Redis (redis.asyncio), pytest + pytest-asyncio
 
-**Sprint 기간:** 2026-04-01 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-01 ~ 2026-04-01
+**상태:** ✅ 완료 (2026-04-01)
 **이전 스프린트:** Phase 4 Sprint 2 (pytest 통과, PR #44)
 **브랜치명:** `phase4.5-sprint1`
+**PR:** (sprint-close 시 기록)
 
 ---
 
@@ -82,9 +84,9 @@ git commit -m "feat(phase4.5-sprint1): task1 -- Redis 상태 영속화 (schedule
 ```
 
 **완료 기준:**
-- ⬜ _last_* 값이 Redis에 저장/복원됨
-- ⬜ TTL 86400 설정됨
-- ⬜ 기존 test_scheduler.py 테스트 회귀 없음
+- ✅ _last_* 값이 Redis에 저장/복원됨
+- ✅ TTL 86400 설정됨
+- ✅ 기존 test_scheduler.py 테스트 회귀 없음
 
 ---
 
@@ -137,11 +139,11 @@ git commit -m "feat(phase4.5-sprint1): task2 -- 스케줄 의존성 체인 + pip
 ```
 
 **완료 기준:**
-- ⬜ 선행 실패 시 후속 job 자동 스킵 + "skipped" 상태 기록
-- ⬜ premarket + primary_screen 성공 시 pipeline_healthy = "true"
-- ⬜ 매일 08:00 premarket 시작 시 pipeline_healthy = "false"로 초기화
-- ⬜ pipeline_status JSON 구조: `{step: {status, timestamp, error}}`
-- ⬜ 기존 test_scheduler.py 회귀 없음
+- ✅ 선행 실패 시 후속 job 자동 스킵 + "skipped" 상태 기록
+- ✅ premarket + primary_screen 성공 시 pipeline_healthy = "true"
+- ✅ 매일 08:00 premarket 시작 시 pipeline_healthy = "false"로 초기화
+- ✅ pipeline_status JSON 구조: `{step: {status, timestamp, error}}`
+- ✅ 기존 test_scheduler.py 회귀 없음
 
 ---
 
@@ -174,8 +176,8 @@ git commit -m "feat(phase4.5-sprint1): task3 -- 매매 엔진 pipeline_healthy �
 ```
 
 **완료 기준:**
-- ⬜ pipeline_healthy != "true" 시 신호 처리 스킵
-- ⬜ 차단 시 경고 로그 출력
+- ✅ pipeline_healthy != "true" 시 신호 처리 스킵
+- ✅ 차단 시 경고 로그 출력
 
 ---
 
@@ -220,9 +222,9 @@ git commit -m "feat(phase4.5-sprint1): task4 -- ETF sanity check 조건부 완�
 ```
 
 **완료 기준:**
-- ⬜ prev_count < 200이면 변동률 검증 스킵
-- ⬜ prev_count >= 200이면 +-30% 허용
-- ⬜ 기존 sanity_check 테스트 회귀 없음
+- ✅ prev_count < 200이면 변동률 검증 스킵
+- ✅ prev_count >= 200이면 +-30% 허용
+- ✅ 기존 sanity_check 테스트 회귀 없음
 
 ---
 
@@ -288,10 +290,10 @@ git commit -m "feat(phase4.5-sprint1): task5 -- health/readiness + 수동 파이
 ```
 
 **완료 기준:**
-- ⬜ GET /health/readiness가 DB+Redis+스케줄러+pipeline 상태 포함
-- ⬜ POST /collector/trigger/premarket-pipeline이 BackgroundTasks로 비동기 실행
-- ⬜ GET /collector/pipeline-status가 단계별 상태 JSON 반환
-- ⬜ 중복 실행 방지 (Redis 락)
+- ✅ GET /health/readiness가 DB+Redis+스케줄러+pipeline 상태 포함
+- ✅ POST /collector/trigger/premarket-pipeline이 BackgroundTasks로 비동기 실행
+- ✅ GET /collector/pipeline-status가 단계별 상태 JSON 반환
+- ✅ 중복 실행 방지 (Redis 락)
 
 ---
 
@@ -332,9 +334,9 @@ git commit -m "feat(phase4.5-sprint1): task6 -- 텔레그램 장애 알림 (실�
 ```
 
 **완료 기준:**
-- ⬜ 파이프라인 단계 실패 시 텔레그램 알림 발송
-- ⬜ 수동 복구 성공/실패 시 결과 알림 발송
-- ⬜ telegram_bot 미설정 시 에러 없이 스킵
+- ✅ 파이프라인 단계 실패 시 텔레그램 알림 발송
+- ✅ 수동 복구 성공/실패 시 결과 알림 발송
+- ✅ telegram_bot 미설정 시 에러 없이 스킵
 
 ---
 
@@ -364,8 +366,8 @@ git commit -m "feat(phase4.5-sprint1): task7 -- 통합 테스트 (파이프라�
 ```
 
 **완료 기준:**
-- ⬜ 전체 파이프라인 성공/실패/복구 3가지 시나리오 테스트 통과
-- ⬜ 기존 전체 pytest 회귀 없음
+- ✅ 전체 파이프라인 성공/실패/복구 3가지 시나리오 테스트 통과
+- ✅ 기존 전체 pytest 회귀 없음 (566 passed, 0 failed)
 
 ---
 
