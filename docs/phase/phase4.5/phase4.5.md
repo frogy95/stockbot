@@ -1,6 +1,6 @@
 # Phase 4.5: 스케줄러 안정화 + 장애 복구 — 실행 계획
 
-> **Status**: 계획 수립 완료 (2026-04-01)
+> **Status**: Sprint 1 완료 (2026-04-01) / Sprint 2 계획 중
 > **ROADMAP 참조**: `ROADMAP.md` Phase 4.5
 > **검토 리포트**:
 > - `phase4.5-po-review.md` (정프로, PO)
@@ -96,12 +96,12 @@ graph TD
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | 백엔드 안정화 | Redis 영속화, 스케줄 의존성, pipeline_healthy, 매매 엔진 차단, ETF sanity, health/readiness, 수동 파이프라인 API, 텔레그램 장애 알림 | 없음 |
+| 1 ✅ | 백엔드 안정화 | Redis 영속화, 스케줄 의존성, pipeline_healthy, 매매 엔진 차단, ETF sanity, health/readiness, 수동 파이프라인 API, 텔레그램 장애 알림 | 없음 |
 | 2 | 프론트엔드 시스템 관리 | 시스템 페이지, 파이프라인 스테퍼, 수동 트리거 버튼, 상태 폴링 | Sprint 1 |
 
 ---
 
-## Sprint 1 상세 — 백엔드 안정화
+## Sprint 1 상세 — 백엔드 안정화 ✅ 완료 (PR #54, 2026-04-01)
 
 ### 백엔드
 
@@ -230,11 +230,12 @@ graph TD
 
 | # | 항목 | 심각도 | 대응 |
 |---|------|--------|------|
-| 1 | Railway 요청 타임아웃 | ⚠️ 중 | 파이프라인 API는 BackgroundTasks + 폴링 패턴으로 해결 |
-| 2 | Redis 장애 시 pipeline_healthy 소실 | ⚠️ 중 | 기본값 `false`(보수적) — 매매 차단이 안전 |
-| 3 | 파이프라인 중복 실행 | ⚠️ 중 | Redis 락으로 동시 실행 방지 |
+| 1 | Railway 요청 타임아웃 | ⚠️ 중 | ✅ 해결 — 파이프라인 API는 BackgroundTasks + 폴링 패턴으로 해결 (Sprint 1) |
+| 2 | Redis 장애 시 pipeline_healthy 소실 | ⚠️ 중 | ✅ 해결 — 기본값 `false`(보수적), 매매 차단이 안전 (Sprint 1) |
+| 3 | 파이프라인 중복 실행 | ⚠️ 중 | ✅ 해결 — Redis 락으로 동시 실행 방지 (Sprint 1) |
 | 4 | ETF 시세 수집 부분 실패 (11종목) | ⬜ 낮 | 로깅 개선만, Phase 4.5 범위 외 |
-| 5 | Sprint 1 일정 (04/02 08:00 장전 전 배포) | ⚠️ 중 | 범위 최소화, 프론트엔드는 Sprint 2로 분리 |
+| 5 | Sprint 1 일정 (04/02 08:00 장전 전 배포) | ⚠️ 중 | ✅ 해결 — 2026-04-01 배포 완료 |
+| 6 | 수동 트리거 API Race condition — BackgroundTask 내 무음 실패 | ⬜ 낮 | Sprint 2에서 개선 권장 — API 핸들러에서 락 확인 직후 Redis에 즉시 set하도록 수정 필요 |
 
 ---
 
@@ -242,13 +243,13 @@ graph TD
 
 | 항목 | 기준 | 상태 |
 |------|------|------|
-| 스케줄 의존성 체인 | 선행 실패 시 후속 job 자동 스킵 + 로그 | ⬜ |
-| pipeline_healthy 플래그 | Redis 영속, 장전 시 초기화, 핵심 완료 시 true | ⬜ |
-| 매매 엔진 차단 | pipeline_healthy=false 시 신호 처리 스킵 | ⬜ |
-| Redis 상태 영속화 | _last_* 값이 컨테이너 재시작 후에도 유지 | ⬜ |
-| ETF sanity check | prev<200이면 변동률 스킵, 그 외 ±30% | ⬜ |
-| health/readiness | DB+Redis+스케줄러+pipeline 확인, Railway 연동 | ⬜ |
-| 수동 파이프라인 API | POST premarket-pipeline + GET pipeline-status | ⬜ |
-| 텔레그램 장애 알림 | 실패/복구 시 자동 발송, 단계+에러+복구방법 포함 | ⬜ |
-| 시스템 페이지 | 파이프라인 스테퍼 + 수동 트리거 버튼 | ⬜ |
-| 상태 폴링 | 5초/30초 적응형 폴링 | ⬜ |
+| 스케줄 의존성 체인 | 선행 실패 시 후속 job 자동 스킵 + 로그 | ✅ 완료 (Sprint 1) |
+| pipeline_healthy 플래그 | Redis 영속, 장전 시 초기화, 핵심 완료 시 true | ✅ 완료 (Sprint 1) |
+| 매매 엔진 차단 | pipeline_healthy=false 시 신호 처리 스킵 | ✅ 완료 (Sprint 1) |
+| Redis 상태 영속화 | _last_* 값이 컨테이너 재시작 후에도 유지 | ✅ 완료 (Sprint 1) |
+| ETF sanity check | prev<200이면 변동률 스킵, 그 외 ±30% | ✅ 완료 (Sprint 1) |
+| health/readiness | DB+Redis+스케줄러+pipeline 확인, Railway 연동 | ✅ 완료 (Sprint 1) |
+| 수동 파이프라인 API | POST premarket-pipeline + GET pipeline-status | ✅ 완료 (Sprint 1) |
+| 텔레그램 장애 알림 | 실패/복구 시 자동 발송, 단계+에러+복구방법 포함 | ✅ 완료 (Sprint 1) |
+| 시스템 페이지 | 파이프라인 스테퍼 + 수동 트리거 버튼 | ⬜ 대기 (Sprint 2) |
+| 상태 폴링 | 5초/30초 적응형 폴링 | ⬜ 대기 (Sprint 2) |
