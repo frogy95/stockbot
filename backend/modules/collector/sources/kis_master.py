@@ -127,7 +127,7 @@ class KISMasterCollector:
         return records
 
     def sanity_check(self, etf_list: list[dict], prev_count: int | None = None) -> bool:
-        """ETF 목록 품질 검증: 최소 200종목, spot-check 5종목, 전일 대비 ±10% 이내."""
+        """ETF 목록 품질 검증: 최소 200종목, spot-check 5종목, prev >= 200일 때 전일 대비 ±30% 이내."""
         count = len(etf_list)
         if count < 200:
             logger.warning("sanity check 실패: 종목 수 부족 (%d < 200)", count)
@@ -139,9 +139,9 @@ class KISMasterCollector:
             logger.warning("sanity check 실패: spot-check 종목 누락 %s", missing)
             return False
 
-        if prev_count and prev_count > 0:
+        if prev_count is not None and prev_count >= 200:
             delta = abs(count - prev_count) / prev_count
-            if delta > 0.10:
+            if delta > 0.30:
                 logger.warning(
                     "sanity check 실패: 전일 대비 변동 %.1f%% (prev=%d, cur=%d)",
                     delta * 100, prev_count, count,

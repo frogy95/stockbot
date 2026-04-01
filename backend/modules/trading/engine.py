@@ -67,6 +67,12 @@ class TradingEngine:
         self, screened_candidates: list[dict]
     ) -> None:
         """2차 스크리닝 결과를 받아 매매 파이프라인을 실행."""
+        # 스케줄러 파이프라인 미완료 시 불완전 데이터 기반 매매 차단
+        pipeline_healthy = await self._redis.get("scheduler:pipeline_healthy")
+        if pipeline_healthy != "true":
+            logger.warning("pipeline_healthy=%r (not 'true') — 신호 처리 차단", pipeline_healthy)
+            return
+
         # 14:30 이후 신규 진입 차단
         if self._eod_liquidator.is_entry_blocked():
             logger.info("신규 진입 차단 시간대 — 신호 생성 스킵")
