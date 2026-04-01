@@ -40,6 +40,7 @@ REDIS_STATE_KEY_PREFIX = "scheduler:last_"
 PIPELINE_STATUS_KEY = "scheduler:pipeline_status"
 PIPELINE_HEALTHY_KEY = "scheduler:pipeline_healthy"
 ALL_PIPELINE_STEPS = ["premarket", "etf_master", "primary_screen", "etf", "dart", "sentiment"]
+PIPELINE_RUNNING_KEY = "scheduler:pipeline_running"
 
 # 의존성 맵: 각 단계의 선행 단계 목록
 DEPENDENCY_MAP: dict[str, list[str]] = {
@@ -89,6 +90,11 @@ class CollectorScheduler:
         self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
         self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
+
+    @property
+    def is_running(self) -> bool:
+        """스케줄러 실행 여부."""
+        return self._running
 
     def set_telegram_bot(self, bot) -> None:
         """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
@@ -149,6 +155,29 @@ class CollectorScheduler:
     async def get_pipeline_status(self) -> dict:
         """파이프라인 상태 조회 (API 노출용)."""
         return await self._get_pipeline_status()
+
+    async def run_premarket_pipeline(self) -> dict:
+        """장전 파이프라인 수동 실행 오케스트레이터.
+
+        Redis 락으로 중복 실행을 방지하고, 각 단계를 순차 실행한다.
+        실패한 단계의 의존 단계는 스킵되지만 독립 단계는 계속 실행한다.
+        """
+        running = await self._redis.get(PIPELINE_RUNNING_KEY)
+        if running == "true":
+            raise RuntimeError("파이프라인이 이미 실행 중입니다")
+
+        await self._redis.set(PIPELINE_RUNNING_KEY, "true", ttl=600)
+        try:
+            await self._premarket_collect()
+            await self._etf_master_collect()
+            await self._primary_screen()
+            await self._etf_collect()
+            await self._dart_collect()
+            await self._sentiment_collect()
+        finally:
+            await self._redis.delete(PIPELINE_RUNNING_KEY)
+
+        return {"completed": True, "pipeline_status": await self._get_pipeline_status()}
 
     async def _load_state_from_redis(self) -> None:
         """Redis에서 _last_* 타임스탬프를 복원한다."""

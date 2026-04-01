@@ -21,6 +21,9 @@ class FakeRedis:
     async def delete(self, key: str) -> None:
         self._store.pop(key, None)
 
+    async def ping(self) -> bool:
+        return True
+
 _TEST_JWT_SECRET = "test-secret-key-for-pytest"
 
 

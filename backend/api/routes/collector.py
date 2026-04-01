@@ -2,9 +2,10 @@
 
 import json
 
-from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from core.redis import redis_client
+from modules.collector.scheduler import PIPELINE_RUNNING_KEY
 
 router = APIRouter(tags=["collector"])
 
@@ -153,6 +154,38 @@ async def probe_data_go_kr():
         }
     except Exception as e:
         return {"ok": False, "bas_dt": bas_dt, "error": str(e)}
+
+
+@router.get("/collector/pipeline-status")
+async def get_pipeline_status(request: Request):
+    """파이프라인 단계별 상태 + pipeline_healthy 조회."""
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    pipeline_status = {}
+    if scheduler is not None:
+        pipeline_status = await scheduler.get_pipeline_status()
+    pipeline_healthy = await redis_client.get("scheduler:pipeline_healthy")
+    return {"pipeline_status": pipeline_status, "pipeline_healthy": pipeline_healthy}
+
+
+@router.post("/collector/trigger/premarket-pipeline", status_code=202)
+async def trigger_premarket_pipeline(background_tasks: BackgroundTasks, request: Request):
+    """장전 파이프라인 수동 트리거 (BackgroundTasks로 비동기 실행).
+
+    실행 중 중복 요청은 409로 거부한다.
+    """
+    running = await redis_client.get(PIPELINE_RUNNING_KEY)
+    if running == "true":
+        raise HTTPException(status_code=409, detail="파이프라인이 이미 실행 중입니다")
+
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+
+    background_tasks.add_task(scheduler.run_premarket_pipeline)
+    return {
+        "triggered": True,
+        "message": "파이프라인 시작됨. GET /api/v1/collector/pipeline-status 에서 확인",
+    }
 
 
 @router.get("/collector/realtime/{stock_code}")
