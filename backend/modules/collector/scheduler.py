@@ -34,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 REALTIME_CACHE_TTL = 5  # 초
+STATE_TTL = 86400  # 초 (Redis 상태 TTL — 24시간)
+REDIS_STATE_KEY_PREFIX = "scheduler:last_"
 
 
 class CollectorScheduler:
@@ -72,6 +74,7 @@ class CollectorScheduler:
         self._last_etf_master: datetime | None = None
         self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
+        self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
 
     def set_telegram_bot(self, bot) -> None:
         """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
@@ -81,8 +84,34 @@ class CollectorScheduler:
         """매매 엔진 참조 설정 (main.py에서 후속 주입)."""
         self._trading_engine = engine
 
+    async def _load_state_from_redis(self) -> None:
+        """Redis에서 _last_* 타임스탬프를 복원한다."""
+        key_field_map = {
+            f"{REDIS_STATE_KEY_PREFIX}premarket": "_last_premarket",
+            f"{REDIS_STATE_KEY_PREFIX}etf": "_last_etf",
+            f"{REDIS_STATE_KEY_PREFIX}primary_screen": "_last_primary_screen",
+            f"{REDIS_STATE_KEY_PREFIX}etf_master": "_last_etf_master",
+            f"{REDIS_STATE_KEY_PREFIX}dart": "_last_dart",
+            f"{REDIS_STATE_KEY_PREFIX}sentiment": "_last_sentiment",
+        }
+        for key, field in key_field_map.items():
+            try:
+                value = await self._redis.get(key)
+                if value:
+                    setattr(self, field, datetime.fromisoformat(value))
+            except Exception:
+                logger.debug("Redis 상태 로드 실패 (key=%s)", key)
+
+    async def _save_last_timestamp(self, job_name: str, dt: datetime) -> None:
+        """Redis에 scheduler:last_{job_name} 키로 타임스탬프를 저장한다 (TTL STATE_TTL)."""
+        try:
+            await self._redis.set(f"{REDIS_STATE_KEY_PREFIX}{job_name}", dt.isoformat(), ttl=STATE_TTL)
+        except Exception:
+            logger.debug("Redis 타임스탬프 저장 실패 (job=%s)", job_name)
+
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
+        await self._load_state_from_redis()
         tz = ZoneInfo(settings.MARKET_TIMEZONE)
         self._scheduler.add_job(
             self._premarket_collect,
@@ -181,6 +210,7 @@ class CollectorScheduler:
             "last_etf_master": self._last_etf_master.isoformat() if self._last_etf_master else None,
             "last_dart": self._last_dart.isoformat() if self._last_dart else None,
             "last_sentiment": self._last_sentiment.isoformat() if self._last_sentiment else None,
+            "pipeline_status": self._pipeline_status,
         }
 
     def get_auxiliary_status(self) -> dict:
@@ -286,6 +316,7 @@ class CollectorScheduler:
                 collector = DataGoKrCollector(db_session)
                 count = await collector.collect_all()
             self._last_premarket = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("premarket", self._last_premarket)
             logger.info("장전 수집 완료: %d종목", count)
             return count
         except Exception:
@@ -300,6 +331,7 @@ class CollectorScheduler:
                 collector = KISCollector(self._rest_client, db_session)
                 count = await collector.collect_etf_prices()
             self._last_etf = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("etf", self._last_etf)
             logger.info("ETF 수집 완료: %d종목", count)
             return count
         except Exception:
@@ -318,6 +350,7 @@ class CollectorScheduler:
                 pass  # seed 폴백은 _etf_master_collect 내부가 아닌 최초 설치 스크립트에서 처리
 
             self._last_etf_master = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("etf_master", self._last_etf_master)
             logger.info(
                 "ETF 마스터 수집 완료: ETF=%d, ETN=%d, source=%s",
                 result["etf_count"], result["etn_count"], result["source"],
@@ -396,6 +429,7 @@ class CollectorScheduler:
 
             passed = [r for r in results if r.get("is_passed")]
             self._last_primary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("primary_screen", self._last_primary_screen)
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
         except Exception as e:
@@ -444,6 +478,7 @@ class CollectorScheduler:
                 count = await collector.collect_financials(stock_codes)
 
             self._last_dart = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("dart", self._last_dart)
             logger.info("DART 재무 수집 완료: %d건", count)
             return count
         except Exception:
@@ -467,6 +502,7 @@ class CollectorScheduler:
                 count = await collector.collect_sentiments(stock_info)
 
             self._last_sentiment = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("sentiment", self._last_sentiment)
             logger.info("네이버 센티멘트 수집 완료: %d건", count)
             return count
         except Exception:
