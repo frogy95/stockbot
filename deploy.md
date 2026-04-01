@@ -20,18 +20,32 @@ PR: https://github.com/frogy95/stockbot/pull/50
   - 스케줄러 11개 잡 등록 확인 (`railway logs` + `/api/v1/collector/status`)
   - `secondary_screen` next_run=null (장중 외 일시정지) 정상 확인
 
-- ⬜ 내일 아침 순차 체크 (`railway logs --tail 200`):
+- ⬜ 아침 순차 체크 (`railway logs --tail 200`):
 
   **08:00 ~ 08:20 수집 단계**
-  ```
-  railway logs --tail 200
-  ```
-  - ⬜ `장전 수집 완료: N종목` (08:00, 공공데이터포털)
-  - ⬜ `ETF 마스터 수집 완료: ETF=N, ETN=N, source=download` (08:10)
-  - ⬜ `1차 스크리닝 완료: N후보, N통과` (08:10)
+  - ❌ `장전 수집 완료: N종목` (08:00) — **장애 발생**: Railway 컨테이너 2회 재시작으로 미완료
+  - ✅ `ETF 마스터 수집 완료` (08:10) — 단, **sanity check 실패** (prev=277 → cur=878, 217% 변동) → 기존 DB ETF 유지
+  - ❌ `1차 스크리닝 완료` (08:10) — 후보 0종목 (장전 수집 데이터 없음)
   - ⬜ `DART 재무 수집 완료: N건` (08:15)
   - ⬜ `ETF 수집 완료: N종목` (08:15)
   - ⬜ `네이버 센티멘트 수집 완료: N건` (08:20)
+
+  **[장애 대응] 수동 복구 — 09:00 전에 완료 필요**
+  ```bash
+  # 1. 장전 수집 수동 트리거
+  curl -X POST https://api.stockbot.choiji.kr/api/v1/collector/trigger/premarket
+
+  # 2. 완료 확인 (null → timestamp 변경 시 완료, 약 2~5분 소요)
+  curl https://api.stockbot.choiji.kr/api/v1/collector/status | jq '.last_premarket'
+
+  # 3. 1차 스크리닝 수동 트리거
+  curl -X POST https://api.stockbot.choiji.kr/api/v1/screening/trigger/primary
+
+  # 4. 후보 종목 수 확인
+  curl https://api.stockbot.choiji.kr/api/v1/screening/primary | jq '.total'
+  ```
+  - ⬜ 수동 장전 수집 완료 확인 (`last_premarket` timestamp 갱신)
+  - ⬜ 1차 스크리닝 후보 N종목 (0 초과) 확인
 
   **09:00 ~ 09:10 장 시작 단계**
   - ⬜ `장중 시작: WS 연결` + `WS 연결 완료` (09:00)
@@ -50,6 +64,13 @@ PR: https://github.com/frogy95/stockbot/pull/50
   **이상 발생 시**
   - WS 미연결: `railway logs` 에서 에러 확인 후 텔레그램 복구 알림 대기
   - 수집 0종목: 공공데이터포털 API 키 만료 여부 확인 (`DATA_GO_KR_API_KEY`)
+  - 1차 스크리닝 후보 0: 위 수동 복구 절차 재실행
+
+- ⬜ **[장애 후속] 오늘 장 종료 후 Hotfix 검토**:
+  - ETF sanity check 기준 재검토 (±10% → ±50% 또는 절대값 기준) — prev=277 vs cur=878 원인 확인
+  - `last_premarket` 등 상태값 Redis 저장 전환 (재시작 시 초기화 방지)
+  - Railway 재시작 원인 파악: `railway logs --tail 500 | grep -E "(ERROR|CRITICAL|OOM|crash)"`
+  - backend health check 추가 (`/api/v1/health` — Railway 상태 감지용)
 
 ---
 
