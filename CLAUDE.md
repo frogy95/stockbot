@@ -34,7 +34,7 @@ docker compose exec backend pytest tests/test_x.py # 단일 파일 테스트
 docker compose exec backend alembic upgrade head    # DB 마이그레이션
 
 # 프론트엔드 타입 체크
-cd frontend && npx tsc --noEmit
+docker compose exec frontend npx tsc --noEmit
 
 # 커스텀 커맨드
 /sprint-dev {P}-{N}             # Phase P의 Sprint N 구현 실행
@@ -114,11 +114,10 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 ### 핵심 원칙
 
 - **수정사항 → Hotfix vs Sprint 의사결정 먼저**: `docs/dev-process.md` 섹션 2 기준
-- **sprint{N}.md가 Single Source of Truth** — Task를 순서대로 실행
-- **worktree 사용 금지**: `git checkout -b phase{P}-sprint{N}` 으로 브랜치 생성
 - **karpathy-guidelines** 준수
 - **검증 원칙**: `docs/dev-process.md` 섹션 5 참조
 - 배포 후 수동 작업: `deploy.md` 참조 (완료 기록은 `docs/deploy-history/` 아카이브)
+- 브랜치/워크플로우 상세 규칙: `.claude/rules/sprint-workflow.md` 참조
 
 ## 에이전트 사용 규칙
 
@@ -173,4 +172,4 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 
 ## Notion 기술 문서 관리
 
-상세 규칙은 `.claude/rules/notion.md` 참조. 업데이트 트리거는 `docs/dev-process.md` 섹션 8.5 참조.
+업데이트 트리거: `docs/dev-process.md` 섹션 8.5 참조. 상세 규칙: `.claude/rules/notion.md` (Notion 설정 후 생성 예정).

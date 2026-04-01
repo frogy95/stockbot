@@ -112,7 +112,7 @@ Agent(
 - Phase 문서를 `docs/phase/phase{N}/phase{N}.md`에 작성합니다.
 - Sprint 분할 테이블의 Sprint 번호는 **phase 내 로컬 번호**를 사용합니다. (Sprint 1, Sprint 2...)
 
-`docs/phase/phase{N}/phase{N}.md`를 다음 구조로 작성합니다:
+`docs/phase/phase{N}/phase{N}.md`를 다음 구조로 작성합니다. (형식 참고: `docs/templates/EXAMPLE-phase.md`)
 
 ```markdown
 # Phase {N}: {제목} — 실행 계획

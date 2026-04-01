@@ -61,7 +61,7 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
 - 데모 모드 API 검증
 - Playwright UI 검증 (주요 페이지, 스프린트 관련 UI 시나리오)
   - 검증 실패 시 스크린샷을 `docs/phase/phase{P}/sprint{N}/` 폴더에 저장
-  - task별 검증 결과는 `docs/phase/phase{P}/sprint{N}/task{N}/test-result.md`에 기록
+  - task별 검증 결과는 `docs/phase/phase{P}/sprint{N}/task{N}/test-result.md`에 기록 (형식: `docs/templates/EXAMPLE-test-result.md`)
 
 **수동 필요 항목**: `docs/dev-process.md` 섹션 5 수동 컬럼 참조
 

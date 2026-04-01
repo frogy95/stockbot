@@ -19,7 +19,7 @@ memory: project
 
 ### 1단계: PRD 분석
 
-- `docs/prd.md` (또는 사용자가 지정한 PRD 파일)를 읽습니다.
+- `docs/prd.md` (또는 사용자가 지정한 PRD 파일)를 읽습니다. PRD 형식 기준: `docs/templates/EXAMPLE-prd.md`
 - 기존 `ROADMAP.md`가 있다면 현재 상태를 파악합니다.
 - 추출할 항목:
   - 핵심 기능 목록 및 우선순위
