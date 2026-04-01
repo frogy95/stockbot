@@ -131,6 +131,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 스프린트 계획 | `sprint-planner` | Opus |
 | 스프린트 마무리 (PR 생성) | `sprint-close` | Sonnet |
 | 스프린트 리뷰 (코드 리뷰 + 검증) | `sprint-review` | Sonnet |
+| PR 이슈 수정 + 재리뷰 | `sprint-pr-fix` | Sonnet |
 | 프로덕션 배포 | `deploy-prod` | Sonnet |
 | 핫픽스 마무리 | `hotfix-close` | Sonnet |
 
