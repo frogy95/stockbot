@@ -31,8 +31,16 @@ PR: https://github.com/frogy95/stockbot/pull/54
 - ✅ 미해결 사항 1~3번, 5번 ✅ 해결 표시
 - ✅ Medium 이슈(Race condition) 미해결 사항 #6으로 추가
 
+#### 재리뷰 (2026-04-01) — race condition 수정 후
+
+- ✅ 재리뷰 완료 — PR 코멘트: https://github.com/frogy95/stockbot/pull/54#issuecomment-4166805504
+- ✅ Medium 이슈(race condition) 수정 확인 — 락 즉시 선점 방식으로 올바르게 수정됨
+- High 이슈 (1건): `/health/readiness`의 `pipeline_healthy` 조건이 장전/장후 Railway 재시작 루프 유발 가능
+  - **조치**: Railway health check path는 반드시 `/health`(DB+Redis만)로 설정. `/health/readiness`는 거래 준비 상태 모니터링 전용으로 사용 (코드 수정 불필요)
+
 #### 수동 검증 필요 항목
 
+- ⬜ **[중요]** Railway health check path 확인: `/health` 사용 중인지 확인 (절대 `/health/readiness` 사용 금지 — 장전/장후 503 루프 발생)
 - ⬜ Railway 배포 후 아침 체크 — /health/readiness 응답, pipeline-status 응답
 - ⬜ 수동 파이프라인 트리거 테스트 (POST premarket-pipeline — 실제 Railway 환경)
 - ⬜ 텔레그램 장애 알림 수신 확인 (실제 프로덕션 환경)
