@@ -92,7 +92,8 @@ def mock_eod_liquidator():
 @pytest.fixture
 def mock_redis():
     redis = AsyncMock()
-    redis.get = AsyncMock(return_value=None)
+    # pipeline_healthy = "true"로 설정 — 가드 통과를 위한 기본값
+    redis.get = AsyncMock(return_value="true")
     return redis
 
 

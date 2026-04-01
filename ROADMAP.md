@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4 Sprint 2 완료 (MVP 완성)
+- 전체 진행률: Phase 0~4.5 Sprint 1 완료
 - 현재 Phase: Phase 4.5 (스케줄러 안정화 + 장애 복구) 🔄 진행 중
-- 현재 Sprint: Phase 4.5 Sprint 1 준비 중
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31)
+- 현재 Sprint: Phase 4.5 Sprint 2 📋 예정
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.5 Sprint 1 — 백엔드 안정화 (스케줄 의존성, Redis 영속화, 수동 파이프라인)
+- 다음 마일스톤: Phase 4.5 Sprint 2 — 프론트엔드 시스템 관리 페이지
 
 ## 기술 아키텍처 결정 사항
 
@@ -492,15 +492,17 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 2026-04-01 장전 테스트 장애 근본 해결. 스케줄 의존성 체인(선행 실패 시 후속 중지 + 매매 엔진 차단), 상태값 Redis 영속화, 수동 파이프라인 재실행 API + 대시보드 UI, ETF sanity check 조건부 완화, health/readiness 강화.
 
 ### 작업 목록
-#### Sprint 1: 백엔드 안정화 📋
-- ⬜ Redis 상태 영속화 (scheduler:* 키, TTL 24h)
-- ⬜ 스케줄 의존성 가드 (선행 단계 상태 확인 → 실패 시 스킵)
-- ⬜ pipeline_healthy 플래그 (장전 시 false 초기화 → 핵심 완료 시 true)
-- ⬜ 매매 엔진 차단 (pipeline_healthy=false 시 신호 처리 스킵)
-- ⬜ ETF sanity check 조건부 완화 (prev<200 스킵, ±30%)
-- ⬜ health/readiness 엔드포인트 (DB+Redis+스케줄러+pipeline)
-- ⬜ 수동 파이프라인 API (POST premarket-pipeline + GET pipeline-status)
-- ⬜ 텔레그램 장애 알림 (실패 단계 + 에러 요약 + 복구 방법)
+#### Sprint 1: 백엔드 안정화 ✅ (2026-04-01 완료)
+> Sprint 계획: `docs/phase/phase4.5/sprint1/sprint1.md` (2026-04-01)
+
+- ✅ Redis 상태 영속화 (scheduler:* 키, TTL 24h)
+- ✅ 스케줄 의존성 가드 (선행 단계 상태 확인 → 실패 시 스킵)
+- ✅ pipeline_healthy 플래그 (장전 시 false 초기화 → 핵심 완료 시 true)
+- ✅ 매매 엔진 차단 (pipeline_healthy=false 시 신호 처리 스킵)
+- ✅ ETF sanity check 조건부 완화 (prev<200 스킵, ±30%)
+- ✅ health/readiness 엔드포인트 (DB+Redis+스케줄러+pipeline)
+- ✅ 수동 파이프라인 API (POST premarket-pipeline + GET pipeline-status)
+- ✅ 텔레그램 장애 알림 (실패 단계 + 에러 요약 + 복구 방법)
 
 #### Sprint 2: 프론트엔드 시스템 관리 📋
 - ⬜ 시스템 페이지 (사이드바 "시스템" 탭)

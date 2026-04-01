@@ -79,7 +79,7 @@ def _build_engine(
     eod.is_entry_blocked = MagicMock(return_value=entry_blocked)
 
     redis = AsyncMock()
-    redis.get = AsyncMock(return_value=None)
+    redis.get = AsyncMock(return_value="true")  # pipeline_healthy 가드 통과
 
     engine = TradingEngine(
         signal_generator=signal_gen,

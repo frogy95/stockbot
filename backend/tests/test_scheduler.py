@@ -1,11 +1,13 @@
 """수집 스케줄러 테스트."""
 
+import json
 import pytest
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
-from modules.collector.scheduler import CollectorScheduler
+from modules.collector.scheduler import CollectorScheduler, PIPELINE_STATUS_KEY
+from tests.conftest import FakeRedis
 
 
 def _make_scheduler():
@@ -96,8 +98,30 @@ async def test_premarket_job():
 
 @pytest.mark.asyncio
 async def test_etf_job():
-    """ETF 수집 job."""
-    scheduler = _make_scheduler()
+    """ETF 수집 job — etf_master 선행 성공 상태를 전제한다."""
+    fake_redis = FakeRedis()
+    # etf_master 성공 상태를 미리 설정
+    await fake_redis.set(PIPELINE_STATUS_KEY, json.dumps({"etf_master": {"status": "success"}}))
+
+    mock_db_session = AsyncMock()
+    mock_session_factory = MagicMock()
+    mock_session_ctx = AsyncMock()
+    mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_db_session)
+    mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
+    mock_session_factory.return_value = mock_session_ctx
+
+    ws_manager = MagicMock()
+    ws_manager.count = 0
+    ws_client = MagicMock()
+
+    scheduler = CollectorScheduler(
+        session_factory=mock_session_factory,
+        rest_client=MagicMock(),
+        ws_manager=ws_manager,
+        trade_strength=MagicMock(),
+        ws_client=ws_client,
+        redis=fake_redis,
+    )
 
     with patch("modules.collector.scheduler.KISCollector") as MockCollector:
         mock_instance = AsyncMock()
@@ -147,8 +171,29 @@ async def test_trigger_premarket():
 
 @pytest.mark.asyncio
 async def test_trigger_etf():
-    """수동 ETF 트리거."""
-    scheduler = _make_scheduler()
+    """수동 ETF 트리거 — etf_master 선행 성공 상태를 전제한다."""
+    fake_redis = FakeRedis()
+    await fake_redis.set(PIPELINE_STATUS_KEY, json.dumps({"etf_master": {"status": "success"}}))
+
+    mock_db_session = AsyncMock()
+    mock_session_factory = MagicMock()
+    mock_session_ctx = AsyncMock()
+    mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_db_session)
+    mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
+    mock_session_factory.return_value = mock_session_ctx
+
+    ws_manager = MagicMock()
+    ws_manager.count = 0
+    ws_client = MagicMock()
+
+    scheduler = CollectorScheduler(
+        session_factory=mock_session_factory,
+        rest_client=MagicMock(),
+        ws_manager=ws_manager,
+        trade_strength=MagicMock(),
+        ws_client=ws_client,
+        redis=fake_redis,
+    )
 
     with patch("modules.collector.scheduler.KISCollector") as MockCollector:
         mock_instance = AsyncMock()
