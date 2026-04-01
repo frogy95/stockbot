@@ -23,9 +23,13 @@
 
 - Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성), ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/44
 
+- Phase 4.5 Sprint 1 — 백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인), 🔄 계획 수립 완료 (2026-04-01)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — Phase 4 완료됨, 착수 가능
+- Phase 4.5 Sprint 1 — 계획 수립 완료, 구현 대기
+- Phase 4.5 Sprint 2 — Sprint 1 완료 후 착수 (프론트엔드 시스템 페이지)
+- Phase 5 Sprint 1 — Phase 4.5 완료 후 착수 가능
 
 ## 핵심 주의사항
 
@@ -82,3 +86,9 @@
 - Phase 4 Sprint 2: approval 토큰 TTL은 승인 타임아웃과 동일 (기본 30초/15초/60초) — expires_in_sec는 Redis TTL 명령으로 조회
 - Phase 4 Sprint 2: frontend/lib/api.ts에 apiPut 미존재 — 추가 필요 (apiPost 패턴 복사, method="PUT")
 - Phase 4 Sprint 2: 프론트엔드 use-polling.ts의 refreshInterval은 정수만 지원 — 동적 전환은 상태값으로 interval 변경하여 usePolling에 전달
+- Phase 4.5 Sprint 1: scheduler.py의 _last_* 필드 7개 (premarket, etf, primary_screen, secondary_screen, dart, sentiment, etf_master) — Redis 영속화 대상
+- Phase 4.5 Sprint 1: RedisClient에 get/set/delete/scan_keys/ttl 메서드 존재 — 추가 메서드 불필요
+- Phase 4.5 Sprint 1: TelegramBot.send_notification(text: str) -> int (message_id 반환) — HTML parse_mode
+- Phase 4.5 Sprint 1: scheduler._telegram_bot은 main.py에서 set_telegram_bot()으로 후속 주입 — None일 수 있음
+- Phase 4.5 Sprint 1: engine.py의 process_screening_results 진입부에 eod_liquidator.is_entry_blocked() 체크 이미 존재 — pipeline_healthy 가드는 그 직전에 추가
+- Phase 4.5 Sprint 1: 기존 test_scheduler.py에서 _make_scheduler() 패턴 — AsyncMock session_factory, redis, ws_client 등 재사용

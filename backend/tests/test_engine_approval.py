@@ -15,6 +15,8 @@ KST = ZoneInfo("Asia/Seoul")
 
 def _make_engine(notifier_manager=None):
     """테스트용 엔진 생성 헬퍼."""
+    mock_redis = AsyncMock()
+    mock_redis.get = AsyncMock(return_value="true")  # pipeline_healthy 가드 통과
     engine = TradingEngine(
         signal_generator=AsyncMock(),
         order_manager=AsyncMock(),
@@ -22,7 +24,7 @@ def _make_engine(notifier_manager=None):
         risk_manager=AsyncMock(),
         position_sizer=AsyncMock(),
         eod_liquidator=MagicMock(),
-        redis_client=AsyncMock(),
+        redis_client=mock_redis,
         notifier_manager=notifier_manager,
     )
     # order_manager._queue mock

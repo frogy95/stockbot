@@ -1,5 +1,6 @@
 """수집 스케줄러 — APScheduler 기반 장전/장중/장후 데이터 수집 오케스트레이션."""
 
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -34,6 +35,22 @@ logger = logging.getLogger(__name__)
 
 MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 REALTIME_CACHE_TTL = 5  # 초
+STATE_TTL = 86400  # 초 (Redis 상태 TTL — 24시간)
+REDIS_STATE_KEY_PREFIX = "scheduler:last_"
+PIPELINE_STATUS_KEY = "scheduler:pipeline_status"
+PIPELINE_HEALTHY_KEY = "scheduler:pipeline_healthy"
+ALL_PIPELINE_STEPS = ["premarket", "etf_master", "primary_screen", "etf", "dart", "sentiment"]
+PIPELINE_RUNNING_KEY = "scheduler:pipeline_running"
+
+# 의존성 맵: 각 단계의 선행 단계 목록
+DEPENDENCY_MAP: dict[str, list[str]] = {
+    "primary_screen": ["premarket"],
+    "etf": ["etf_master"],
+    "dart": ["primary_screen"],
+    "sentiment": ["primary_screen"],
+}
+# pipeline_healthy = "true" 조건: 두 단계 모두 success
+CORE_STEPS = ["premarket", "primary_screen"]
 
 
 class CollectorScheduler:
@@ -72,6 +89,12 @@ class CollectorScheduler:
         self._last_etf_master: datetime | None = None
         self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
+        self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
+
+    @property
+    def is_running(self) -> bool:
+        """스케줄러 실행 여부."""
+        return self._running
 
     def set_telegram_bot(self, bot) -> None:
         """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
@@ -81,8 +104,129 @@ class CollectorScheduler:
         """매매 엔진 참조 설정 (main.py에서 후속 주입)."""
         self._trading_engine = engine
 
+    @staticmethod
+    def _are_core_steps_healthy(pipeline_status: dict) -> bool:
+        """CORE_STEPS가 모두 'success'인지 확인한다."""
+        return all(
+            pipeline_status.get(s, {}).get("status") == "success"
+            for s in CORE_STEPS
+        )
+
+    async def _get_pipeline_status(self) -> dict:
+        """Redis에서 pipeline_status JSON을 읽어 dict로 반환. 없으면 빈 dict."""
+        raw = await self._redis.get(PIPELINE_STATUS_KEY)
+        if not raw:
+            return {}
+        try:
+            return json.loads(raw)
+        except Exception:
+            return {}
+
+    async def _update_step_status(
+        self, step: str, status: str, error: str | None = None
+    ) -> None:
+        """pipeline_status의 해당 step을 업데이트하고 Redis에 저장한다.
+
+        status가 'success'이고 모든 CORE_STEPS가 'success'이면 pipeline_healthy를 'true'로 설정.
+        """
+        pipeline_status = await self._get_pipeline_status()
+        entry: dict = {"status": status, "timestamp": datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).isoformat()}
+        if error is not None:
+            entry["error"] = error
+        pipeline_status[step] = entry
+        await self._redis.set(PIPELINE_STATUS_KEY, json.dumps(pipeline_status), ttl=STATE_TTL)
+        self._pipeline_status = pipeline_status
+
+        if status == "success" and self._are_core_steps_healthy(pipeline_status):
+            await self._redis.set(PIPELINE_HEALTHY_KEY, "true", ttl=STATE_TTL)
+
+    async def _check_dependency(self, step: str, pipeline_status: dict | None = None) -> bool:
+        """DEPENDENCY_MAP에서 선행 단계를 확인, 모든 선행이 'success'이면 True.
+
+        pipeline_status를 외부에서 전달하면 추가 Redis 조회를 생략한다.
+        """
+        deps = DEPENDENCY_MAP.get(step, [])
+        if not deps:
+            return True
+        if pipeline_status is None:
+            pipeline_status = await self._get_pipeline_status()
+        return all(
+            pipeline_status.get(dep, {}).get("status") == "success"
+            for dep in deps
+        )
+
+    async def get_pipeline_status(self) -> dict:
+        """파이프라인 상태 조회 (API 노출용)."""
+        return await self._get_pipeline_status()
+
+    async def _send_failure_alert(self, step: str, error: str) -> None:
+        """파이프라인 단계 실패 시 텔레그램 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[장애]</b> {step} 실패\n"
+            f"에러: {error[:200]}\n"
+            f"수동 복구: POST /api/v1/collector/trigger/premarket-pipeline"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_recovery_alert(self, success: bool) -> None:
+        """수동 복구 결과 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        if success:
+            msg = "<b>[복구 완료]</b> 장전 파이프라인 정상 복구"
+        else:
+            msg = "<b>[복구 실패]</b> 장전 파이프라인 일부 실패 — 수동 확인 필요"
+        await self._telegram_bot.send_notification(msg)
+
+    async def run_premarket_pipeline(self) -> dict:
+        """장전 파이프라인 수동 실행 오케스트레이터.
+
+        락 선점은 API 핸들러가 담당한다. 이 메서드는 단계 실행 후 finally에서 락을 해제한다.
+        실패한 단계의 의존 단계는 스킵되지만 독립 단계는 계속 실행한다.
+        """
+        try:
+            await self._premarket_collect()
+            await self._etf_master_collect()
+            await self._primary_screen()
+            await self._etf_collect()
+            await self._dart_collect()
+            await self._sentiment_collect()
+        finally:
+            await self._redis.delete(PIPELINE_RUNNING_KEY)
+
+        await self._send_recovery_alert(success=self._are_core_steps_healthy(self._pipeline_status))
+        return {"completed": True, "pipeline_status": self._pipeline_status}
+
+    async def _load_state_from_redis(self) -> None:
+        """Redis에서 _last_* 타임스탬프를 복원한다."""
+        key_field_map = {
+            f"{REDIS_STATE_KEY_PREFIX}premarket": "_last_premarket",
+            f"{REDIS_STATE_KEY_PREFIX}etf": "_last_etf",
+            f"{REDIS_STATE_KEY_PREFIX}primary_screen": "_last_primary_screen",
+            f"{REDIS_STATE_KEY_PREFIX}etf_master": "_last_etf_master",
+            f"{REDIS_STATE_KEY_PREFIX}dart": "_last_dart",
+            f"{REDIS_STATE_KEY_PREFIX}sentiment": "_last_sentiment",
+        }
+        for key, field in key_field_map.items():
+            try:
+                value = await self._redis.get(key)
+                if value:
+                    setattr(self, field, datetime.fromisoformat(value))
+            except Exception:
+                logger.debug("Redis 상태 로드 실패 (key=%s)", key)
+
+    async def _save_last_timestamp(self, job_name: str, dt: datetime) -> None:
+        """Redis에 scheduler:last_{job_name} 키로 타임스탬프를 저장한다 (TTL STATE_TTL)."""
+        try:
+            await self._redis.set(f"{REDIS_STATE_KEY_PREFIX}{job_name}", dt.isoformat(), ttl=STATE_TTL)
+        except Exception:
+            logger.debug("Redis 타임스탬프 저장 실패 (job=%s)", job_name)
+
     async def start(self) -> None:
         """스케줄러 시작 + job 등록."""
+        await self._load_state_from_redis()
         tz = ZoneInfo(settings.MARKET_TIMEZONE)
         self._scheduler.add_job(
             self._premarket_collect,
@@ -181,6 +325,7 @@ class CollectorScheduler:
             "last_etf_master": self._last_etf_master.isoformat() if self._last_etf_master else None,
             "last_dart": self._last_dart.isoformat() if self._last_dart else None,
             "last_sentiment": self._last_sentiment.isoformat() if self._last_sentiment else None,
+            "pipeline_status": self._pipeline_status,
         }
 
     def get_auxiliary_status(self) -> dict:
@@ -281,29 +426,50 @@ class CollectorScheduler:
     async def _premarket_collect(self) -> int:
         """08:00 공공데이터포털 전 종목 수집. 매 실행마다 독립 DB 세션 사용."""
         logger.info("장전 수집 시작")
+        # 매일 08:00 시작 시 파이프라인 상태 전체 초기화
+        await asyncio.gather(
+            self._redis.set(PIPELINE_HEALTHY_KEY, "false", ttl=STATE_TTL),
+            self._redis.set(
+                PIPELINE_STATUS_KEY,
+                json.dumps({s: {"status": "pending"} for s in ALL_PIPELINE_STEPS}),
+                ttl=STATE_TTL,
+            ),
+        )
+        self._pipeline_status = {}
         try:
             async with self._session_factory() as db_session:
                 collector = DataGoKrCollector(db_session)
                 count = await collector.collect_all()
             self._last_premarket = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("premarket", self._last_premarket)
+            await self._update_step_status("premarket", "success")
             logger.info("장전 수집 완료: %d종목", count)
             return count
-        except Exception:
+        except Exception as e:
             logger.exception("장전 수집 실패")
+            await self._update_step_status("premarket", "failed", error=str(e))
+            await self._send_failure_alert("premarket", str(e))
             return 0
 
     async def _etf_collect(self) -> int:
-        """08:05 ETF 시세 수집. 매 실행마다 독립 DB 세션 사용."""
+        """08:15 ETF 시세 수집. 매 실행마다 독립 DB 세션 사용."""
+        if not await self._check_dependency("etf"):
+            logger.warning("ETF 수집 스킵: etf_master 선행 실패")
+            await self._update_step_status("etf", "skipped")
+            return 0
         logger.info("ETF 수집 시작")
         try:
             async with self._session_factory() as db_session:
                 collector = KISCollector(self._rest_client, db_session)
                 count = await collector.collect_etf_prices()
             self._last_etf = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("etf", self._last_etf)
+            await self._update_step_status("etf", "success")
             logger.info("ETF 수집 완료: %d종목", count)
             return count
-        except Exception:
+        except Exception as e:
             logger.exception("ETF 수집 실패")
+            await self._update_step_status("etf", "failed", error=str(e))
             return 0
 
     async def _etf_master_collect(self) -> dict:
@@ -318,13 +484,17 @@ class CollectorScheduler:
                 pass  # seed 폴백은 _etf_master_collect 내부가 아닌 최초 설치 스크립트에서 처리
 
             self._last_etf_master = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("etf_master", self._last_etf_master)
+            await self._update_step_status("etf_master", "success")
             logger.info(
                 "ETF 마스터 수집 완료: ETF=%d, ETN=%d, source=%s",
                 result["etf_count"], result["etn_count"], result["source"],
             )
             return result
-        except Exception:
+        except Exception as e:
             logger.exception("ETF 마스터 수집 실패")
+            await self._update_step_status("etf_master", "failed", error=str(e))
+            await self._send_failure_alert("etf_master", str(e))
             return {"etf_count": 0, "etn_count": 0, "source": "error", "sanity_passed": False}
 
     async def _market_open(self) -> None:
@@ -380,6 +550,10 @@ class CollectorScheduler:
 
     async def _primary_screen(self) -> dict:
         """08:10 1차 스크리닝: DB 정적 필터 + 팩터 스코어링."""
+        if not await self._check_dependency("primary_screen"):
+            logger.warning("1차 스크리닝 스킵: premarket 선행 실패")
+            await self._update_step_status("primary_screen", "skipped")
+            return {"skipped": True, "candidates": 0, "passed": 0}
         logger.info("1차 스크리닝 시작")
         try:
             async with self._session_factory() as db_session:
@@ -396,10 +570,14 @@ class CollectorScheduler:
 
             passed = [r for r in results if r.get("is_passed")]
             self._last_primary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("primary_screen", self._last_primary_screen)
+            await self._update_step_status("primary_screen", "success")
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
         except Exception as e:
             logger.exception("1차 스크리닝 실패")
+            await self._update_step_status("primary_screen", "failed", error=str(e))
+            await self._send_failure_alert("primary_screen", str(e))
             return {"candidates": 0, "passed": 0, "error": str(e)}
 
     async def _secondary_screen(self) -> dict:
@@ -429,6 +607,10 @@ class CollectorScheduler:
 
     async def _dart_collect(self) -> int:
         """08:15 DART 재무 데이터 수집 — 1차 스크리닝 통과 종목 대상."""
+        if not await self._check_dependency("dart"):
+            logger.warning("DART 수집 스킵: primary_screen 선행 실패")
+            await self._update_step_status("dart", "skipped")
+            return 0
         logger.info("DART 재무 수집 시작")
         try:
             from modules.collector.sources.dart import DartCollector
@@ -438,20 +620,28 @@ class CollectorScheduler:
 
                 if not stock_codes:
                     logger.info("DART 재무 수집 대상 없음")
+                    await self._update_step_status("dart", "success")
                     return 0
 
                 collector = DartCollector(db_session)
                 count = await collector.collect_financials(stock_codes)
 
             self._last_dart = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("dart", self._last_dart)
+            await self._update_step_status("dart", "success")
             logger.info("DART 재무 수집 완료: %d건", count)
             return count
-        except Exception:
+        except Exception as e:
             logger.exception("DART 재무 수집 실패")
+            await self._update_step_status("dart", "failed", error=str(e))
             return 0
 
     async def _sentiment_collect(self) -> int:
         """08:20 네이버 뉴스 센티멘트 수집 — 1차 스크리닝 통과 종목 대상."""
+        if not await self._check_dependency("sentiment"):
+            logger.warning("센티멘트 수집 스킵: primary_screen 선행 실패")
+            await self._update_step_status("sentiment", "skipped")
+            return 0
         logger.info("네이버 센티멘트 수집 시작")
         try:
             from modules.collector.sources.naver import NaverCollector
@@ -461,16 +651,20 @@ class CollectorScheduler:
 
                 if not stock_info:
                     logger.info("네이버 센티멘트 수집 대상 없음")
+                    await self._update_step_status("sentiment", "success")
                     return 0
 
                 collector = NaverCollector(db_session)
                 count = await collector.collect_sentiments(stock_info)
 
             self._last_sentiment = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("sentiment", self._last_sentiment)
+            await self._update_step_status("sentiment", "success")
             logger.info("네이버 센티멘트 수집 완료: %d건", count)
             return count
-        except Exception:
+        except Exception as e:
             logger.exception("네이버 센티멘트 수집 실패")
+            await self._update_step_status("sentiment", "failed", error=str(e))
             return 0
 
     # ── 내부 헬퍼 ────────────────────────────────────────

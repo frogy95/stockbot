@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.collector.sources.kis_master import KISMasterCollector
+from modules.collector.sources.kis_master import KISMasterCollector, SPOT_CHECK_CODES
 
 
 def _make_zip(filename: str, content: bytes) -> bytes:
@@ -197,6 +197,37 @@ def test_sanity_check_fail_spot():
 def test_sanity_check_fail_delta():
     etf_list = _etf_list_with_spots()
     assert KISMasterCollector(_new_collector()._db).sanity_check(etf_list, prev_count=500) is False
+
+
+def test_sanity_check_skips_variation_when_prev_low():
+    """prev_count < 200이면 변동률 검증 스킵 (최소 종목수 + spot-check만)."""
+    collector = _new_collector()
+    # prev=150 (200 미만) — 변동률 무관하게 PASS (종목 수만 충족하면 됨)
+    etf_list = [{"stock_code": c} for c in SPOT_CHECK_CODES] + [{"stock_code": f"{i:06d}"} for i in range(195)]
+    assert collector.sanity_check(etf_list, prev_count=150) is True
+
+
+def test_sanity_check_allows_30pct_variation():
+    """prev_count >= 200이면 +-30% 변동 허용."""
+    collector = _new_collector()
+    etf_list = [{"stock_code": c} for c in SPOT_CHECK_CODES] + [{"stock_code": f"{i:06d}"} for i in range(595)]
+    # prev=800, cur=600 → 25% 감소 → PASS
+    assert collector.sanity_check(etf_list, prev_count=800) is True
+
+
+def test_sanity_check_blocks_over_30pct_variation():
+    """prev_count >= 200이면 +-30% 초과 시 FAIL."""
+    collector = _new_collector()
+    etf_list = [{"stock_code": c} for c in SPOT_CHECK_CODES] + [{"stock_code": f"{i:06d}"} for i in range(495)]
+    # prev=800, cur=500 → 37.5% 감소 → FAIL
+    assert collector.sanity_check(etf_list, prev_count=800) is False
+
+
+def test_sanity_check_prev_none_skips_variation():
+    """prev_count=None이면 변동률 검증 스킵."""
+    collector = _new_collector()
+    etf_list = [{"stock_code": c} for c in SPOT_CHECK_CODES] + [{"stock_code": f"{i:06d}"} for i in range(195)]
+    assert collector.sanity_check(etf_list, prev_count=None) is True
 
 
 # ── sync_to_db ───────────────────────────────────────────────────────────────
