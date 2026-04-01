@@ -5,21 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v0.7.0 (2026-04-01)
+### Hotfix: 텔레그램 /pipeline + /recover 커맨드 추가 (2026-04-01)
 
-포함 스프린트: Phase 4.5 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/55
+PR: https://github.com/frogy95/stockbot/pull/56
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ✅ 자동 검증 완료 항목:
+  - pytest: 571 passed, 0 failed
+  - 코드 리뷰: Critical/High 이슈 없음
 
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
-
-#### 수동 검증 필요 항목
-
-- ⬜ Railway 배포 후 아침 체크 — /health/readiness 응답, pipeline-status 응답
-- ⬜ 수동 파이프라인 트리거 테스트 (POST premarket-pipeline — 실제 Railway 환경)
-- ⬜ 텔레그램 장애 알림 수신 확인 (실제 프로덕션 환경)
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - Railway 배포 후 텔레그램에서 /pipeline 커맨드 실제 응답 확인
+  - 텔레그램에서 /recover 커맨드 실행 후 파이프라인 복구 진행 확인
+  - /help 응답에서 /pipeline, /recover 항목 확인
 
 ---
 

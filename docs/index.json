@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-01T09:00:00+09:00",
+  "lastUpdated": "2026-04-01T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1340,6 +1340,29 @@
           "hash": "1956e55",
           "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-telegram-recover-command",
+      "name": "텔레그램 /pipeline + /recover 커맨드 추가",
+      "status": "deployed",
+      "path": "docs/hotfix/telegram-recover-command/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/56",
+      "deployedAt": "2026-04-01",
+      "description": "Phase 4.5 Sprint 1에서 파이프라인 상태 Redis 영속화 및 수동 복구 REST API가 구현되었으나 텔레그램 커맨드 인터페이스에 연동되지 않아 운영자가 텔레그램에서 즉각 상태 확인/수동 복구 불가하던 문제 수정. CommandHandler에 collector_scheduler 파라미터 추가, /pipeline(단계별 상태 조회), /recover(장전 파이프라인 수동 복구) 커맨드 구현, /help 업데이트.",
+      "commits": [
+        {
+          "hash": "ba17957",
+          "message": "feat(telegram): /pipeline + /recover 커맨드 추가 — 장전 파이프라인 상태 조회 및 수동 복구",
+          "date": "2026-04-01"
+        },
+        {
+          "hash": "f7400b7",
+          "message": "docs(hotfix): telegram-recover-command 핫픽스 문서 추가",
+          "date": "2026-04-01"
         }
       ]
     }

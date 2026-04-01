@@ -56,6 +56,6 @@ Phase 4.5 Sprint 1에서 파이프라인 상태 Redis 영속화(`PIPELINE_HEALTH
 ---
 
 ## PR
-- **URL:** (main PR 생성 후 업데이트)
+- **URL:** https://github.com/frogy95/stockbot/pull/56
 - **대상:** main
 - **역머지:** ✅ develop에 역머지 완료
