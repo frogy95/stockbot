@@ -40,7 +40,7 @@ PR: https://github.com/frogy95/stockbot/pull/54
 
 #### 수동 검증 필요 항목
 
-- ⬜ **[중요]** Railway health check path 확인: `/health` 사용 중인지 확인 (절대 `/health/readiness` 사용 금지 — 장전/장후 503 루프 발생)
+- ✅ Railway health check path 확인: 미설정 (TCP 기본 체크) — 문제없음
 - ⬜ Railway 배포 후 아침 체크 — /health/readiness 응답, pipeline-status 응답
 - ⬜ 수동 파이프라인 트리거 테스트 (POST premarket-pipeline — 실제 Railway 환경)
 - ⬜ 텔레그램 장애 알림 수신 확인 (실제 프로덕션 환경)
