@@ -104,6 +104,14 @@ class CollectorScheduler:
         """매매 엔진 참조 설정 (main.py에서 후속 주입)."""
         self._trading_engine = engine
 
+    @staticmethod
+    def _are_core_steps_healthy(pipeline_status: dict) -> bool:
+        """CORE_STEPS가 모두 'success'인지 확인한다."""
+        return all(
+            pipeline_status.get(s, {}).get("status") == "success"
+            for s in CORE_STEPS
+        )
+
     async def _get_pipeline_status(self) -> dict:
         """Redis에서 pipeline_status JSON을 읽어 dict로 반환. 없으면 빈 dict."""
         raw = await self._redis.get(PIPELINE_STATUS_KEY)
@@ -129,13 +137,8 @@ class CollectorScheduler:
         await self._redis.set(PIPELINE_STATUS_KEY, json.dumps(pipeline_status), ttl=STATE_TTL)
         self._pipeline_status = pipeline_status
 
-        if status == "success":
-            all_core_success = all(
-                pipeline_status.get(s, {}).get("status") == "success"
-                for s in CORE_STEPS
-            )
-            if all_core_success:
-                await self._redis.set(PIPELINE_HEALTHY_KEY, "true", ttl=STATE_TTL)
+        if status == "success" and self._are_core_steps_healthy(pipeline_status):
+            await self._redis.set(PIPELINE_HEALTHY_KEY, "true", ttl=STATE_TTL)
 
     async def _check_dependency(self, step: str, pipeline_status: dict | None = None) -> bool:
         """DEPENDENCY_MAP에서 선행 단계를 확인, 모든 선행이 'success'이면 True.
@@ -155,6 +158,27 @@ class CollectorScheduler:
     async def get_pipeline_status(self) -> dict:
         """파이프라인 상태 조회 (API 노출용)."""
         return await self._get_pipeline_status()
+
+    async def _send_failure_alert(self, step: str, error: str) -> None:
+        """파이프라인 단계 실패 시 텔레그램 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[장애]</b> {step} 실패\n"
+            f"에러: {error[:200]}\n"
+            f"수동 복구: POST /api/v1/collector/trigger/premarket-pipeline"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_recovery_alert(self, success: bool) -> None:
+        """수동 복구 결과 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        if success:
+            msg = "<b>[복구 완료]</b> 장전 파이프라인 정상 복구"
+        else:
+            msg = "<b>[복구 실패]</b> 장전 파이프라인 일부 실패 — 수동 확인 필요"
+        await self._telegram_bot.send_notification(msg)
 
     async def run_premarket_pipeline(self) -> dict:
         """장전 파이프라인 수동 실행 오케스트레이터.
@@ -177,7 +201,8 @@ class CollectorScheduler:
         finally:
             await self._redis.delete(PIPELINE_RUNNING_KEY)
 
-        return {"completed": True, "pipeline_status": await self._get_pipeline_status()}
+        await self._send_recovery_alert(success=self._are_core_steps_healthy(self._pipeline_status))
+        return {"completed": True, "pipeline_status": self._pipeline_status}
 
     async def _load_state_from_redis(self) -> None:
         """Redis에서 _last_* 타임스탬프를 복원한다."""
@@ -428,6 +453,7 @@ class CollectorScheduler:
         except Exception as e:
             logger.exception("장전 수집 실패")
             await self._update_step_status("premarket", "failed", error=str(e))
+            await self._send_failure_alert("premarket", str(e))
             return 0
 
     async def _etf_collect(self) -> int:
@@ -473,6 +499,7 @@ class CollectorScheduler:
         except Exception as e:
             logger.exception("ETF 마스터 수집 실패")
             await self._update_step_status("etf_master", "failed", error=str(e))
+            await self._send_failure_alert("etf_master", str(e))
             return {"etf_count": 0, "etn_count": 0, "source": "error", "sanity_passed": False}
 
     async def _market_open(self) -> None:
@@ -555,6 +582,7 @@ class CollectorScheduler:
         except Exception as e:
             logger.exception("1차 스크리닝 실패")
             await self._update_step_status("primary_screen", "failed", error=str(e))
+            await self._send_failure_alert("primary_screen", str(e))
             return {"candidates": 0, "passed": 0, "error": str(e)}
 
     async def _secondary_screen(self) -> dict:
