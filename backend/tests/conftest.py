@@ -5,6 +5,22 @@ import pytest
 
 import core.database as db_module
 
+
+class FakeRedis:
+    """dict 기반 간이 Redis mock — 스케줄러 테스트용."""
+
+    def __init__(self):
+        self._store: dict[str, str] = {}
+
+    async def get(self, key: str) -> str | None:
+        return self._store.get(key)
+
+    async def set(self, key: str, value: str, ttl: int | None = None) -> None:
+        self._store[key] = value
+
+    async def delete(self, key: str) -> None:
+        self._store.pop(key, None)
+
 _TEST_JWT_SECRET = "test-secret-key-for-pytest"
 
 
