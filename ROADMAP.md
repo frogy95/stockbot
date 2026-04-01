@@ -22,11 +22,11 @@
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~4.5 Sprint 1 완료
-- 현재 Phase: Phase 4.5 (스케줄러 안정화 + 장애 복구) 🔄 진행 중
-- 현재 Sprint: Phase 4.5 Sprint 2 📋 예정
+- 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) 🔄 진행 중
+- 현재 Sprint: Phase 4.6 Sprint 1 📋 예정
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.5 Sprint 2 — 프론트엔드 시스템 관리 페이지
+- 다음 마일스톤: Phase 4.6 Sprint 1 — 프로덕션 안정화 + 에러 전파 수정
 
 ## 기술 아키텍처 결정 사항
 
@@ -54,6 +54,7 @@ Phase 0 (완료)
                                 └─> Phase 3: 매매 엔진 + 기본 알림
                           ├─> Phase 4: 웹 대시보드 (MVP)
                           │     └─> Phase 4.5: 스케줄러 안정화 + 장애 복구
+                          │           └─> Phase 4.6: 데이터 수집 파이프라인 근본 수리
                           └─> Phase 5: 완전 자동 모드 + 성과 분석
                                 └─> Phase 6: 고도화 + 안정화
 ```
@@ -523,6 +524,57 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 > Phase 상세 계획: `docs/phase/phase4.5/phase4.5.md` ✅ 생성 완료 (2026-04-01)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 한유엑(UX) -- 4명 검토 완료
+
+---
+
+## Phase 4.6: 데이터 수집 파이프라인 근본 수리 (Sprint 1~2) 🔄
+
+### 목표
+며칠째 지속되는 데이터 수집 파이프라인 장애의 근본 원인 6건을 체계적으로 해결한다. Dockerfile --reload 제거(WatchFiles 무한 재시작), 에러 전파 수정(0건 수집도 success 기록), data_go_kr 날짜 폴백, stocks.updated_at NULL 수정, pipeline_healthy 거짓 양성 방지, 모의 환경 ETF 시세 optional.
+
+### 작업 목록
+#### Sprint 1: 근본 수리 — 프로덕션 안정화 + 에러 전파 📋
+- ⬜ Dockerfile --reload 제거 + docker-compose 개발 분리
+- ⬜ premarket 최소 수집 건수 검증 (100건 미만 시 failed)
+- ⬜ ETF 시세 최소 수집률 검증 (10% 미만 시 failed) + 모의 환경 optional
+- ⬜ data_go_kr 날짜 폴백 (전일→2일전→3일전, 최대 7일)
+- ⬜ stocks.updated_at upsert 시 명시적 설정
+- ⬜ pipeline_healthy 판정 강화 (status + 건수 동시 확인)
+- ⬜ collect_all 반환값 dict 변경 + 상세 로깅
+
+#### Sprint 2: 데이터 품질 + 통합 검증 📋
+- ⬜ 한국거래소 2026년 휴장일 캘린더
+- ⬜ market_data 신선도 검증 (T-2 거래일 이내)
+- ⬜ 환경별 파이프라인 분리 (paper/live 단계 활성화)
+- ⬜ 통합 테스트 (수동+자동 파이프라인)
+
+### 전문가 확정 파라미터 (2026-04-02, 4명 검토)
+
+| # | 항목 | 확정값 | 담당 |
+|---|------|--------|------|
+| 1 | Dockerfile CMD | --reload 제거, --workers 1 유지 | 윤에이피 |
+| 2 | premarket 최소 수집 건수 | 100건 미만 시 failed | 최리스크 |
+| 3 | ETF 시세 최소 수집률 | 10% 미만 시 failed | 최리스크 |
+| 4 | 모의 환경 ETF 시세 | optional (pipeline_healthy 불영향) | 윤에이피 |
+| 5 | data_go_kr 날짜 폴백 | 전일→2일전→3일전 (최대 7일) | 윤에이피 |
+| 6 | pipeline_healthy 판정 | status + 최소 건수 동시 확인 | 최리스크 |
+| 7 | market_data 신선도 | T-2 거래일 이내 | 김단타 |
+| 8 | 한국거래소 휴장일 | 2026년 하드코딩 + 향후 API 전환 | 윤에이피 |
+
+### 완료 기준 (Definition of Done)
+- Dockerfile --reload 제거 완료, 프로덕션 정상 기동
+- market_data에 최근 거래일 데이터 존재 (T-2 이내)
+- stocks 테이블에 주식(STOCK) 포함 (100건+)
+- 0건 수집 시 failed 기록 + pipeline_healthy=false
+- 자동 파이프라인 정상 실행 확인 (다음 거래일 08:00)
+
+### 기술 고려사항
+- --reload 제거가 가장 영향 큰 단일 수정 (WatchFiles 무한루프 → 스케줄러 정상화)
+- 공공데이터포털 T+1 데이터 지연은 코드로 완전 해결 불가, 날짜 폴백으로 최선 대응
+- 모의투자 KIS API ETF 시세 미지원은 환경 한계, 실전 전환 전 별도 검증 필요
+
+> Phase 상세 계획: `docs/phase/phase4.6/phase4.6.md` ✅ 생성 완료 (2026-04-02)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
 
 ---
 

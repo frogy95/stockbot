@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-01T09:00:00+09:00",
+  "lastUpdated": "2026-04-02T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1236,6 +1236,13 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4.6",
+      "title": "데이터 수집 파이프라인 근본 수리",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase4.6/phase4.6.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [
