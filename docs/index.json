@@ -1152,6 +1152,13 @@
           "lastUpdated": "2026-03-31T00:00:00Z"
         }
       ]
+    },
+    {
+      "id": "phase4.5",
+      "title": "스케줄러 안정화 + 장애 복구",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase4.5/phase4.5.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [
