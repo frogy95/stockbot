@@ -172,6 +172,7 @@ async def trigger_premarket_pipeline(background_tasks: BackgroundTasks, request:
     """장전 파이프라인 수동 트리거 (BackgroundTasks로 비동기 실행).
 
     실행 중 중복 요청은 409로 거부한다.
+    락 확인 직후 즉시 Redis에 락을 선점하여 동시 요청의 race condition을 방지한다.
     """
     running = await redis_client.get(PIPELINE_RUNNING_KEY)
     if running == "true":
@@ -181,6 +182,8 @@ async def trigger_premarket_pipeline(background_tasks: BackgroundTasks, request:
     if scheduler is None:
         return {"triggered": False, "message": "스케줄러 미초기화"}
 
+    # 락을 즉시 선점 — BackgroundTask 실행 전 동시 요청 차단
+    await redis_client.set(PIPELINE_RUNNING_KEY, "true", ttl=600)
     background_tasks.add_task(scheduler.run_premarket_pipeline)
     return {
         "triggered": True,

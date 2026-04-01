@@ -183,14 +183,9 @@ class CollectorScheduler:
     async def run_premarket_pipeline(self) -> dict:
         """장전 파이프라인 수동 실행 오케스트레이터.
 
-        Redis 락으로 중복 실행을 방지하고, 각 단계를 순차 실행한다.
+        락 선점은 API 핸들러가 담당한다. 이 메서드는 단계 실행 후 finally에서 락을 해제한다.
         실패한 단계의 의존 단계는 스킵되지만 독립 단계는 계속 실행한다.
         """
-        running = await self._redis.get(PIPELINE_RUNNING_KEY)
-        if running == "true":
-            raise RuntimeError("파이프라인이 이미 실행 중입니다")
-
-        await self._redis.set(PIPELINE_RUNNING_KEY, "true", ttl=600)
         try:
             await self._premarket_collect()
             await self._etf_master_collect()
