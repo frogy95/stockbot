@@ -126,8 +126,12 @@ class KISMasterCollector:
             r["underlying_index"] = self._extract_index(name)
         return records
 
+    # prev_count가 이 값 미만이면 DB가 비정상 상태(복구 모드)로 간주하여
+    # ±30% 변동 비교를 건너뛴다. 최소 200 + spot-check만 통과하면 적재 허용.
+    _HEALTHY_PREV_THRESHOLD = 500
+
     def sanity_check(self, etf_list: list[dict], prev_count: int | None = None) -> bool:
-        """ETF 목록 품질 검증: 최소 200종목, spot-check 5종목, prev >= 200일 때 전일 대비 ±30% 이내."""
+        """ETF 목록 품질 검증: 최소 200종목, spot-check 5종목, prev >= 500일 때 전일 대비 ±30% 이내."""
         count = len(etf_list)
         if count < 200:
             logger.warning("sanity check 실패: 종목 수 부족 (%d < 200)", count)
@@ -139,7 +143,7 @@ class KISMasterCollector:
             logger.warning("sanity check 실패: spot-check 종목 누락 %s", missing)
             return False
 
-        if prev_count is not None and prev_count >= 200:
+        if prev_count is not None and prev_count >= self._HEALTHY_PREV_THRESHOLD:
             delta = abs(count - prev_count) / prev_count
             if delta > 0.30:
                 logger.warning(
@@ -147,6 +151,11 @@ class KISMasterCollector:
                     delta * 100, prev_count, count,
                 )
                 return False
+        elif prev_count is not None and prev_count < self._HEALTHY_PREV_THRESHOLD:
+            logger.info(
+                "sanity check: DB 복구 모드 (prev=%d < %d), 변동 비교 건너뜀 (cur=%d)",
+                prev_count, self._HEALTHY_PREV_THRESHOLD, count,
+            )
 
         return True
 
