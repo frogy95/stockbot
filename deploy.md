@@ -29,9 +29,14 @@ PR: https://github.com/frogy95/stockbot/pull/63
 
 #### 수동 검증 필요 항목
 
-- ⬜ Railway 배포 후 KODEX ETF 시세 수집 확인 — 장중 로그에서 "KODEX ETF 수집 대상: ~280종목" 확인
-- ⬜ scheduler 상세 로깅 확인 — 수집 완료 로그에 step/collected/failed/total/validation 포함 여부
-- ⬜ DB 후검증 경고 로그 미발생 확인 (정상 수집 시 WARNING 없음)
+- ✅ Railway 배포 후 KODEX ETF 시세 수집 확인 — market_data 199건 수집 (data_date: 2026-04-02, source: kis_rest), db_validation.passed: true
+- ✅ scheduler 상세 로깅 확인 — pipeline_status에 status/collected_count/validation/db_validation 구조화 필드 포함 확인
+- ✅ DB 후검증 경고 로그 미발생 확인 — premarket/ETF db_validation 모두 passed, WARNING 미발생
+
+> 수동 수집 트리거 과정에서 ETF 수집 버그 3건 발견 및 핫픽스 완료:
+> - `InFailedSQLTransactionError` 미롤백 (hotfix/etf-transaction-rollback)
+> - 롤백 후 미커밋 아이템 유실 (hotfix/etf-per-item-commit)
+> - `updated_at` 컬럼 미존재로 upsert 전체 실패 (hotfix/etf-updated-at-fix)
 
 ---
 
