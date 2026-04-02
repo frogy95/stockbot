@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T10:00:00+09:00",
+  "lastUpdated": "2026-04-02T14:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1240,7 +1240,7 @@
     {
       "id": "phase4.6",
       "title": "데이터 수집 파이프라인 근본 수리",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase4.6/phase4.6.md",
       "sprints": [
         {
@@ -1502,6 +1502,15 @@
       "version": "v0.7.0",
       "description": "Phase 4.5 Sprint 1 프로덕션 배포 — Redis 상태 영속화, 스케줄 의존성 체인, pipeline_healthy 차단, ETF sanity check 완화, 신규 API 3종 (health/readiness, collector/trigger/premarket-pipeline, collector/pipeline-status), 텔레그램 장애 알림",
       "prUrl": "https://github.com/frogy95/stockbot/pull/55",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-02",
+      "type": "sprint",
+      "ref": "phase4.6-sprint1",
+      "version": "v0.8.0",
+      "description": "Phase 4.6 Sprint 1 프로덕션 배포 — Dockerfile --reload 제거 (Railway 재시작 루프 해결), KIS inquiry_client LIVE 고정 (시세 조회 도메인 분리), CollectionResult + CollectionValidator 유효성 검증 체계 신설, 4개 수집기 CollectionResult 통일, pipeline_status collected_count/validation 추가",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/59",
       "status": "completed"
     }
   ]

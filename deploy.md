@@ -5,16 +5,22 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 4.6 Sprint 1: 데이터 수집 파이프라인 근본 수리 (2026-04-02)
+### 프로덕션 배포 - v0.8.0 (2026-04-02)
 
 포함 스프린트: Phase 4.6 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/58
+PR: https://github.com/frogy95/stockbot/pull/59
 
-- ✅ 코드 리뷰 완료 (sprint-review 에이전트 — 2026-04-02)
-- ✅ 자동 검증 완료 — pytest 602 passed, 0 failed
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+
+#### 자동 검증
+
+- ✅ pytest 602 passed, 0 failed
+- ✅ sprint-review 코드 리뷰 완료
 
 #### 수동 검증 필요 항목
 
+- ⬜ /api/v1/health 헬스체크 확인
 - ⬜ Railway 배포 후 파이프라인 정상 동작 확인 — pipeline-status JSON에 collected_count, validation 키 포함 여부
 - ⬜ 수동 파이프라인 트리거 후 premarket 1500건+ 수집 확인 (POST /api/v1/collector/trigger/premarket)
 - ⬜ inquiry_client LIVE 환경으로 ETF 시세 수집 정상화 확인 (수집률 >= 50%)
