@@ -9,13 +9,24 @@
 
 PR: https://github.com/frogy95/stockbot/pull/72
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+#### 코드 리뷰 결과 (2026-04-02)
+
+- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음
+- Medium 이슈 1건: FactorScorer factors 파라미터에 부분 키만 전달 시 KeyError 발생 가능 (현재 호출부는 모두 안전, Phase 문서 미해결 사항 #7에 기록)
+
+#### 자동 검증 결과 (2026-04-02)
+
+- ✅ pytest 638 passed (0 failed, 53 warnings)
+- ✅ API health check: 200 OK (database: connected, redis: connected)
+- ✅ 데모 모드 API 검증: 1차 스크리닝 3팩터만 반환 확인 (volume_factor, momentum_factor, volatility_factor)
+- ✅ PrimaryScreener pass_threshold=60.0 확인
+- ✅ RealtimeScreener pass_threshold=75.0 확인
+- ✅ FactorScorer 하위 호환 확인 (기본값 STOCK_FACTORS/ETF_FACTORS 사용)
+- ✅ PRIMARY_FACTORS len=3, PRIMARY_WEIGHTS sum=1.0 확인
 
 #### 수동 검증 필요 항목
 
-- ⬜ docker compose up --build 후 PrimaryScreener pass_threshold=60.0 확인
-- ⬜ docker compose up --build 후 RealtimeScreener pass_threshold=75.0 확인
+- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
 
 ---
 

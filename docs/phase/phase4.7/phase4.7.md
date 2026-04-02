@@ -1,6 +1,6 @@
 # Phase 4.7: 1차 스크리닝 스코어링 구조 수정 — 실행 계획
 
-> **Status**: 계획 수립 완료 (2026-04-02)
+> **Status**: Sprint 1 완료 (2026-04-02)
 > **ROADMAP 참조**: `ROADMAP.md` Phase 4.7
 > **검토 리포트**:
 >
@@ -79,11 +79,13 @@ orderbook_ratio    전부 1.0   1       2.27% (고정)         가중 0.2
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | 스코어링 구조 수정 + 임계값 조정 | scorer.py 팩터 분리, screener.py 3팩터 빌드, 임계값 조정, 테스트 전면 수정, 2차 임계값 하향 | 없음 |
+| ✅ 1 | 스코어링 구조 수정 + 임계값 조정 | scorer.py 팩터 분리, screener.py 3팩터 빌드, 임계값 조정, 테스트 전면 수정, 2차 임계값 하향 | 없음 |
 
 ---
 
-## Sprint 1 상세 — 스코어링 구조 수정 + 임계값 조정
+## Sprint 1 상세 — 스코어링 구조 수정 + 임계값 조정 ✅ 완료
+
+> 완료: 2026-04-02, PR #72, pytest 638 passed
 
 ### 작업 순서
 
@@ -131,7 +133,8 @@ Sprint 1에서 프론트엔드 변경 없음.
 | 3 | momentum_factor 0.0 동률 (데이터 부족 시) | ⚠️ 낮은 확률 | closes < 4일(신규 상장 등)이면 0.0. 3팩터 중 1개이므로 나머지로 차별화 가능 |
 | 4 | 1차/2차 팩터 불일치로 인한 순위 역전 | 정보 정상 동작 | 1차 통과 후 2차에서 5팩터 재스코어링. 1차 순위가 2차에서 뒤바뀌는 것은 의도된 동작 |
 | 5 | 가중치 비대칭 (volume 우선) 미적용 | 📋 Phase 5 범위 | 김단타: volume 0.4 권장. 박퀀트: 초기 균등 후 IC 기반 조정. 2주 운영 후 검토 |
-| 6 | 2차 스크리닝 realtime_screener 임계값 확인 | ⚠️ Sprint 1 확인 | realtime_screener가 별도 FactorScorer를 사용하는지 코드 확인 필요 |
+| 6 | ~~2차 스크리닝 realtime_screener 임계값 확인~~ | ✅ 해결 (Sprint 1) | realtime_screener.py에서 FactorScorer(pass_threshold=75.0)으로 명시 확인 완료 |
+| 7 | FactorScorer factors 파라미터 부분 키 KeyError | ⚠️ Medium — Sprint 2에서 개선 권장 | scorer.py 99-100: factors 파라미터에 "STOCK"/"ETF" 중 한 키만 전달 시 KeyError 발생 가능. .get() 방식으로 변경 권장. 현재 호출부는 모두 두 키 제공하므로 즉각 장애 없음 |
 
 ---
 
@@ -139,12 +142,12 @@ Sprint 1에서 프론트엔드 변경 없음.
 
 | # | 항목 | 기준 | 상태 |
 |---|------|------|------|
-| 1 | 1차 스크리닝 3팩터 분리 | PRIMARY_STOCK_FACTORS, PRIMARY_ETF_FACTORS 정의 및 사용 | ⬜ |
-| 2 | 1차 pass_threshold 60.0 | FactorScorer(pass_threshold=60.0) 적용 | ⬜ |
-| 3 | 2차 pass_threshold 75.0 | 2차 스크리닝에서 75.0 사용 확인 | ⬜ |
-| 4 | _build_candidates 3팩터만 | trade_strength/orderbook_ratio/tracking_error 미포함 | ⬜ |
-| 5 | FactorScorer factors 파라미터 | 생성자에서 팩터 리스트 지정 가능, 기본값 하위 호환 | ⬜ |
-| 6 | 버그 재현 방지 회귀 테스트 | 44개+ 후보에서 is_passed=True 종목 존재 확인 테스트 | ⬜ |
-| 7 | 기존 테스트 통과 | pytest 전체 pass | ⬜ |
-| 8 | 최소 후보 경고 | 5개 미만 시 warning 로깅 | ⬜ |
-| 9 | 프로덕션 배포 후 검증 | 다음 거래일 primary_screen passed > 0 확인 | ⬜ |
+| 1 | 1차 스크리닝 3팩터 분리 | PRIMARY_STOCK_FACTORS, PRIMARY_ETF_FACTORS 정의 및 사용 | ✅ 완료 |
+| 2 | 1차 pass_threshold 60.0 | FactorScorer(pass_threshold=60.0) 적용 | ✅ 완료 |
+| 3 | 2차 pass_threshold 75.0 | 2차 스크리닝에서 75.0 사용 확인 | ✅ 완료 |
+| 4 | _build_candidates 3팩터만 | trade_strength/orderbook_ratio/tracking_error 미포함 | ✅ 완료 |
+| 5 | FactorScorer factors 파라미터 | 생성자에서 팩터 리스트 지정 가능, 기본값 하위 호환 | ✅ 완료 |
+| 6 | 버그 재현 방지 회귀 테스트 | 44개+ 후보에서 is_passed=True 종목 존재 확인 테스트 | ✅ 완료 |
+| 7 | 기존 테스트 통과 | pytest 전체 pass | ✅ 완료 (638 passed) |
+| 8 | 최소 후보 경고 | 5개 미만 시 warning 로깅 | ✅ 완료 |
+| 9 | 프로덕션 배포 후 검증 | 다음 거래일 primary_screen passed > 0 확인 | ⬜ 수동 필요 |
