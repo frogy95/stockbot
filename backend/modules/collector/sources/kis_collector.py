@@ -55,14 +55,17 @@ class KISCollector:
         )
 
     async def _get_etf_codes(self) -> list[str]:
-        """stocks 테이블에서 ETF 종목코드 조회."""
+        """stocks 테이블에서 KODEX ETF 종목코드 조회."""
         result = await self._db.execute(
             select(Stock.stock_code).where(
                 Stock.stock_type == "ETF",
                 Stock.is_active.is_(True),
+                Stock.stock_name.startswith("KODEX"),
             )
         )
-        return list(result.scalars().all())
+        codes = list(result.scalars().all())
+        logger.info("KODEX ETF 수집 대상: %d종목", len(codes))
+        return codes
 
     async def _save_etf_price(self, stock_code: str, price: StockPrice) -> None:
         """market_data 테이블에 ETF 시세 저장."""

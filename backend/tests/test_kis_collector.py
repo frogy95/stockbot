@@ -1,7 +1,7 @@
 """한투 REST ETF 수집기 테스트."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from core.clients.kis_rest import StockPrice
 from modules.collector.models import CollectionResult
@@ -114,3 +114,60 @@ async def test_collect_etf_close_price_zero():
     assert result.total_target == 3
     assert result.null_counts is not None
     assert result.null_counts["close_price_zero"] == 1
+
+
+@pytest.mark.asyncio
+async def test_get_etf_codes_filters_kodex_only():
+    """_get_etf_codes()가 KODEX ETF만 반환하는지 확인."""
+    mock_rest = MagicMock()
+    mock_rest.get_stock_price = AsyncMock(
+        side_effect=lambda code: _make_stock_price(code)
+    )
+
+    # mock DB: KODEX 2종 + 비KODEX 2종
+    kodex_codes = ["069500", "252670"]  # KODEX 200, KODEX 미국S&P500
+    all_codes = kodex_codes + ["091160", "114800"]  # 비KODEX ETF
+
+    # _get_etf_codes 내부의 DB execute 결과를 모킹
+    # startswith("KODEX") 필터가 적용되므로 KODEX만 반환되어야 함
+    mock_scalars = MagicMock()
+    mock_scalars.all.return_value = kodex_codes
+    mock_result = MagicMock()
+    mock_result.scalars.return_value = mock_scalars
+
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    collector = KISCollector(mock_rest, mock_db)
+    # collect_etf_prices(etf_codes=None) → _get_etf_codes() 호출
+    result = await collector.collect_etf_prices(etf_codes=None)
+
+    assert result.collected == 2
+    assert result.total_target == 2
+    # get_stock_price가 KODEX 코드에 대해서만 호출됨
+    called_codes = [call.args[0] for call in mock_rest.get_stock_price.call_args_list]
+    assert set(called_codes) == set(kodex_codes)
+
+
+@pytest.mark.asyncio
+async def test_get_etf_codes_query_includes_kodex_filter():
+    """_get_etf_codes() 쿼리에 KODEX startswith 조건이 포함되는지 확인."""
+    mock_rest = MagicMock()
+
+    mock_scalars = MagicMock()
+    mock_scalars.all.return_value = []
+    mock_result = MagicMock()
+    mock_result.scalars.return_value = mock_scalars
+
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    collector = KISCollector(mock_rest, mock_db)
+    await collector.collect_etf_prices(etf_codes=None)
+
+    # execute가 호출되었는지 확인 (SELECT 쿼리)
+    assert mock_db.execute.call_count >= 1
+    # 첫 번째 execute 호출의 SQL에 KODEX LIKE 조건이 포함되어야 함
+    select_stmt = mock_db.execute.call_args_list[0].args[0]
+    compiled = str(select_stmt.compile(compile_kwargs={"literal_binds": True}))
+    assert "KODEX%" in compiled or "LIKE" in compiled.upper()

@@ -343,8 +343,8 @@ pipeline_healthy = true 조건:
 
 | Sprint | 주제                      | 주요 작업                                                                                                                                                                           | 의존성      |
 | ------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| 1      | 근본 수리 + 도메인 분리 + 유효성 검증 | Dockerfile --reload 제거, KIS 도메인 분리, **CollectionResult + CollectionValidator 도입**, 에러 전파 + 유효성 검증 통합, data_go_kr 날짜 폴백, stocks.updated_at 수정, pipeline_healthy 판정 강화, 실패 정보 구조화 | 없음       |
-| 2      | 데이터 품질 + 통합 검증          | 한국거래소 휴장일 대응, **DB 후검증 쿼리**, market_data 신선도 검증, 수집 결과 상세 로깅, 통합 검증                                                                                                             | Sprint 1 |
+| 1 ✅    | 근본 수리 + 도메인 분리 + 유효성 검증 | Dockerfile --reload 제거, KIS 도메인 분리, **CollectionResult + CollectionValidator 도입**, 에러 전파 + 유효성 검증 통합, data_go_kr 날짜 폴백, stocks.updated_at 수정, pipeline_healthy 판정 강화, 실패 정보 구조화 | 없음       |
+| 2 ✅    | 데이터 품질 + 통합 검증          | 한국거래소 휴장일 대응, **DB 후검증 쿼리**, market_data 신선도 검증, 수집 결과 상세 로깅, 통합 검증                                                                                                             | Sprint 1 |
 
 
 ---
@@ -403,7 +403,7 @@ Sprint 1에서는 프론트엔드 변경 없음.
 
 ---
 
-## Sprint 2 상세 — 데이터 품질 + 통합 검증
+## Sprint 2 상세 ✅ 완료 — 데이터 품질 + 통합 검증 (PR #62, 2026-04-02)
 
 ### 백엔드
 
@@ -445,13 +445,14 @@ Sprint 2에서도 프론트엔드 변경 없음.
 | 3   | financial_data 24건 극소량             | ✅ Sprint 1 포함   | 원인: `MAX_FINANCIAL_QUERIES=30` 하드코딩 상한. screening_results 전체 건수로 변경 (corp_code 매핑된 전체 종목 수집) |
 | 4   | --reload 제거 후 Railway 재배포 필요       | ⚠️ 수동 작업      | Sprint 1 완료 후 develop -> main PR -> Railway 자동 배포                         |
 | 5   | 다음 거래일 첫 자동 파이프라인 실행 모니터링          | ⚠️ 수동 확인      | Sprint 1 배포 후 다음 거래일 08:00 장전 파이프라인 실시간 확인                                |
-| 6   | 한국거래소 휴장일 하드코딩 유지보수                | 정보 향후 개선      | 2026년 캘린더 하드코딩 후, 향후 공공API 전환 검토                                          |
+| 6   | 한국거래소 휴장일 하드코딩 유지보수                | ✅ 해결 (Sprint 2, PR #62) | ~~2026년 캘린더 하드코딩 후, 향후 공공API 전환 검토~~ trading_calendar.py 구현 완료. 2027년 대비는 Phase 5에서 검토 |
 | 7   | TRADING_ENV=live 시 Rate Limit 공유   | ⚠️ Phase 5 범위 | 실전 전환 시 inquiry/trading 동일 앱키 -> 시간대 분리로 수용. Phase 5에서 Throttler 공유/분할 검토 |
 | 8   | 실전 앱키 필수 (CI 환경)                   | ⚠️ 테스트 mock   | KIS_APP_KEY 없는 CI에서 서버 시작 실패 가능 -> 기존 테스트가 mock 기반이므로 문제없음                |
 | 9   | **ETN 시세 수집 공백** (rev.3 추가)        | ⚠️ Phase 5 범위 | 마스터만 있고 시세 수집 코드 없음. 현재 매매 대상 아님. KIS REST로 가능하나 ~200건 추가 호출 필요           |
 | 10  | **수집 범위 이원화** (rev.3 추가)           | 정보 Phase 5 범위 | 주식=T+1, ETF=당일, ETN=없음. 비대칭 구조 문서화. 통합은 Phase 5                           |
 | 11  | **유효성 검증 임계값 운영 보정** (rev.3 추가)    | ⚠️ 1주일 운영 후   | 초기 임계값(1,500건, 50%, 5%)은 보수적. 1주일 운영 데이터로 보정 필요                           |
 | 12  | **공공데이터포털 ETF/ETN API** (rev.3 추가) | 정보 미확인        | GetStockSecuritiesInfoService는 주식만. 별도 ETF API 존재 여부 Phase 5에서 확인         |
+| 13  | **trading_calendar 2027년 미대응** (Sprint 2 리뷰) | ⚠️ Phase 5 범위 | 2026년 공휴일만 하드코딩. 2027년 이후 날짜 유입 시 공휴일 미인식. Sprint 5에서 개선 권장 (Medium, 코드 리뷰 식별) |
 
 
 ---
@@ -461,20 +462,20 @@ Sprint 2에서도 프론트엔드 변경 없음.
 
 | #   | 항목                                 | 기준                                                               | 상태  |
 | --- | ---------------------------------- | ---------------------------------------------------------------- | --- |
-| 1   | Dockerfile --reload 제거             | 프로덕션 CMD에 --reload 없음, 개발은 docker-compose override               | ⬜   |
-| 2   | KIS 조회/매매 도메인 분리                   | inquiry_client(LIVE) + trading_client(TRADING_ENV) 이중 구조 동작      | ⬜   |
-| 3   | premarket 수집 정상 동작                 | market_data에 최근 거래일 데이터 존재 (T-2 이내)                              | ⬜   |
-| 4   | stocks 테이블 주식 포함                   | stock_type='STOCK' 건수 > 0 (공공데이터포털 수집 확인)                        | ⬜   |
-| 5   | ETF 시세 수집 정상 (모의/실전 무관)            | inquiry_client로 LIVE 도메인 조회, 수집률 >= 50%                          | ⬜   |
-| 6   | 에러 전파 정직성                          | 0건 수집 시 failed 기록, pipeline_healthy=false                        | ⬜   |
-| 7   | stocks.updated_at 정상               | upsert 후 updated_at NOT NULL                                     | ⬜   |
-| 8   | pipeline_healthy 거짓 양성 방지          | 건수 + 상태 + validation 동시 검증 통과해야 true                             | ⬜   |
-| 9   | 자동 파이프라인 정상 실행                     | 다음 거래일 08:00 파이프라인 자동 완료 확인                                      | ⬜   |
-| 10  | 한국거래소 휴장일 대응                       | 공휴일에 수집 시도해도 정상 폴백                                               | ⬜   |
-| 11  | 통합 테스트 통과                          | pytest 기존 테스트 + 신규 테스트 전체 pass                                   | ⬜   |
-| 12  | **CollectionValidator 동작** (rev.3) | 각 수집 단계의 유효성 검증이 정상 동작, 임계값 미달 시 failed                          | ⬜   |
-| 13  | **CollectionResult 반환** (rev.3)    | 모든 수집기가 CollectionResult 반환, null_counts 포함                      | ⬜   |
-| 14  | **실패 정보 구조화** (rev.3)              | pipeline_status JSON에 validation dict 포함, failure_type/reason 기록 | ⬜   |
-| 15  | **DB 후검증** (rev.3)                 | Sprint 2에서 DB SELECT로 적재 건수/null 비율 재확인                          | ⬜   |
+| 1   | Dockerfile --reload 제거             | 프로덕션 CMD에 --reload 없음, 개발은 docker-compose override               | ✅ 완료 (Sprint 1, PR #58) |
+| 2   | KIS 조회/매매 도메인 분리                   | inquiry_client(LIVE) + trading_client(TRADING_ENV) 이중 구조 동작      | ✅ 완료 (Sprint 1, PR #58) |
+| 3   | premarket 수집 정상 동작                 | market_data에 최근 거래일 데이터 존재 (T-2 이내)                              | ⬜ 수동 확인 필요 (Railway 배포 후) |
+| 4   | stocks 테이블 주식 포함                   | stock_type='STOCK' 건수 > 0 (공공데이터포털 수집 확인)                        | ⬜ 수동 확인 필요 (Railway 배포 후) |
+| 5   | ETF 시세 수집 정상 (모의/실전 무관)            | inquiry_client로 LIVE 도메인 조회, 수집률 >= 50%                          | ⬜ 수동 확인 필요 (Railway 배포 후) |
+| 6   | 에러 전파 정직성                          | 0건 수집 시 failed 기록, pipeline_healthy=false                        | ✅ 완료 (Sprint 1, PR #58) |
+| 7   | stocks.updated_at 정상               | upsert 후 updated_at NOT NULL                                     | ✅ 완료 (Sprint 1, PR #58) |
+| 8   | pipeline_healthy 거짓 양성 방지          | 건수 + 상태 + validation 동시 검증 통과해야 true                             | ✅ 완료 (Sprint 1, PR #58) |
+| 9   | 자동 파이프라인 정상 실행                     | 다음 거래일 08:00 파이프라인 자동 완료 확인                                      | ⬜ 수동 확인 필요 (Railway 배포 후) |
+| 10  | 한국거래소 휴장일 대응                       | 공휴일에 수집 시도해도 정상 폴백                                               | ✅ 완료 (Sprint 2, PR #62) |
+| 11  | 통합 테스트 통과                          | pytest 기존 테스트 + 신규 테스트 전체 pass                                   | ✅ 완료 (Sprint 2, PR #62 — 631 passed) |
+| 12  | **CollectionValidator 동작** (rev.3) | 각 수집 단계의 유효성 검증이 정상 동작, 임계값 미달 시 failed                          | ✅ 완료 (Sprint 1, PR #58) |
+| 13  | **CollectionResult 반환** (rev.3)    | 모든 수집기가 CollectionResult 반환, null_counts 포함                      | ✅ 완료 (Sprint 1, PR #58) |
+| 14  | **실패 정보 구조화** (rev.3)              | pipeline_status JSON에 validation dict 포함, failure_type/reason 기록 | ✅ 완료 (Sprint 1, PR #58) |
+| 15  | **DB 후검증** (rev.3)                 | Sprint 2에서 DB SELECT로 적재 건수/null 비율 재확인                          | ✅ 완료 (Sprint 2, PR #62) |
 
 
