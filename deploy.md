@@ -5,6 +5,21 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: ETF 시세 저장 updated_at 컬럼 오참조 수정 (2026-04-02)
+
+PR: https://github.com/frogy95/stockbot/pull/68
+
+- ✅ 자동 검증 완료 항목:
+  - pytest ETF 관련 테스트 54개 통과
+  - 코드 리뷰 완료 (Critical/High 이슈 없음)
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - Railway 배포 후 다음 장전(08:00) ETF 수집 로그 확인 — UndefinedColumnError 미발생 확인
+  - market_data 테이블에 당일 ETF 시세 데이터 적재 확인
+
+---
+
 ### 프로덕션 배포 - v0.9.0 (2026-04-02)
 
 포함 스프린트: Phase 4.6 Sprint 2

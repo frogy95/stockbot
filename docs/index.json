@@ -1516,7 +1516,7 @@
       "path": "docs/hotfix/etf-updated-at-fix/hotfix.md",
       "assignee": "frogy95",
       "reviewer": "hotfix-close agent",
-      "pr": "",
+      "pr": "https://github.com/frogy95/stockbot/pull/68",
       "deployedAt": "2026-04-02",
       "description": "kis_collector.py _save_etf_price 메서드의 on_conflict_do_update set_ 절에서 market_data 테이블에 존재하지 않는 updated_at 컬럼 참조로 UndefinedColumnError 발생, ETF 시세 전체 저장 실패하던 버그 수정. updated_at → collected_at 1줄 수정.",
       "commits": [

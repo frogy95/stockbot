@@ -49,6 +49,6 @@ ETF 시세 수집 스케줄이 실행될 때마다 모든 ETF 시세 저장이 �
 ---
 
 ## PR
-- **URL:** (PR 생성 후 업데이트)
+- **URL:** https://github.com/frogy95/stockbot/pull/68
 - **대상:** main
 - **역머지:** ⬜ develop에 역머지 필요
