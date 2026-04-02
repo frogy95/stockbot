@@ -40,6 +40,7 @@ class KISCollector:
                 await self._save_etf_price(code, price)
                 collected += 1
             except Exception:
+                await self._db.rollback()
                 failed += 1
                 logger.exception("ETF 시세 수집 실패: %s", code)
 

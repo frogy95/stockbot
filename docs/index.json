@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T15:30:00+09:00",
+  "lastUpdated": "2026-04-02T13:25:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1506,6 +1506,29 @@
           "hash": "1956e55",
           "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-etf-transaction-rollback",
+      "name": "ETF 시세 수집 실패 시 DB 트랜잭션 rollback 누락 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/etf-transaction-rollback/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/64",
+      "deployedAt": "2026-04-02",
+      "description": "collect_etf_prices except 블록에서 await self._db.rollback() 미호출로 SQLAlchemy 세션이 실패 상태로 남아 첫 번째 ETF 저장 오류 발생 시 나머지 ~279종목이 InFailedSQLTransactionError로 연쇄 실패하던 버그 수정. except 블록에 rollback 1줄 추가.",
+      "commits": [
+        {
+          "hash": "cf9fa6f",
+          "message": "fix(etf-collector): ETF 시세 수집 실패 시 DB 트랜잭션 롤백 추가",
+          "date": "2026-04-02"
+        },
+        {
+          "hash": "971f662",
+          "message": "docs(hotfix): etf-transaction-rollback 핫픽스 문서 추가",
+          "date": "2026-04-02"
         }
       ]
     }
