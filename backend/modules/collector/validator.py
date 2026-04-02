@@ -1,5 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.models.market_data import MarketData
+from core.trading_calendar import get_prev_trading_day
 from modules.collector.models import CollectionResult, ValidationResult
 
 KST = timezone(timedelta(hours=9))
@@ -124,6 +129,85 @@ class CollectionValidator:
             )
         return ValidationResult(passed=True, severity="info")
 
+    async def validate_premarket_db(self, session: AsyncSession) -> ValidationResult:
+        """DB에 적재된 장전 데이터 건수 + null 비율 검증."""
+        today = datetime.now(KST).date()
+        boundary = get_prev_trading_day(today, n=2)
+
+        # 전체 건수
+        total_stmt = select(func.count()).select_from(MarketData).where(
+            MarketData.data_date >= boundary,
+            MarketData.source == "data_go_kr",
+        )
+        total_result = await session.execute(total_stmt)
+        total_count = total_result.scalar_one()
+
+        if total_count < 1500:
+            return ValidationResult(
+                passed=False,
+                failure_type="permanent",
+                failure_reason=f"DB 장전 데이터 건수 부족: {total_count} < 1500",
+                details={"total_count": total_count, "boundary_date": str(boundary)},
+            )
+
+        # close_price null 건수
+        null_stmt = select(func.count()).select_from(MarketData).where(
+            MarketData.data_date >= boundary,
+            MarketData.source == "data_go_kr",
+            MarketData.close_price.is_(None),
+        )
+        null_result = await session.execute(null_stmt)
+        null_count = null_result.scalar_one()
+
+        null_ratio = null_count / total_count
+        if null_ratio >= 0.05:
+            return ValidationResult(
+                passed=False,
+                failure_type="permanent",
+                failure_reason=f"DB close_price null 비율 초과: {null_ratio:.1%} >= 5%",
+                details={
+                    "total_count": total_count,
+                    "null_count": null_count,
+                    "null_ratio": null_ratio,
+                },
+            )
+
+        return ValidationResult(
+            passed=True,
+            severity="info",
+            details={
+                "total_count": total_count,
+                "null_count": null_count,
+                "null_ratio": null_ratio,
+                "boundary_date": str(boundary),
+            },
+        )
+
+    async def validate_etf_db(self, session: AsyncSession) -> ValidationResult:
+        """DB에 적재된 ETF 시세 건수 검증."""
+        today = datetime.now(KST).date()
+
+        stmt = select(func.count()).select_from(MarketData).where(
+            MarketData.data_date == today,
+            MarketData.source == "kis_rest",
+        )
+        result = await session.execute(stmt)
+        count = result.scalar_one()
+
+        if count < 140:
+            return ValidationResult(
+                passed=False,
+                failure_type="permanent",
+                failure_reason=f"DB ETF 시세 건수 부족: {count} < 140",
+                details={"count": count, "data_date": str(today)},
+            )
+
+        return ValidationResult(
+            passed=True,
+            severity="info",
+            details={"count": count, "data_date": str(today)},
+        )
+
     @staticmethod
     def _null_ratio(result: CollectionResult, field_name: str) -> float:
         if result.collected == 0:
@@ -134,16 +218,8 @@ class CollectionValidator:
 
     @staticmethod
     def _is_within_t2(data_date: str) -> bool:
-        """data_date(YYYYMMDD)가 오늘(KST) 기준 T-2 영업일 이내인지 판정 (주말 건너뜀)."""
+        """data_date(YYYYMMDD)가 오늘(KST) 기준 T-2 영업일 이내인지 판정 (주말/공휴일 건너뜀)."""
         today = datetime.now(KST).date()
         target = datetime.strptime(data_date, "%Y%m%d").date()
-
-        # 오늘부터 역순으로 영업일 2일 전까지 계산
-        biz_days_back = 0
-        current = today
-        while biz_days_back < 2:
-            current -= timedelta(days=1)
-            if current.weekday() < 5:  # 월~금
-                biz_days_back += 1
-
-        return target >= current
+        boundary = get_prev_trading_day(today, n=2)
+        return target >= boundary

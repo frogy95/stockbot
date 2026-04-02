@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.models.market_data import MarketData
+from core.trading_calendar import get_latest_trading_day, is_trading_day
 from core.models.stock import Stock
 from modules.collector.models import CollectionResult
 
@@ -40,17 +41,12 @@ class DataGoKrCollector:
         from core.config import settings
         today_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
         dates: list[str] = []
-        target = today_kst - timedelta(days=1)
-        # 첫 날짜를 주말이 아닌 평일로 보정
-        if target.weekday() == 6:    # 일요일 → 금요일
-            target -= timedelta(days=2)
-        elif target.weekday() == 5:  # 토요일 → 금요일
-            target -= timedelta(days=1)
+        target = get_latest_trading_day(today_kst - timedelta(days=1))
         dates.append(target.strftime("%Y%m%d"))
 
         while len(dates) < max_days:
             target -= timedelta(days=1)
-            if target.weekday() >= 5:  # 주말 건너뛰기
+            if not is_trading_day(target):
                 continue
             dates.append(target.strftime("%Y%m%d"))
 
