@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T17:00:00+09:00",
+  "lastUpdated": "2026-04-02T22:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1402,6 +1402,13 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4.7",
+      "title": "1차 스크리닝 스코어링 구조 수정",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase4.7/phase4.7.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [
