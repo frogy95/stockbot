@@ -1337,7 +1337,7 @@
           "status": "completed",
           "branch": "phase4.6-sprint2",
           "sprintDoc": "docs/phase/phase4.6/sprint2/sprint2.md",
-          "prUrl": "(PR 생성 후 기록 예정)",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/62",
           "completedAt": "2026-04-02",
           "lastUpdated": "2026-04-02T00:00:00+09:00",
           "progress": {
