@@ -64,3 +64,8 @@ def get_environment(name: str) -> KISEnvironment:
 
 def get_current_environment() -> KISEnvironment:
     return get_environment(settings.TRADING_ENV)
+
+
+def get_inquiry_environment() -> KISEnvironment:
+    """시세 조회 전용 환경 — TRADING_ENV와 무관하게 항상 LIVE 반환."""
+    return LIVE
