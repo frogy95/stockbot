@@ -5,6 +5,24 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### 프로덕션 배포 - v1.0.0 (2026-04-02)
+
+포함 스프린트: Phase 4.7 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/73
+
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+
+#### 자동 검증 결과
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+#### 수동 검증 필요 항목
+
+- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
+
+---
+
 ### Phase 4.7 Sprint 1: 1차 스크리닝 3팩터 분리 + 임계값 조정 (2026-04-02)
 
 PR: https://github.com/frogy95/stockbot/pull/72

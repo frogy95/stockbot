@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T22:00:00+09:00",
+  "lastUpdated": "2026-04-02T22:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1667,6 +1667,15 @@
       "version": "v0.9.0",
       "description": "Phase 4.6 Sprint 2 프로덕션 배포 — ETF 시세 수집 대상 KODEX 제한 (~280종목), trading_calendar 공휴일 DB 통합 (공공데이터포털 API), CollectionValidator DB 후검증 추가 (premarket + ETF), scheduler 상세 로깅 + market_data 신선도 후검증, 통합 테스트 631 passed",
       "prUrl": "https://github.com/frogy95/stockbot/pull/63",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-02",
+      "type": "sprint",
+      "ref": "phase4.7-sprint1",
+      "version": "v1.0.0",
+      "description": "Phase 4.7 Sprint 1 프로덕션 배포 — 1차 스크리닝 3팩터 분리 (volume_factor, momentum_factor, volatility_factor), PrimaryScreener pass_threshold=60.0, RealtimeScreener pass_threshold=75.0, DB/환경변수 변경 없음",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/73",
       "status": "completed"
     }
   ]
