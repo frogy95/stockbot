@@ -1,7 +1,8 @@
 # Phase 4.6 API 개발자 검토 리포트 — 윤에이피
 
-> **검토일**: 2026-04-02 (수정안 검토)
-> **대상**: 데이터 수집 파이프라인 근본 수리 계획 — KIS 조회/매매 도메인 분리 반영 수정안
+> **rev.3** (2026-04-02) — 수집 유효성 검증 구현 설계 + 수집 범위 이원화 검토
+> **rev.2** (2026-04-02) — KIS 조회/매매 도메인 분리 반영
+> **rev.1** (2026-04-02) — 최초 검토
 
 ---
 
@@ -9,95 +10,148 @@
 
 | 항목 | 판정 |
 |------|------|
-| tr_id 패턴 분석 정확성 | ✅ 통과 — 조회 tr_id는 환경 무관 고정값 |
-| 도메인 분리 구현 방안 | ✅ 통과 — inquiry_client/trading_client 분리 합리적 |
-| TokenManager 이중 인스턴스 | ✅ 통과 — 기존 구조가 env별 독립이므로 자연스러운 확장 |
-| KISRestClient 수정 범위 | ✅ 통과 — 클래스 내부 변경 없음, 인스턴스만 2개 |
-| main.py 초기화 변경 | ✅ 통과 — 파급 범위 관리 가능 |
-| Dockerfile --reload | ❌ 재검토 — 즉시 제거 필수 (기존 판정 유지) |
+| tr_id 패턴 분석 정확성 | ✅ 통과 — 조회 tr_id는 환경 무관 고정값 (rev.2 유지) |
+| 도메인 분리 구현 방안 | ✅ 통과 — inquiry_client/trading_client 분리 (rev.2 유지) |
+| 유효성 검증 구현 아키텍처 (rev.3) | ✅ 통과 — CollectionValidator 클래스 분리 권고 |
+| 수집기 반환값 변경 (rev.3) | ✅ 통과 — CollectionResult dataclass 도입 |
+| 수집 범위 이원화 문서화 (rev.3) | ✅ 통과 — 현황 기록 필수, 해소는 Phase 5 |
+| ETN 시세 수집 경로 (rev.3) | ⚠️ 주의 — KIS REST로 가능하나 Phase 4.6 범위 밖 |
+| 실패 정보 구조화 (rev.3) | ✅ 통과 — pipeline_status JSON 확장 |
 
 ## 2. 항목별 검증 결과
 
-### tr_id 패턴 분석 — ✅ 정확
+### 2.1 유효성 검증 구현 아키텍처 (rev.3 신규)
 
-한투 API tr_id 규칙:
-- **조회** (시세/호가/종목정보): `FHKST01010100`, `FHKST01010200` 등 -> 환경 prefix 없음, 고정값
-- **매매** (주문/취소): `{V/T}TTC0802U`, `{V/T}TTC0801U` -> V=모의, T=실전
-- **잔고/체결**: `{V/T}TTS3320R`, `{V/T}TTC8001R` -> V=모의, T=실전
+**권고: `CollectionValidator` 클래스 분리**
 
-실전 도메인으로 조회 tr_id를 보내면 정상 동작한다. 모의 도메인이 일부 조회(ETF 포함)에서 HTTP 500을 반환하는 것은 문서에 없는 실전 이슈.
+scheduler.py에 검증 로직을 인라인으로 넣으면 코드가 복잡해진다. 별도 클래스로 분리:
 
-### 구현 방안 — ✅ 합리적
+```
+backend/modules/collector/validator.py (신규)
+  CollectionValidator
+    validate_premarket(result: CollectionResult) -> ValidationResult
+    validate_etf_master(result: dict) -> ValidationResult  # 기존 sanity_check 위임
+    validate_etf_collect(result: CollectionResult) -> ValidationResult
+    validate_primary_screen(candidates_count: int) -> ValidationResult
+    validate_dart(result: CollectionResult) -> ValidationResult
+    validate_sentiment(result: CollectionResult) -> ValidationResult
 
-```python
-# 현재 구조 (단일 환경)
-env = get_current_environment()  # paper or live
-token_manager = KISTokenManager(env=env, redis=redis_client)
-rest_client = KISRestClient(env=env, token_manager=token_manager, throttler=throttler)
-
-# 수정 구조 (이중 환경)
-inquiry_env = get_environment("live")  # 조회는 항상 LIVE
-trading_env = get_current_environment()  # 매매는 TRADING_ENV 따름
-
-inquiry_token = KISTokenManager(env=inquiry_env, redis=redis_client)
-trading_token = KISTokenManager(env=trading_env, redis=redis_client)
-
-inquiry_throttler = TokenBucketThrottler(interval=inquiry_env.rate_limit_interval)
-trading_throttler = TokenBucketThrottler(interval=trading_env.rate_limit_interval)
-
-inquiry_client = KISRestClient(env=inquiry_env, token_manager=inquiry_token, throttler=inquiry_throttler)
-trading_client = KISRestClient(env=trading_env, token_manager=trading_token, throttler=trading_throttler)
+  ValidationResult (dataclass)
+    passed: bool
+    failure_type: "retryable" | "permanent" | None
+    failure_reason: str | None
+    details: dict
+    severity: "error" | "warning" | "info"
 ```
 
-**장점**: KISRestClient 내부 코드 변경 없음. 인스턴스만 2개.
-**참고**: `TRADING_ENV=live`일 때 inquiry_env == trading_env -> 동일 환경 2개 인스턴스. 토큰은 Redis 키가 같아서 (`kis:live:access_token`) 공유됨. 문제없음.
+장점:
+- 각 수집기는 결과만 반환, 검증은 validator가 담당
+- scheduler.py는 validator 결과에 따라 status 업데이트
+- 테스트가 쉬워짐 (validator 단독 unit test 가능)
 
-### TokenManager 이중 인스턴스 — ✅ 자연스러운 확장
+### 2.2 수집기 반환값 변경 (rev.3 신규)
 
-기존 `KISTokenManager`는 `_token_key()`를 `kis:{env.name}:access_token`으로 생성:
-- inquiry용: `kis:live:access_token`
-- trading용 (paper): `kis:paper:access_token`
+현재 수집기들이 `int` (건수만) 반환하는데, 검증에 필요한 정보가 부족하다.
 
-Redis 키가 자연스럽게 분리. 코드 수정 불필요.
+| 수집기 | 현재 반환 | 변경 후 |
+|--------|----------|--------|
+| `data_go_kr.collect_all()` | `int` | `CollectionResult(collected, skipped, data_date, null_counts)` |
+| `kis_collector.collect_etf_prices()` | `int` | `CollectionResult(collected, failed, total_target)` |
+| `kis_master.collect()` | `dict` | 유지 (이미 충분한 정보 포함) |
+| `screener.screen()` | `list[dict]` | 유지 (candidates 수 = len(results)) |
+| `dart.collect_financials()` | `int` | `CollectionResult(collected, mapped_count, target_count)` |
+| `naver.collect_sentiments()` | `int` | `CollectionResult(collected, target_count)` |
 
-### 파급 범위 분석
+**CollectionResult** dataclass:
+```python
+@dataclass
+class CollectionResult:
+    collected: int
+    failed: int = 0
+    skipped: int = 0
+    total_target: int = 0
+    data_date: str | None = None
+    null_counts: dict[str, int] | None = None  # {"close_price": 5, "volume": 2}
+```
 
-| 파일 | 변경 | 설명 |
-|------|------|------|
-| `kis_config.py` | 수정 | `get_inquiry_environment()` 헬퍼 추가 |
-| `main.py` | 수정 | lifespan에서 inquiry/trading 이중 초기화, app.state 분리 |
-| `scheduler.py` | 수정 | `__init__`에 `inquiry_client` 파라미터 추가, ETF 수집에 inquiry_client 사용 |
-| `kis_collector.py` | 변경 없음 | 이미 `rest_client`를 외부에서 받으므로 inquiry_client 넘기면 됨 |
-| `kis_rest.py` | 변경 없음 | 인스턴스 2개, 클래스 자체 수정 불필요 |
-| `token_manager.py` | 변경 없음 | 이미 env별 독립 |
+### 2.3 data_go_kr null 비율 계산 (rev.3 신규)
 
-**app.state 권고**: 기존 `app.state.kis_rest`를 매매용으로 유지하고 `app.state.kis_inquiry` 추가 -> 기존 코드 파급 최소화.
+현재 `_save_market_data`에서 null 필드를 그대로 저장한다. null 비율 검증을 위해 `collect_all` 내부에서 null 카운팅 추가:
 
-### Shutdown 순서
+```python
+null_counts = {"close_price": 0, "volume": 0, "market_cap": 0}
+for item in items:
+    if self._parse_int(item.get("clpr")) is None:
+        null_counts["close_price"] += 1
+    if self._parse_int(item.get("trqu")) is None:
+        null_counts["volume"] += 1
+    if self._parse_int(item.get("mrktTotAmt")) is None:
+        null_counts["market_cap"] += 1
+```
 
-inquiry_client `.close()` + trading_client `.close()` 각각 호출 필요. inquiry_token_manager도 `.close()` 필요.
+DB 후검증은 Sprint 2에서 추가 (Sprint 1은 수집 시점 검증만).
 
-### WS 클라이언트 — 변경 없음
+### 2.4 수집 범위 이원화 현황 (rev.3 신규)
 
-WS(웹소켓)는 실시간 체결/호가 수신용. WS 연결 URL은 모의/실전이 다르므로 현재 구조 유지.
+```
+일반주식 시세:  data_go_kr (T+1 일별) -- 당일 시세 없음
+ETF 시세:      kis_collector (당일, LIVE) -- 당일 시세 있음
+ETN 시세:      없음 -- 수집 코드 자체 없음
+```
 
-## 3. 파라미터 조정 권고
+**ETF 시세 수집 경로**: inquiry_client(LIVE 도메인) 전환으로 해결 완료 (rev.2)
+**ETN 시세 수집 경로**: KIS REST `FHKST01010100` (주식현재가) API로 ETN도 조회 가능. 하지만:
+- ETN은 ~200종목 추가 호출 필요 (Rate Limit 0.07초 기준 약 14초 추가)
+- 현재 매매 대상 아님
+- Phase 5에서 kis_collector에 ETN 추가하는 것이 자연스러움
 
-| # | 항목 | 기존 확정값 | 권고 수정값 | 근거 |
-|---|------|-----------|-----------|------|
-| 5 | ETF 시세 (모의) | optional | **required** | LIVE 도메인 조회로 정상 수집 |
-| 신규 | inquiry Rate Limit | 미정 | **LIVE 기준 0.07초** | 실전 도메인 Rate Limit |
-| 신규 | Throttler 분리 | 미정 | **inquiry/trading 각각 독립 Throttler** | Rate Limit 간섭 방지 |
-| 기존 | Dockerfile, 에러 전파, 날짜 폴백 등 | 유지 | 유지 | 기존 분석 정확 |
+**공공데이터포털 ETF API**: `GetStockSecuritiesInfoService`는 코드에 명시적으로 "일반 주식만 (ETF 미포함)" 주석. 별도 ETF/ETN API 존재 여부 미확인.
+
+### 2.5 _update_step_status 시그니처 확장 (rev.3 신규)
+
+```python
+async def _update_step_status(
+    self, step: str, status: str, 
+    error: str | None = None,
+    collected_count: int | None = None,
+    validation: dict | None = None,
+) -> None:
+```
+
+pipeline_status JSON에 validation 정보를 포함하여 장애 원인 진단 용이.
+
+### 2.6 도메인 분리 구현 (rev.2 유지)
+
+```python
+# 수정 구조 (이중 환경)
+inquiry_env = get_environment("live")      # 조회는 항상 LIVE
+trading_env = get_current_environment()    # 매매는 TRADING_ENV 따름
+
+inquiry_client = KISRestClient(env=inquiry_env, ...)
+trading_client = KISRestClient(env=trading_env, ...)
+```
+
+KISRestClient 내부 코드 변경 없음. 인스턴스만 2개.
+
+## 3. 파라미터 조정 권고 (rev.3)
+
+| 항목 | 기존 확정값 | 권고 수정값 (rev.3) | 근거 |
+|------|-----------|-------------------|------|
+| premarket 최소 건수 | 100 | **1,500** | PO/리스크 의견 동의. 3,700+ 중 100은 검증 없음 |
+| ETF 시세 최소 수집률 | 10% | **50%** | LIVE 도메인 전환 후 정상이면 90%+ 예상. 50%는 보수적 |
+| validator 분리 | 없음 (신규) | **CollectionValidator 별도 클래스** | scheduler.py 비대화 방지, 테스트 용이성 |
+| 수집기 반환값 | int (신규) | **CollectionResult dataclass** | 검증에 필요한 메타데이터 포함 |
+| _update_step_status | status+error만 (기존) | **+ collected_count + validation** | 장애 원인 진단 정보 포함 |
+| 기존 도메인 분리 파라미터 | rev.2 확정 | 유지 | 변경 없음 |
 
 ## 4. 리스크 및 대안
 
-### TRADING_ENV=live 시 Rate Limit 공유
-inquiry와 trading이 동일 LIVE 환경 -> 서버 측에서 앱키 기준 Rate Limit. 두 Throttler 합산이 실제 한도를 초과할 수 있다. -> 단, 조회는 장전 08:00 집중, 매매는 장중 09:00~15:30이므로 시간대 분리. 리스크 수용 가능. Phase 5 범위에서 Throttler 공유/분할 검토.
-
-### CI 환경
-실전 앱키가 없는 CI에서 서버 시작 실패 -> 테스트 시 mock 필수. 기존 테스트가 mock 기반이므로 문제없음.
+- **CollectionResult 도입 시 기존 코드 영향**: scheduler.py의 각 `_xxx_collect` 메서드에서 반환값 처리 변경 필요. 내부 인터페이스이므로 문제없음
+- **null 카운팅 성능**: 3,700+ 종목에 대해 필드별 null 체크는 O(n) -- 무시할 수준
+- **Redis pipeline_status JSON 크기 증가**: validation 정보 추가로 JSON이 커지지만 KB 단위이므로 문제없음
+- **ETN 시세 API 호출**: Phase 5에서 ~200건 추가 호출 시 약 14초 추가. Rate Limit 내
+- **CI 환경 (기존)**: 실전 앱키 없는 CI에서 서버 시작 실패 -> 테스트 시 mock 필수
 
 ## 최종 판단
 
-**수정안 승인**. KISRestClient를 인스턴스 2개로 분리하는 방식은 기존 코드 변경이 최소화되면서 문제를 근본적으로 해결한다. 클래스 내부 수정 없이 초기화 시점에서만 분리하는 것이 핵심.
+**rev.3 수정안 승인**. CollectionValidator 분리 + CollectionResult dataclass 도입으로 검증 로직이 깔끔하게 분리된다.
