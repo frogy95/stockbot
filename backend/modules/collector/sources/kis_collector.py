@@ -89,7 +89,7 @@ class KISCollector:
                 "low_price": stmt.excluded.low_price,
                 "volume": stmt.excluded.volume,
                 "change_rate": stmt.excluded.change_rate,
-                "updated_at": func.now(),
+                "collected_at": func.now(),
             },
         )
         await self._db.execute(stmt)
