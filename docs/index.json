@@ -1408,7 +1408,57 @@
       "title": "1차 스크리닝 스코어링 구조 수정",
       "status": "planned",
       "phaseDoc": "docs/phase/phase4.7/phase4.7.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "1차 스크리닝 3팩터 분리 + 임계값 조정",
+          "status": "planned",
+          "branch": "phase4.7-sprint1",
+          "sprintDoc": "docs/phase/phase4.7/sprint1/sprint1.md",
+          "progress": {
+            "total": 4,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "scorer.py 팩터 분리 + FactorScorer 확장",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-1-scorerpy-팩터-분리--factorscorer-확장",
+              "testPlan": "PRIMARY_STOCK_FACTORS/PRIMARY_ETF_FACTORS/PRIMARY_WEIGHTS 정의 + FactorScorer factors 파라미터 하위 호환",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "screener.py 3팩터 빌드 + PrimaryScreener 초기화 수정",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-2-screenerpy-3팩터-빌드--primaryscreener-초기화-수정",
+              "testPlan": "_build_candidates 3팩터만 반환 + pass_threshold=60.0 + 최소 후보 경고",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "RealtimeScreener + main.py 임계값 명시",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-3-realtimescreener--mainpy-임계값-명시",
+              "testPlan": "RealtimeScreener pass_threshold=75.0 기본값 변경",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "테스트 전면 수정 + 회귀 테스트 추가",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-4-테스트-전면-수정--회귀-테스트-추가",
+              "testPlan": "1차/2차 분리 테스트 + 버그 재현 방지 회귀 테스트 + pytest 전체 PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

@@ -28,10 +28,12 @@
 - [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/58
 - Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, 🔄 계획 수립 완료 (2026-04-02)
 
+- Phase 4.7 Sprint 1 — 1차 스크리닝 3팩터 분리 + 임계값 조정, 🔄 계획 수립 완료 (2026-04-02)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.6 Sprint 2 — 계획 수립 완료, 구현 대기
-- Phase 5 Sprint 1 — Phase 4.6 완료 후 착수 가능
+- Phase 4.7 Sprint 1 — 계획 수립 완료, 구현 대기
+- Phase 5 Sprint 1 — Phase 4.7 완료 후 착수 가능
 
 ## 핵심 주의사항
 
@@ -106,3 +108,8 @@
 - Phase 4.6 Sprint 2: trading_calendar.py는 2026년 공휴일 하드코딩 — 대체공휴일 정확성 확인 필요 (주석 표기)
 - Phase 4.6 Sprint 2: validator._is_within_t2()에서 기존 주말만 건너뜀 -> trading_calendar 사용으로 교체
 - Phase 4.6 Sprint 2: DB 후검증(validate_premarket_db/validate_etf_db)은 참고 정보 — pipeline_healthy에 직접 영향 없음
+- Phase 4.7 Sprint 1: FactorScorer.__init__에 factors 파라미터 없음 — score_candidates에서 STOCK_FACTORS/ETF_FACTORS 하드코딩. factors dict 파라미터 추가 필요
+- Phase 4.7 Sprint 1: PrimaryScreener는 FactorScorer()를 기본값으로 생성 (pass_threshold=80.0) — 60.0으로 변경 + 3팩터 지정
+- Phase 4.7 Sprint 1: RealtimeScreener도 FactorScorer()를 기본값으로 생성 (pass_threshold=80.0) — 75.0으로 변경
+- Phase 4.7 Sprint 1: main.py에서 PrimaryScreener()와 RealtimeScreener() 모두 파라미터 없이 생성 — __init__ 기본값 변경으로 충분, main.py 수정 불필요
+- Phase 4.7 Sprint 1: screener.py의 _build_candidates에서 trade_strength_factor=50.0, orderbook_ratio_factor=1.0, tracking_error_factor=0.0 하드코딩 — 이 3개 제거 대상
