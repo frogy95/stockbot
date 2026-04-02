@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 from unittest.mock import AsyncMock, MagicMock, call
 
 from modules.collector.scheduler import CollectorScheduler
+from modules.collector.models import CollectionResult
+from modules.collector.sources.data_go_kr import DataGoKrCollector
 
 
 def _make_scheduler(redis_mock=None):
@@ -69,7 +71,7 @@ async def test_premarket_saves_to_redis():
         "modules.collector.scheduler.DataGoKrCollector"
     ) as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=2800)
+        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockCollector.return_value = mock_instance
 
         await scheduler._premarket_collect()

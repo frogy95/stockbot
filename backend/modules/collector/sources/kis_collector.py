@@ -3,13 +3,14 @@
 import logging
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.clients.kis_rest import KISRestClient, StockPrice
 from core.models.market_data import MarketData
 from core.models.stock import Stock
+from modules.collector.models import CollectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -21,25 +22,37 @@ class KISCollector:
         self._rest = rest_client
         self._db = db_session
 
-    async def collect_etf_prices(self, etf_codes: list[str] | None = None) -> int:
-        """ETF 개별 시세 수집. 수집 성공 종목 수 반환."""
+    async def collect_etf_prices(self, etf_codes: list[str] | None = None) -> CollectionResult:
+        """ETF 개별 시세 수집. CollectionResult 반환."""
         if etf_codes is None:
             etf_codes = await self._get_etf_codes()
 
         collected = 0
+        failed = 0
+        null_counts: dict[str, int] = {}
         for code in etf_codes:
             try:
                 price = await self._rest.get_stock_price(code)
+                if price.price == 0:
+                    null_counts["close_price_zero"] = null_counts.get("close_price_zero", 0) + 1
+                    logger.warning("ETF 종가 0 감지: %s", code)
+                    continue
                 await self._save_etf_price(code, price)
                 collected += 1
             except Exception:
+                failed += 1
                 logger.exception("ETF 시세 수집 실패: %s", code)
 
         if collected > 0:
             await self._db.commit()
 
-        logger.info("ETF 수집 완료: %d/%d", collected, len(etf_codes))
-        return collected
+        logger.info("ETF 수집 완료: %d/%d (실패: %d)", collected, len(etf_codes), failed)
+        return CollectionResult(
+            collected=collected,
+            failed=failed,
+            total_target=len(etf_codes),
+            null_counts=null_counts if null_counts else None,
+        )
 
     async def _get_etf_codes(self) -> list[str]:
         """stocks 테이블에서 ETF 종목코드 조회."""
@@ -74,6 +87,7 @@ class KISCollector:
                 "low_price": stmt.excluded.low_price,
                 "volume": stmt.excluded.volume,
                 "change_rate": stmt.excluded.change_rate,
+                "updated_at": func.now(),
             },
         )
         await self._db.execute(stmt)

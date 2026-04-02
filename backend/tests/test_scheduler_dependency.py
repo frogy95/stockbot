@@ -5,6 +5,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from modules.collector.scheduler import CollectorScheduler
+from modules.collector.models import CollectionResult
+from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
@@ -138,7 +140,7 @@ async def test_pipeline_healthy_false_on_init():
 
     with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=2800)
+        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockCollector.return_value = mock_instance
 
         await scheduler._premarket_collect()

@@ -4,13 +4,14 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from core.clients.kis_rest import StockPrice
+from modules.collector.models import CollectionResult
 from modules.collector.sources.kis_collector import KISCollector
 
 
-def _make_stock_price(stock_code: str = "069500") -> StockPrice:
+def _make_stock_price(stock_code: str = "069500", price: int = 40000) -> StockPrice:
     return StockPrice(
         stock_code=stock_code,
-        price=40000,
+        price=price,
         change=500,
         change_rate=1.27,
         volume=3000000,
@@ -31,9 +32,12 @@ async def test_collect_etf_prices():
     mock_db = AsyncMock()
 
     collector = KISCollector(mock_rest, mock_db)
-    count = await collector.collect_etf_prices(["069500", "252670"])
+    result = await collector.collect_etf_prices(["069500", "252670"])
 
-    assert count == 2
+    assert isinstance(result, CollectionResult)
+    assert result.collected == 2
+    assert result.total_target == 2
+    assert result.failed == 0
     assert mock_rest.get_stock_price.call_count == 2
     mock_db.commit.assert_called_once()
 
@@ -46,8 +50,10 @@ async def test_collect_etf_save_to_db():
     mock_db = AsyncMock()
 
     collector = KISCollector(mock_rest, mock_db)
-    await collector.collect_etf_prices(["069500"])
+    result = await collector.collect_etf_prices(["069500"])
 
+    assert isinstance(result, CollectionResult)
+    assert result.collected == 1
     # upsert용 execute 호출
     assert mock_db.execute.call_count == 1
 
@@ -66,19 +72,45 @@ async def test_collect_etf_partial_failure():
     mock_db = AsyncMock()
 
     collector = KISCollector(mock_rest, mock_db)
-    count = await collector.collect_etf_prices(["069500", "FAIL", "252670"])
+    result = await collector.collect_etf_prices(["069500", "FAIL", "252670"])
 
-    assert count == 2  # FAIL 제외
+    assert result.collected == 2  # FAIL 제외
+    assert result.failed == 1
+    assert result.total_target == 3
 
 
 @pytest.mark.asyncio
 async def test_collect_etf_empty_list():
-    """빈 리스트 시 0 반환."""
+    """빈 리스트 시 collected=0 반환."""
     mock_rest = MagicMock()
     mock_db = AsyncMock()
 
     collector = KISCollector(mock_rest, mock_db)
-    count = await collector.collect_etf_prices([])
+    result = await collector.collect_etf_prices([])
 
-    assert count == 0
+    assert result.collected == 0
+    assert result.total_target == 0
     mock_db.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_collect_etf_close_price_zero():
+    """close_price가 0인 종목은 수집에서 제외하고 null_counts에 기록."""
+    mock_rest = MagicMock()
+
+    async def get_price(code):
+        if code == "ZERO":
+            return _make_stock_price(code, price=0)
+        return _make_stock_price(code)
+
+    mock_rest.get_stock_price = AsyncMock(side_effect=get_price)
+    mock_db = AsyncMock()
+
+    collector = KISCollector(mock_rest, mock_db)
+    result = await collector.collect_etf_prices(["069500", "ZERO", "252670"])
+
+    assert result.collected == 2
+    assert result.failed == 0
+    assert result.total_target == 3
+    assert result.null_counts is not None
+    assert result.null_counts["close_price_zero"] == 1

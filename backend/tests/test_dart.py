@@ -8,7 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.collector.sources.dart import DartCollector, MAX_FINANCIAL_QUERIES
+from modules.collector.sources.dart import DartCollector
+from modules.collector.models import CollectionResult
 
 
 # ---------------------------------------------------------------------------
@@ -227,7 +228,7 @@ class TestCollectFinancials:
 
     @pytest.mark.asyncio
     async def test_collect_financials_basic(self):
-        """매핑된 종목의 재무 데이터를 수집하고 저장 건수를 반환한다."""
+        """매핑된 종목의 재무 데이터를 수집하고 CollectionResult를 반환한다."""
         mock_session = self._make_mock_session([
             ("005930", "00126380"),
         ])
@@ -235,9 +236,11 @@ class TestCollectFinancials:
 
         financial_data = {"revenue": 100_000, "operating_profit": 20_000, "net_income": 15_000}
         with patch.object(collector, "fetch_financial", return_value=financial_data) as mock_fetch:
-            count = await collector.collect_financials(["005930"])
+            result = await collector.collect_financials(["005930"])
 
-        assert count == 1
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 1
+        assert result.total_target == 1
         mock_fetch.assert_called_once()
         mock_session.commit.assert_called_once()
 
@@ -249,14 +252,16 @@ class TestCollectFinancials:
         collector = DartCollector(mock_session)
 
         with patch.object(collector, "fetch_financial") as mock_fetch:
-            count = await collector.collect_financials(["069500"])  # KODEX200 ETF
+            result = await collector.collect_financials(["069500"])  # KODEX200 ETF
 
-        assert count == 0
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 0
+        assert result.skipped == 1
         mock_fetch.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_collect_financials_max_limit(self):
-        """MAX_FINANCIAL_QUERIES(30) 이상 종목은 잘라낸다."""
+    async def test_collect_financials_all_targets_processed(self):
+        """35개 종목이 모두 처리된다 (상한 없음)."""
         # 35개 종목 매핑 생성
         corp_code_rows = [(f"{i:06d}", f"{i:08d}") for i in range(35)]
         mock_session = self._make_mock_session(corp_code_rows)
@@ -265,14 +270,16 @@ class TestCollectFinancials:
         financial_data = {"revenue": 1000, "operating_profit": 200, "net_income": 100}
         with patch.object(collector, "fetch_financial", return_value=financial_data) as mock_fetch:
             stock_codes = [f"{i:06d}" for i in range(35)]
-            count = await collector.collect_financials(stock_codes)
+            result = await collector.collect_financials(stock_codes)
 
-        assert count == MAX_FINANCIAL_QUERIES
-        assert mock_fetch.call_count == MAX_FINANCIAL_QUERIES
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 35
+        assert result.total_target == 35
+        assert mock_fetch.call_count == 35
 
     @pytest.mark.asyncio
     async def test_collect_financials_skip_none_result(self):
-        """fetch_financial이 None을 반환하면 해당 종목을 스킵한다."""
+        """fetch_financial이 None을 반환하면 failed로 추적한다."""
         mock_session = self._make_mock_session([
             ("005930", "00126380"),
             ("000660", "00126381"),
@@ -284,24 +291,18 @@ class TestCollectFinancials:
         with patch.object(
             collector, "fetch_financial", side_effect=[None, financial_data]
         ):
-            count = await collector.collect_financials(["005930", "000660"])
+            result = await collector.collect_financials(["005930", "000660"])
 
-        assert count == 1
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 1
+        assert result.failed == 1
 
     @pytest.mark.asyncio
     async def test_collect_financials_empty_input(self):
-        """빈 stock_codes 리스트이면 0을 반환한다."""
+        """빈 stock_codes 리스트이면 collected=0인 CollectionResult를 반환한다."""
         mock_session = AsyncMock(spec=AsyncSession)
         collector = DartCollector(mock_session)
 
-        count = await collector.collect_financials([])
-        assert count == 0
-
-
-# ---------------------------------------------------------------------------
-# Test 4: MAX_FINANCIAL_QUERIES 상수
-# ---------------------------------------------------------------------------
-
-def test_max_financial_queries_constant():
-    """MAX_FINANCIAL_QUERIES 상수가 30임을 검증한다."""
-    assert MAX_FINANCIAL_QUERIES == 30
+        result = await collector.collect_financials([])
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 0
