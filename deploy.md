@@ -5,26 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v0.8.0 (2026-04-02)
+### Hotfix: ETF 마스터 sanity check 데드락 수정 (2026-04-02)
 
-포함 스프린트: Phase 4.6 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/59
+PR: https://github.com/frogy95/stockbot/pull/60
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ✅ 자동 검증 완료 항목:
+  - pytest: 603 passed, 0 failed
+  - 코드 리뷰: Critical/High 이슈 없음
 
-#### 자동 검증
-
-- ✅ pytest 602 passed, 0 failed
-- ✅ sprint-review 코드 리뷰 완료
-
-#### 수동 검증 필요 항목
-
-- ⬜ /api/v1/health 헬스체크 확인
-- ⬜ Railway 배포 후 파이프라인 정상 동작 확인 — pipeline-status JSON에 collected_count, validation 키 포함 여부
-- ⬜ 수동 파이프라인 트리거 후 premarket 1500건+ 수집 확인 (POST /api/v1/collector/trigger/premarket)
-- ⬜ inquiry_client LIVE 환경으로 ETF 시세 수집 정상화 확인 (수집률 >= 50%)
-- ⬜ Dockerfile --reload 제거 후 Railway 프로덕션 재시작 루프 미발생 확인
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - 배포 후 ETF 마스터 수동 트리거 (POST /api/v1/collector/trigger/etf-master) → sanity check 통과 확인
+  - ETF 시세 수동 트리거 (POST /api/v1/collector/trigger/etf) → 수집률 50%+ 확인
+  - pipeline-status에서 etf_master status="success" 확인
 
 ---
 

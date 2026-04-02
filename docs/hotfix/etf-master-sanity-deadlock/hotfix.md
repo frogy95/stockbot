@@ -52,6 +52,6 @@
 ---
 
 ## PR
-- **URL:** (2단계에서 업데이트 예정)
+- **URL:** https://github.com/frogy95/stockbot/pull/60
 - **대상:** main
 - **역머지:** ✅ develop에 역머지 완료

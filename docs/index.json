@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T14:00:00+09:00",
+  "lastUpdated": "2026-04-02T11:31:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1436,6 +1436,29 @@
           "hash": "1956e55",
           "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-etf-master-sanity-deadlock",
+      "name": "ETF 마스터 sanity check 데드락 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/etf-master-sanity-deadlock/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/60",
+      "deployedAt": "2026-04-02",
+      "description": "프로덕션 DB ETF 277개(비정상) 상태에서 mst 878개 파싱 시 변동률 217%로 sanity check 실패 → fallback 반복 데드락 수정. prev_count < 500이면 복구 모드로 간주하여 ±30% 변동 비교 생략, 최소 200 + spot-check 통과 시 적재 허용.",
+      "commits": [
+        {
+          "hash": "5d1837c",
+          "message": "fix(collector): ETF 마스터 sanity check 데드락 복구 모드 추가",
+          "date": "2026-04-02"
+        },
+        {
+          "hash": "7966f66",
+          "message": "docs(hotfix): etf-master-sanity-deadlock 핫픽스 문서 추가",
+          "date": "2026-04-02"
         }
       ]
     }
