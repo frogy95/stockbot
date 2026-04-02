@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.collector.sources.naver import NaverCollector
+from modules.collector.models import CollectionResult
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +170,7 @@ class TestCollectSentiments:
 
     @pytest.mark.asyncio
     async def test_returns_collected_count(self):
-        """수집 건수를 정확히 반환한다."""
+        """수집 결과를 CollectionResult로 반환한다."""
         mock_session = AsyncMock(spec=AsyncSession)
         collector = NaverCollector(mock_session)
 
@@ -198,9 +199,11 @@ class TestCollectSentiments:
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            count = await collector.collect_sentiments(stock_info)
+            result = await collector.collect_sentiments(stock_info)
 
-        assert count == 2
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 1  # 종목 수 기준
+        assert result.total_target == 1
         assert mock_session.add.call_count == 2
         mock_session.commit.assert_called_once()
 
@@ -234,16 +237,17 @@ class TestCollectSentiments:
             mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
 
             with patch("modules.collector.sources.naver.asyncio.sleep", new_callable=AsyncMock):
-                count = await collector.collect_sentiments(stock_info)
+                result = await collector.collect_sentiments(stock_info)
 
-        # 종목 2개 × 뉴스 1건 = 2건
-        assert count == 2
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 2  # 두 종목 모두 뉴스 있음
+        assert result.total_target == 2
         # 종목마다 commit 1회 = 총 2회
         assert mock_session.commit.call_count == 2
 
     @pytest.mark.asyncio
     async def test_news_api_error_skips_stock(self):
-        """뉴스 API 에러 시 해당 종목 스킵, 0 반환."""
+        """뉴스 API 에러 시 해당 종목 스킵, skipped=1."""
         mock_session = AsyncMock(spec=AsyncSession)
         collector = NaverCollector(mock_session)
 
@@ -255,7 +259,10 @@ class TestCollectSentiments:
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            count = await collector.collect_sentiments(stock_info)
+            result = await collector.collect_sentiments(stock_info)
 
-        assert count == 0
+        assert isinstance(result, CollectionResult)
+        assert result.collected == 0
+        assert result.skipped == 1
+        assert result.total_target == 1
         mock_session.add.assert_not_called()
