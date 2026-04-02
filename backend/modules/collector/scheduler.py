@@ -19,6 +19,8 @@ from core.models.stock import Stock
 
 from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
+from modules.collector.models import CollectionResult, ValidationResult
+from modules.collector.validator import CollectionValidator
 from modules.collector.sources.data_go_kr import DataGoKrCollector
 from modules.collector.sources.kis_collector import KISCollector
 from modules.collector.sources.kis_master import KISMasterCollector
@@ -69,15 +71,18 @@ class CollectorScheduler:
         redis: RedisClient,
         primary_screener=None,
         realtime_screener=None,
+        inquiry_client: KISRestClient | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._rest_client = rest_client
+        self._inquiry_client = inquiry_client
         self._ws_manager = ws_manager
         self._trade_strength = trade_strength
         self._ws_client = ws_client
         self._redis = redis
         self._primary_screener = primary_screener
         self._realtime_screener = realtime_screener
+        self._validator = CollectionValidator()
         self._scheduler = AsyncIOScheduler()
         self._running = False
         self._last_premarket: datetime | None = None
@@ -106,11 +111,15 @@ class CollectorScheduler:
 
     @staticmethod
     def _are_core_steps_healthy(pipeline_status: dict) -> bool:
-        """CORE_STEPS가 모두 'success'인지 확인한다."""
-        return all(
-            pipeline_status.get(s, {}).get("status") == "success"
-            for s in CORE_STEPS
-        )
+        """CORE_STEPS가 모두 'success'이고 validation(있으면) passed인지 확인한다."""
+        for s in CORE_STEPS:
+            step_data = pipeline_status.get(s, {})
+            if step_data.get("status") != "success":
+                return False
+            v = step_data.get("validation")
+            if v is not None and not v.get("passed", True):
+                return False
+        return True
 
     async def _get_pipeline_status(self) -> dict:
         """Redis에서 pipeline_status JSON을 읽어 dict로 반환. 없으면 빈 dict."""
@@ -123,7 +132,12 @@ class CollectorScheduler:
             return {}
 
     async def _update_step_status(
-        self, step: str, status: str, error: str | None = None
+        self,
+        step: str,
+        status: str,
+        error: str | None = None,
+        collected_count: int | None = None,
+        validation: ValidationResult | None = None,
     ) -> None:
         """pipeline_status의 해당 step을 업데이트하고 Redis에 저장한다.
 
@@ -133,6 +147,16 @@ class CollectorScheduler:
         entry: dict = {"status": status, "timestamp": datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).isoformat()}
         if error is not None:
             entry["error"] = error
+        if collected_count is not None:
+            entry["collected_count"] = collected_count
+        if validation is not None:
+            entry["validation"] = {
+                "passed": validation.passed,
+                "failure_type": validation.failure_type,
+                "failure_reason": validation.failure_reason,
+                "details": validation.details,
+                "severity": validation.severity,
+            }
         pipeline_status[step] = entry
         await self._redis.set(PIPELINE_STATUS_KEY, json.dumps(pipeline_status), ttl=STATE_TTL)
         self._pipeline_status = pipeline_status
@@ -367,13 +391,13 @@ class CollectorScheduler:
 
     async def trigger_dart(self) -> dict:
         """수동 DART 재무 수집 트리거."""
-        count = await self._dart_collect()
-        return {"financials_collected": count}
+        collected = await self._dart_collect()
+        return {"financials_collected": collected}
 
     async def trigger_sentiment(self) -> dict:
         """수동 네이버 센티멘트 수집 트리거."""
-        count = await self._sentiment_collect()
-        return {"sentiments_collected": count}
+        collected = await self._sentiment_collect()
+        return {"sentiments_collected": collected}
 
     async def trigger_market_open(self) -> dict:
         """수동 market_open 트리거 (WS 연결 + 2차 스크리닝 활성화)."""
@@ -439,12 +463,17 @@ class CollectorScheduler:
         try:
             async with self._session_factory() as db_session:
                 collector = DataGoKrCollector(db_session)
-                count = await collector.collect_all()
+                result = await collector.collect_all()
+            validation = self._validator.validate_premarket(result)
             self._last_premarket = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("premarket", self._last_premarket)
-            await self._update_step_status("premarket", "success")
-            logger.info("장전 수집 완료: %d종목", count)
-            return count
+            if validation.passed:
+                await self._update_step_status("premarket", "success", collected_count=result.collected, validation=validation)
+            else:
+                await self._update_step_status("premarket", "failed", error=validation.failure_reason, collected_count=result.collected, validation=validation)
+                await self._send_failure_alert("premarket", validation.failure_reason or "유효성 검증 실패")
+            logger.info("장전 수집 완료: %d종목, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+            return result.collected
         except Exception as e:
             logger.exception("장전 수집 실패")
             await self._update_step_status("premarket", "failed", error=str(e))
@@ -459,14 +488,20 @@ class CollectorScheduler:
             return 0
         logger.info("ETF 수집 시작")
         try:
+            client = self._inquiry_client or self._rest_client
             async with self._session_factory() as db_session:
-                collector = KISCollector(self._rest_client, db_session)
-                count = await collector.collect_etf_prices()
+                collector = KISCollector(client, db_session)
+                result = await collector.collect_etf_prices()
+            validation = self._validator.validate_etf_collect(result)
             self._last_etf = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("etf", self._last_etf)
-            await self._update_step_status("etf", "success")
-            logger.info("ETF 수집 완료: %d종목", count)
-            return count
+            if validation.passed:
+                await self._update_step_status("etf", "success", collected_count=result.collected, validation=validation)
+            else:
+                await self._update_step_status("etf", "failed", error=validation.failure_reason, collected_count=result.collected, validation=validation)
+                await self._send_failure_alert("etf", validation.failure_reason or "ETF 유효성 검증 실패")
+            logger.info("ETF 수집 완료: %d/%d종목", result.collected, result.total_target)
+            return result.collected
         except Exception as e:
             logger.exception("ETF 수집 실패")
             await self._update_step_status("etf", "failed", error=str(e))
@@ -483,9 +518,15 @@ class CollectorScheduler:
             if result["source"] == "seed":
                 pass  # seed 폴백은 _etf_master_collect 내부가 아닌 최초 설치 스크립트에서 처리
 
+            collection_result = CollectionResult(collected=result["etf_count"] + result["etn_count"])
+            validation = self._validator.validate_etf_master(collection_result, sanity_passed=result.get("sanity_passed", False))
             self._last_etf_master = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("etf_master", self._last_etf_master)
-            await self._update_step_status("etf_master", "success")
+            if validation.passed:
+                await self._update_step_status("etf_master", "success", collected_count=collection_result.collected, validation=validation)
+            else:
+                await self._update_step_status("etf_master", "failed", error=validation.failure_reason, collected_count=collection_result.collected, validation=validation)
+                await self._send_failure_alert("etf_master", validation.failure_reason or "ETF 마스터 유효성 검증 실패")
             logger.info(
                 "ETF 마스터 수집 완료: ETF=%d, ETN=%d, source=%s",
                 result["etf_count"], result["etn_count"], result["source"],
@@ -569,9 +610,11 @@ class CollectorScheduler:
                 )
 
             passed = [r for r in results if r.get("is_passed")]
+            collection_result = CollectionResult(collected=len(passed))
+            validation = self._validator.validate_primary_screen(collection_result)
             self._last_primary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("primary_screen", self._last_primary_screen)
-            await self._update_step_status("primary_screen", "success")
+            await self._update_step_status("primary_screen", "success", collected_count=len(passed), validation=validation)
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
         except Exception as e:
@@ -620,17 +663,21 @@ class CollectorScheduler:
 
                 if not stock_codes:
                     logger.info("DART 재무 수집 대상 없음")
-                    await self._update_step_status("dart", "success")
+                    result = CollectionResult(collected=0, total_target=0)
+                    validation = self._validator.validate_dart(result)
+                    await self._update_step_status("dart", "success", collected_count=0, validation=validation)
                     return 0
 
                 collector = DartCollector(db_session)
-                count = await collector.collect_financials(stock_codes)
+                result = await collector.collect_financials(stock_codes)
 
+            validation = self._validator.validate_dart(result)
             self._last_dart = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("dart", self._last_dart)
-            await self._update_step_status("dart", "success")
-            logger.info("DART 재무 수집 완료: %d건", count)
-            return count
+            status = "success" if validation.passed else "failed"
+            await self._update_step_status("dart", status, collected_count=result.collected, validation=validation, error=validation.failure_reason if not validation.passed else None)
+            logger.info("DART 재무 수집 완료: %d건, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+            return result.collected
         except Exception as e:
             logger.exception("DART 재무 수집 실패")
             await self._update_step_status("dart", "failed", error=str(e))
@@ -651,17 +698,21 @@ class CollectorScheduler:
 
                 if not stock_info:
                     logger.info("네이버 센티멘트 수집 대상 없음")
-                    await self._update_step_status("sentiment", "success")
+                    result = CollectionResult(collected=0, total_target=0)
+                    validation = self._validator.validate_sentiment(result)
+                    await self._update_step_status("sentiment", "success", collected_count=0, validation=validation)
                     return 0
 
                 collector = NaverCollector(db_session)
-                count = await collector.collect_sentiments(stock_info)
+                result = await collector.collect_sentiments(stock_info)
 
+            validation = self._validator.validate_sentiment(result)
             self._last_sentiment = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("sentiment", self._last_sentiment)
-            await self._update_step_status("sentiment", "success")
-            logger.info("네이버 센티멘트 수집 완료: %d건", count)
-            return count
+            status = "success" if validation.passed else "failed"
+            await self._update_step_status("sentiment", status, collected_count=result.collected, validation=validation, error=validation.failure_reason if not validation.passed else None)
+            logger.info("네이버 센티멘트 수집 완료: %d건, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+            return result.collected
         except Exception as e:
             logger.exception("네이버 센티멘트 수집 실패")
             await self._update_step_status("sentiment", "failed", error=str(e))
