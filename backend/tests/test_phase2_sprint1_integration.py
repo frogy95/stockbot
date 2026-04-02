@@ -177,4 +177,4 @@ async def test_etf_collect_pipeline():
     result = await collector.collect_etf_prices(["069500", "252670"])
 
     assert result.collected == 2
-    mock_db.commit.assert_called_once()
+    assert mock_db.commit.call_count == 2  # 아이템당 개별 커밋
