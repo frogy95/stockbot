@@ -1242,7 +1242,93 @@
       "title": "데이터 수집 파이프라인 근본 수리",
       "status": "planned",
       "phaseDoc": "docs/phase/phase4.6/phase4.6.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "근본 수리 + KIS 도메인 분리 + 유효성 검증",
+          "status": "planned",
+          "branch": "phase4.6-sprint1",
+          "sprintDoc": "docs/phase/phase4.6/sprint1/sprint1.md",
+          "progress": {
+            "total": 8,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "Dockerfile --reload 제거 + docker-compose 개발 override",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-1-dockerfile---reload-제거--docker-compose-개발-override",
+              "testPlan": "grep --reload Dockerfile 결과 없음 + docker compose config override 확인",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "KIS 조회/매매 도메인 분리",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-2-kis-조회매매-도메인-분리",
+              "testPlan": "get_inquiry_environment() LIVE 반환 + test_kis_config.py PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "CollectionResult + ValidationResult + CollectionValidator 도입",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-3-collectionresult--validationresult--collectionvalidator-도입",
+              "testPlan": "test_collection_validator.py 11개+ 시나리오 전체 PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "data_go_kr 수집기 개선",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-4-data_go_kr-수집기-개선",
+              "testPlan": "CollectionResult 반환 + 날짜 폴백 + updated_at + test_data_go_kr.py PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "kis_collector 수집기 개선",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-5-kis_collector-수집기-개선",
+              "testPlan": "CollectionResult 반환 + 실패 추적 + test_kis_collector.py PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "dart + naver 수집기 개선",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-6-dart--naver-수집기-개선",
+              "testPlan": "CollectionResult 반환 + MAX_FINANCIAL_QUERIES 제거 + test_dart/naver PASS",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "scheduler.py 통합",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-7-schedulerpy-통합",
+              "testPlan": "inquiry_client 전달 + CollectionValidator 호출 + pipeline_healthy 강화",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "통합 테스트 + 기존 테스트 수정",
+              "path": "docs/phase/phase4.6/sprint1/sprint1.md#task-8-통합-테스트--기존-테스트-수정",
+              "testPlan": "pytest 전체 PASS + test_phase4_6_integration.py 6개 시나리오",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
