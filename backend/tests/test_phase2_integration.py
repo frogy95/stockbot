@@ -106,8 +106,8 @@ class TestDartFinancialPipeline:
         mock_db.execute = AsyncMock(return_value=mock_result)
 
         collector = DartCollector(mock_db)
-        count = await collector.collect_financials(["005930", "000660"])
-        assert count == 0
+        result = await collector.collect_financials(["005930", "000660"])
+        assert result.collected == 0
 
     @pytest.mark.asyncio
     async def test_collect_financials_skips_etf(self):
@@ -125,9 +125,9 @@ class TestDartFinancialPipeline:
         with patch.object(DartCollector, "fetch_financial", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = None  # API 응답 없음
             collector = DartCollector(mock_db)
-            count = await collector.collect_financials(["005930", "069500"])  # 069500 = KODEX200 ETF
-        # 005930만 시도, 결과 없어서 count=0
-        assert count == 0
+            result = await collector.collect_financials(["005930", "069500"])  # 069500 = KODEX200 ETF
+        # 005930만 시도, 결과 없어서 collected=0
+        assert result.collected == 0
         assert mock_fetch.call_count == 1  # ETF는 매핑 없어서 호출 안 됨
 
     @pytest.mark.asyncio
@@ -152,8 +152,8 @@ class TestNaverSentimentPipeline:
         """빈 입력이면 0을 반환한다."""
         mock_db = AsyncMock()
         collector = NaverCollector(mock_db)
-        count = await collector.collect_sentiments([])
-        assert count == 0
+        result = await collector.collect_sentiments([])
+        assert result.collected == 0
 
     @pytest.mark.asyncio
     async def test_collect_sentiments_with_mocked_api(self):
@@ -167,11 +167,11 @@ class TestNaverSentimentPipeline:
         with patch.object(NaverCollector, "search_news", new_callable=AsyncMock) as mock_search:
             mock_search.return_value = news_items
             collector = NaverCollector(mock_db)
-            count = await collector.collect_sentiments([
+            result = await collector.collect_sentiments([
                 {"stock_code": "005930", "stock_name": "삼성전자"}
             ])
 
-        assert count == 2  # 뉴스 2건
+        assert result.collected == 1  # 종목 수 기준 (뉴스가 1건 이상인 종목)
         assert mock_db.add.call_count == 2
         mock_db.commit.assert_called_once()
 

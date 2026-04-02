@@ -61,9 +61,9 @@ async def test_premarket_collect_pipeline():
 
         from modules.collector.sources.data_go_kr import DataGoKrCollector
         collector = DataGoKrCollector(mock_db)
-        count = await collector.collect_all(retry_delay=0)
+        result = await collector.collect_all(retry_delay=0)
 
-    assert count == 1
+    assert result.collected == 1
     # stocks upsert + market_data insert = 2 execute calls
     assert mock_db.execute.call_count == 2
     mock_db.commit.assert_called_once()
@@ -174,7 +174,7 @@ async def test_etf_collect_pipeline():
     mock_db = AsyncMock()
 
     collector = KISCollector(mock_rest, mock_db)
-    count = await collector.collect_etf_prices(["069500", "252670"])
+    result = await collector.collect_etf_prices(["069500", "252670"])
 
-    assert count == 2
+    assert result.collected == 2
     mock_db.commit.assert_called_once()

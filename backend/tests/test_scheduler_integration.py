@@ -10,7 +10,21 @@ from modules.collector.scheduler import (
     PIPELINE_HEALTHY_KEY,
     CORE_STEPS,
 )
+from modules.collector.models import CollectionResult
+from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
+
+
+def _premarket_result(collected: int = 2800) -> CollectionResult:
+    return CollectionResult(
+        collected=collected,
+        data_date=DataGoKrCollector._latest_trading_date(),
+        null_counts={"close_price": 0, "volume": 0},
+    )
+
+
+def _etf_result(collected: int = 700, total_target: int = 700) -> CollectionResult:
+    return CollectionResult(collected=collected, total_target=total_target)
 
 
 def _make_scheduler(fake_redis: FakeRedis | None = None):
@@ -64,11 +78,11 @@ async def test_full_pipeline_success_flow():
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=2800)
+        MockData.return_value.collect_all = AsyncMock(return_value=_premarket_result())
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
-        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=700)
+        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=_etf_result())
 
         # 전체 파이프라인 실행
         await scheduler._premarket_collect()
@@ -105,7 +119,7 @@ async def test_premarket_failure_cascades():
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
-        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=700)
+        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=_etf_result())
 
         await scheduler._premarket_collect()      # 실패
         await scheduler._etf_master_collect()     # 성공 (독립)
@@ -146,11 +160,11 @@ async def test_manual_pipeline_recovers():
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=2800)
+        MockData.return_value.collect_all = AsyncMock(return_value=_premarket_result())
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
-        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=700)
+        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=_etf_result())
 
         result = await scheduler.run_premarket_pipeline()
 
