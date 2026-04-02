@@ -39,7 +39,7 @@ async def test_collect_etf_prices():
     assert result.total_target == 2
     assert result.failed == 0
     assert mock_rest.get_stock_price.call_count == 2
-    mock_db.commit.assert_called_once()
+    assert mock_db.commit.call_count == 2  # 아이템당 개별 커밋
 
 
 @pytest.mark.asyncio

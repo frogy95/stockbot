@@ -38,14 +38,12 @@ class KISCollector:
                     logger.warning("ETF 종가 0 감지: %s", code)
                     continue
                 await self._save_etf_price(code, price)
+                await self._db.commit()
                 collected += 1
             except Exception:
                 await self._db.rollback()
                 failed += 1
                 logger.exception("ETF 시세 수집 실패: %s", code)
-
-        if collected > 0:
-            await self._db.commit()
 
         logger.info("ETF 수집 완료: %d/%d (실패: %d)", collected, len(etf_codes), failed)
         return CollectionResult(
