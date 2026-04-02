@@ -453,6 +453,7 @@ Sprint 2에서도 프론트엔드 변경 없음.
 | 11  | **유효성 검증 임계값 운영 보정** (rev.3 추가)    | ⚠️ 1주일 운영 후   | 초기 임계값(1,500건, 50%, 5%)은 보수적. 1주일 운영 데이터로 보정 필요                           |
 | 12  | **공공데이터포털 ETF/ETN API** (rev.3 추가) | 정보 미확인        | GetStockSecuritiesInfoService는 주식만. 별도 ETF API 존재 여부 Phase 5에서 확인         |
 | 13  | **trading_calendar 2027년 미대응** (Sprint 2 리뷰) | ⚠️ Phase 5 범위 | 2026년 공휴일만 하드코딩. 2027년 이후 날짜 유입 시 공휴일 미인식. Sprint 5에서 개선 권장 (Medium, 코드 리뷰 식별) |
+| 14  | **primary_screen 0건 성공 반환** (수동 검증 중 발견, 2026-04-02) | ⚠️ Phase 5 범위 | 스크리닝 결과가 0건이어도 step status=success 반환. pipeline_healthy에 미반영되어 이상 감지 불가. Phase 5에서 임계값 기반 실패 판단 추가 권장 |
 
 
 ---
