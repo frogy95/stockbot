@@ -208,6 +208,62 @@ async def test_trigger_etf():
 
 
 @pytest.mark.asyncio
+async def test_premarket_calls_db_validation():
+    """장전 수집 성공 후 DB 후검증이 호출되는지 확인."""
+    scheduler = _make_scheduler()
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(
+            collected=2800, data_date=DataGoKrCollector._latest_trading_date(),
+            null_counts={"close_price": 0, "volume": 0},
+        ))
+        MockCollector.return_value = mock_instance
+
+        with patch.object(scheduler._validator, "validate_premarket_db", new_callable=AsyncMock) as mock_db_val:
+            from modules.collector.models import ValidationResult
+            mock_db_val.return_value = ValidationResult(passed=True, severity="info")
+            await scheduler._premarket_collect()
+            mock_db_val.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_etf_calls_db_validation():
+    """ETF 수집 성공 후 DB 후검증이 호출되는지 확인."""
+    fake_redis = FakeRedis()
+    await fake_redis.set(PIPELINE_STATUS_KEY, json.dumps({"etf_master": {"status": "success"}}))
+
+    mock_db_session = AsyncMock()
+    mock_session_factory = MagicMock()
+    mock_session_ctx = AsyncMock()
+    mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_db_session)
+    mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
+    mock_session_factory.return_value = mock_session_ctx
+
+    scheduler = CollectorScheduler(
+        session_factory=mock_session_factory,
+        rest_client=MagicMock(),
+        ws_manager=MagicMock(count=0),
+        trade_strength=MagicMock(),
+        ws_client=MagicMock(),
+        redis=fake_redis,
+    )
+
+    with patch("modules.collector.scheduler.KISCollector") as MockCollector:
+        mock_instance = AsyncMock()
+        mock_instance.collect_etf_prices = AsyncMock(
+            return_value=CollectionResult(collected=20, total_target=20)
+        )
+        MockCollector.return_value = mock_instance
+
+        with patch.object(scheduler._validator, "validate_etf_db", new_callable=AsyncMock) as mock_db_val:
+            from modules.collector.models import ValidationResult
+            mock_db_val.return_value = ValidationResult(passed=True, severity="info")
+            await scheduler._etf_collect()
+            mock_db_val.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_check_and_recover_market_open_during_market_hours():
     """장중(09:00~15:30) 재시작 시 _market_open 자동 호출."""
     scheduler = _make_scheduler()

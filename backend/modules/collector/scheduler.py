@@ -164,6 +164,24 @@ class CollectorScheduler:
         if status == "success" and self._are_core_steps_healthy(pipeline_status):
             await self._redis.set(PIPELINE_HEALTHY_KEY, "true", ttl=STATE_TTL)
 
+    async def _run_db_validation(self, step: str, validator_method: str) -> None:
+        """DB 후검증 실행 → 결과를 pipeline_status에 기록."""
+        try:
+            async with self._session_factory() as db_session:
+                db_validation = await getattr(self._validator, validator_method)(db_session)
+            if not db_validation.passed:
+                logger.warning("DB 후검증 실패: %s", db_validation.failure_reason)
+            step_data = self._pipeline_status.get(step, {})
+            step_data["db_validation"] = {
+                "passed": db_validation.passed,
+                "failure_reason": db_validation.failure_reason,
+                "details": db_validation.details,
+            }
+            self._pipeline_status[step] = step_data
+            await self._redis.set(PIPELINE_STATUS_KEY, json.dumps(self._pipeline_status), ttl=STATE_TTL)
+        except Exception:
+            logger.debug("%s DB 후검증 실행 실패", step, exc_info=True)
+
     async def _check_dependency(self, step: str, pipeline_status: dict | None = None) -> bool:
         """DEPENDENCY_MAP에서 선행 단계를 확인, 모든 선행이 'success'이면 True.
 
@@ -449,7 +467,7 @@ class CollectorScheduler:
 
     async def _premarket_collect(self) -> int:
         """08:00 공공데이터포털 전 종목 수집. 매 실행마다 독립 DB 세션 사용."""
-        logger.info("장전 수집 시작")
+        logger.info("수집 시작: step=premarket")
         # 매일 08:00 시작 시 파이프라인 상태 전체 초기화
         await asyncio.gather(
             self._redis.set(PIPELINE_HEALTHY_KEY, "false", ttl=STATE_TTL),
@@ -472,10 +490,16 @@ class CollectorScheduler:
             else:
                 await self._update_step_status("premarket", "failed", error=validation.failure_reason, collected_count=result.collected, validation=validation)
                 await self._send_failure_alert("premarket", validation.failure_reason or "유효성 검증 실패")
-            logger.info("장전 수집 완료: %d종목, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+                logger.error("수집 실패: step=premarket reason=%s", validation.failure_reason)
+            logger.info(
+                "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
+                result.collected, result.failed, result.total_target,
+                "PASS" if validation.passed else "FAIL",
+            )
+            await self._run_db_validation("premarket", "validate_premarket_db")
             return result.collected
         except Exception as e:
-            logger.exception("장전 수집 실패")
+            logger.exception("수집 실패: step=premarket reason=%s", e)
             await self._update_step_status("premarket", "failed", error=str(e))
             await self._send_failure_alert("premarket", str(e))
             return 0
@@ -486,12 +510,13 @@ class CollectorScheduler:
             logger.warning("ETF 수집 스킵: etf_master 선행 실패")
             await self._update_step_status("etf", "skipped")
             return 0
-        logger.info("ETF 수집 시작")
+        logger.info("수집 시작: step=etf")
         try:
             client = self._inquiry_client or self._rest_client
             async with self._session_factory() as db_session:
                 collector = KISCollector(client, db_session)
                 result = await collector.collect_etf_prices()
+            logger.info("ETF 수집 대상: KODEX %d종목 (전체 ETF 대비)", result.total_target)
             validation = self._validator.validate_etf_collect(result)
             self._last_etf = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("etf", self._last_etf)
@@ -500,10 +525,16 @@ class CollectorScheduler:
             else:
                 await self._update_step_status("etf", "failed", error=validation.failure_reason, collected_count=result.collected, validation=validation)
                 await self._send_failure_alert("etf", validation.failure_reason or "ETF 유효성 검증 실패")
-            logger.info("ETF 수집 완료: %d/%d종목", result.collected, result.total_target)
+                logger.error("수집 실패: step=etf reason=%s", validation.failure_reason)
+            logger.info(
+                "수집 완료: step=etf collected=%d failed=%d total=%d validation=%s",
+                result.collected, result.failed, result.total_target,
+                "PASS" if validation.passed else "FAIL",
+            )
+            await self._run_db_validation("etf", "validate_etf_db")
             return result.collected
         except Exception as e:
-            logger.exception("ETF 수집 실패")
+            logger.exception("수집 실패: step=etf reason=%s", e)
             await self._update_step_status("etf", "failed", error=str(e))
             return 0
 
@@ -654,7 +685,7 @@ class CollectorScheduler:
             logger.warning("DART 수집 스킵: primary_screen 선행 실패")
             await self._update_step_status("dart", "skipped")
             return 0
-        logger.info("DART 재무 수집 시작")
+        logger.info("수집 시작: step=dart")
         try:
             from modules.collector.sources.dart import DartCollector
 
@@ -676,10 +707,16 @@ class CollectorScheduler:
             await self._save_last_timestamp("dart", self._last_dart)
             status = "success" if validation.passed else "failed"
             await self._update_step_status("dart", status, collected_count=result.collected, validation=validation, error=validation.failure_reason if not validation.passed else None)
-            logger.info("DART 재무 수집 완료: %d건, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+            if not validation.passed:
+                logger.error("수집 실패: step=dart reason=%s", validation.failure_reason)
+            logger.info(
+                "수집 완료: step=dart collected=%d failed=%d total=%d validation=%s",
+                result.collected, result.failed, result.total_target,
+                "PASS" if validation.passed else "FAIL",
+            )
             return result.collected
         except Exception as e:
-            logger.exception("DART 재무 수집 실패")
+            logger.exception("수집 실패: step=dart reason=%s", e)
             await self._update_step_status("dart", "failed", error=str(e))
             return 0
 
@@ -689,7 +726,7 @@ class CollectorScheduler:
             logger.warning("센티멘트 수집 스킵: primary_screen 선행 실패")
             await self._update_step_status("sentiment", "skipped")
             return 0
-        logger.info("네이버 센티멘트 수집 시작")
+        logger.info("수집 시작: step=sentiment")
         try:
             from modules.collector.sources.naver import NaverCollector
 
@@ -711,10 +748,16 @@ class CollectorScheduler:
             await self._save_last_timestamp("sentiment", self._last_sentiment)
             status = "success" if validation.passed else "failed"
             await self._update_step_status("sentiment", status, collected_count=result.collected, validation=validation, error=validation.failure_reason if not validation.passed else None)
-            logger.info("네이버 센티멘트 수집 완료: %d건, 검증=%s", result.collected, "통과" if validation.passed else "실패")
+            if not validation.passed:
+                logger.error("수집 실패: step=sentiment reason=%s", validation.failure_reason)
+            logger.info(
+                "수집 완료: step=sentiment collected=%d failed=%d total=%d validation=%s",
+                result.collected, result.failed, result.total_target,
+                "PASS" if validation.passed else "FAIL",
+            )
             return result.collected
         except Exception as e:
-            logger.exception("네이버 센티멘트 수집 실패")
+            logger.exception("수집 실패: step=sentiment reason=%s", e)
             await self._update_step_status("sentiment", "failed", error=str(e))
             return 0
 
