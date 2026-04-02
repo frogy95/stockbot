@@ -62,6 +62,6 @@ SQLAlchemy asyncpg 드라이버는 트랜잭션 오류 후 rollback 없이 추�
 
 ## PR
 
-- **URL:** 생성 후 업데이트
+- **URL:** https://github.com/frogy95/stockbot/pull/64
 - **대상:** main
-- **역머지:** ✅ develop에 역머지 완료
+- **역머지:** ✅ develop에 역머지 완료 (PR #65)
