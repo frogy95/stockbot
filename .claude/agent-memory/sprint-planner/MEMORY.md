@@ -25,12 +25,12 @@
 
 - Phase 4.5 Sprint 1 — 백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인), ✅ 완료 (2026-04-01) / PR: https://github.com/frogy95/stockbot/pull/55
 
-- [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, 🔄 계획 수립 완료 (2026-04-02)
+- [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/58
+- Phase 4.6 Sprint 2 — 데이터 품질 + 통합 검증, 🔄 계획 수립 완료 (2026-04-02)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.6 Sprint 1 — 계획 수립 완료, 구현 대기
-- Phase 4.6 Sprint 2 — Sprint 1 완료 후 착수 (데이터 품질 + 통합 검증)
+- Phase 4.6 Sprint 2 — 계획 수립 완료, 구현 대기
 - Phase 5 Sprint 1 — Phase 4.6 완료 후 착수 가능
 
 ## 핵심 주의사항
@@ -101,3 +101,9 @@
 - Phase 4.6 Sprint 1: pg_insert upsert에서 ORM onupdate=func.now() 미작동 -> set_에 명시적 func.now() 추가 필요 (data_go_kr + kis_collector)
 - Phase 4.6 Sprint 1: _make_scheduler()에 inquiry_client 파라미터 추가 필요 (기존 테스트 전체 수정 대상)
 - Phase 4.6 Sprint 1: scheduler._update_step_status 시그니처 변경 (collected_count, validation 추가) -> 기존 호출부 전체 수정
+- Phase 4.6 Sprint 2: trading_calendar.py 신규 — 2026년 한국거래소 휴장일 하드코딩 (frozenset), 6/3 대통령선거일 포함
+- Phase 4.6 Sprint 2: validator._is_within_t2 기존 구현은 주말만 건너뜀 — prev_trading_day()로 대체하여 공휴일 반영
+- Phase 4.6 Sprint 2: data_go_kr._get_trading_dates()가 자체 주말 건너뛰기 -> trading_calendar.get_trading_dates_from()으로 위임
+- Phase 4.6 Sprint 2: validate_premarket_db는 async 메서드 (DB 세션 필요) — scheduler에서 db_session 블록 안에서 호출
+- Phase 4.6 Sprint 2: DB 스키마 변경 없음, Alembic 마이그레이션 불필요
+- Phase 4.6 Sprint 2: _market_open에 신선도 검증 추가하되 WS 연결은 차단 안 함 (warning만)
