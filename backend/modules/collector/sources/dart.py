@@ -14,12 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import settings
 from core.models.corp_code import CorpCode
 from core.models.financial_data import FinancialData
+from modules.collector.models import CollectionResult
 
 logger = logging.getLogger(__name__)
 
 CORP_CODE_URL = "https://opendart.fss.or.kr/api/corpCode.xml"
 FINANCIAL_URL = "https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json"
-MAX_FINANCIAL_QUERIES = 30
 
 # 분기별 보고서 코드
 REPRT_CODE = {1: "11013", 2: "11012", 3: "11014", 4: "11011"}
@@ -172,16 +172,16 @@ class DartCollector:
 
         return result
 
-    async def collect_financials(self, stock_codes: list[str]) -> int:
+    async def collect_financials(self, stock_codes: list[str]) -> CollectionResult:
         """종목코드 리스트를 받아 재무 데이터를 수집하고 DB에 저장한다.
 
         - DB에서 stock_code → corp_code 매핑 조회
         - ETF/비상장(매핑 없음) 종목은 스킵
-        - 최대 MAX_FINANCIAL_QUERIES건 처리
         - 현재 연도 기준 직전 연도 연간 보고서(11011) 수집
         """
+        total_target = len(stock_codes)
         if not stock_codes:
-            return 0
+            return CollectionResult(collected=0, total_target=0)
 
         # stock_code → corp_code 매핑 조회
         result = await self._db.execute(
@@ -191,8 +191,9 @@ class DartCollector:
         )
         mapping: dict[str, str] = {row.stock_code: row.corp_code for row in result.fetchall()}
 
-        # 매핑된 종목만, 최대 MAX_FINANCIAL_QUERIES건
-        target_codes = [sc for sc in stock_codes if sc in mapping][:MAX_FINANCIAL_QUERIES]
+        # 매핑된 종목만
+        target_codes = [sc for sc in stock_codes if sc in mapping]
+        skipped = total_target - len(target_codes)
 
         # 직전 연도 연간 보고서
         target_year = str(datetime.now().year - 1)
@@ -201,11 +202,13 @@ class DartCollector:
         fiscal_quarter_int = 4
 
         collected = 0
+        failed = 0
         for stock_code in target_codes:
             corp_code = mapping[stock_code]
             try:
                 financial = await self.fetch_financial(corp_code, target_year, target_reprt)
                 if financial is None:
+                    failed += 1
                     continue
 
                 stmt = pg_insert(FinancialData).values(
@@ -229,9 +232,10 @@ class DartCollector:
                 collected += 1
             except Exception:
                 logger.exception("재무 데이터 저장 실패: stock_code=%s", stock_code)
+                failed += 1
 
         if collected:
             await self._db.commit()
 
-        logger.info("DART 재무 수집 완료: %d건", collected)
-        return collected
+        logger.info("DART 재무 수집 완료: %d건 (실패: %d, 스킵: %d)", collected, failed, skipped)
+        return CollectionResult(collected=collected, failed=failed, skipped=skipped, total_target=total_target)

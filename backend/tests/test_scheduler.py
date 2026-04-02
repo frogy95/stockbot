@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
 from modules.collector.scheduler import CollectorScheduler, PIPELINE_STATUS_KEY
+from modules.collector.models import CollectionResult
+from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
@@ -87,7 +89,7 @@ async def test_premarket_job():
 
     with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=2800)
+        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockCollector.return_value = mock_instance
 
         count = await scheduler._premarket_collect()
@@ -125,7 +127,7 @@ async def test_etf_job():
 
     with patch("modules.collector.scheduler.KISCollector") as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_etf_prices = AsyncMock(return_value=20)
+        mock_instance.collect_etf_prices = AsyncMock(return_value=CollectionResult(collected=20, total_target=20))
         MockCollector.return_value = mock_instance
 
         count = await scheduler._etf_collect()
@@ -161,7 +163,7 @@ async def test_trigger_premarket():
 
     with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=2800)
+        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockCollector.return_value = mock_instance
 
         result = await scheduler.trigger_premarket()
@@ -197,7 +199,7 @@ async def test_trigger_etf():
 
     with patch("modules.collector.scheduler.KISCollector") as MockCollector:
         mock_instance = AsyncMock()
-        mock_instance.collect_etf_prices = AsyncMock(return_value=20)
+        mock_instance.collect_etf_prices = AsyncMock(return_value=CollectionResult(collected=20, total_target=20))
         MockCollector.return_value = mock_instance
 
         result = await scheduler.trigger_etf()

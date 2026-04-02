@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.redis import redis_client
-from core.clients.kis_config import get_current_environment
+from core.clients.kis_config import get_current_environment, get_inquiry_environment
 from core.clients.token_manager import KISTokenManager
 from core.clients.throttler import TokenBucketThrottler
 from core.clients.kis_rest import KISRestClient
@@ -48,20 +48,31 @@ async def lifespan(app: FastAPI):
     # Redis
     await redis_client.connect()
 
-    # KIS 클라이언트 초기화
+    # KIS_APP_KEY 존재 검증
+    if not app_settings.KIS_APP_KEY:
+        logger.warning("KIS_APP_KEY 미설정: 시세 조회 불가")
+
+    # KIS 매매 클라이언트 초기화 (TRADING_ENV 기반)
     env = get_current_environment()
     token_manager = KISTokenManager(env=env, redis=redis_client)
     throttler = TokenBucketThrottler(interval=env.rate_limit_interval)
     rest_client = KISRestClient(env=env, token_manager=token_manager, throttler=throttler)
     ws_client = KISWebSocketClient(env=env, token_manager=token_manager)
 
+    # KIS 조회 클라이언트 초기화 (항상 LIVE)
+    inquiry_env = get_inquiry_environment()
+    inquiry_token_manager = KISTokenManager(env=inquiry_env, redis=redis_client)
+    inquiry_throttler = TokenBucketThrottler(interval=inquiry_env.rate_limit_interval)
+    inquiry_client = KISRestClient(env=inquiry_env, token_manager=inquiry_token_manager, throttler=inquiry_throttler)
+
     app.state.kis_env = env
     app.state.kis_token_manager = token_manager
     app.state.kis_throttler = throttler
     app.state.kis_rest = rest_client
     app.state.kis_ws = ws_client
+    app.state.kis_inquiry = inquiry_client
 
-    logger.info("KIS 클라이언트 초기화 완료 (환경: %s)", env.name)
+    logger.info("KIS 클라이언트 초기화 완료 (매매: %s, 조회: %s)", env.name, inquiry_env.name)
 
     # 수집 모듈 초기화
     session_factory = get_session_factory()
@@ -84,6 +95,7 @@ async def lifespan(app: FastAPI):
         redis=redis_client,
         primary_screener=primary_screener,
         realtime_screener=realtime_screener,
+        inquiry_client=inquiry_client,
     )
 
     app.state.trade_strength = trade_strength
@@ -161,6 +173,8 @@ async def lifespan(app: FastAPI):
         await telegram_bot.delete_webhook()
     await trading_engine.stop()
     await collector_scheduler.stop()
+    await inquiry_client.close()
+    await inquiry_token_manager.close()
     await rest_client.close()
     await ws_client.disconnect()
     await token_manager.close()

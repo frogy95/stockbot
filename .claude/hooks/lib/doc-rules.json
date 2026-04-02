@@ -124,6 +124,17 @@
           "msg": "deploy-history 아카이빙이 누락되었습니다 — deploy.md 기존 완료 기록을 docs/deploy-history/YYYY-MM-DD.md로 이동하세요"
         }
       ]
+    },
+    {
+      "id": "sprint-pr-fix",
+      "detect": { "modified": ["deploy.md"], "content_match": "PR 수정|리뷰 반영|re-review" },
+      "required": ["deploy.md"],
+      "checks": [
+        {
+          "type": "critical_unresolved",
+          "msg": "🚨 Critical/High 이슈가 미해결 상태입니다. sprint-pr-fix를 다시 실행해주세요"
+        }
+      ]
     }
   ]
 }

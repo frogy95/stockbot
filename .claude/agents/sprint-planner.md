@@ -47,7 +47,7 @@ skills:
 - 브랜치명은 `phase{P}-sprint{N}` 형식으로 안내합니다. (예: phase1-sprint1)
 - 파일은 `docs/phase/phase{P}/sprint{N}/sprint{N}.md`에 생성합니다. 디렉토리가 없으면 생성합니다.
 
-다음 구조로 `docs/phase/phase{P}/sprint{N}/sprint{N}.md`를 작성합니다:
+다음 구조로 `docs/phase/phase{P}/sprint{N}/sprint{N}.md`를 작성합니다. (형식 참고: `docs/templates/EXAMPLE-sprint.md`, task 형식: `docs/templates/EXAMPLE-task.md`, 테스트 계획: `docs/templates/EXAMPLE-test-plan.md`)
 
 ```markdown
 # Sprint {N}: {제목} (Phase {P})

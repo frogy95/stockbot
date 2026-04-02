@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.models.news_sentiment import NewsSentiment
+from modules.collector.models import CollectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +66,19 @@ class NaverCollector:
         score = (pos - neg) / max(pos + neg, 1)
         return max(-1.0, min(1.0, score))
 
-    async def collect_sentiments(self, stock_info: list[dict]) -> int:
+    async def collect_sentiments(self, stock_info: list[dict]) -> CollectionResult:
         """종목 리스트의 뉴스 센티멘트를 수집해 DB에 저장한다.
 
         Args:
             stock_info: [{"stock_code": "...", "stock_name": "..."}] 형태의 리스트
 
         Returns:
-            수집된 뉴스 건수
+            CollectionResult (collected=뉴스 1건 이상 수집된 종목 수)
         """
-        total_collected = 0
+        total_target = len(stock_info)
+        success_count = 0
+        failed = 0
+        skipped = 0
 
         for idx, stock in enumerate(stock_info):
             stock_code = stock["stock_code"]
@@ -85,6 +89,10 @@ class NaverCollector:
                 await asyncio.sleep(0.1)
 
             news_items = await self.search_news(stock_name, display=10)
+
+            if not news_items:
+                skipped += 1
+                continue
 
             for news_item in news_items:
                 raw_title = news_item.get("title", "")
@@ -112,12 +120,20 @@ class NaverCollector:
                     keyword=matched_keyword,
                 )
                 self._db.add(record)
-                total_collected += 1
 
+            success_count += 1
             await self._db.commit()
 
-        logger.info("네이버 뉴스 센티멘트 수집 완료: %d건", total_collected)
-        return total_collected
+        logger.info(
+            "네이버 뉴스 센티멘트 수집 완료: 성공 %d종목, 스킵 %d종목",
+            success_count, skipped,
+        )
+        return CollectionResult(
+            collected=success_count,
+            failed=failed,
+            skipped=skipped,
+            total_target=total_target,
+        )
 
     @staticmethod
     def _parse_pub_date(pub_date_str: str) -> datetime | None:

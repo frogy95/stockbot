@@ -4,6 +4,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from modules.collector.scheduler import CollectorScheduler
+from modules.collector.models import CollectionResult
+from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
@@ -78,11 +80,11 @@ async def test_pipeline_recovery_success_sends_telegram():
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=2800)
+        MockData.return_value.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
-        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=700)
+        MockKIS.return_value.collect_etf_prices = AsyncMock(return_value=CollectionResult(collected=700, total_target=700))
 
         scheduler._primary_screener = AsyncMock()
         scheduler._primary_screener.screen = AsyncMock(return_value=[])

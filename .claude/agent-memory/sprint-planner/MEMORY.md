@@ -23,13 +23,15 @@
 
 - Phase 4 Sprint 2 — 신호/스크리닝/설정 + 웹 매매 승인 (MVP 완성), ✅ 완료 (2026-03-31) / PR: https://github.com/frogy95/stockbot/pull/44
 
-- Phase 4.5 Sprint 1 — 백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인), 🔄 계획 수립 완료 (2026-04-01)
+- Phase 4.5 Sprint 1 — 백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인), ✅ 완료 (2026-04-01) / PR: https://github.com/frogy95/stockbot/pull/55
+
+- [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, 🔄 계획 수립 완료 (2026-04-02)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.5 Sprint 1 — 계획 수립 완료, 구현 대기
-- Phase 4.5 Sprint 2 — Sprint 1 완료 후 착수 (프론트엔드 시스템 페이지)
-- Phase 5 Sprint 1 — Phase 4.5 완료 후 착수 가능
+- Phase 4.6 Sprint 1 — 계획 수립 완료, 구현 대기
+- Phase 4.6 Sprint 2 — Sprint 1 완료 후 착수 (데이터 품질 + 통합 검증)
+- Phase 5 Sprint 1 — Phase 4.6 완료 후 착수 가능
 
 ## 핵심 주의사항
 
@@ -92,3 +94,10 @@
 - Phase 4.5 Sprint 1: scheduler._telegram_bot은 main.py에서 set_telegram_bot()으로 후속 주입 — None일 수 있음
 - Phase 4.5 Sprint 1: engine.py의 process_screening_results 진입부에 eod_liquidator.is_entry_blocked() 체크 이미 존재 — pipeline_healthy 가드는 그 직전에 추가
 - Phase 4.5 Sprint 1: 기존 test_scheduler.py에서 _make_scheduler() 패턴 — AsyncMock session_factory, redis, ws_client 등 재사용
+- Phase 4.6 Sprint 1: inquiry_client는 항상 LIVE 환경 — KIS_APP_KEY 미설정 시 warning만 (서버 차단 안 함, CI 대응)
+- Phase 4.6 Sprint 1: CollectionValidator의 T-2 거래일 판정은 주말만 건너뜀 — 공휴일은 Sprint 2 trading_calendar.py에서 추가
+- Phase 4.6 Sprint 1: naver collect_sentiments의 CollectionResult.collected는 뉴스 건수가 아닌 종목 수 기준
+- Phase 4.6 Sprint 1: dart MAX_FINANCIAL_QUERIES=30 상한 제거 -> corp_code 매핑된 전체 종목 수집
+- Phase 4.6 Sprint 1: pg_insert upsert에서 ORM onupdate=func.now() 미작동 -> set_에 명시적 func.now() 추가 필요 (data_go_kr + kis_collector)
+- Phase 4.6 Sprint 1: _make_scheduler()에 inquiry_client 파라미터 추가 필요 (기존 테스트 전체 수정 대상)
+- Phase 4.6 Sprint 1: scheduler._update_step_status 시그니처 변경 (collected_count, validation 추가) -> 기존 호출부 전체 수정

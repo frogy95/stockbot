@@ -5,13 +5,14 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.models.market_data import MarketData
 from core.models.stock import Stock
+from modules.collector.models import CollectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -31,49 +32,90 @@ class DataGoKrCollector:
         self._db = db_session
 
     @staticmethod
-    def _latest_trading_date() -> str:
-        """가장 최근 완료된 거래일을 YYYYMMDD 문자열로 반환한다.
+    def _get_trading_dates(max_days: int = 7) -> list[str]:
+        """현재 날짜부터 역순으로 주말을 건너뛰며 최대 max_days개 거래일을 반환한다.
 
-        공공데이터포털 API는 당일 데이터를 제공하지 않으므로 항상 직전 평일을 반환한다.
-        월요일 → 금요일, 화~금 → 전날, 주말 → 금요일.
+        공공데이터포털 API는 당일 데이터를 제공하지 않으므로 직전 평일부터 시작한다.
         """
         from core.config import settings
         today_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        dates: list[str] = []
         target = today_kst - timedelta(days=1)
-        if target.weekday() == 6:    # 일요일(전일이 일요일이면 토요일) → 금요일
+        # 첫 날짜를 주말이 아닌 평일로 보정
+        if target.weekday() == 6:    # 일요일 → 금요일
             target -= timedelta(days=2)
         elif target.weekday() == 5:  # 토요일 → 금요일
             target -= timedelta(days=1)
-        return target.strftime("%Y%m%d")
+        dates.append(target.strftime("%Y%m%d"))
 
-    async def collect_all(self, retry_delay: float = RETRY_DELAY) -> int:
-        """전 종목 일괄 수집. 수집된 종목 수를 반환한다."""
-        bas_dt = self._latest_trading_date()
-        logger.info("공공데이터포털 수집 기준일: %s", bas_dt)
+        while len(dates) < max_days:
+            target -= timedelta(days=1)
+            if target.weekday() >= 5:  # 주말 건너뛰기
+                continue
+            dates.append(target.strftime("%Y%m%d"))
+
+        return dates
+
+    @staticmethod
+    def _latest_trading_date() -> str:
+        """가장 최근 완료된 거래일을 YYYYMMDD 문자열로 반환한다."""
+        return DataGoKrCollector._get_trading_dates(1)[0]
+
+    async def collect_all(self, retry_delay: float = RETRY_DELAY) -> CollectionResult:
+        """전 종목 일괄 수집. CollectionResult를 반환한다."""
+        trading_dates = self._get_trading_dates()
+        bas_dt: str | None = None
         total_collected = 0
-        page = 1
+        null_counts: dict[str, int] = {"close_price": 0, "volume": 0}
 
-        while True:
-            items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay, bas_dt)
-            if not items:
+        for idx, candidate_date in enumerate(trading_dates):
+            logger.info("공공데이터포털 수집 기준일: %s", candidate_date)
+            total_collected = 0
+            null_counts = {"close_price": 0, "volume": 0}
+            page = 1
+
+            while True:
+                items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay, candidate_date)
+                if not items:
+                    break
+
+                for item in items:
+                    try:
+                        await self._upsert_stock(item)
+                        await self._save_market_data(item)
+                        total_collected += 1
+                        # null 카운팅
+                        if self._parse_int(item.get("clpr")) is None:
+                            null_counts["close_price"] += 1
+                        if self._parse_int(item.get("trqu")) is None:
+                            null_counts["volume"] += 1
+                    except Exception:
+                        logger.exception("종목 저장 실패: %s", item.get("srtnCd", "?"))
+
+                await self._db.commit()
+
+                if len(items) < DEFAULT_NUM_ROWS:
+                    break
+                page += 1
+
+            if total_collected > 0:
+                bas_dt = candidate_date
                 break
 
-            for item in items:
-                try:
-                    await self._upsert_stock(item)
-                    await self._save_market_data(item)
-                    total_collected += 1
-                except Exception:
-                    logger.exception("종목 저장 실패: %s", item.get("srtnCd", "?"))
+            # 0건이면 다음 날짜로 폴백
+            if idx + 1 < len(trading_dates):
+                next_date = trading_dates[idx + 1]
+                logger.warning("기준일 %s 수집 0건, 폴백 시도: %s", candidate_date, next_date)
 
-            await self._db.commit()
-
-            if len(items) < DEFAULT_NUM_ROWS:
-                break
-            page += 1
+        if bas_dt is None:
+            bas_dt = trading_dates[0] if trading_dates else None
 
         logger.info("공공데이터포털 수집 완료: %d종목", total_collected)
-        return total_collected
+        return CollectionResult(
+            collected=total_collected,
+            data_date=bas_dt,
+            null_counts=null_counts,
+        )
 
     async def _fetch_page(
         self, page: int, num_rows: int, retry_delay: float = RETRY_DELAY, bas_dt: str | None = None
@@ -141,6 +183,7 @@ class DataGoKrCollector:
                 "market_type": stmt.excluded.market_type,
                 "listed_shares": stmt.excluded.listed_shares,
                 "is_active": True,
+                "updated_at": func.now(),
             },
         )
         await self._db.execute(stmt)

@@ -6,6 +6,7 @@ from core.clients.kis_config import (
     LIVE,
     get_environment,
     get_current_environment,
+    get_inquiry_environment,
 )
 
 
@@ -61,3 +62,16 @@ class TestGetCurrentEnvironment:
         env = get_current_environment()
         # 기본 TRADING_ENV가 "paper"이므로 PAPER 반환
         assert env.name == "paper"
+
+
+class TestGetInquiryEnvironment:
+    def test_always_returns_live(self):
+        env = get_inquiry_environment()
+        assert env is LIVE
+        assert env.name == "live"
+
+    def test_independent_of_trading_env(self, monkeypatch):
+        """TRADING_ENV가 paper여도 inquiry는 항상 LIVE."""
+        monkeypatch.setattr("core.clients.kis_config.settings.TRADING_ENV", "paper")
+        env = get_inquiry_environment()
+        assert env is LIVE
