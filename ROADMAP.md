@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.6 Sprint 1 완료
-- 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) 🔄 진행 중
-- 현재 Sprint: Phase 4.6 Sprint 2 🔄 진행 중 (데이터 품질 + KODEX 필터 + 통합 검증)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02)
+- 전체 진행률: Phase 0~4.6 Sprint 2 완료
+- 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) ✅ 완료
+- 현재 Sprint: Phase 5 착수 대기
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증
+- 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
 ## 기술 아키텍처 결정 사항
 
@@ -547,15 +547,15 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - ✅ stocks.updated_at upsert 시 명시적 설정
 - ✅ pipeline_healthy 판정 강화 (status + 건수 + validation 동시 확인)
 
-#### Sprint 2: 데이터 품질 + KODEX 필터 + 통합 검증 🔄
-- ⬜ 한국거래소 2026년 휴장일 캘린더
-- ⬜ **KODEX ETF 필터링** (시세 수집 대상 878 -> ~280 축소)
-- ⬜ data_go_kr + validator 공휴일 통합
-- ⬜ **DB 후검증 쿼리** (SELECT COUNT + null 비율 재확인) (rev.3)
-- ⬜ scheduler 상세 로깅 + market_data 신선도 검증 (T-2 거래일 이내)
-- ⬜ 통합 테스트
-- ⬜ **CollectionValidator unit test** (임계값별 pass/fail 시나리오) (rev.3)
-- ⬜ 통합 테스트 (수동+자동 파이프라인 + 도메인 분리 + 유효성 검증)
+#### Sprint 2: 데이터 품질 + KODEX 필터 + 통합 검증 ✅ (2026-04-02)
+- ✅ 한국거래소 2026년 휴장일 캘린더
+- ✅ **KODEX ETF 필터링** (시세 수집 대상 878 -> ~280 축소)
+- ✅ data_go_kr + validator 공휴일 통합
+- ✅ **DB 후검증 쿼리** (SELECT COUNT + null 비율 재확인) (rev.3)
+- ✅ scheduler 상세 로깅 + market_data 신선도 검증 (T-2 거래일 이내)
+- ✅ 통합 테스트
+- ✅ **CollectionValidator unit test** (임계값별 pass/fail 시나리오) (rev.3)
+- ✅ 통합 테스트 (수동+자동 파이프라인 + 도메인 분리 + 유효성 검증)
 
 ### 전문가 확정 파라미터 (2026-04-02, rev.3 — 4명 검토)
 

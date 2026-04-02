@@ -1334,12 +1334,15 @@
         {
           "id": "sprint2",
           "title": "데이터 품질 + KODEX 필터 + 통합 검증",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase4.6-sprint2",
           "sprintDoc": "docs/phase/phase4.6/sprint2/sprint2.md",
+          "prUrl": "(PR 생성 후 기록 예정)",
+          "completedAt": "2026-04-02",
+          "lastUpdated": "2026-04-02T00:00:00+09:00",
           "progress": {
             "total": 6,
-            "completed": 0
+            "completed": 6
           },
           "tasks": [
             {
@@ -1347,8 +1350,8 @@
               "title": "한국거래소 휴장일 캘린더 유틸",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-1-trading_calendar----한국거래소-휴장일-캘린더",
               "testPlan": "is_trading_day + get_latest_trading_day + get_prev_trading_day 테스트",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1356,8 +1359,8 @@
               "title": "KODEX ETF 필터링",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-2-kodex-etf-필터링----시세-수집-대상-축소",
               "testPlan": "_get_etf_codes() KODEX 필터 + collect_etf_prices 통합 테스트",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1365,8 +1368,8 @@
               "title": "data_go_kr 휴장일 통합",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-3-data_go_kr-휴장일-통합----trading_calendar-활용",
               "testPlan": "_latest_trading_date + _is_within_t2 공휴일 처리 테스트",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1374,8 +1377,8 @@
               "title": "CollectionValidator DB 후검증",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-4-collectionvalidator-db-후검증----적재-결과-재확인",
               "testPlan": "validate_premarket_db + validate_etf_db 테스트",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1383,8 +1386,8 @@
               "title": "scheduler 상세 로깅 + 신선도 검증",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-5-scheduler-상세-로깅--신선도-검증",
               "testPlan": "구조화 로깅 + DB 후검증 호출 테스트",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1392,8 +1395,8 @@
               "title": "통합 테스트",
               "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-6-통합-테스트",
               "testPlan": "6개 통합 시나리오 + 전체 regression 603+ passed",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "PASS",
+              "status": "completed",
               "commits": []
             }
           ]

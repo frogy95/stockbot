@@ -6,9 +6,10 @@
 
 **Tech Stack:** Python 3.12, SQLAlchemy 2.0 (async), pytest, APScheduler
 
-**Sprint 기간:** 2026-04-02 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-02 ~ 2026-04-02
 **이전 스프린트:** Sprint 1 (pytest 603 passed, PR #58 + 핫픽스 PR #60/#61)
 **브랜치명:** `phase4.6-sprint2`
+**상태:** ✅ 완료 (2026-04-02)
 
 ---
 
@@ -87,8 +88,8 @@ git commit -m "feat(phase4.6-sprint2): task1 -- 한국거래소 2026년 휴장�
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ is_trading_day, get_latest_trading_day, get_prev_trading_day 정상 동작
+- ✅ pytest 테스트 통과
+- ✅ is_trading_day, get_latest_trading_day, get_prev_trading_day 정상 동작
 
 ---
 
@@ -138,9 +139,9 @@ git commit -m "feat(phase4.6-sprint2): task2 -- ETF 시세 수집 대상을 KODE
 ```
 
 **완료 기준:**
-- ⬜ `_get_etf_codes()`가 KODEX ETF만 반환
-- ⬜ 마스터 데이터(stocks 테이블)는 전체 ETF 유지
-- ⬜ pytest 테스트 통과
+- ✅ `_get_etf_codes()`가 KODEX ETF만 반환
+- ✅ 마스터 데이터(stocks 테이블)는 전체 ETF 유지
+- ✅ pytest 테스트 통과
 
 ---
 
@@ -172,9 +173,9 @@ git commit -m "feat(phase4.6-sprint2): task3 -- data_go_kr + validator에 tradin
 ```
 
 **완료 기준:**
-- ⬜ `_latest_trading_date()`가 공휴일을 건너뜀
-- ⬜ `_is_within_t2()`가 공휴일을 건너뜀
-- ⬜ pytest 테스트 통과
+- ✅ `_latest_trading_date()`가 공휴일을 건너뜀
+- ✅ `_is_within_t2()`가 공휴일을 건너뜀
+- ✅ pytest 테스트 통과
 
 ---
 
@@ -216,9 +217,9 @@ git commit -m "feat(phase4.6-sprint2): task4 -- CollectionValidator DB 후검증
 ```
 
 **완료 기준:**
-- ⬜ `validate_premarket_db()` 정상 동작
-- ⬜ `validate_etf_db()` 정상 동작
-- ⬜ pytest 테스트 통과
+- ✅ `validate_premarket_db()` 정상 동작
+- ✅ `validate_etf_db()` 정상 동작
+- ✅ pytest 테스트 통과
 
 ---
 
@@ -259,9 +260,9 @@ git commit -m "feat(phase4.6-sprint2): task5 -- scheduler 상세 로깅 + market
 ```
 
 **완료 기준:**
-- ⬜ 수집 결과가 step/collected/failed/total/validation 포함하여 로깅
-- ⬜ DB 후검증이 premarket/etf 수집 후 실행
-- ⬜ pytest 테스트 통과
+- ✅ 수집 결과가 step/collected/failed/total/validation 포함하여 로깅
+- ✅ DB 후검증이 premarket/etf 수집 후 실행
+- ✅ pytest 테스트 통과
 
 ---
 
@@ -294,8 +295,8 @@ git commit -m "feat(phase4.6-sprint2): task6 -- Phase 4.6 Sprint 2 통합 테스
 ```
 
 **완료 기준:**
-- ⬜ 통합 테스트 6개 시나리오 전체 PASS
-- ⬜ 기존 테스트 전체 regression PASS (603+ passed)
+- ✅ 통합 테스트 6개 시나리오 전체 PASS
+- ✅ 기존 테스트 전체 regression PASS (603+ passed)
 
 ---
 
