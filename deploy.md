@@ -5,6 +5,20 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: ETF 시세 수집 실패 시 DB 트랜잭션 rollback 누락 수정 (2026-04-02)
+
+PR: https://github.com/frogy95/stockbot/pull/64
+
+- ✅ 자동 검증 완료 항목:
+  - pytest ETF 관련 54개: 54 passed, 0 failed
+  - /api/v1/health 헬스체크: healthy
+  - 코드 리뷰: Critical/High 이슈 없음
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영 확인)
+  - Railway 재배포 후 ETF 수집 시 InFailedSQLTransactionError 미발생 확인
+  - 수집 로그에서 rollback 후 다음 종목 정상 수집 이어짐 확인
+
 ### 프로덕션 배포 - v0.9.0 (2026-04-02)
 
 포함 스프린트: Phase 4.6 Sprint 2
@@ -12,8 +26,6 @@ PR: https://github.com/frogy95/stockbot/pull/63
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
-
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 
 #### 수동 검증 필요 항목
 
