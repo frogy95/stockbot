@@ -28,12 +28,12 @@
 - [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/58
 - Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, 🔄 계획 수립 완료 (2026-04-02)
 
-- Phase 4.7 Sprint 1 — 1차 스크리닝 3팩터 분리 + 임계값 조정, 🔄 계획 수립 완료 (2026-04-02)
+- Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/62
+- Phase 4.7 Sprint 1 — 1차 스크리닝 3팩터 분리 + 임계값 조정, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/72
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.7 Sprint 1 — 계획 수립 완료, 구현 대기
-- Phase 5 Sprint 1 — Phase 4.7 완료 후 착수 가능
+- Phase 5 Sprint 1 — Phase 4.7 완료, 착수 가능
 
 ## 핵심 주의사항
 
