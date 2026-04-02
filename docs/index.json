@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T14:00:00+09:00",
+  "lastUpdated": "2026-04-02T15:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1581,6 +1581,15 @@
       "version": "v0.8.0",
       "description": "Phase 4.6 Sprint 1 프로덕션 배포 — Dockerfile --reload 제거 (Railway 재시작 루프 해결), KIS inquiry_client LIVE 고정 (시세 조회 도메인 분리), CollectionResult + CollectionValidator 유효성 검증 체계 신설, 4개 수집기 CollectionResult 통일, pipeline_status collected_count/validation 추가",
       "prUrl": "https://github.com/frogy95/stockbot/pull/59",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-02",
+      "type": "sprint",
+      "ref": "phase4.6-sprint2",
+      "version": "v0.9.0",
+      "description": "Phase 4.6 Sprint 2 프로덕션 배포 — ETF 시세 수집 대상 KODEX 제한 (~280종목), trading_calendar 공휴일 DB 통합 (공공데이터포털 API), CollectionValidator DB 후검증 추가 (premarket + ETF), scheduler 상세 로깅 + market_data 신선도 후검증, 통합 테스트 631 passed",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/63",
       "status": "completed"
     }
   ]
