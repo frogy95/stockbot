@@ -5,38 +5,46 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Hotfix: ETF 시세 수집 실패 시 DB 트랜잭션 rollback 누락 수정 (2026-04-02)
+### 프로덕션 배포 - v1.0.0 (2026-04-02)
 
-PR: https://github.com/frogy95/stockbot/pull/64
-
-- ✅ 자동 검증 완료 항목:
-  - pytest ETF 관련 54개: 54 passed, 0 failed
-  - /api/v1/health 헬스체크: healthy
-  - 코드 리뷰: Critical/High 이슈 없음
-
-- ⬜ 수동 검증 필요 항목:
-  - docker compose up --build (코드 반영 확인)
-  - Railway 재배포 후 ETF 수집 시 InFailedSQLTransactionError 미발생 확인
-  - 수집 로그에서 rollback 후 다음 종목 정상 수집 이어짐 확인
-
-### 프로덕션 배포 - v0.9.0 (2026-04-02)
-
-포함 스프린트: Phase 4.6 Sprint 2
-PR: https://github.com/frogy95/stockbot/pull/63
+포함 스프린트: Phase 4.7 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/73
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
 
+#### 자동 검증 결과
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
 #### 수동 검증 필요 항목
 
-- ✅ Railway 배포 후 KODEX ETF 시세 수집 확인 — market_data 199건 수집 (data_date: 2026-04-02, source: kis_rest), db_validation.passed: true
-- ✅ scheduler 상세 로깅 확인 — pipeline_status에 status/collected_count/validation/db_validation 구조화 필드 포함 확인
-- ✅ DB 후검증 경고 로그 미발생 확인 — premarket/ETF db_validation 모두 passed, WARNING 미발생
+- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
 
-> 수동 수집 트리거 과정에서 ETF 수집 버그 3건 발견 및 핫픽스 완료:
-> - `InFailedSQLTransactionError` 미롤백 (hotfix/etf-transaction-rollback)
-> - 롤백 후 미커밋 아이템 유실 (hotfix/etf-per-item-commit)
-> - `updated_at` 컬럼 미존재로 upsert 전체 실패 (hotfix/etf-updated-at-fix)
+---
+
+### Phase 4.7 Sprint 1: 1차 스크리닝 3팩터 분리 + 임계값 조정 (2026-04-02)
+
+PR: https://github.com/frogy95/stockbot/pull/72
+
+#### 코드 리뷰 결과 (2026-04-02)
+
+- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음
+- Medium 이슈 1건: FactorScorer factors 파라미터에 부분 키만 전달 시 KeyError 발생 가능 (현재 호출부는 모두 안전, Phase 문서 미해결 사항 #7에 기록)
+
+#### 자동 검증 결과 (2026-04-02)
+
+- ✅ pytest 638 passed (0 failed, 53 warnings)
+- ✅ API health check: 200 OK (database: connected, redis: connected)
+- ✅ 데모 모드 API 검증: 1차 스크리닝 3팩터만 반환 확인 (volume_factor, momentum_factor, volatility_factor)
+- ✅ PrimaryScreener pass_threshold=60.0 확인
+- ✅ RealtimeScreener pass_threshold=75.0 확인
+- ✅ FactorScorer 하위 호환 확인 (기본값 STOCK_FACTORS/ETF_FACTORS 사용)
+- ✅ PRIMARY_FACTORS len=3, PRIMARY_WEIGHTS sum=1.0 확인
+
+#### 수동 검증 필요 항목
+
+- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
 
 ---
 

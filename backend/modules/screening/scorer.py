@@ -18,6 +18,13 @@ ETF_FACTORS = [
     "tracking_error_factor",
 ]
 
+PRIMARY_FACTORS = ["volume_factor", "volatility_factor", "momentum_factor"]
+PRIMARY_WEIGHTS: dict[str, float] = {
+    "volume_factor": 1 / 3,
+    "volatility_factor": 1 / 3,
+    "momentum_factor": 1 / 3,
+}
+
 # 낮을수록 좋은 팩터 (역순위 적용)
 REVERSE_FACTORS = {"tracking_error_factor"}
 
@@ -83,9 +90,14 @@ class FactorScorer:
         self,
         factor_weights: dict[str, float] | None = None,
         pass_threshold: float = 80.0,
+        factors: dict[str, list[str]] | None = None,
     ):
         self.factor_weights = factor_weights or dict(DEFAULT_WEIGHTS)
         self.pass_threshold = pass_threshold
+        defaults = {"STOCK": STOCK_FACTORS, "ETF": ETF_FACTORS}
+        factor_config = factors or defaults
+        self._stock_factors = factor_config["STOCK"]
+        self._etf_factors = factor_config["ETF"]
 
     def score_candidates(self, candidates: list[dict]) -> list[dict]:
         """후보 종목 리스트를 받아 팩터별 순위 백분위 계산 후 가중 합산 스코어를 추가한다."""
@@ -99,9 +111,9 @@ class FactorScorer:
         scored: list[dict] = []
 
         if stocks:
-            scored.extend(_calc_percentiles(stocks, STOCK_FACTORS))
+            scored.extend(_calc_percentiles(stocks, self._stock_factors))
         if etfs:
-            scored.extend(_calc_percentiles(etfs, ETF_FACTORS))
+            scored.extend(_calc_percentiles(etfs, self._etf_factors))
 
         # 가중 합산 score 계산
         for item in scored:

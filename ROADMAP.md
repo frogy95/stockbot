@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.6 Sprint 2 완료
-- 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) ✅ 완료
-- 현재 Sprint: Phase 5 착수 대기
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02)
+- 전체 진행률: Phase 0~4.7 Sprint 1 완료
+- 현재 Phase: Phase 4.7 (1차 스크리닝 스코어링 구조 수정) ✅ 완료
+- 현재 Sprint: Phase 4.7 Sprint 1 ✅ 완료 (2026-04-02)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
@@ -55,6 +55,7 @@ Phase 0 (완료)
                           ├─> Phase 4: 웹 대시보드 (MVP)
                           │     └─> Phase 4.5: 스케줄러 안정화 + 장애 복구
                           │           └─> Phase 4.6: 데이터 수집 파이프라인 근본 수리
+                          │                 └─> Phase 4.7: 1차 스크리닝 스코어링 구조 수정
                           └─> Phase 5: 완전 자동 모드 + 성과 분석
                                 └─> Phase 6: 고도화 + 안정화
 ```
@@ -66,6 +67,7 @@ Phase 0 (완료)
 - Phase 2.5 -> 2.6: mst 파서 구현 오류 수정 (sanity check 항상 실패 블로커)
 - Phase 2.6 -> 3: ETF 포함 완전한 수집 파이프라인이 매매 전략의 전제. 리스크 선행 -> 매매 전략 -> 텔레그램 알림 순서
 - Phase 3 -> 4: 매매 데이터(포지션, 주문, 신호)가 대시보드 표시 대상
+- Phase 4.6 -> 4.7: 수집 파이프라인 정상화 후 스크리닝 스코어링 구조 수정
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
 - Phase 4, 5 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
@@ -602,6 +604,32 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 > Phase 상세 계획: `docs/phase/phase4.6/phase4.6.md` ✅ rev.3 수정 완료 (2026-04-02)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 rev.3 검토 완료
+
+---
+
+## Phase 4.7: 1차 스크리닝 스코어링 구조 수정 (Sprint 1) ✅
+
+### 목표
+1차 스크리닝(primary_screen)이 배포 첫날부터 후보 종목을 통과시키지 못하는 치명적 설계 버그 수정. 실시간 데이터 없는 팩터(체결강도/호가잔량)를 1차에서 제외하고, 3팩터(거래량/변동성/모멘텀) 전용 스코어링 구조로 분리.
+
+### 작업 목록
+#### Sprint 1: 스코어링 구조 수정 + 임계값 조정
+- scorer.py: PRIMARY_STOCK_FACTORS / PRIMARY_ETF_FACTORS 분리, FactorScorer에 factors 파라미터 추가
+- screener.py: _build_candidates 3팩터만 빌드, PrimaryScreener 1차 전용 스코어러 생성
+- 1차 pass_threshold 80.0 -> 60.0, 2차 pass_threshold 80.0 -> 75.0
+- 최소 후보 경고 (5개 미만 시 warning)
+- 테스트 전면 수정 + 버그 재현 방지 회귀 테스트
+
+### 미확정 사항
+- 가중치 비대칭 (volume 우선) 여부는 2주 운영 후 IC 기반 조정 (Phase 5)
+
+### 기술 고려사항
+- 버그 근본 원인: 분산=0인 팩터가 rank percentile에서 ~2%로 고정 → 이론적 최대 60.91 < 임계값 80.0
+- A안(3팩터 분리) 전문가 전원 합의, B안(고정 percentile=50) 기각
+- FactorScorer 클래스는 변경 최소화, factors 파라미터만 추가 (하위 호환)
+
+> Phase 상세 계획: `docs/phase/phase4.7/phase4.7.md` (2026-04-02)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
 
 ---
 

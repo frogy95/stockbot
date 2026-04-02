@@ -39,7 +39,7 @@ class RealtimeScreener:
         trade_strength_calc: TradeStrengthCalculator | None = None,
     ):
         self.filters = filters or SecondaryFilters()
-        self.scorer = scorer or FactorScorer()
+        self.scorer = scorer or FactorScorer(pass_threshold=75.0)
         self.redis_client = redis_client
         self.trade_strength_calc = trade_strength_calc or TradeStrengthCalculator()
 

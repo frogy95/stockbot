@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T17:00:00+09:00",
+  "lastUpdated": "2026-04-02T22:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1402,6 +1402,65 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4.7",
+      "title": "1차 스크리닝 스코어링 구조 수정",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase4.7/phase4.7.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "1차 스크리닝 3팩터 분리 + 임계값 조정",
+          "status": "completed",
+          "branch": "phase4.7-sprint1",
+          "sprintDoc": "docs/phase/phase4.7/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/72",
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
+          "lastUpdated": "2026-04-02T00:00:00+09:00",
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "scorer.py 팩터 분리 + FactorScorer 확장",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-1-scorerpy-팩터-분리--factorscorer-확장",
+              "testPlan": "PRIMARY_STOCK_FACTORS/PRIMARY_ETF_FACTORS/PRIMARY_WEIGHTS 정의 + FactorScorer factors 파라미터 하위 호환",
+              "testResult": "PASS",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "screener.py 3팩터 빌드 + PrimaryScreener 초기화 수정",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-2-screenerpy-3팩터-빌드--primaryscreener-초기화-수정",
+              "testPlan": "_build_candidates 3팩터만 반환 + pass_threshold=60.0 + 최소 후보 경고",
+              "testResult": "PASS",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "RealtimeScreener + main.py 임계값 명시",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-3-realtimescreener--mainpy-임계값-명시",
+              "testPlan": "RealtimeScreener pass_threshold=75.0 기본값 변경",
+              "testResult": "PASS",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "테스트 전면 수정 + 회귀 테스트 추가",
+              "path": "docs/phase/phase4.7/sprint1/sprint1.md#task-4-테스트-전면-수정--회귀-테스트-추가",
+              "testPlan": "1차/2차 분리 테스트 + 버그 재현 방지 회귀 테스트 + pytest 전체 PASS",
+              "testResult": "PASS — 638 passed",
+              "status": "completed",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
@@ -1608,6 +1667,15 @@
       "version": "v0.9.0",
       "description": "Phase 4.6 Sprint 2 프로덕션 배포 — ETF 시세 수집 대상 KODEX 제한 (~280종목), trading_calendar 공휴일 DB 통합 (공공데이터포털 API), CollectionValidator DB 후검증 추가 (premarket + ETF), scheduler 상세 로깅 + market_data 신선도 후검증, 통합 테스트 631 passed",
       "prUrl": "https://github.com/frogy95/stockbot/pull/63",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-02",
+      "type": "sprint",
+      "ref": "phase4.7-sprint1",
+      "version": "v1.0.0",
+      "description": "Phase 4.7 Sprint 1 프로덕션 배포 — 1차 스크리닝 3팩터 분리 (volume_factor, momentum_factor, volatility_factor), PrimaryScreener pass_threshold=60.0, RealtimeScreener pass_threshold=75.0, DB/환경변수 변경 없음",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/73",
       "status": "completed"
     }
   ]
