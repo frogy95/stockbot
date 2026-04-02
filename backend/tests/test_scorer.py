@@ -2,7 +2,13 @@
 
 import pytest
 
-from modules.screening.scorer import FactorScorer
+from modules.screening.scorer import (
+    FactorScorer,
+    PRIMARY_FACTORS,
+    PRIMARY_WEIGHTS,
+    STOCK_FACTORS,
+    ETF_FACTORS,
+)
 
 
 class TestFactorScorerBasic:
@@ -306,6 +312,78 @@ class TestETFFactor:
         for r in result:
             assert r["score"] == pytest.approx(100.0)
             assert r["is_passed"] is True
+
+
+class TestPrimaryFactorScorer:
+    """1차 스크리닝 전용 3팩터 스코어러 테스트."""
+
+    def _primary_scorer(self) -> FactorScorer:
+        return FactorScorer(
+            factors={"STOCK": PRIMARY_FACTORS, "ETF": PRIMARY_FACTORS},
+            factor_weights=PRIMARY_WEIGHTS,
+            pass_threshold=60.0,
+        )
+
+    def _make_primary_candidate(self, code: str, v: float) -> dict:
+        return {
+            "stock_code": code,
+            "stock_type": "STOCK",
+            "volume_factor": v,
+            "volatility_factor": v,
+            "momentum_factor": v,
+        }
+
+    def test_primary_3_factors_only(self):
+        """PRIMARY_FACTORS + PRIMARY_WEIGHTS로 생성한 스코어러는 factors dict에 3개 키만 포함."""
+        result = self._primary_scorer().score_candidates([self._make_primary_candidate("A", 1.0)])
+        assert set(result[0]["factors"].keys()) == set(PRIMARY_FACTORS)
+
+    def test_primary_threshold_60(self):
+        """단일 종목 3팩터 all 백분위 100 → score=100 → is_passed=True (threshold=60)."""
+        result = self._primary_scorer().score_candidates([self._make_primary_candidate("A", 1.0)])
+        assert result[0]["score"] == pytest.approx(100.0)
+        assert result[0]["is_passed"] is True
+
+    def test_primary_threshold_rejects_low_score(self):
+        """2종목 중 하위 종목 score < 60 → is_passed=False."""
+        candidates = [
+            self._make_primary_candidate("HIGH", 100.0),
+            self._make_primary_candidate("LOW", 1.0),
+        ]
+        result = self._primary_scorer().score_candidates(candidates)
+        by_code = {r["stock_code"]: r for r in result}
+        assert by_code["HIGH"]["is_passed"] is True
+        assert by_code["LOW"]["is_passed"] is False
+
+    def test_factors_parameter_backward_compatible(self):
+        """FactorScorer(factors 미지정)는 기존 STOCK_FACTORS/ETF_FACTORS 사용."""
+        scorer = FactorScorer()
+        assert scorer._stock_factors == STOCK_FACTORS
+        assert scorer._etf_factors == ETF_FACTORS
+
+    def test_bug_regression_all_tie_factors(self):
+        """44개 후보에 trade_strength/orderbook 동률 시 5팩터 pass=0건, 3팩터 pass 존재."""
+        candidates = [
+            {
+                "stock_code": f"{i:06d}",
+                "stock_type": "STOCK",
+                "volume_factor": float(i + 1),
+                "volatility_factor": float(i + 1),
+                "momentum_factor": float(i + 1),
+                "trade_strength_factor": 50.0,   # 전체 동률
+                "orderbook_ratio_factor": 1.0,   # 전체 동률
+            }
+            for i in range(44)
+        ]
+
+        # 버그 재현: 동률 팩터가 백분위 ~2.27로 낮아져 모두 pass_threshold=80 미달
+        scorer_5 = FactorScorer(pass_threshold=80.0)
+        passed_5 = [r for r in scorer_5.score_candidates(candidates) if r["is_passed"]]
+        assert len(passed_5) == 0
+
+        # 수정 검증: 3팩터만 사용하면 동률 팩터 영향 없이 통과 종목 존재
+        passed_3 = [r for r in self._primary_scorer().score_candidates(candidates) if r["is_passed"]]
+        assert len(passed_3) > 0
 
 
 class TestRankOrder:
