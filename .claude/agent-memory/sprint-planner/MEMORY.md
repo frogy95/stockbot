@@ -26,7 +26,7 @@
 - Phase 4.5 Sprint 1 — 백엔드 안정화 (Redis 영속화, 스케줄 의존성, 수동 파이프라인), ✅ 완료 (2026-04-01) / PR: https://github.com/frogy95/stockbot/pull/55
 
 - [Phase 4.6 Sprint 1](phase4.6-sprint1-status.md) — 근본 수리 + KIS 도메인 분리 + 유효성 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/58
-- Phase 4.6 Sprint 2 — 데이터 품질 + 통합 검증, 🔄 계획 수립 완료 (2026-04-02)
+- Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, 🔄 계획 수립 완료 (2026-04-02)
 
 ## 다음 사용 가능한 스프린트
 
@@ -101,9 +101,8 @@
 - Phase 4.6 Sprint 1: pg_insert upsert에서 ORM onupdate=func.now() 미작동 -> set_에 명시적 func.now() 추가 필요 (data_go_kr + kis_collector)
 - Phase 4.6 Sprint 1: _make_scheduler()에 inquiry_client 파라미터 추가 필요 (기존 테스트 전체 수정 대상)
 - Phase 4.6 Sprint 1: scheduler._update_step_status 시그니처 변경 (collected_count, validation 추가) -> 기존 호출부 전체 수정
-- Phase 4.6 Sprint 2: trading_calendar.py 신규 — 2026년 한국거래소 휴장일 하드코딩 (frozenset), 6/3 대통령선거일 포함
-- Phase 4.6 Sprint 2: validator._is_within_t2 기존 구현은 주말만 건너뜀 — prev_trading_day()로 대체하여 공휴일 반영
-- Phase 4.6 Sprint 2: data_go_kr._get_trading_dates()가 자체 주말 건너뛰기 -> trading_calendar.get_trading_dates_from()으로 위임
-- Phase 4.6 Sprint 2: validate_premarket_db는 async 메서드 (DB 세션 필요) — scheduler에서 db_session 블록 안에서 호출
-- Phase 4.6 Sprint 2: DB 스키마 변경 없음, Alembic 마이그레이션 불필요
-- Phase 4.6 Sprint 2: _market_open에 신선도 검증 추가하되 WS 연결은 차단 안 함 (warning만)
+- Phase 4.6 Sprint 2: ETF 시세 수집 대상 KODEX만으로 제한 — kis_collector._get_etf_codes()에 Stock.stock_name.startswith("KODEX") 조건 추가 (마스터 전체 유지, 시세 수집만 축소)
+- Phase 4.6 Sprint 2: KODEX ETF ~280종목 → API 호출 시간 ~30초 (기존 878종목 대비 약 1/3)
+- Phase 4.6 Sprint 2: trading_calendar.py는 2026년 공휴일 하드코딩 — 대체공휴일 정확성 확인 필요 (주석 표기)
+- Phase 4.6 Sprint 2: validator._is_within_t2()에서 기존 주말만 건너뜀 -> trading_calendar 사용으로 교체
+- Phase 4.6 Sprint 2: DB 후검증(validate_premarket_db/validate_etf_db)은 참고 정보 — pipeline_healthy에 직접 영향 없음

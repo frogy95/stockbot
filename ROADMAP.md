@@ -23,10 +23,10 @@
 
 - 전체 진행률: Phase 0~4.6 Sprint 1 완료
 - 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) 🔄 진행 중
-- 현재 Sprint: Phase 4.6 Sprint 2 🔄 진행 중
+- 현재 Sprint: Phase 4.6 Sprint 2 🔄 진행 중 (데이터 품질 + KODEX 필터 + 통합 검증)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.6 Sprint 2 — 데이터 품질 + 통합 검증
+- 다음 마일스톤: Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증
 
 ## 기술 아키텍처 결정 사항
 
@@ -547,16 +547,15 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - ✅ stocks.updated_at upsert 시 명시적 설정
 - ✅ pipeline_healthy 판정 강화 (status + 건수 + validation 동시 확인)
 
-#### Sprint 2: 데이터 품질 + 통합 검증 🔄 진행 중
-
-> Sprint 계획: `docs/phase/phase4.6/sprint2/sprint2.md` (2026-04-02)
-- ⬜ 한국거래소 2026년 휴장일 캘린더 (`core/trading_calendar.py`)
-- ⬜ data_go_kr 날짜 계산에 trading_calendar 통합
+#### Sprint 2: 데이터 품질 + KODEX 필터 + 통합 검증 🔄
+- ⬜ 한국거래소 2026년 휴장일 캘린더
+- ⬜ **KODEX ETF 필터링** (시세 수집 대상 878 -> ~280 축소)
+- ⬜ data_go_kr + validator 공휴일 통합
 - ⬜ **DB 후검증 쿼리** (SELECT COUNT + null 비율 재확인) (rev.3)
-- ⬜ **validator._is_within_t2에 공휴일 반영**
-- ⬜ market_data 신선도 검증 (T-2 거래일 이내)
-- ⬜ 수집 결과 상세 로깅 (소요시간 + 구조화 로그)
-- ⬜ 통합 테스트 + 전체 회귀 검증
+- ⬜ scheduler 상세 로깅 + market_data 신선도 검증 (T-2 거래일 이내)
+- ⬜ 통합 테스트
+- ⬜ **CollectionValidator unit test** (임계값별 pass/fail 시나리오) (rev.3)
+- ⬜ 통합 테스트 (수동+자동 파이프라인 + 도메인 분리 + 유효성 검증)
 
 ### 전문가 확정 파라미터 (2026-04-02, rev.3 — 4명 검토)
 

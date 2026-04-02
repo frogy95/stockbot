@@ -1240,7 +1240,7 @@
     {
       "id": "phase4.6",
       "title": "데이터 수집 파이프라인 근본 수리",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase4.6/phase4.6.md",
       "sprints": [
         {
@@ -1333,56 +1333,65 @@
         },
         {
           "id": "sprint2",
-          "title": "데이터 품질 + 통합 검증",
+          "title": "데이터 품질 + KODEX 필터 + 통합 검증",
           "status": "planned",
           "branch": "phase4.6-sprint2",
           "sprintDoc": "docs/phase/phase4.6/sprint2/sprint2.md",
           "progress": {
-            "total": 5,
+            "total": 6,
             "completed": 0
           },
           "tasks": [
             {
               "id": "task1",
-              "title": "한국거래소 휴장일 캘린더 모듈",
-              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-1-한국거래소-휴장일-캘린더-모듈",
-              "testPlan": "is_trading_day 공휴일/주말 판정 + prev_trading_day 정확성 + test_trading_calendar.py PASS",
+              "title": "한국거래소 휴장일 캘린더 유틸",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-1-trading_calendar----한국거래소-휴장일-캘린더",
+              "testPlan": "is_trading_day + get_latest_trading_day + get_prev_trading_day 테스트",
               "testResult": "",
               "status": "planned",
               "commits": []
             },
             {
               "id": "task2",
-              "title": "data_go_kr 날짜 계산에 trading_calendar 통합",
-              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-2-data_go_kr-날짜-계산에-trading_calendar-통합",
-              "testPlan": "_get_trading_dates 공휴일 건너뛰기 + test_data_go_kr.py PASS",
+              "title": "KODEX ETF 필터링",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-2-kodex-etf-필터링----시세-수집-대상-축소",
+              "testPlan": "_get_etf_codes() KODEX 필터 + collect_etf_prices 통합 테스트",
               "testResult": "",
               "status": "planned",
               "commits": []
             },
             {
               "id": "task3",
-              "title": "CollectionValidator DB 후검증 + trading_calendar 통합",
-              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-3-collectionvalidator-db-후검증--validator에-trading_calendar-통합",
-              "testPlan": "validate_premarket_db + validate_market_data_freshness + _is_within_t2 공휴일 대응 + test_collection_validator.py PASS",
+              "title": "data_go_kr 휴장일 통합",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-3-data_go_kr-휴장일-통합----trading_calendar-활용",
+              "testPlan": "_latest_trading_date + _is_within_t2 공휴일 처리 테스트",
               "testResult": "",
               "status": "planned",
               "commits": []
             },
             {
               "id": "task4",
-              "title": "scheduler 상세 로깅 + 신선도/DB 후검증 호출",
-              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-4-scheduler-상세-로깅--신선도db-후검증-호출",
-              "testPlan": "premarket DB 후검증 호출 + market_open 신선도 검증 + elapsed_sec 기록",
+              "title": "CollectionValidator DB 후검증",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-4-collectionvalidator-db-후검증----적재-결과-재확인",
+              "testPlan": "validate_premarket_db + validate_etf_db 테스트",
               "testResult": "",
               "status": "planned",
               "commits": []
             },
             {
               "id": "task5",
-              "title": "통합 테스트 + 기존 테스트 수정 + 전체 회귀 검증",
-              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-5-통합-테스트--기존-테스트-수정--전체-회귀-검증",
-              "testPlan": "pytest 전체 PASS + test_scheduler_pipeline.py 5개 시나리오 + test_phase4_6_integration.py 확장",
+              "title": "scheduler 상세 로깅 + 신선도 검증",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-5-scheduler-상세-로깅--신선도-검증",
+              "testPlan": "구조화 로깅 + DB 후검증 호출 테스트",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "통합 테스트",
+              "path": "docs/phase/phase4.6/sprint2/sprint2.md#task-6-통합-테스트",
+              "testPlan": "6개 통합 시나리오 + 전체 regression 603+ passed",
               "testResult": "",
               "status": "planned",
               "commits": []
