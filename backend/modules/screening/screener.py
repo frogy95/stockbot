@@ -1,6 +1,7 @@
 """1차 스크리닝 엔진 — 장전 DB 정적 필터 + 팩터 스코어링."""
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
@@ -17,7 +18,9 @@ from modules.screening.factors import (
     calc_volume_factor,
 )
 from modules.screening.filters import PrimaryFilters, is_hot_stock, passes_primary_filter
-from modules.screening.scorer import FactorScorer
+from modules.screening.scorer import FactorScorer, PRIMARY_FACTORS, PRIMARY_WEIGHTS
+
+logger = logging.getLogger(__name__)
 
 
 class PrimaryScreener:
@@ -29,7 +32,11 @@ class PrimaryScreener:
         scorer: FactorScorer | None = None,
     ):
         self.filters = filters or PrimaryFilters()
-        self.scorer = scorer or FactorScorer()
+        self.scorer = scorer or FactorScorer(
+            factors={"STOCK": PRIMARY_FACTORS, "ETF": PRIMARY_FACTORS},
+            factor_weights=PRIMARY_WEIGHTS,
+            pass_threshold=60.0,
+        )
 
     async def screen(self, session: AsyncSession) -> list[dict]:
         """1차 스크리닝 실행: DB 조회 → 필터 → 스코어링 → 상위 N종목 반환."""
@@ -43,6 +50,8 @@ class PrimaryScreener:
         filtered = self._apply_filters(rows)
         if not filtered:
             return []
+        if len(filtered) < 5:
+            logger.warning("1차 스크리닝 필터 통과 종목 %d개 — 소수 후보 시 백분위 왜곡 가능", len(filtered))
 
         candidates = self._build_candidates(filtered, recent_data)
         scored = self.scorer.score_candidates(candidates)
@@ -88,9 +97,6 @@ class PrimaryScreener:
                 if len(highs) >= 2
                 else 0.0
             )
-            # 1차 스크리닝에서는 체결강도/호가잔량 미사용 → 중립값
-            trade_strength_factor = 50.0
-            orderbook_ratio_factor = 1.0
 
             candidates.append({
                 "stock_code": code,
@@ -104,9 +110,6 @@ class PrimaryScreener:
                 "volume_factor": volume_factor,
                 "momentum_factor": momentum_factor,
                 "volatility_factor": volatility_factor,
-                "trade_strength_factor": trade_strength_factor,
-                "orderbook_ratio_factor": orderbook_ratio_factor,
-                "tracking_error_factor": 0.0,  # 1차 스크리닝 시 NAV 없음 → 중립값
             })
         return candidates
 

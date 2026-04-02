@@ -236,11 +236,15 @@ class TestScreenIntegration:
                 "open_price": 49_000 + i * 10_000,
             })
 
-        # _get_recent_market_data를 모킹하여 종목별 최근 데이터 반환
+        # _get_recent_market_data를 모킹 — momentum(4개 이상), volatility(2개 이상) 계산 가능하도록
         recent_data = {}
-        for code in ["005930", "000660", "035420"]:
+        for i, code in enumerate(["005930", "000660", "035420"]):
+            base = 50_000 + i * 10_000
             recent_data[code] = [
-                {"close_price": 50000, "high_price": 52000, "low_price": 48000, "data_date": today},
+                {"close_price": base, "high_price": base + 2000, "low_price": base - 2000, "data_date": today},
+                {"close_price": base - 500, "high_price": base + 1500, "low_price": base - 2500, "data_date": today},
+                {"close_price": base - 1000, "high_price": base + 1000, "low_price": base - 3000, "data_date": today},
+                {"close_price": base - 1500, "high_price": base + 500, "low_price": base - 3500, "data_date": today},
             ]
 
         # _fetch_today_and_prev를 모킹
@@ -286,6 +290,52 @@ class TestScreenIntegration:
                 assert "change_rate" in item
             # rank 순서
             assert result[0]["rank"] == 1
+            # 1차 스크리닝은 3팩터만 사용 — 실시간 팩터 미포함
+            for item in result:
+                assert "trade_strength_factor" not in item["factors"]
+                assert "orderbook_ratio_factor" not in item["factors"]
+            # 3팩터 + pass_threshold=60 → 상위 종목은 통과
+            assert any(item["is_passed"] for item in result)
+
+
+# ---------------------------------------------------------------------------
+# _build_candidates 실시간 팩터 미포함 테스트
+# ---------------------------------------------------------------------------
+
+class TestBuildCandidates:
+    """_build_candidates가 3팩터만 반환하는지 검증."""
+
+    def test_build_candidates_no_realtime_factors(self):
+        """_build_candidates 결과 dict에 실시간 전용 팩터 키가 없음."""
+        screener = PrimaryScreener()
+        filtered = [
+            _make_row("005930", "삼성전자", volume=200_000, prev_volume=50_000),
+            _make_row("000660", "SK하이닉스", volume=150_000, prev_volume=40_000),
+        ]
+        today = date.today()
+        recent_data = {
+            "005930": [
+                {"close_price": 50000, "high_price": 52000, "low_price": 48000, "data_date": today},
+                {"close_price": 49000, "high_price": 51000, "low_price": 47000, "data_date": today},
+                {"close_price": 48000, "high_price": 50000, "low_price": 46000, "data_date": today},
+                {"close_price": 47000, "high_price": 49000, "low_price": 45000, "data_date": today},
+            ],
+            "000660": [
+                {"close_price": 80000, "high_price": 83000, "low_price": 77000, "data_date": today},
+                {"close_price": 79000, "high_price": 82000, "low_price": 76000, "data_date": today},
+                {"close_price": 78000, "high_price": 81000, "low_price": 75000, "data_date": today},
+                {"close_price": 77000, "high_price": 80000, "low_price": 74000, "data_date": today},
+            ],
+        }
+        candidates = screener._build_candidates(filtered, recent_data)
+        assert len(candidates) == 2
+        for c in candidates:
+            assert "trade_strength_factor" not in c
+            assert "orderbook_ratio_factor" not in c
+            assert "tracking_error_factor" not in c
+            assert "volume_factor" in c
+            assert "volatility_factor" in c
+            assert "momentum_factor" in c
 
 
 # ---------------------------------------------------------------------------
