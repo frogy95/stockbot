@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.6 Sprint 2 완료
-- 현재 Phase: Phase 4.7 (1차 스크리닝 스코어링 구조 수정) 🔄 진행 중
-- 현재 Sprint: Phase 4.7 Sprint 1 🔄 계획 수립 완료
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02)
+- 전체 진행률: Phase 0~4.7 Sprint 1 완료
+- 현재 Phase: Phase 4.7 (1차 스크리닝 스코어링 구조 수정) ✅ 완료
+- 현재 Sprint: Phase 4.7 Sprint 1 ✅ 완료 (2026-04-02)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.7 — 1차 스크리닝 스코어링 버그 수정 → Phase 5
+- 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
 ## 기술 아키텍처 결정 사항
 
@@ -607,7 +607,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.7: 1차 스크리닝 스코어링 구조 수정 (Sprint 1) 🔄
+## Phase 4.7: 1차 스크리닝 스코어링 구조 수정 (Sprint 1) ✅
 
 ### 목표
 1차 스크리닝(primary_screen)이 배포 첫날부터 후보 종목을 통과시키지 못하는 치명적 설계 버그 수정. 실시간 데이터 없는 팩터(체결강도/호가잔량)를 1차에서 제외하고, 3팩터(거래량/변동성/모멘텀) 전용 스코어링 구조로 분리.

@@ -6,7 +6,10 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0, pytest
 
-**Sprint 기간:** 2026-04-02 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-02 ~ 2026-04-02
+**상태:** ✅ 완료 (2026-04-02)
+**pytest:** 638 passed
+**PR:** https://github.com/frogy95/stockbot/pull/72
 **이전 스프린트:** Phase 4.6 Sprint 2 (631 passed, PR #63)
 **브랜치명:** `phase4.7-sprint1`
 
@@ -69,9 +72,9 @@ git commit -m "feat(phase4.7-sprint1): task1 -- scorer.py 1차/2차 팩터 분�
 ```
 
 **완료 기준:**
-- ⬜ PRIMARY_STOCK_FACTORS, PRIMARY_ETF_FACTORS, PRIMARY_WEIGHTS 정의 완료
-- ⬜ FactorScorer(factors=None)은 기존 5팩터 동작 유지 (하위 호환)
-- ⬜ FactorScorer(factors={"STOCK": [...], "ETF": [...]})로 팩터 지정 가능
+- ✅ PRIMARY_STOCK_FACTORS, PRIMARY_ETF_FACTORS, PRIMARY_WEIGHTS 정의 완료
+- ✅ FactorScorer(factors=None)은 기존 5팩터 동작 유지 (하위 호환)
+- ✅ FactorScorer(factors={"STOCK": [...], "ETF": [...]})로 팩터 지정 가능
 
 ---
 
@@ -115,9 +118,9 @@ git commit -m "feat(phase4.7-sprint1): task2 -- screener.py 3팩터 빌드 + 임
 ```
 
 **완료 기준:**
-- ⬜ _build_candidates가 3팩터만 반환 (trade_strength/orderbook_ratio/tracking_error 미포함)
-- ⬜ PrimaryScreener의 FactorScorer가 pass_threshold=60.0 사용
-- ⬜ 필터 통과 5개 미만 시 warning 로깅
+- ✅ _build_candidates가 3팩터만 반환 (trade_strength/orderbook_ratio/tracking_error 미포함)
+- ✅ PrimaryScreener의 FactorScorer가 pass_threshold=60.0 사용
+- ✅ 필터 통과 5개 미만 시 warning 로깅
 
 ---
 
@@ -147,8 +150,8 @@ git commit -m "feat(phase4.7-sprint1): task3 -- RealtimeScreener pass_threshold 
 ```
 
 **완료 기준:**
-- ⬜ RealtimeScreener 기본 pass_threshold가 75.0
-- ⬜ RealtimeScreener는 기존 5팩터 유지
+- ✅ RealtimeScreener 기본 pass_threshold가 75.0
+- ✅ RealtimeScreener는 기존 5팩터 유지
 
 ---
 
@@ -190,11 +193,11 @@ git commit -m "feat(phase4.7-sprint1): task4 -- 1차/2차 분리 테스트 + 버
 ```
 
 **완료 기준:**
-- ⬜ test_scorer.py: 1차(3팩터) 전용 테스트 통과
-- ⬜ test_scorer.py: 버그 재현 + 수정 검증 회귀 테스트 통과
-- ⬜ test_screener.py: _build_candidates 3팩터만 반환 검증 통과
-- ⬜ test_screener.py: 통합 테스트에서 is_passed=True 종목 존재 확인
-- ⬜ pytest 전체 PASS
+- ✅ test_scorer.py: 1차(3팩터) 전용 테스트 통과
+- ✅ test_scorer.py: 버그 재현 + 수정 검증 회귀 테스트 통과
+- ✅ test_screener.py: _build_candidates 3팩터만 반환 검증 통과
+- ✅ test_screener.py: 통합 테스트에서 is_passed=True 종목 존재 확인
+- ✅ pytest 638 passed
 
 ---
 
