@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.5 Sprint 1 완료
+- 전체 진행률: Phase 0~4.6 Sprint 1 완료
 - 현재 Phase: Phase 4.6 (데이터 수집 파이프라인 근본 수리) 🔄 진행 중
-- 현재 Sprint: Phase 4.6 Sprint 1 🔄 진행 중
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01)
+- 현재 Sprint: Phase 4.6 Sprint 2 📋 예정
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.6 Sprint 1 — 근본 수리 + 도메인 분리 + 유효성 검증 (rev.3)
+- 다음 마일스톤: Phase 4.6 Sprint 2 — 데이터 품질 + 통합 검증
 
 ## 기술 아키텍처 결정 사항
 
@@ -527,24 +527,25 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.6: 데이터 수집 파이프라인 근본 수리 (Sprint 1~2) 🔄
+## Phase 4.6: 데이터 수집 파이프라인 근본 수리 (Sprint 1~2) 🔄 진행 중
 
 ### 목표
 며칠째 지속되는 데이터 수집 파이프라인 장애의 근본 원인 8건을 체계적으로 해결하고, **수집 유효성 검증 체계**를 구축한다. Dockerfile --reload 제거, **KIS 조회/매매 도메인 분리**, **CollectionValidator + CollectionResult 기반 유효성 검증** (premarket >= 1,500건, ETF >= 50%, null < 5%, data_date T-2 이내), 에러 전파 수정, 실패 유형 분류(retryable/permanent), data_go_kr 날짜 폴백, pipeline_healthy 거짓 양성 방지.
 
 ### 작업 목록
-#### Sprint 1: 근본 수리 + 도메인 분리 + 유효성 검증 🔄
+#### Sprint 1: 근본 수리 + 도메인 분리 + 유효성 검증 ✅
 
 > Sprint 계획: `docs/phase/phase4.6/sprint1/sprint1.md` (2026-04-02)
-- ⬜ Dockerfile --reload 제거 + docker-compose 개발 분리
-- ⬜ KIS 조회/매매 도메인 분리 (inquiry_client=LIVE, trading_client=TRADING_ENV)
-- ⬜ **CollectionResult dataclass + CollectionValidator 클래스 도입** (rev.3)
-- ⬜ **수집기 반환값 CollectionResult 전환** (data_go_kr, kis_collector, dart, naver) (rev.3)
-- ⬜ **유효성 검증 적용** (premarket>=1500, ETF>=50%, null<5%, date T-2) (rev.3)
-- ⬜ **실패 유형 분류** (retryable/permanent) + Redis 구조화 저장 (rev.3)
-- ⬜ data_go_kr 날짜 폴백 (전일->2일전->3일전, 최대 7일)
-- ⬜ stocks.updated_at upsert 시 명시적 설정
-- ⬜ pipeline_healthy 판정 강화 (status + 건수 + validation 동시 확인)
+> 완료: 2026-04-02 / pytest 602 passed
+- ✅ Dockerfile --reload 제거 + docker-compose 개발 분리
+- ✅ KIS 조회/매매 도메인 분리 (inquiry_client=LIVE, trading_client=TRADING_ENV)
+- ✅ **CollectionResult dataclass + CollectionValidator 클래스 도입** (rev.3)
+- ✅ **수집기 반환값 CollectionResult 전환** (data_go_kr, kis_collector, dart, naver) (rev.3)
+- ✅ **유효성 검증 적용** (premarket>=1500, ETF>=50%, null<5%, date T-2) (rev.3)
+- ✅ **실패 유형 분류** (retryable/permanent) + Redis 구조화 저장 (rev.3)
+- ✅ data_go_kr 날짜 폴백 (전일->2일전->3일전, 최대 7일)
+- ✅ stocks.updated_at upsert 시 명시적 설정
+- ✅ pipeline_healthy 판정 강화 (status + 건수 + validation 동시 확인)
 
 #### Sprint 2: 데이터 품질 + 통합 검증 📋
 - ⬜ 한국거래소 2026년 휴장일 캘린더

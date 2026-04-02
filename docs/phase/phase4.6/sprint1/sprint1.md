@@ -6,8 +6,10 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Redis 7, APScheduler, httpx, pytest
 
-**Sprint 기간:** 2026-04-02 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-02 ~ 2026-04-02
+**상태:** ✅ 완료 (2026-04-02) / pytest 602 passed
 **이전 스프린트:** Phase 4.5 Sprint 1 (pytest passed, PR #57 develop merge 완료)
+**PR:** https://github.com/frogy95/stockbot/pull/58
 **브랜치명:** `phase4.6-sprint1`
 
 ---
@@ -77,9 +79,9 @@ git commit -m "feat(phase4.6-sprint1): task1 -- Dockerfile --reload 제거 + 개
 ```
 
 **완료 기준:**
-- ⬜ Dockerfile CMD에 --reload 없음
-- ⬜ docker-compose.yml에서 개발용 --reload override 존재
-- ⬜ `docker compose config`로 override 동작 확인
+- ✅ Dockerfile CMD에 --reload 없음
+- ✅ docker-compose.yml에서 개발용 --reload override 존재
+- ✅ `docker compose config`로 override 동작 확인
 
 ---
 
@@ -129,11 +131,11 @@ git commit -m "feat(phase4.6-sprint1): task2 -- KIS 조회/매매 도메인 분�
 ```
 
 **완료 기준:**
-- ⬜ `get_inquiry_environment()` 항상 LIVE 반환
-- ⬜ main.py에서 inquiry_client 별도 초기화
-- ⬜ app.state.kis_inquiry 존재
-- ⬜ KIS_APP_KEY 미설정 시 warning 로그 (서버 시작은 정상)
-- ⬜ test_kis_config.py 전체 PASS
+- ✅ `get_inquiry_environment()` 항상 LIVE 반환
+- ✅ main.py에서 inquiry_client 별도 초기화
+- ✅ app.state.kis_inquiry 존재
+- ✅ KIS_APP_KEY 미설정 시 warning 로그 (서버 시작은 정상)
+- ✅ test_kis_config.py 전체 PASS
 
 ---
 
@@ -211,9 +213,9 @@ git commit -m "feat(phase4.6-sprint1): task3 -- CollectionResult + CollectionVal
 ```
 
 **완료 기준:**
-- ⬜ CollectionResult, ValidationResult dataclass 정의 완료
-- ⬜ CollectionValidator 6개 검증 메서드 구현
-- ⬜ test_collection_validator.py 11개+ 시나리오 전체 PASS
+- ✅ CollectionResult, ValidationResult dataclass 정의 완료
+- ✅ CollectionValidator 6개 검증 메서드 구현
+- ✅ test_collection_validator.py 20개 시나리오 전체 PASS
 
 ---
 
@@ -257,11 +259,11 @@ git commit -m "feat(phase4.6-sprint1): task4 -- data_go_kr CollectionResult + �
 ```
 
 **완료 기준:**
-- ⬜ collect_all이 CollectionResult 반환
-- ⬜ 0건 수집 시 최대 7일 날짜 폴백 시도
-- ⬜ _upsert_stock에 updated_at 명시적 설정
-- ⬜ null_counts에 close_price, volume 카운팅
-- ⬜ test_data_go_kr.py 전체 PASS
+- ✅ collect_all이 CollectionResult 반환
+- ✅ 0건 수집 시 최대 7일 날짜 폴백 시도
+- ✅ _upsert_stock에 updated_at 명시적 설정
+- ✅ null_counts에 close_price, volume 카운팅
+- ✅ test_data_go_kr.py 전체 PASS
 
 ---
 
@@ -298,11 +300,11 @@ git commit -m "feat(phase4.6-sprint1): task5 -- kis_collector CollectionResult +
 ```
 
 **완료 기준:**
-- ⬜ collect_etf_prices가 CollectionResult 반환
-- ⬜ 실패 건수, total_target 추적
-- ⬜ close_price 0 체크
-- ⬜ updated_at 명시적 설정
-- ⬜ test_kis_collector.py 전체 PASS
+- ✅ collect_etf_prices가 CollectionResult 반환
+- ✅ 실패 건수, total_target 추적
+- ✅ close_price 0 체크
+- ✅ updated_at 명시적 설정
+- ✅ test_kis_collector.py 전체 PASS
 
 ---
 
@@ -347,9 +349,9 @@ git commit -m "feat(phase4.6-sprint1): task6 -- dart/naver CollectionResult + MA
 ```
 
 **완료 기준:**
-- ⬜ dart collect_financials가 CollectionResult 반환, MAX_FINANCIAL_QUERIES 제거
-- ⬜ naver collect_sentiments가 CollectionResult 반환, 종목별 성공/실패 추적
-- ⬜ test_dart.py, test_naver.py 전체 PASS
+- ✅ dart collect_financials가 CollectionResult 반환, MAX_FINANCIAL_QUERIES 제거
+- ✅ naver collect_sentiments가 CollectionResult 반환, 종목별 성공/실패 추적
+- ✅ test_dart.py, test_naver.py 전체 PASS
 
 ---
 
@@ -421,11 +423,11 @@ git commit -m "feat(phase4.6-sprint1): task7 -- scheduler CollectionValidator �
 ```
 
 **완료 기준:**
-- ⬜ scheduler.__init__에 inquiry_client 파라미터 추가
-- ⬜ _update_step_status에 collected_count, validation 포함
-- ⬜ 모든 수집 단계에서 CollectionValidator 호출
-- ⬜ _are_core_steps_healthy가 validation.passed도 확인
-- ⬜ ETF 수집이 inquiry_client 사용
+- ✅ scheduler.__init__에 inquiry_client 파라미터 추가
+- ✅ _update_step_status에 collected_count, validation 포함
+- ✅ 모든 수집 단계에서 CollectionValidator 호출
+- ✅ _are_core_steps_healthy가 validation.passed도 확인
+- ✅ ETF 수집이 inquiry_client 사용
 
 ---
 
@@ -477,10 +479,10 @@ git commit -m "feat(phase4.6-sprint1): task8 -- 통합 테스트 + 기존 테스
 ```
 
 **완료 기준:**
-- ⬜ 기존 scheduler 관련 테스트 전체 PASS (Mock 반환값 수정)
-- ⬜ pipeline_health 테스트에 validation 검증 추가
-- ⬜ test_phase4_6_integration.py 6개 시나리오 PASS
-- ⬜ pytest 전체 테스트 회귀 없음
+- ✅ 기존 scheduler 관련 테스트 전체 PASS (Mock 반환값 수정)
+- ✅ pipeline_health 테스트에 validation 검증 추가
+- ✅ test_phase4_6_integration.py 8개 시나리오 PASS
+- ✅ pytest 전체 테스트 602 passed, 0 failed
 
 ---
 
