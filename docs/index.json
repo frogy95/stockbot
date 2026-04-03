@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T22:30:00+09:00",
+  "lastUpdated": "2026-04-02T09:25:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1565,6 +1565,24 @@
           "hash": "1956e55",
           "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-screener-date-source-filter",
+      "name": "1차 스크리닝 date_subq source 필터 누락으로 candidates 0 발생 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/screener-date-source-filter/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/75",
+      "deployedAt": "2026-04-02",
+      "description": "PrimaryScreener._fetch_today_and_prev의 date_subq가 전체 소스의 최신 날짜를 조회하여 KIS REST API ETF 시세(source=kis_rest)의 당일 날짜로 오염되면서 주식 prev_volume=0 발생 → 1차 스크리닝 candidates 0개 버그 수정. date_subq에 source='data_go_kr' 필터 추가.",
+      "commits": [
+        {
+          "hash": "244e1f6",
+          "message": "fix(screener): _fetch_today_and_prev date_subq를 data_go_kr 소스로 제한",
+          "date": "2026-04-02"
         }
       ]
     },

@@ -5,6 +5,21 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: 1차 스크리닝 date_subq source 필터 누락으로 candidates 0 발생 (2026-04-02)
+
+PR: https://github.com/frogy95/stockbot/pull/75
+
+- ✅ 자동 검증 완료 항목:
+  - pytest test_screener.py: 10 passed, 0 failed
+  - /api/v1/health 헬스체크: healthy (database: connected, redis: connected)
+  - 코드 리뷰: Critical/High 이슈 없음 (source 필터 2줄 추가)
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - Railway 배포 후 다음 장전(08:00 이후) 1차 스크리닝 실행 로그 확인 — primary_screen passed > 0 확인
+
+---
+
 ### 프로덕션 배포 - v1.0.0 (2026-04-02)
 
 포함 스프린트: Phase 4.7 Sprint 1
