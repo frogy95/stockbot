@@ -18,6 +18,7 @@ from core.clients.kis_rest import (
     CancelRequest,
     Balance,
     Position,
+    DailyPrice,
 )
 from core.clients.throttler import TokenBucketThrottler
 
@@ -441,3 +442,81 @@ async def test_sell_order_tr_id():
     headers = call_kwargs.kwargs.get("headers", call_kwargs[1].get("headers", {}))
 
     assert headers.get("tr_id") == "VTTC0801U"
+
+
+# ---------------------------------------------------------------------------
+# 일봉 조회 테스트
+# ---------------------------------------------------------------------------
+
+DAILY_PRICE_RESP = {
+    "rt_cd": "0",
+    "output2": [
+        {
+            "stck_bsop_date": "20260403",
+            "stck_oprc": "70500",
+            "stck_hgpr": "72000",
+            "stck_lwpr": "70000",
+            "stck_clpr": "71000",
+            "acml_vol": "12345678",
+            "prdy_ctrt": "0.71",
+        },
+        {
+            "stck_bsop_date": "20260402",
+            "stck_oprc": "69000",
+            "stck_hgpr": "71000",
+            "stck_lwpr": "68500",
+            "stck_clpr": "70500",
+            "acml_vol": "9876543",
+            "prdy_ctrt": "-0.50",
+        },
+    ],
+}
+
+
+@pytest.mark.asyncio
+async def test_get_daily_price():
+    """일봉 조회 → list[DailyPrice] 반환"""
+    client = _make_client(http_responses=[{"json": DAILY_PRICE_RESP}])
+
+    result = await client.get_daily_price("005930", "20260402", "20260403")
+
+    assert isinstance(result, list)
+    assert len(result) == 2
+    first = result[0]
+    assert isinstance(first, DailyPrice)
+    assert first.stock_code == "005930"
+    assert first.data_date == "20260403"
+    assert first.open_price == 70500
+    assert first.high_price == 72000
+    assert first.low_price == 70000
+    assert first.close_price == 71000
+    assert first.volume == 12345678
+    assert first.change_rate == 0.71
+
+    second = result[1]
+    assert second.data_date == "20260402"
+    assert second.close_price == 70500
+
+
+@pytest.mark.asyncio
+async def test_get_daily_price_empty():
+    """output2가 없으면 빈 리스트 반환"""
+    resp = {"rt_cd": "0", "output2": []}
+    client = _make_client(http_responses=[{"json": resp}])
+
+    result = await client.get_daily_price("005930", "20260402", "20260403")
+
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_get_daily_price_tr_id():
+    """일봉 조회 tr_id가 FHKST03010100인지 확인"""
+    client = _make_client(http_responses=[{"json": DAILY_PRICE_RESP}])
+
+    await client.get_daily_price("005930", "20260402", "20260403")
+
+    http = client._http
+    call_kwargs = http.get.call_args
+    headers = call_kwargs.kwargs.get("headers", call_kwargs[1].get("headers", {}))
+    assert headers.get("tr_id") == "FHKST03010100"

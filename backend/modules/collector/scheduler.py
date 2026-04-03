@@ -23,6 +23,7 @@ from modules.collector.models import CollectionResult, ValidationResult
 from modules.collector.validator import CollectionValidator
 from modules.collector.sources.data_go_kr import DataGoKrCollector
 from modules.collector.sources.kis_collector import KISCollector
+from modules.collector.sources.kis_daily_collector import KISDailyCollector
 from modules.collector.sources.kis_master import KISMasterCollector
 from modules.collector.sources.kis_realtime import (
     parse_raw_message,
@@ -488,9 +489,24 @@ class CollectorScheduler:
             if validation.passed:
                 await self._update_step_status("premarket", "success", collected_count=result.collected, validation=validation)
             else:
-                await self._update_step_status("premarket", "failed", error=validation.failure_reason, collected_count=result.collected, validation=validation)
-                await self._send_failure_alert("premarket", validation.failure_reason or "유효성 검증 실패")
-                logger.error("수집 실패: step=premarket reason=%s", validation.failure_reason)
+                logger.warning("포털 수집 실패, KIS 보조 수집 전환: reason=%s", validation.failure_reason)
+                kis_result = await self._run_kis_daily_fallback()
+                kis_validation = self._validator.validate_kis_daily(kis_result)
+                if kis_validation.passed:
+                    await self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation)
+                    logger.info("KIS 보조 수집 성공: collected=%d", kis_result.collected)
+                    logger.info(
+                        "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
+                        kis_result.collected, kis_result.failed, kis_result.total_target,
+                        "PASS",
+                    )
+                    await self._run_db_validation("premarket", "validate_premarket_db")
+                    return kis_result.collected
+                else:
+                    error_msg = f"이중 실패 — 포털: {validation.failure_reason}, KIS: {kis_validation.failure_reason}"
+                    await self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation)
+                    await self._send_failure_alert("premarket", error_msg)
+                    logger.error("이중 실패: step=premarket %s", error_msg)
             logger.info(
                 "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
                 result.collected, result.failed, result.total_target,
@@ -503,6 +519,17 @@ class CollectorScheduler:
             await self._update_step_status("premarket", "failed", error=str(e))
             await self._send_failure_alert("premarket", str(e))
             return 0
+
+    async def _run_kis_daily_fallback(self) -> CollectionResult:
+        """포털 수집 실패 시 KIS 일봉 보조 수집 실행."""
+        try:
+            client = self._inquiry_client or self._rest_client
+            async with self._session_factory() as db_session:
+                daily_collector = KISDailyCollector(client, db_session)
+                return await daily_collector.collect_all()
+        except Exception as e:
+            logger.exception("KIS 보조 수집 실패: %s", e)
+            return CollectionResult(collected=0, failed=0, total_target=0)
 
     async def _etf_collect(self) -> int:
         """08:15 ETF 시세 수집. 매 실행마다 독립 DB 세션 사용."""

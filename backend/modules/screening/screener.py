@@ -131,10 +131,10 @@ class PrimaryScreener:
         self, session: AsyncSession
     ) -> dict[str, dict]:
         """최신 2일 market_data + stocks 조인 → 종목별 당일/전일 매핑."""
-        # 최근 2개 날짜 조회 — data_go_kr 소스만 사용 (KIS 실시간 ETF 날짜 오염 방지)
+        # 최근 2개 날짜 조회 — data_go_kr/kis_daily 소스만 사용 (KIS 실시간 ETF 날짜 오염 방지)
         date_subq = (
             select(MarketData.data_date)
-            .where(MarketData.source == "data_go_kr")
+            .where(MarketData.source.in_(["data_go_kr", "kis_daily"]))
             .distinct()
             .order_by(desc(MarketData.data_date))
             .limit(2)
@@ -155,6 +155,7 @@ class PrimaryScreener:
                 Stock.stock_name,
                 Stock.stock_type,
                 Stock.market_type,
+                Stock.listed_shares,
             )
             .join(Stock, MarketData.stock_code == Stock.stock_code)
             .where(
@@ -183,6 +184,9 @@ class PrimaryScreener:
                 continue
             today_row = date_rows[0]
             prev_volume = date_rows[1]["volume"] if len(date_rows) > 1 else 0
+            market_cap = int(today_row["market_cap"] or 0)
+            if market_cap == 0 and today_row["listed_shares"] and today_row["close_price"]:
+                market_cap = int(today_row["listed_shares"]) * int(today_row["close_price"])
             mapped[code] = {
                 "stock_code": code,
                 "stock_name": today_row["stock_name"],
@@ -190,7 +194,7 @@ class PrimaryScreener:
                 "market_type": today_row["market_type"],
                 "volume": int(today_row["volume"] or 0),
                 "prev_volume": int(prev_volume or 0),
-                "market_cap": int(today_row["market_cap"] or 0),
+                "market_cap": market_cap,
                 "change_rate": float(today_row["change_rate"] or 0),
                 "close_price": int(today_row["close_price"] or 0),
                 "high_price": int(today_row["high_price"] or 0),

@@ -3,7 +3,7 @@
 **브랜치:** `hotfix/screener-date-source-filter`
 **담당자:** frogy95
 **리뷰어:** hotfix-close agent
-**상태:** ✅ 배포 완료
+**상태:** ✅ 배포 완료 (main PR #75 머지, develop 역머지 완료)
 **배포일:** 2026-04-02
 
 ---
@@ -48,6 +48,6 @@
 ---
 
 ## PR
-- **URL:** (PR 생성 후 업데이트)
+- **URL:** https://github.com/frogy95/stockbot/pull/75
 - **대상:** main
-- **역머지:** ⬜ develop에 역머지 필요
+- **역머지:** ✅ develop에 역머지 완료

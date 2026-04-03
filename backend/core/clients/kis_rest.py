@@ -78,6 +78,17 @@ class Position(BaseModel):
     profit_rate: float
 
 
+class DailyPrice(BaseModel):
+    stock_code: str
+    data_date: str
+    open_price: int
+    high_price: int
+    low_price: int
+    close_price: int
+    volume: int
+    change_rate: float
+
+
 # ---------------------------------------------------------------------------
 # 예외
 # ---------------------------------------------------------------------------
@@ -237,6 +248,38 @@ class KISRestClient:
             low=int(output.get("stck_lwpr", 0)),
             open_price=int(output.get("stck_oprc", 0)),
         )
+
+    async def get_daily_price(
+        self, stock_code: str, start_date: str, end_date: str
+    ) -> list[DailyPrice]:
+        """일봉 조회 (FHKST03010100) — output2 배열을 DailyPrice 리스트로 반환."""
+        data = await self._request(
+            "GET",
+            "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
+            tr_id="FHKST03010100",
+            params={
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD": stock_code,
+                "FID_INPUT_DATE_1": start_date,
+                "FID_INPUT_DATE_2": end_date,
+                "FID_PERIOD_DIV_CODE": "D",
+                "FID_ORG_ADJ_PRC": "0",
+            },
+        )
+
+        return [
+            DailyPrice(
+                stock_code=stock_code,
+                data_date=item.get("stck_bsop_date", ""),
+                open_price=int(item.get("stck_oprc", 0)),
+                high_price=int(item.get("stck_hgpr", 0)),
+                low_price=int(item.get("stck_lwpr", 0)),
+                close_price=int(item.get("stck_clpr", 0)),
+                volume=int(item.get("acml_vol", 0)),
+                change_rate=float(item.get("prdy_ctrt", 0)),
+            )
+            for item in data.get("output2", [])
+        ]
 
     async def get_orderbook(self, stock_code: str) -> Orderbook:
         """호가 조회"""

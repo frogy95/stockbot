@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.7 Sprint 1 완료
-- 현재 Phase: Phase 4.7 (1차 스크리닝 스코어링 구조 수정) ✅ 완료
-- 현재 Sprint: Phase 4.7 Sprint 1 ✅ 완료 (2026-04-02)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02)
+- 전체 진행률: Phase 0~4.8 Sprint 1 완료
+- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) 🔄 진행 중
+- 현재 Sprint: Phase 4.8 Sprint 2 📋 예정
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
@@ -56,6 +56,7 @@ Phase 0 (완료)
                           │     └─> Phase 4.5: 스케줄러 안정화 + 장애 복구
                           │           └─> Phase 4.6: 데이터 수집 파이프라인 근본 수리
                           │                 └─> Phase 4.7: 1차 스크리닝 스코어링 구조 수정
+                          │                       └─> Phase 4.8: EOD 데이터 수집 내결함성 강화
                           └─> Phase 5: 완전 자동 모드 + 성과 분석
                                 └─> Phase 6: 고도화 + 안정화
 ```
@@ -68,6 +69,7 @@ Phase 0 (완료)
 - Phase 2.6 -> 3: ETF 포함 완전한 수집 파이프라인이 매매 전략의 전제. 리스크 선행 -> 매매 전략 -> 텔레그램 알림 순서
 - Phase 3 -> 4: 매매 데이터(포지션, 주문, 신호)가 대시보드 표시 대상
 - Phase 4.6 -> 4.7: 수집 파이프라인 정상화 후 스크리닝 스코어링 구조 수정
+- Phase 4.7 -> 4.8: 스크리닝 정상화 후 데이터 수집 SPOF 해소 (공공데이터포털 단일 의존 → KIS 일봉 보조)
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
 - Phase 4, 5 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
@@ -630,6 +632,41 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 > Phase 상세 계획: `docs/phase/phase4.7/phase4.7.md` (2026-04-02)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
+
+---
+
+## Phase 4.8: EOD 데이터 수집 내결함성 강화 (Sprint 1~2) 🔄
+
+#### Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백 ✅ (2026-04-03)
+
+### 목표
+공공데이터포털 전일 OHLCV 미게시 시 1차 스크리닝이 0건 후보를 생성하는 구조적 SPOF 해소. KIS REST 일봉 API 보조 수집, 스케줄러 자동 폴백, 재시도 메커니즘 구현.
+
+### 작업 목록
+#### Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백
+- KISRestClient에 get_daily_price() 메서드 추가 (FHKST03010100)
+- KISDailyCollector 신규 클래스 (배치 수집, source="kis_daily")
+- scheduler._premarket_collect() 폴백: 포털 실패 시 KIS 보조 수집 자동 전환
+- screener._fetch_today_and_prev() source 필터 확장 (data_go_kr OR kis_daily)
+- CollectionValidator.validate_kis_daily() 보조 수집 검증
+
+#### Sprint 2: 재시도 스케줄 + 알림 + 모니터링
+- 08:30 포털 재시도 CronTrigger job
+- 텔레그램 알림 (보조 수집 전환/이중 실패 긴급)
+- 포털 vs KIS 데이터 cross-check (종가 1% 괴리 warning)
+- 재시도 성공 시 포털 데이터 우선 로직
+
+### 미확정 사항
+- KIS 일봉 API(FHKST03010100) 모의거래 지원 여부 → Sprint 1에서 사전 테스트
+- KIS 일봉에 시가총액 미포함 시 대체 전략 최종 확정
+
+### 기술 고려사항
+- 모의거래 Rate Limit(초당 1건)으로 전 종목 수집 시 ~42분 → inquiry_client(실전) 사용 또는 범위 축소
+- 실전 환경에서는 초당 20건, ~2분 내 완료 가능
+- market_data.source 필드로 "kis_daily" 구분 (ETF용 "kis_rest"와 별도)
+
+> Phase 상세 계획: `docs/phase/phase4.8/phase4.8.md` (2026-04-02)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 윤에이피(API 개발자) — 4명 검토 완료
 
 ---
 

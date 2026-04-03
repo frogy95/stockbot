@@ -112,6 +112,23 @@ class CollectionValidator:
             )
         return ValidationResult(passed=True, severity="info")
 
+    def validate_kis_daily(self, result: CollectionResult) -> ValidationResult:
+        if result.total_target == 0:
+            return ValidationResult(
+                passed=False,
+                failure_type="permanent",
+                failure_reason="KIS 보조 수집 대상 0건",
+            )
+        ratio = result.collected / result.total_target
+        if ratio < 0.8:
+            return ValidationResult(
+                passed=False,
+                failure_type="permanent",
+                failure_reason=f"KIS 보조 수집률 부족: {ratio:.0%} < 80%",
+                details={"collected": result.collected, "total_target": result.total_target},
+            )
+        return ValidationResult(passed=True, severity="info")
+
     def validate_sentiment(self, result: CollectionResult) -> ValidationResult:
         if result.total_target == 0:
             return ValidationResult(

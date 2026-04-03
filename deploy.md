@@ -5,46 +5,36 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v1.0.0 (2026-04-02)
+### Phase 4.8 Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백 (2026-04-03)
 
-포함 스프린트: Phase 4.7 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/73
+PR: https://github.com/frogy95/stockbot/pull/77
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+#### 코드 리뷰 결과 (2026-04-03)
 
-#### 자동 검증 결과
+- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용
+- ✅ 성능: N+1 없음, 배치 50종목 단위 수집
+- ✅ 테스트: 신규 기능 테스트 추가 (단위 + 통합), 661개 전체 테스트 통과
+- ⚠️ Medium 이슈 1건: KIS 폴백 성공 시 `_premarket_collect()` 반환값이 포털 실패 건수를 반환 (scheduler.py L503-509) — Sprint 2에서 수정 권장, PR 코멘트 등록 완료
 
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+#### 자동 검증 결과 (2026-04-03)
 
-#### 수동 검증 필요 항목
+- ✅ pytest 전체: 661 passed, 56 warnings (Docker 로컬)
+  - test_kis_rest.py: 3개 통과 (get_daily_price, empty, tr_id)
+  - test_kis_daily_collector.py: 5개 통과 (collect_all, batch_commit, source_tag, data_date, min_success_rate)
+  - test_collection_validator.py: validate_kis_daily 3개 포함 전체 통과
+  - test_phase4_8_integration.py: 4개 통과 (폴백 시나리오, 이중 실패, market_cap 추정)
+  - test_scheduler.py: 폴백 관련 4개 포함 전체 통과
+  - test_screener.py: kis_daily 소스 필터 + market_cap 추정 관련 4개 포함 전체 통과
 
-- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
+#### Phase 문서 반영 (2026-04-03)
 
----
-
-### Phase 4.7 Sprint 1: 1차 스크리닝 3팩터 분리 + 임계값 조정 (2026-04-02)
-
-PR: https://github.com/frogy95/stockbot/pull/72
-
-#### 코드 리뷰 결과 (2026-04-02)
-
-- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음
-- Medium 이슈 1건: FactorScorer factors 파라미터에 부분 키만 전달 시 KeyError 발생 가능 (현재 호출부는 모두 안전, Phase 문서 미해결 사항 #7에 기록)
-
-#### 자동 검증 결과 (2026-04-02)
-
-- ✅ pytest 638 passed (0 failed, 53 warnings)
-- ✅ API health check: 200 OK (database: connected, redis: connected)
-- ✅ 데모 모드 API 검증: 1차 스크리닝 3팩터만 반환 확인 (volume_factor, momentum_factor, volatility_factor)
-- ✅ PrimaryScreener pass_threshold=60.0 확인
-- ✅ RealtimeScreener pass_threshold=75.0 확인
-- ✅ FactorScorer 하위 호환 확인 (기본값 STOCK_FACTORS/ETF_FACTORS 사용)
-- ✅ PRIMARY_FACTORS len=3, PRIMARY_WEIGHTS sum=1.0 확인
+- ✅ docs/phase/phase4.8/phase4.8.md Sprint 1 완료 표시
+- ✅ 완료 기준 테이블 업데이트 (Sprint 1 항목 ✅, Sprint 2 항목 ⬜ 유지)
+- ✅ 미해결 사항 테이블: 항목 1-3 해결 처리, 항목 6 (Medium 이슈) 추가
 
 #### 수동 검증 필요 항목
 
-- ⬜ 프로덕션 배포 후 다음 거래일 primary_screen passed > 0 확인 (장중 확인 필요)
+- ⬜ 프로덕션 배포 후 다음 거래일 premarket 폴백 동작 확인 (장전 포털 실패 시 KIS 보조 수집 자동 전환 로그 확인)
 
 ---
 
