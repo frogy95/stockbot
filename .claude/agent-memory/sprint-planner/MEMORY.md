@@ -33,9 +33,11 @@
 
 - [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, ✅ 완료 (2026-04-03) / PR: https://github.com/frogy95/stockbot/pull/77
 
+- Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, 🔄 계획 수립 완료 (2026-04-03)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링 (Sprint 1 완료, 착수 가능)
+- Phase 4.8 Sprint 2 — 계획 수립 완료, 구현 착수 가능
 - Phase 5 Sprint 1 — Phase 4.8 완료 후 착수 가능
 
 ## 핵심 주의사항

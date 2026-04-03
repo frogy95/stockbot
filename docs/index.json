@@ -1523,6 +1523,53 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "phase4.8-sprint2",
+          "title": "재시도 스케줄 + 알림 + 모니터링",
+          "status": "planned",
+          "branch": "phase4.8-sprint2",
+          "sprintDoc": "docs/phase/phase4.8/sprint2/sprint2.md",
+          "prUrl": null,
+          "progress": { "total": 4, "completed": 0 },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KIS 폴백 반환값 수정 + 알림 메서드 추가",
+              "path": "backend/modules/collector/scheduler.py",
+              "testPlan": "tests/test_scheduler_telegram_alert.py",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "08:30 포털 재시도 job + 포털 우선 로직",
+              "path": "backend/modules/collector/scheduler.py",
+              "testPlan": "tests/test_scheduler_retry.py",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "데이터 cross-check (종가 1% 괴리 warning)",
+              "path": "backend/modules/collector/validator.py",
+              "testPlan": "tests/test_validator_crosscheck.py",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "통합 테스트 (재시도 + 알림 + cross-check)",
+              "path": "backend/tests/test_phase4_8_integration.py",
+              "testPlan": "tests/test_phase4_8_integration.py",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     }
