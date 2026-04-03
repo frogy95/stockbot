@@ -31,11 +31,11 @@
 - Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/62
 - Phase 4.7 Sprint 1 — 1차 스크리닝 3팩터 분리 + 임계값 조정, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/72
 
-- [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, 🔄 계획 수립 완료 (2026-04-02)
+- [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, ✅ 완료 (2026-04-03) / PR: https://github.com/frogy95/stockbot/pull/77
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링 (Sprint 1 이후)
+- Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링 (Sprint 1 완료, 착수 가능)
 - Phase 5 Sprint 1 — Phase 4.8 완료 후 착수 가능
 
 ## 핵심 주의사항

@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T09:25:00+09:00",
+  "lastUpdated": "2026-04-03T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1471,18 +1471,19 @@
         {
           "id": "phase4.8-sprint1",
           "title": "KIS 일봉 보조 수집기 + 스케줄러 폴백",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase4.8-sprint1",
           "sprintDoc": "docs/phase/phase4.8/sprint1/sprint1.md",
-          "progress": { "total": 5, "completed": 0 },
+          "prUrl": "https://github.com/frogy95/stockbot/pull/77",
+          "progress": { "total": 5, "completed": 5 },
           "tasks": [
             {
               "id": "task1",
               "title": "KIS REST 일봉 조회 메서드 추가",
               "path": "backend/core/clients/kis_rest.py",
               "testPlan": "tests/test_kis_rest.py::test_get_daily_price",
-              "testResult": null,
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1490,8 +1491,8 @@
               "title": "KIS 일봉 보조 수집기 신규 생성",
               "path": "backend/modules/collector/sources/kis_daily_collector.py",
               "testPlan": "tests/test_kis_daily_collector.py",
-              "testResult": null,
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1499,8 +1500,8 @@
               "title": "스케줄러 폴백 로직 + validator 확장",
               "path": "backend/modules/collector/scheduler.py",
               "testPlan": "tests/test_scheduler.py::*fallback*",
-              "testResult": null,
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1508,8 +1509,8 @@
               "title": "스크리닝 소스 필터 확장 + market_cap 추정",
               "path": "backend/modules/screening/screener.py",
               "testPlan": "tests/test_screener.py::*kis_daily*",
-              "testResult": null,
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -1517,8 +1518,8 @@
               "title": "통합 테스트 (폴백 시나리오)",
               "path": "backend/tests/test_phase4_8_integration.py",
               "testPlan": "tests/test_phase4_8_integration.py",
-              "testResult": null,
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             }
           ]
