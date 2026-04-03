@@ -342,6 +342,158 @@ class TestBuildCandidates:
 # save_results 테스트
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# kis_daily 소스 필터 + market_cap 추정 테스트
+# ---------------------------------------------------------------------------
+
+class TestFetchTodayAndPrev:
+    """_fetch_today_and_prev 소스 필터 확장 + market_cap 추정 검증."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_includes_kis_daily_source(self):
+        """date_subq가 source IN ('data_go_kr', 'kis_daily')를 포함하는지 확인."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        captured_stmts = []
+
+        async def capture_execute(stmt, *args, **kwargs):
+            captured_stmts.append(stmt)
+            mock_result = MagicMock()
+            mock_result.mappings.return_value.all.return_value = []
+            return mock_result
+
+        session.execute = capture_execute
+
+        await screener._fetch_today_and_prev(session)
+
+        assert len(captured_stmts) >= 1
+        compiled = str(captured_stmts[0].compile(compile_kwargs={"literal_binds": True}))
+        assert "kis_daily" in compiled
+
+    @pytest.mark.asyncio
+    async def test_market_cap_estimation_from_listed_shares(self):
+        """market_cap=None이고 listed_shares와 close_price가 있으면 추정값 반환."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        today = date.today()
+        row = {
+            "stock_code": "005930",
+            "data_date": today,
+            "stock_name": "삼성전자",
+            "stock_type": "STOCK",
+            "market_type": "KOSPI",
+            "volume": 100_000,
+            "market_cap": None,
+            "listed_shares": 5_000_000_000,
+            "change_rate": Decimal("1.5"),
+            "close_price": 70_000,
+            "high_price": 72_000,
+            "low_price": 69_000,
+            "open_price": 70_000,
+        }
+
+        mock_result = MagicMock()
+        mock_result.mappings.return_value.all.return_value = [row]
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await screener._fetch_today_and_prev(session)
+
+        assert "005930" in result
+        expected_cap = 5_000_000_000 * 70_000
+        assert result["005930"]["market_cap"] == expected_cap
+
+    @pytest.mark.asyncio
+    async def test_market_cap_zero_when_no_listed_shares(self):
+        """listed_shares가 None이면 market_cap=0 유지."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        today = date.today()
+        row = {
+            "stock_code": "005930",
+            "data_date": today,
+            "stock_name": "삼성전자",
+            "stock_type": "STOCK",
+            "market_type": "KOSPI",
+            "volume": 100_000,
+            "market_cap": None,
+            "listed_shares": None,
+            "change_rate": Decimal("1.5"),
+            "close_price": 70_000,
+            "high_price": 72_000,
+            "low_price": 69_000,
+            "open_price": 70_000,
+        }
+
+        mock_result = MagicMock()
+        mock_result.mappings.return_value.all.return_value = [row]
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await screener._fetch_today_and_prev(session)
+
+        assert "005930" in result
+        assert result["005930"]["market_cap"] == 0
+
+    @pytest.mark.asyncio
+    async def test_mixed_source_latest_date_priority(self):
+        """동일 종목에 data_go_kr(최신)과 kis_daily(이전 날짜)가 있으면 최신 날짜 우선."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        today = date.today()
+        from datetime import timedelta
+        yesterday = today - timedelta(days=1)
+
+        rows = [
+            # data_go_kr (최신: today)
+            {
+                "stock_code": "005930",
+                "data_date": today,
+                "stock_name": "삼성전자",
+                "stock_type": "STOCK",
+                "market_type": "KOSPI",
+                "volume": 200_000,
+                "market_cap": 400_000_000_000_000,
+                "listed_shares": None,
+                "change_rate": Decimal("2.0"),
+                "close_price": 80_000,
+                "high_price": 82_000,
+                "low_price": 78_000,
+                "open_price": 79_000,
+            },
+            # kis_daily (이전: yesterday — prev_volume으로 사용)
+            {
+                "stock_code": "005930",
+                "data_date": yesterday,
+                "stock_name": "삼성전자",
+                "stock_type": "STOCK",
+                "market_type": "KOSPI",
+                "volume": 100_000,
+                "market_cap": None,
+                "listed_shares": None,
+                "change_rate": Decimal("1.0"),
+                "close_price": 78_000,
+                "high_price": 80_000,
+                "low_price": 76_000,
+                "open_price": 77_000,
+            },
+        ]
+
+        mock_result = MagicMock()
+        mock_result.mappings.return_value.all.return_value = rows
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await screener._fetch_today_and_prev(session)
+
+        assert "005930" in result
+        # 최신 날짜 데이터가 당일로 선택됨
+        assert result["005930"]["close_price"] == 80_000
+        # 이전 날짜가 prev_volume으로 사용됨
+        assert result["005930"]["prev_volume"] == 100_000
+
+
 class TestSaveResults:
     """screening_results 테이블에 결과 저장."""
 
