@@ -495,6 +495,13 @@ class CollectorScheduler:
                 if kis_validation.passed:
                     await self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation)
                     logger.info("KIS 보조 수집 성공: collected=%d", kis_result.collected)
+                    logger.info(
+                        "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
+                        kis_result.collected, kis_result.failed, kis_result.total_target,
+                        "PASS",
+                    )
+                    await self._run_db_validation("premarket", "validate_premarket_db")
+                    return kis_result.collected
                 else:
                     error_msg = f"이중 실패 — 포털: {validation.failure_reason}, KIS: {kis_validation.failure_reason}"
                     await self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation)
