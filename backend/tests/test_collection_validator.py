@@ -140,6 +140,26 @@ class TestValidateSentiment:
         assert v.severity == "warning"
 
 
+class TestValidateKisDaily:
+    def test_pass_above_80_percent(self, validator):
+        result = CollectionResult(collected=80, total_target=100)
+        v = validator.validate_kis_daily(result)
+        assert v.passed is True
+        assert v.severity == "info"
+
+    def test_fail_low_rate(self, validator):
+        result = CollectionResult(collected=79, total_target=100)
+        v = validator.validate_kis_daily(result)
+        assert v.passed is False
+        assert v.failure_type == "permanent"
+        assert "80%" in v.failure_reason
+
+    def test_pass_exact_threshold(self, validator):
+        result = CollectionResult(collected=80, total_target=100)
+        v = validator.validate_kis_daily(result)
+        assert v.passed is True
+
+
 class TestNullRatio:
     def test_zero_collected(self):
         result = CollectionResult(collected=0)
