@@ -93,6 +93,7 @@
 |--------|------|----------|--------|
 | 1 ✅ | KIS 일봉 보조 수집기 + 스케줄러 폴백 | KIS 일봉 API 메서드, KISDailyCollector, 스케줄러 폴백 로직, 스크리닝 소스 필터 확장 | 없음 |
 | 2 ✅ | 재시도 스케줄 + 알림 + 모니터링 | 08:30 재시도 job, 텔레그램 알림, cross-check 로깅, 검증 강화 | Sprint 1 |
+| 3 | 장전 파이프라인 체인 구조 전환 | 개별 CronTrigger 6개 제거, `_run_scheduled_pipeline()` 래퍼 추가, 08:00 단일 CronTrigger 등록, 테스트 수정 | Sprint 2 |
 
 ---
 
@@ -156,6 +157,68 @@
 
 ---
 
+## Sprint 3 상세 — 장전 파이프라인 체인 구조 전환
+
+> **배경**: 스케줄러의 개별 CronTrigger 구조는 KIS 폴백 수집(~3~5분)이 08:10 이전에 완료되지 않으면 primary_screen이 스킵되어 당일 자동 스크리닝이 전체 무력화되는 설계 결함. 수동 복구용 `run_premarket_pipeline()`은 이미 올바른 체인 방식으로 구현되어 있으므로, 이를 자동 스케줄에도 적용한다.
+>
+> **검토 보고서**: `docs/phase/phase4.8/phase4.8-sprint3-review.md` (전문가 4명 전원 합의)
+
+### 백엔드
+
+| 파일 | 작업 | 신규/수정 |
+|------|------|----------|
+| `backend/modules/collector/scheduler.py` | `start()`: 장전 CronTrigger 6개 제거 (`premarket_collect`, `etf_master_collect`, `primary_screen`, `etf_collect`, `dart_collect`, `sentiment_collect`) | 수정 |
+| `backend/modules/collector/scheduler.py` | `_run_scheduled_pipeline()` 래퍼 메서드 추가 (락 선점 + `run_premarket_pipeline()` 호출) | 수정 |
+| `backend/modules/collector/scheduler.py` | `start()`: `_run_scheduled_pipeline` 08:00 CronTrigger 단일 등록 | 수정 |
+| `backend/tests/test_pipeline_chain.py` | 체인 파이프라인 동작 검증 테스트 (성공/실패/락 충돌 시나리오) | **신규** |
+
+### 유지 대상
+
+| 항목 | 이유 |
+|------|------|
+| `market_open`, `market_close`, `market_open_recovery`, `premarket_retry`, `secondary_screen` CronTrigger | 체인 외 독립 실행 job — 유지 |
+| 개별 수동 트리거 API (`trigger_premarket`, `trigger_etf` 등) | 디버깅/운영용 — 유지 |
+| `run_premarket_pipeline()` 수동 트리거 | 장애 복구용 — 유지 |
+
+### 구현 상세
+
+#### `_run_scheduled_pipeline()` 래퍼
+
+```python
+async def _run_scheduled_pipeline(self) -> None:
+    """08:00 CronTrigger용 장전 파이프라인. 락 선점 후 체인 실행."""
+    existing = await self._redis.get(PIPELINE_RUNNING_KEY)
+    if existing:
+        logger.warning("파이프라인 이미 실행 중 — 자동 스케줄 스킵")
+        return
+    await self._redis.set(PIPELINE_RUNNING_KEY, "auto", ttl=STATE_TTL)
+    await self.run_premarket_pipeline()
+```
+
+#### 체인 실행 순서 (`run_premarket_pipeline` 기존 구현 그대로)
+
+```
+08:00 CronTrigger → _run_scheduled_pipeline()
+    ├→ _premarket_collect()      (완료 후)
+    ├→ _etf_master_collect()     (완료 후)
+    ├→ _primary_screen()         (완료 후, primary_screener 가드 유지)
+    ├→ _etf_collect()            (완료 후)
+    ├→ _dart_collect()           (완료 후)
+    └→ _sentiment_collect()
+08:30 CronTrigger → _premarket_retry()   (체인 외 독립 실행, 유지)
+```
+
+### 주의사항
+
+| # | 항목 | 심각도 |
+|---|------|--------|
+| 1 | `PIPELINE_RUNNING_KEY` 락 선점을 래퍼에서 처리 — 수동/자동 충돌 방지 | ⚠️ 필수 |
+| 2 | `if self._primary_screener:` 가드 체인 내 유지 | ⚠️ 필수 |
+| 3 | `premarket_retry` job은 체인 밖 독립 유지 | ⚠️ 필수 |
+| 4 | 파이프라인 전체 소요 시간 로깅 (09:00 전 완료 모니터링) | 권고 |
+
+---
+
 ## 미해결 사항 / 리스크
 
 | # | 항목 | 심각도 | 담당 | 대응 |
@@ -183,3 +246,4 @@
 | 데이터 cross-check | 종가 1% 괴리 warning 로깅 | ✅ 완료 |
 | pipeline_healthy 연동 | 보조 수집 성공 시 healthy, 이중 실패 시 false | ✅ 완료 |
 | 통합 테스트 | 포털 실패 → KIS 폴백 → 스크리닝 정상 동작 시나리오 | ✅ 완료 |
+| 장전 파이프라인 체인 전환 | 08:00 단일 CronTrigger, 개별 장전 job 제거, 락 보호 | ⬜ Sprint 3 |
