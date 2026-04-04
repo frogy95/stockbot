@@ -610,6 +610,13 @@ class CollectorScheduler:
                 )
                 logger.info("포털 재시도 성공: collected=%d", result.collected)
                 await self._run_db_validation("premarket", "validate_premarket_db")
+                # cross-check: 재시도 성공 시에도 KIS 종가와 괴리 검증 (비중단)
+                if result.data_date:
+                    try:
+                        async with self._session_factory() as db_session:
+                            await self._validator.cross_check_prices(db_session, result.data_date)
+                    except Exception as e:
+                        logger.warning("cross-check 오류 (비중단): %s", e)
             else:
                 logger.warning(
                     "포털 재시도 실패 (KIS 보조 데이터 유지): reason=%s",
