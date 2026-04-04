@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-03T00:00:00+09:00",
+  "lastUpdated": "2026-04-05T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1465,7 +1465,7 @@
     {
       "id": "phase4.8",
       "title": "EOD 데이터 수집 내결함성 강화",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase4.8/phase4.8.md",
       "sprints": [
         {
@@ -1527,47 +1527,71 @@
         {
           "id": "phase4.8-sprint2",
           "title": "재시도 스케줄 + 알림 + 모니터링",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase4.8-sprint2",
           "sprintDoc": "docs/phase/phase4.8/sprint2/sprint2.md",
           "prUrl": null,
-          "progress": { "total": 4, "completed": 0 },
+          "progress": { "total": 4, "completed": 4 },
           "tasks": [
             {
               "id": "task1",
               "title": "KIS 폴백 반환값 수정 + 알림 메서드 추가",
               "path": "backend/modules/collector/scheduler.py",
               "testPlan": "tests/test_scheduler_telegram_alert.py",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "fbd4ce7",
+                  "message": "feat(phase4.8-sprint2): task1 -- KIS 폴백 알림 메서드 + 반환값 정리",
+                  "date": "2026-04-05"
+                }
+              ]
             },
             {
               "id": "task2",
               "title": "08:30 포털 재시도 job + 포털 우선 로직",
               "path": "backend/modules/collector/scheduler.py",
               "testPlan": "tests/test_scheduler_retry.py",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "1ea6dc5",
+                  "message": "feat(phase4.8-sprint2): task2 -- 08:30 포털 재시도 job + 포털 우선 로직",
+                  "date": "2026-04-05"
+                }
+              ]
             },
             {
               "id": "task3",
               "title": "데이터 cross-check (종가 1% 괴리 warning)",
               "path": "backend/modules/collector/validator.py",
               "testPlan": "tests/test_validator_crosscheck.py",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "e98ae3b",
+                  "message": "feat(phase4.8-sprint2): task3 -- 데이터 cross-check 종가 1% 괴리 warning",
+                  "date": "2026-04-05"
+                }
+              ]
             },
             {
               "id": "task4",
               "title": "통합 테스트 (재시도 + 알림 + cross-check)",
               "path": "backend/tests/test_phase4_8_integration.py",
               "testPlan": "tests/test_phase4_8_integration.py",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "fa706ba",
+                  "message": "feat(phase4.8-sprint2): task4 -- 재시도+알림+cross-check 통합 테스트",
+                  "date": "2026-04-05"
+                }
+              ]
             }
           ]
         }

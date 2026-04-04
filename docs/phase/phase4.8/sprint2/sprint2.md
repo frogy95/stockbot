@@ -6,9 +6,10 @@
 
 **Tech Stack:** APScheduler CronTrigger, TelegramBot.send_notification, SQLAlchemy async
 
-**Sprint 기간:** 2026-04-03 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-03 ~ 2026-04-05
 **이전 스프린트:** Sprint 1 (661 passed, PR #77)
 **브랜치명:** `phase4.8-sprint2`
+**상태:** ✅ 완료 (2026-04-05)
 
 ---
 
@@ -73,9 +74,9 @@ git commit -m "feat(phase4.8-sprint2): task1 -- KIS 폴백 알림 메서드 + �
 ```
 
 **완료 기준:**
-- ⬜ KIS 폴백 성공 시 `[정보]` 알림 발송 테스트 통과
-- ⬜ 이중 실패 시 `[긴급]` 알림 발송 테스트 통과
-- ⬜ 기존 telegram alert 테스트 3개 회귀 없음
+- ✅ KIS 폴백 성공 시 `[정보]` 알림 발송 테스트 통과
+- ✅ 이중 실패 시 `[긴급]` 알림 발송 테스트 통과
+- ✅ 기존 telegram alert 테스트 3개 회귀 없음
 
 ---
 
@@ -123,10 +124,10 @@ git commit -m "feat(phase4.8-sprint2): task2 -- 08:30 포털 재시도 job + 포
 ```
 
 **완료 기준:**
-- ⬜ premarket_retry job이 08:30에 등록됨
-- ⬜ 포털 성공 시 재시도 스킵
-- ⬜ 재시도 성공 시 포털 데이터 우선으로 status 업데이트
-- ⬜ 재시도 실패 시 기존 KIS 보조 데이터 유지
+- ✅ premarket_retry job이 08:30에 등록됨
+- ✅ 포털 성공 시 재시도 스킵
+- ✅ 재시도 성공 시 포털 데이터 우선으로 status 업데이트
+- ✅ 재시도 실패 시 기존 KIS 보조 데이터 유지
 
 ---
 
@@ -171,9 +172,9 @@ git commit -m "feat(phase4.8-sprint2): task3 -- 데이터 cross-check 종가 1% 
 ```
 
 **완료 기준:**
-- ⬜ cross_check_prices 메서드 동작 확인
-- ⬜ 1% 이상 괴리 시 warning 로그 출력
-- ⬜ 양쪽 모두 있는 종목만 비교 (한쪽만 있으면 스킵)
+- ✅ cross_check_prices 메서드 동작 확인
+- ✅ 1% 이상 괴리 시 warning 로그 출력
+- ✅ 양쪽 모두 있는 종목만 비교 (한쪽만 있으면 스킵)
 
 ---
 
@@ -201,8 +202,8 @@ git commit -m "feat(phase4.8-sprint2): task4 -- 재시도+알림+cross-check 통
 ```
 
 **완료 기준:**
-- ⬜ 3개 통합 시나리오 테스트 통과
-- ⬜ 전체 pytest 회귀 없음
+- ✅ 3개 통합 시나리오 테스트 통과 (674 passed 전체)
+- ✅ 전체 pytest 회귀 없음
 
 ---
 
