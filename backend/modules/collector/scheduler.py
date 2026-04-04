@@ -520,10 +520,13 @@ class CollectorScheduler:
             await self._save_last_timestamp("premarket", self._last_premarket)
             if validation.passed:
                 await self._update_step_status("premarket", "success", collected_count=result.collected, validation=validation)
-                # cross-check: 포털 수집 성공 시 KIS 종가와 괴리 검증
+                # cross-check: 포털 수집 성공 시 KIS 종가와 괴리 검증 (비중단)
                 if result.data_date:
-                    async with self._session_factory() as db_session:
-                        await self._validator.cross_check_prices(db_session, result.data_date)
+                    try:
+                        async with self._session_factory() as db_session:
+                            await self._validator.cross_check_prices(db_session, result.data_date)
+                    except Exception as e:
+                        logger.warning("cross-check 오류 (비중단): %s", e)
             else:
                 logger.warning("포털 수집 실패, KIS 보조 수집 전환: reason=%s", validation.failure_reason)
                 kis_result = await self._run_kis_daily_fallback()
