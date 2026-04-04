@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-05T10:00:00+09:00",
+  "lastUpdated": "2026-04-05T10:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1901,6 +1901,14 @@
       "description": "Phase 4.8 프로덕션 배포 — KIS 일봉 폴백 수집기 (Sprint 1), EOD 수집 내결함성 완성 재시도 스케줄 + 알림 + 모니터링 (Sprint 2)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/79",
       "version": "v1.1.0"
+    },
+    {
+      "date": "2026-04-05",
+      "type": "sprint",
+      "ref": "phase4.8-sprint3",
+      "description": "Phase 4.8 Sprint 3 프로덕션 배포 — 장전 파이프라인 체인 구조 전환 (CronTrigger 6개 → 단일 premarket_pipeline 체인)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/81",
+      "version": "v1.2.0"
     }
   ]
 }
