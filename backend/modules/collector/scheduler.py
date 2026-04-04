@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -255,18 +256,18 @@ class CollectorScheduler:
             logger.warning("파이프라인 이미 실행 중 -- 자동 스케줄 스킵")
             return
         await self._redis.set(PIPELINE_RUNNING_KEY, "auto", ttl=STATE_TTL)
-        start_time = datetime.now()
+        t0 = time.monotonic()
         logger.info("장전 파이프라인 시작 (자동 스케줄)")
         try:
             await self.run_premarket_pipeline()
         finally:
-            elapsed = (datetime.now() - start_time).total_seconds()
-            logger.info("장전 파이프라인 종료 (자동 스케줄, 소요: %.1f초)", elapsed)
+            logger.info("장전 파이프라인 종료 (자동 스케줄, 소요: %.1f초)", time.monotonic() - t0)
 
     async def run_premarket_pipeline(self) -> dict:
-        """장전 파이프라인 수동 실행 오케스트레이터.
+        """장전 파이프라인 오케스트레이터.
 
-        락 선점은 API 핸들러가 담당한다. 이 메서드는 단계 실행 후 finally에서 락을 해제한다.
+        락 선점은 호출자(API 핸들러 또는 _run_scheduled_pipeline)가 담당한다.
+        이 메서드는 단계를 순차 실행하고 finally에서 락을 해제한다.
         실패한 단계의 의존 단계는 스킵되지만 독립 단계는 계속 실행한다.
         """
         try:

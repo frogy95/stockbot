@@ -36,37 +36,37 @@ def _make_scheduler() -> CollectorScheduler:
 
 @pytest.mark.asyncio
 async def test_etf_master_collect_job_registered_at_0810():
-    """etf_master_collect job이 08:10 KST로 등록되는지 확인."""
+    """etf_master_collect는 체인 파이프라인(premarket_pipeline, 08:00)으로 통합됨을 확인."""
     scheduler = _make_scheduler()
     await scheduler.start()
 
     job_ids = [job["id"] for job in scheduler.get_status()["next_jobs"]]
-    assert "etf_master_collect" in job_ids
+    assert "premarket_pipeline" in job_ids
+    assert "etf_master_collect" not in job_ids
 
     from apscheduler.triggers.cron import CronTrigger
-    job = scheduler._scheduler.get_job("etf_master_collect")
+    job = scheduler._scheduler.get_job("premarket_pipeline")
     assert job is not None
     trigger = job.trigger
     assert isinstance(trigger, CronTrigger)
     fields = {f.name: str(f) for f in trigger.fields}
     assert fields["hour"] == "8"
-    assert fields["minute"] == "10"
+    assert fields["minute"] == "0"
 
     await scheduler.stop()
 
 
 @pytest.mark.asyncio
 async def test_etf_collect_job_at_0815():
-    """etf_collect job이 08:15 KST로 변경되었는지 확인 (기존 08:05 → 08:15)."""
+    """etf_collect는 체인 파이프라인으로 통합되어 개별 job이 등록되지 않음을 확인."""
     scheduler = _make_scheduler()
     await scheduler.start()
 
-    from apscheduler.triggers.cron import CronTrigger
     job = scheduler._scheduler.get_job("etf_collect")
-    assert job is not None
-    fields = {f.name: str(f) for f in job.trigger.fields}
-    assert fields["hour"] == "8"
-    assert fields["minute"] == "15"
+    assert job is None  # 개별 job 없음, premarket_pipeline 체인 내에서 처리
+
+    pipeline_job = scheduler._scheduler.get_job("premarket_pipeline")
+    assert pipeline_job is not None
 
     await scheduler.stop()
 

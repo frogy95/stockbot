@@ -56,7 +56,6 @@ async def test_scheduler_registers_jobs():
     assert "market_close" in job_ids
     assert "market_open_recovery" in job_ids
     assert "premarket_retry" in job_ids
-    # 개별 장전 job은 더 이상 등록되지 않음
     assert "premarket_collect" not in job_ids
     assert "etf_master_collect" not in job_ids
     assert "primary_screen" not in job_ids
