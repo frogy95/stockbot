@@ -8,7 +8,7 @@
 
 **Sprint 기간:** 2026-04-05 ~ 2026-04-05
 **상태:** ✅ 완료
-**PR:** (작성 예정)
+**PR:** https://github.com/frogy95/stockbot/pull/80
 **이전 스프린트:** Sprint 2 (674 passed, PR #78)
 **브랜치명:** `phase4.8-sprint3`
 

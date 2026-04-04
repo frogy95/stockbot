@@ -7,7 +7,7 @@
 
 ### Phase 4.8 Sprint 3: 장전 파이프라인 체인 구조 전환 (2026-04-05)
 
-PR: (작성 예정)
+PR: https://github.com/frogy95/stockbot/pull/80
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

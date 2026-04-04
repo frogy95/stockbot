@@ -33,11 +33,11 @@
 
 - [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, ✅ 완료 (2026-04-03) / PR: https://github.com/frogy95/stockbot/pull/77
 - Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/78
-- Phase 4.8 Sprint 3 — 장전 파이프라인 체인 구조 전환, 🔄 계획 수립 완료 (2026-04-05)
+- Phase 4.8 Sprint 3 — 장전 파이프라인 체인 구조 전환, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/80
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 4.8 Sprint 3 — 계획 수립 완료, 구현 대기
+- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.8 완료, Phase 5 계획 필요)
 
 ## 핵심 주의사항
 
