@@ -1,6 +1,6 @@
 # Phase 4.8: EOD 데이터 수집 내결함성 강화 — 실행 계획
 
-> **Status**: Sprint 1 완료 (2026-04-03), Sprint 2 진행 예정
+> **Status**: Sprint 1 완료 (2026-04-03), Sprint 2 완료 (2026-04-05) — Phase 4.8 전체 완료
 > **ROADMAP 참조**: `ROADMAP.md` Phase 4.8
 > **검토 리포트**:
 >
@@ -92,7 +92,7 @@
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
 | 1 ✅ | KIS 일봉 보조 수집기 + 스케줄러 폴백 | KIS 일봉 API 메서드, KISDailyCollector, 스케줄러 폴백 로직, 스크리닝 소스 필터 확장 | 없음 |
-| 2 | 재시도 스케줄 + 알림 + 모니터링 | 08:30 재시도 job, 텔레그램 알림, cross-check 로깅, 검증 강화 | Sprint 1 |
+| 2 ✅ | 재시도 스케줄 + 알림 + 모니터링 | 08:30 재시도 job, 텔레그램 알림, cross-check 로깅, 검증 강화 | Sprint 1 |
 
 ---
 
@@ -128,7 +128,9 @@
 
 ---
 
-## Sprint 2 상세 — 재시도 스케줄 + 알림 + 모니터링
+## Sprint 2 상세 — 재시도 스케줄 + 알림 + 모니터링 ✅ 완료
+
+> PR #78 머지 대기 (2026-04-05). 674개 테스트 통과. Medium 이슈 1건: `_premarket_retry` 성공 후 cross_check_prices 호출 누락 → Phase 5에서 개선 권장.
 
 ### 백엔드
 
@@ -163,7 +165,8 @@
 | 3 | ~~KIS 일봉에 시가총액/상장주식수 미포함~~ | ~~⚠️~~ | 박퀀트 | ✅ 해결 — stocks.listed_shares * close_price 추정 로직 구현 (Sprint 1) |
 | 4 | 포털+KIS 이중 실패 시 매매 불가 | ✅ 확정 | 최리스크 | pipeline_healthy=false 유지, 매매 자동 중단 (기존 메커니즘) |
 | 5 | 포털 재시도 성공 시 KIS 보조 데이터와 공존 | ⚠️ | 박퀀트 | 스크리닝에서 동일 종목/날짜에 두 소스 있으면 data_go_kr 우선 |
-| 6 | KIS 폴백 성공 시 `_premarket_collect()` 반환값이 포털 실패 건수를 반환 | ⚠️ Medium | - | Sprint 2에서 개선 권장 — `kis_result.collected`를 반환하도록 수정 필요 |
+| 6 | ~~KIS 폴백 성공 시 `_premarket_collect()` 반환값이 포털 실패 건수를 반환~~ | ~~⚠️ Medium~~ | - | ✅ 해결 — Sprint 2에서 `return kis_result.collected` 경로 확인 완료 (PR #78) |
+| 7 | `_premarket_retry` 재시도 성공 후 cross_check_prices 호출 누락 | ⚠️ Medium | - | Sprint 2 코드 리뷰 발견. Phase 5에서 개선 권장 — 재시도 성공 후에도 cross-check 실행 필요 |
 
 ---
 
@@ -175,8 +178,8 @@
 | KIS 보조 수집기 | `KISDailyCollector` 전 활성 주식 배치 수집, source="kis_daily" | ✅ 완료 |
 | 스케줄러 폴백 | 포털 실패 시 KIS 보조 수집 자동 전환 | ✅ 완료 |
 | 스크리닝 소스 필터 | date_subq에서 data_go_kr OR kis_daily 인식 | ✅ 완료 |
-| 포털 재시도 | 08:30 자동 재시도 (1회) | ⬜ Sprint 2 |
-| 텔레그램 알림 | 보조 수집 전환/이중 실패 알림 | ⬜ Sprint 2 |
-| 데이터 cross-check | 종가 1% 괴리 warning 로깅 | ⬜ Sprint 2 |
+| 포털 재시도 | 08:30 자동 재시도 (1회) | ✅ 완료 |
+| 텔레그램 알림 | 보조 수집 전환/이중 실패 알림 | ✅ 완료 |
+| 데이터 cross-check | 종가 1% 괴리 warning 로깅 | ✅ 완료 |
 | pipeline_healthy 연동 | 보조 수집 성공 시 healthy, 이중 실패 시 false | ✅ 완료 |
 | 통합 테스트 | 포털 실패 → KIS 폴백 → 스크리닝 정상 동작 시나리오 | ✅ 완료 |
