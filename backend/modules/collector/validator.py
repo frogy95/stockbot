@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import func, select
@@ -6,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.models.market_data import MarketData
 from core.trading_calendar import get_prev_trading_day
 from modules.collector.models import CollectionResult, ValidationResult
+
+logger = logging.getLogger(__name__)
 
 KST = timezone(timedelta(hours=9))
 
@@ -199,6 +202,49 @@ class CollectionValidator:
                 "boundary_date": str(boundary),
             },
         )
+
+    async def cross_check_prices(self, session: AsyncSession, data_date: date) -> list[dict]:
+        """포털(data_go_kr) vs KIS(kis_daily) 종가를 in-memory join하여 1% 초과 괴리 종목 반환.
+
+        Returns:
+            괴리 종목 목록. 각 항목: {"stock_code", "portal_close", "kis_close", "divergence_pct"}
+        """
+        portal_stmt = select(MarketData.stock_code, MarketData.close_price).where(
+            MarketData.data_date == data_date,
+            MarketData.source == "data_go_kr",
+            MarketData.close_price.is_not(None),
+        )
+        kis_stmt = select(MarketData.stock_code, MarketData.close_price).where(
+            MarketData.data_date == data_date,
+            MarketData.source == "kis_daily",
+            MarketData.close_price.is_not(None),
+        )
+
+        portal_result = await session.execute(portal_stmt)
+        kis_result = await session.execute(kis_stmt)
+
+        portal_map: dict = {row[0]: row[1] for row in portal_result.all()}
+        kis_map: dict = {row[0]: row[1] for row in kis_result.all()}
+
+        divergent_stocks: list[dict] = []
+        for stock_code in portal_map.keys() & kis_map.keys():
+            portal_close = portal_map[stock_code]
+            kis_close = kis_map[stock_code]
+            if portal_close == 0:
+                continue
+            divergence_pct = float(abs(portal_close - kis_close) / portal_close * 100)
+            if divergence_pct > 1.0:
+                divergent_stocks.append({
+                    "stock_code": stock_code,
+                    "portal_close": portal_close,
+                    "kis_close": kis_close,
+                    "divergence_pct": divergence_pct,
+                })
+
+        if divergent_stocks:
+            logger.warning("데이터 cross-check 괴리 발견: %s", divergent_stocks)
+
+        return divergent_stocks
 
     async def validate_etf_db(self, session: AsyncSession) -> ValidationResult:
         """DB에 적재된 ETF 시세 건수 검증."""

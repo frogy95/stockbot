@@ -39,6 +39,8 @@ logger = logging.getLogger(__name__)
 MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 REALTIME_CACHE_TTL = 5  # 초
 STATE_TTL = 86400  # 초 (Redis 상태 TTL — 24시간)
+ALERT_MAX_LEN = 200  # 알림 메시지 에러 문자열 최대 길이
+RECOVERY_INSTRUCTION = "POST /api/v1/collector/trigger/premarket-pipeline"
 REDIS_STATE_KEY_PREFIX = "scheduler:last_"
 PIPELINE_STATUS_KEY = "scheduler:pipeline_status"
 PIPELINE_HEALTHY_KEY = "scheduler:pipeline_healthy"
@@ -208,8 +210,31 @@ class CollectorScheduler:
             return
         msg = (
             f"<b>[장애]</b> {step} 실패\n"
-            f"에러: {error[:200]}\n"
-            f"수동 복구: POST /api/v1/collector/trigger/premarket-pipeline"
+            f"에러: {error[:ALERT_MAX_LEN]}\n"
+            f"수동 복구: {RECOVERY_INSTRUCTION}"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_fallback_info_alert(self, step: str, portal_reason: str, kis_collected: int) -> None:
+        """포털 실패 → KIS 폴백 성공 시 [정보] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[정보]</b> {step} 포털 수집 실패, KIS 보조 수집 전환\n"
+            f"포털 실패 사유: {portal_reason[:ALERT_MAX_LEN]}\n"
+            f"KIS 보조 수집: {kis_collected}건"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_double_failure_alert(self, step: str, portal_reason: str, kis_reason: str) -> None:
+        """포털 + KIS 이중 실패 시 [긴급] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[긴급]</b> {step} 이중 실패 — 수동 복구 필요\n"
+            f"포털 실패: {portal_reason[:ALERT_MAX_LEN]}\n"
+            f"KIS 실패: {kis_reason[:ALERT_MAX_LEN]}\n"
+            f"수동 복구: {RECOVERY_INSTRUCTION}"
         )
         await self._telegram_bot.send_notification(msg)
 
@@ -326,6 +351,13 @@ class CollectorScheduler:
             self._sentiment_collect,
             CronTrigger(hour=8, minute=20, timezone=tz),
             id="sentiment_collect",
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
+        # 08:30 포털 재시도: 포털 수집이 실패했을 때 재시도
+        self._scheduler.add_job(
+            self._premarket_retry,
+            CronTrigger(hour=8, minute=30, timezone=tz),
+            id="premarket_retry",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         # 2차 스크리닝: 09:30~15:30 30초 주기
@@ -488,12 +520,22 @@ class CollectorScheduler:
             await self._save_last_timestamp("premarket", self._last_premarket)
             if validation.passed:
                 await self._update_step_status("premarket", "success", collected_count=result.collected, validation=validation)
+                # cross-check: 포털 수집 성공 시 KIS 종가와 괴리 검증 (비중단)
+                if result.data_date:
+                    try:
+                        async with self._session_factory() as db_session:
+                            await self._validator.cross_check_prices(db_session, result.data_date)
+                    except Exception as e:
+                        logger.warning("cross-check 오류 (비중단): %s", e)
             else:
                 logger.warning("포털 수집 실패, KIS 보조 수집 전환: reason=%s", validation.failure_reason)
                 kis_result = await self._run_kis_daily_fallback()
                 kis_validation = self._validator.validate_kis_daily(kis_result)
                 if kis_validation.passed:
-                    await self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation)
+                    await asyncio.gather(
+                        self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation),
+                        self._send_fallback_info_alert("premarket", validation.failure_reason or "", kis_result.collected),
+                    )
                     logger.info("KIS 보조 수집 성공: collected=%d", kis_result.collected)
                     logger.info(
                         "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
@@ -504,8 +546,10 @@ class CollectorScheduler:
                     return kis_result.collected
                 else:
                     error_msg = f"이중 실패 — 포털: {validation.failure_reason}, KIS: {kis_validation.failure_reason}"
-                    await self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation)
-                    await self._send_failure_alert("premarket", error_msg)
+                    await asyncio.gather(
+                        self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation),
+                        self._send_double_failure_alert("premarket", validation.failure_reason or "", kis_validation.failure_reason or ""),
+                    )
                     logger.error("이중 실패: step=premarket %s", error_msg)
             logger.info(
                 "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
@@ -530,6 +574,56 @@ class CollectorScheduler:
         except Exception as e:
             logger.exception("KIS 보조 수집 실패: %s", e)
             return CollectionResult(collected=0, failed=0, total_target=0)
+
+    async def _send_recovery_info_alert(self, collected: int) -> None:
+        """08:30 포털 재시도 성공 시 [복구] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[복구]</b> 08:30 포털 재시도 성공\n"
+            f"수집 건수: {collected}건"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _premarket_retry(self) -> None:
+        """08:30 포털 재시도 — premarket이 실패 상태일 때만 포털 재수집을 시도한다.
+
+        성공 시 pipeline_status를 포털 데이터 기준으로 success로 업데이트하고
+        [복구] 태그 알림을 발송한다. 실패 시에는 KIS 보조 데이터가 이미 있으므로 경고 로그만 기록.
+        """
+        pipeline_status = await self._get_pipeline_status()
+        premarket_status = pipeline_status.get("premarket", {}).get("status")
+        if premarket_status == "success":
+            logger.info("포털 재시도 스킵: premarket 이미 성공 상태")
+            return
+
+        logger.info("포털 재시도 시작: step=premarket_retry (premarket.status=%s)", premarket_status)
+        try:
+            async with self._session_factory() as db_session:
+                collector = DataGoKrCollector(db_session)
+                result = await collector.collect_all()
+            validation = self._validator.validate_premarket(result)
+            if validation.passed:
+                await asyncio.gather(
+                    self._update_step_status("premarket", "success", collected_count=result.collected, validation=validation),
+                    self._send_recovery_info_alert(result.collected),
+                )
+                logger.info("포털 재시도 성공: collected=%d", result.collected)
+                await self._run_db_validation("premarket", "validate_premarket_db")
+                # cross-check: 재시도 성공 시에도 KIS 종가와 괴리 검증 (비중단)
+                if result.data_date:
+                    try:
+                        async with self._session_factory() as db_session:
+                            await self._validator.cross_check_prices(db_session, result.data_date)
+                    except Exception as e:
+                        logger.warning("cross-check 오류 (비중단): %s", e)
+            else:
+                logger.warning(
+                    "포털 재시도 실패 (KIS 보조 데이터 유지): reason=%s",
+                    validation.failure_reason,
+                )
+        except Exception as e:
+            logger.warning("포털 재시도 예외 발생 (KIS 보조 데이터 유지): %s", e)
 
     async def _etf_collect(self) -> int:
         """08:15 ETF 시세 수집. 매 실행마다 독립 DB 세션 사용."""

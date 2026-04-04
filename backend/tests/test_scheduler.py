@@ -48,7 +48,7 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 8  # premarket, etf_master, etf, market_open, market_close, market_open_recovery, dart, sentiment
+    assert status["job_count"] == 9  # premarket, premarket_retry, etf_master, etf, market_open, market_close, market_open_recovery, dart, sentiment
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_collect" in job_ids

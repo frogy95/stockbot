@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.8 Sprint 1 완료
-- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) 🔄 진행 중
-- 현재 Sprint: Phase 4.8 Sprint 2 📋 예정
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03)
+- 전체 진행률: Phase 0~4.8 Sprint 2 완료
+- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) ✅ 완료
+- 현재 Sprint: Phase 5 Sprint 1 착수 가능
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
@@ -635,7 +635,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.8: EOD 데이터 수집 내결함성 강화 (Sprint 1~2) 🔄
+## Phase 4.8: EOD 데이터 수집 내결함성 강화 (Sprint 1~2) ✅
 
 #### Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백 ✅ (2026-04-03)
 
@@ -650,7 +650,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - screener._fetch_today_and_prev() source 필터 확장 (data_go_kr OR kis_daily)
 - CollectionValidator.validate_kis_daily() 보조 수집 검증
 
-#### Sprint 2: 재시도 스케줄 + 알림 + 모니터링
+#### Sprint 2: 재시도 스케줄 + 알림 + 모니터링 ✅ (2026-04-05)
 - 08:30 포털 재시도 CronTrigger job
 - 텔레그램 알림 (보조 수집 전환/이중 실패 긴급)
 - 포털 vs KIS 데이터 cross-check (종가 1% 괴리 warning)

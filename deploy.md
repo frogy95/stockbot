@@ -5,36 +5,40 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 4.8 Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백 (2026-04-03)
+### Phase 4.8 Sprint 2: 재시도 스케줄 + 알림 + 모니터링 (2026-04-05)
 
-PR: https://github.com/frogy95/stockbot/pull/77
+PR: https://github.com/frogy95/stockbot/pull/78
 
-#### 코드 리뷰 결과 (2026-04-03)
+#### 코드 리뷰 결과 (2026-04-05)
 
 - ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용
-- ✅ 성능: N+1 없음, 배치 50종목 단위 수집
-- ✅ 테스트: 신규 기능 테스트 추가 (단위 + 통합), 661개 전체 테스트 통과
-- ⚠️ Medium 이슈 1건: KIS 폴백 성공 시 `_premarket_collect()` 반환값이 포털 실패 건수를 반환 (scheduler.py L503-509) — Sprint 2에서 수정 권장, PR 코멘트 등록 완료
+- ✅ 성능: N+1 없음 (cross_check_prices in-memory join), 비중단 오류 처리
+- ✅ 에러 핸들링: 모든 알림 메서드 `_telegram_bot is None` 가드 적용
+- ✅ 테스트: 신규 테스트 13개 추가 (test_scheduler_retry.py, test_validator_crosscheck.py, 통합 3건)
+- ⚠️ Medium 이슈 1건: `_premarket_retry` 재시도 성공 후 `cross_check_prices` 호출 누락 (scheduler.py L606-612) — Phase 5에서 개선 권장
 
-#### 자동 검증 결과 (2026-04-03)
+#### 자동 검증 결과 (2026-04-05)
 
-- ✅ pytest 전체: 661 passed, 56 warnings (Docker 로컬)
-  - test_kis_rest.py: 3개 통과 (get_daily_price, empty, tr_id)
-  - test_kis_daily_collector.py: 5개 통과 (collect_all, batch_commit, source_tag, data_date, min_success_rate)
-  - test_collection_validator.py: validate_kis_daily 3개 포함 전체 통과
-  - test_phase4_8_integration.py: 4개 통과 (폴백 시나리오, 이중 실패, market_cap 추정)
-  - test_scheduler.py: 폴백 관련 4개 포함 전체 통과
-  - test_screener.py: kis_daily 소스 필터 + market_cap 추정 관련 4개 포함 전체 통과
+- ✅ pytest 전체: 674 passed, 70 warnings (Docker 로컬)
+  - test_scheduler_retry.py: 전체 통과 (premarket_retry job 등록, 스킵, 재시도 성공/실패)
+  - test_validator_crosscheck.py: 전체 통과 (괴리 없음, 1% 미만, 1% 초과, 오버랩 없음)
+  - test_scheduler_telegram_alert.py: 기존 3건 + 신규 알림 테스트 전체 통과
+  - test_phase4_8_integration.py: 통합 시나리오 3건 추가, 전체 통과
+  - test_scheduler.py: job_count=9 확인 (premarket_retry 포함) 통과
+- ✅ API 검증: /api/v1/health (healthy), /api/v1/collector/status (premarket_retry job 포함 확인)
+- ✅ 스케줄러 검증: premarket_retry job 08:30 CronTrigger 등록 확인 (job_count=12)
+- ✅ Playwright UI 검증: 로그인, 대시보드, 스크리닝 페이지 정상 로딩
 
-#### Phase 문서 반영 (2026-04-03)
+#### Phase 문서 반영 (2026-04-05)
 
-- ✅ docs/phase/phase4.8/phase4.8.md Sprint 1 완료 표시
-- ✅ 완료 기준 테이블 업데이트 (Sprint 1 항목 ✅, Sprint 2 항목 ⬜ 유지)
-- ✅ 미해결 사항 테이블: 항목 1-3 해결 처리, 항목 6 (Medium 이슈) 추가
+- ✅ docs/phase/phase4.8/phase4.8.md Sprint 2 완료 표시 + Status 업데이트
+- ✅ 완료 기준 테이블: 포털 재시도, 텔레그램 알림, cross-check 항목 ✅ 완료
+- ✅ 미해결 사항 테이블: 항목 6 해결 처리, 항목 7 (Medium 이슈) 추가
 
 #### 수동 검증 필요 항목
 
-- ⬜ 프로덕션 배포 후 다음 거래일 premarket 폴백 동작 확인 (장전 포털 실패 시 KIS 보조 수집 자동 전환 로그 확인)
+- ⬜ 프로덕션 배포 후 다음 거래일 08:30 premarket_retry job 동작 확인 (재시도 로그 확인)
+- ⬜ 프로덕션 배포 후 포털 실패 시 [정보] 알림, 이중 실패 시 [긴급] 알림 발송 확인
 
 ---
 
