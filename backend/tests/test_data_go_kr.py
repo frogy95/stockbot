@@ -163,40 +163,24 @@ async def test_collect_all_success():
 
 
 @pytest.mark.asyncio
-async def test_collect_all_date_fallback():
-    """첫 번째 날짜에서 0건일 때 다음 날짜로 폴백하는지 확인."""
+async def test_collect_all_returns_zero_when_no_data():
+    """최신 거래일에 0건이면 날짜 폴백 없이 collected=0을 반환하는지 확인."""
     mock_session = AsyncMock(spec=AsyncSession)
     collector = DataGoKrCollector(mock_session)
 
     empty_response = _make_response_json([], total_count=0)
-    normal_response = _make_response_json([SAMPLE_ITEM])
-
     mock_resp_empty = MagicMock()
     mock_resp_empty.raise_for_status = MagicMock()
     mock_resp_empty.json.return_value = empty_response
 
-    mock_resp_normal = MagicMock()
-    mock_resp_normal.raise_for_status = MagicMock()
-    mock_resp_normal.json.return_value = normal_response
-
-    call_count = 0
-
-    async def get_side_effect(*args, **kwargs):
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            return mock_resp_empty
-        return mock_resp_normal
-
     with patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client:
         mock_ctx = AsyncMock()
-        mock_ctx.get.side_effect = get_side_effect
+        mock_ctx.get.return_value = mock_resp_empty
         mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
         mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
 
         result = await collector.collect_all(retry_delay=0)
 
     assert isinstance(result, CollectionResult)
-    assert result.collected == 1
-    # 두 번째 날짜에서 수집 성공 → 최소 2번 이상 API 호출
-    assert call_count >= 2
+    assert result.collected == 0
+    assert result.data_date is not None
