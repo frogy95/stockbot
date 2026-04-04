@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-03-31 업데이트)
+## 스프린트 현황 (2026-04-02 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -31,9 +31,12 @@
 - Phase 4.6 Sprint 2 — 데이터 품질 + KODEX 필터 + 통합 검증, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/62
 - Phase 4.7 Sprint 1 — 1차 스크리닝 3팩터 분리 + 임계값 조정, ✅ 완료 (2026-04-02) / PR: https://github.com/frogy95/stockbot/pull/72
 
+- [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, ✅ 완료 (2026-04-03) / PR: https://github.com/frogy95/stockbot/pull/77
+- Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/78
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — Phase 4.7 완료, 착수 가능
+- Phase 5 Sprint 1 — Phase 4.8 완료, 착수 가능
 
 ## 핵심 주의사항
 
@@ -113,3 +116,9 @@
 - Phase 4.7 Sprint 1: RealtimeScreener도 FactorScorer()를 기본값으로 생성 (pass_threshold=80.0) — 75.0으로 변경
 - Phase 4.7 Sprint 1: main.py에서 PrimaryScreener()와 RealtimeScreener() 모두 파라미터 없이 생성 — __init__ 기본값 변경으로 충분, main.py 수정 불필요
 - Phase 4.7 Sprint 1: screener.py의 _build_candidates에서 trade_strength_factor=50.0, orderbook_ratio_factor=1.0, tracking_error_factor=0.0 하드코딩 — 이 3개 제거 대상
+- Phase 4.8 Sprint 1: KIS 일봉 API(FHKST03010100) — 모의거래 미지원 가능성, inquiry_client(실전 조회 전용) 사용
+- Phase 4.8 Sprint 1: market_data.source="kis_daily"로 태깅, "kis_rest"(ETF)와 구분
+- Phase 4.8 Sprint 1: KIS 일봉에 시총 미포함 — stocks.listed_shares * close_price로 market_cap 추정
+- Phase 4.8 Sprint 1: 배치 50종목 단위 commit (부분 실패 복구), 보조 수집 최소 성공률 80%
+- Phase 4.8 Sprint 1: screener._fetch_today_and_prev() date_subq source 필터 확장: "data_go_kr" OR "kis_daily"
+- Phase 4.8 Sprint 1: 동일 종목/날짜에 두 소스 있으면 data_go_kr 우선 (확정 파라미터 #11)

@@ -12,9 +12,8 @@ from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
-def _make_scheduler():
-    """테스트용 CollectorScheduler 생성."""
-    # session_factory mock: async context manager가 mock db_session 반환
+def _make_scheduler(redis=None):
+    """테스트용 CollectorScheduler 생성. redis=None이면 AsyncMock 사용."""
     mock_db_session = AsyncMock()
     mock_session_factory = MagicMock()
     mock_session_ctx = AsyncMock()
@@ -22,29 +21,23 @@ def _make_scheduler():
     mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
     mock_session_factory.return_value = mock_session_ctx
 
-    rest_client = MagicMock()
-
     ws_manager = MagicMock()
     ws_manager.count = 0
     ws_manager.unsubscribe_all = AsyncMock()
 
-    trade_strength = MagicMock()
     ws_client = MagicMock()
     ws_client.connect = AsyncMock()
     ws_client.disconnect = AsyncMock()
     ws_client.set_on_data = MagicMock()
 
-    redis = AsyncMock()
-
-    scheduler = CollectorScheduler(
+    return CollectorScheduler(
         session_factory=mock_session_factory,
-        rest_client=rest_client,
+        rest_client=MagicMock(),
         ws_manager=ws_manager,
-        trade_strength=trade_strength,
+        trade_strength=MagicMock(),
         ws_client=ws_client,
-        redis=redis,
+        redis=redis if redis is not None else AsyncMock(),
     )
-    return scheduler
 
 
 @pytest.mark.asyncio
@@ -55,7 +48,7 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 8  # premarket, etf_master, etf, market_open, market_close, market_open_recovery, dart, sentiment
+    assert status["job_count"] == 9  # premarket, premarket_retry, etf_master, etf, market_open, market_close, market_open_recovery, dart, sentiment
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_collect" in job_ids
@@ -261,6 +254,82 @@ async def test_etf_calls_db_validation():
             mock_db_val.return_value = ValidationResult(passed=True, severity="info")
             await scheduler._etf_collect()
             mock_db_val.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_premarket_fallback_to_kis_daily():
+    """포털 수집 후 validation 실패 시 KIS 보조 수집 자동 호출."""
+    scheduler = _make_scheduler(FakeRedis())
+
+    portal_result = CollectionResult(collected=100, total_target=3000, data_date="20260403", null_counts={})
+    kis_result = CollectionResult(collected=2400, failed=100, total_target=2500, data_date="20260403")
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
+         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+        MockKIS.return_value.collect_all = AsyncMock(return_value=kis_result)
+
+        await scheduler._premarket_collect()
+
+    MockKIS.return_value.collect_all.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_premarket_fallback_kis_success():
+    """KIS 보조 수집 성공 시 pipeline_status premarket이 success로 갱신."""
+    scheduler = _make_scheduler(FakeRedis())
+
+    portal_result = CollectionResult(collected=100, total_target=3000, data_date="20260403", null_counts={})
+    kis_result = CollectionResult(collected=2400, failed=100, total_target=2500, data_date="20260403")
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
+         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+        MockKIS.return_value.collect_all = AsyncMock(return_value=kis_result)
+
+        await scheduler._premarket_collect()
+
+    status = await scheduler._get_pipeline_status()
+    assert status.get("premarket", {}).get("status") == "success"
+
+
+@pytest.mark.asyncio
+async def test_premarket_fallback_kis_fail():
+    """KIS 보조 수집도 실패 시 pipeline_status premarket이 failed로 유지."""
+    scheduler = _make_scheduler(FakeRedis())
+
+    portal_result = CollectionResult(collected=100, total_target=3000, data_date="20260403", null_counts={})
+    kis_result = CollectionResult(collected=100, failed=2400, total_target=2500, data_date="20260403")
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
+         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+        MockKIS.return_value.collect_all = AsyncMock(return_value=kis_result)
+
+        await scheduler._premarket_collect()
+
+    status = await scheduler._get_pipeline_status()
+    assert status.get("premarket", {}).get("status") == "failed"
+
+
+@pytest.mark.asyncio
+async def test_premarket_no_fallback_on_success():
+    """포털 수집 성공 시 KIS 보조 수집 미호출."""
+    scheduler = _make_scheduler(FakeRedis())
+
+    portal_result = CollectionResult(
+        collected=2800, total_target=3000,
+        data_date=DataGoKrCollector._latest_trading_date(),
+        null_counts={"close_price": 0, "volume": 0},
+    )
+
+    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
+         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+
+        await scheduler._premarket_collect()
+
+    MockKIS.return_value.collect_all.assert_not_called()
 
 
 @pytest.mark.asyncio

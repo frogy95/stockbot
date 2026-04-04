@@ -15,6 +15,8 @@
 <!-- 대상: skill | agent | hook | rule | claude.md -->
 <!-- 예시: - [agent] sprint-planner가 task 의존성 순서를 잘못 잡음 → 의존성 검증 단계 추가 필요 (2026-03-30) -->
 
+- [agent] deploy-prod — develop→main PR 생성 전 sprint PR(feature→develop)이 실제로 머지됐는지 확인하지 않음. 이번 케이스: PR #72(phase4.7-sprint1→develop)가 OPEN인 상태에서 PR #73(develop→main)을 생성·머지하여 스프린트 코드 없이 프로덕션 배포됨 → 사전 점검 단계에 "develop 브랜치의 최신 커밋이 배포 대상 스프린트 커밋을 포함하는지 gh pr list 또는 git log로 검증" 추가 필요 (2026-04-03)
+
 ## 반영 완료
 
 <!-- 형식: - [대상] 내용 (기록일 → 반영일) -->

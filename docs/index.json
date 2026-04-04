@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-02T22:30:00+09:00",
+  "lastUpdated": "2026-04-05T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1461,6 +1461,147 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4.8",
+      "title": "EOD 데이터 수집 내결함성 강화",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase4.8/phase4.8.md",
+      "sprints": [
+        {
+          "id": "phase4.8-sprint1",
+          "title": "KIS 일봉 보조 수집기 + 스케줄러 폴백",
+          "status": "completed",
+          "branch": "phase4.8-sprint1",
+          "sprintDoc": "docs/phase/phase4.8/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/77",
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KIS REST 일봉 조회 메서드 추가",
+              "path": "backend/core/clients/kis_rest.py",
+              "testPlan": "tests/test_kis_rest.py::test_get_daily_price",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "KIS 일봉 보조 수집기 신규 생성",
+              "path": "backend/modules/collector/sources/kis_daily_collector.py",
+              "testPlan": "tests/test_kis_daily_collector.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "스케줄러 폴백 로직 + validator 확장",
+              "path": "backend/modules/collector/scheduler.py",
+              "testPlan": "tests/test_scheduler.py::*fallback*",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "스크리닝 소스 필터 확장 + market_cap 추정",
+              "path": "backend/modules/screening/screener.py",
+              "testPlan": "tests/test_screener.py::*kis_daily*",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "통합 테스트 (폴백 시나리오)",
+              "path": "backend/tests/test_phase4_8_integration.py",
+              "testPlan": "tests/test_phase4_8_integration.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            }
+          ]
+        },
+        {
+          "id": "phase4.8-sprint2",
+          "title": "재시도 스케줄 + 알림 + 모니터링",
+          "status": "completed",
+          "branch": "phase4.8-sprint2",
+          "sprintDoc": "docs/phase/phase4.8/sprint2/sprint2.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/78",
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KIS 폴백 반환값 수정 + 알림 메서드 추가",
+              "path": "backend/modules/collector/scheduler.py",
+              "testPlan": "tests/test_scheduler_telegram_alert.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "fbd4ce7",
+                  "message": "feat(phase4.8-sprint2): task1 -- KIS 폴백 알림 메서드 + 반환값 정리",
+                  "date": "2026-04-05"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "08:30 포털 재시도 job + 포털 우선 로직",
+              "path": "backend/modules/collector/scheduler.py",
+              "testPlan": "tests/test_scheduler_retry.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "1ea6dc5",
+                  "message": "feat(phase4.8-sprint2): task2 -- 08:30 포털 재시도 job + 포털 우선 로직",
+                  "date": "2026-04-05"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "데이터 cross-check (종가 1% 괴리 warning)",
+              "path": "backend/modules/collector/validator.py",
+              "testPlan": "tests/test_validator_crosscheck.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "e98ae3b",
+                  "message": "feat(phase4.8-sprint2): task3 -- 데이터 cross-check 종가 1% 괴리 warning",
+                  "date": "2026-04-05"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "통합 테스트 (재시도 + 알림 + cross-check)",
+              "path": "backend/tests/test_phase4_8_integration.py",
+              "testPlan": "tests/test_phase4_8_integration.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "fa706ba",
+                  "message": "feat(phase4.8-sprint2): task4 -- 재시도+알림+cross-check 통합 테스트",
+                  "date": "2026-04-05"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
@@ -1565,6 +1706,24 @@
           "hash": "1956e55",
           "message": "fix: 2차 스크리닝 결과를 매매 엔진에 전달하는 연결 누락 수정",
           "date": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-screener-date-source-filter",
+      "name": "1차 스크리닝 date_subq source 필터 누락으로 candidates 0 발생 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/screener-date-source-filter/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/75",
+      "deployedAt": "2026-04-02",
+      "description": "PrimaryScreener._fetch_today_and_prev의 date_subq가 전체 소스의 최신 날짜를 조회하여 KIS REST API ETF 시세(source=kis_rest)의 당일 날짜로 오염되면서 주식 prev_volume=0 발생 → 1차 스크리닝 candidates 0개 버그 수정. date_subq에 source='data_go_kr' 필터 추가.",
+      "commits": [
+        {
+          "hash": "244e1f6",
+          "message": "fix(screener): _fetch_today_and_prev date_subq를 data_go_kr 소스로 제한",
+          "date": "2026-04-02"
         }
       ]
     },
@@ -1677,6 +1836,14 @@
       "description": "Phase 4.7 Sprint 1 프로덕션 배포 — 1차 스크리닝 3팩터 분리 (volume_factor, momentum_factor, volatility_factor), PrimaryScreener pass_threshold=60.0, RealtimeScreener pass_threshold=75.0, DB/환경변수 변경 없음",
       "prUrl": "https://github.com/frogy95/stockbot/pull/73",
       "status": "completed"
+    },
+    {
+      "date": "2026-04-05",
+      "type": "sprint",
+      "ref": "phase4.8-sprint1, phase4.8-sprint2",
+      "description": "Phase 4.8 프로덕션 배포 — KIS 일봉 폴백 수집기 (Sprint 1), EOD 수집 내결함성 완성 재시도 스케줄 + 알림 + 모니터링 (Sprint 2)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/79",
+      "version": "v1.1.0"
     }
   ]
 }
