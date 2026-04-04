@@ -48,17 +48,21 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 9  # premarket, premarket_retry, etf_master, etf, market_open, market_close, market_open_recovery, dart, sentiment
+    assert status["job_count"] == 5  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry
 
     job_ids = {j["id"] for j in status["next_jobs"]}
-    assert "premarket_collect" in job_ids
-    assert "etf_master_collect" in job_ids
-    assert "etf_collect" in job_ids
+    assert "premarket_pipeline" in job_ids
     assert "market_open" in job_ids
     assert "market_close" in job_ids
     assert "market_open_recovery" in job_ids
-    assert "dart_collect" in job_ids
-    assert "sentiment_collect" in job_ids
+    assert "premarket_retry" in job_ids
+    # 개별 장전 job은 더 이상 등록되지 않음
+    assert "premarket_collect" not in job_ids
+    assert "etf_master_collect" not in job_ids
+    assert "primary_screen" not in job_ids
+    assert "etf_collect" not in job_ids
+    assert "dart_collect" not in job_ids
+    assert "sentiment_collect" not in job_ids
 
     await scheduler.stop()
 
