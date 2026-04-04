@@ -58,58 +58,44 @@ class DataGoKrCollector:
         return DataGoKrCollector._get_trading_dates(1)[0]
 
     async def collect_all(self, retry_delay: float = RETRY_DELAY) -> CollectionResult:
-        """전 종목 일괄 수집. CollectionResult를 반환한다."""
-        trading_dates = self._get_trading_dates()
-        bas_dt: str | None = None
+        """최신 거래일 전 종목 일괄 수집. CollectionResult를 반환한다.
+
+        최신 거래일 데이터만 시도한다. 0건이면 collected=0을 반환하여
+        상위 레이어(스케줄러)에서 KIS 폴백을 결정하도록 한다.
+        """
+        target_date = self._latest_trading_date()
+        logger.info("공공데이터포털 수집 기준일: %s", target_date)
         total_collected = 0
         null_counts: dict[str, int] = {"close_price": 0, "volume": 0}
+        page = 1
 
-        for idx, candidate_date in enumerate(trading_dates):
-            logger.info("공공데이터포털 수집 기준일: %s", candidate_date)
-            total_collected = 0
-            null_counts = {"close_price": 0, "volume": 0}
-            page = 1
-
-            while True:
-                items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay, candidate_date)
-                if not items:
-                    break
-
-                for item in items:
-                    try:
-                        await self._upsert_stock(item)
-                        await self._save_market_data(item)
-                        total_collected += 1
-                        # null 카운팅
-                        if self._parse_int(item.get("clpr")) is None:
-                            null_counts["close_price"] += 1
-                        if self._parse_int(item.get("trqu")) is None:
-                            null_counts["volume"] += 1
-                    except Exception:
-                        logger.exception("종목 저장 실패: %s", item.get("srtnCd", "?"))
-
-                await self._db.commit()
-
-                if len(items) < DEFAULT_NUM_ROWS:
-                    break
-                page += 1
-
-            if total_collected > 0:
-                bas_dt = candidate_date
+        while True:
+            items = await self._fetch_page(page, DEFAULT_NUM_ROWS, retry_delay, target_date)
+            if not items:
                 break
 
-            # 0건이면 다음 날짜로 폴백
-            if idx + 1 < len(trading_dates):
-                next_date = trading_dates[idx + 1]
-                logger.warning("기준일 %s 수집 0건, 폴백 시도: %s", candidate_date, next_date)
+            for item in items:
+                try:
+                    await self._upsert_stock(item)
+                    await self._save_market_data(item)
+                    total_collected += 1
+                    if self._parse_int(item.get("clpr")) is None:
+                        null_counts["close_price"] += 1
+                    if self._parse_int(item.get("trqu")) is None:
+                        null_counts["volume"] += 1
+                except Exception:
+                    logger.exception("종목 저장 실패: %s", item.get("srtnCd", "?"))
 
-        if bas_dt is None:
-            bas_dt = trading_dates[0] if trading_dates else None
+            await self._db.commit()
 
-        logger.info("공공데이터포털 수집 완료: %d종목", total_collected)
+            if len(items) < DEFAULT_NUM_ROWS:
+                break
+            page += 1
+
+        logger.info("공공데이터포털 수집 완료: %d종목 (기준일: %s)", total_collected, target_date)
         return CollectionResult(
             collected=total_collected,
-            data_date=bas_dt,
+            data_date=target_date,
             null_counts=null_counts,
         )
 
