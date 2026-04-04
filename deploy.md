@@ -5,6 +5,20 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: 포털 수집기 날짜 폴백 제거 (2026-04-05)
+
+PR: https://github.com/frogy95/stockbot/pull/82
+
+- ✅ 자동 검증 완료 항목:
+  - pytest 타겟(test_data_go_kr.py): 8 passed, 0 failed
+  - 헬스체크 API: /api/v1/health — healthy
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - 다음 거래일 08:00 premarket_pipeline 실행 시 포털 0건 → KIS 폴백 발동 확인 (Railway 로그)
+
+---
+
 ### 프로덕션 배포 - v1.2.0 (2026-04-05)
 
 포함 스프린트: Phase 4.8 Sprint 1, Sprint 2, Sprint 3
