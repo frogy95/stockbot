@@ -5,10 +5,10 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v1.1.0 (2026-04-05)
+### 프로덕션 배포 - v1.2.0 (2026-04-05)
 
-포함 스프린트: Phase 4.8 Sprint 1, Sprint 2
-PR: https://github.com/frogy95/stockbot/pull/79
+포함 스프린트: Phase 4.8 Sprint 1, Sprint 2, Sprint 3
+PR: https://github.com/frogy95/stockbot/pull/81
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
@@ -20,8 +20,11 @@ PR: https://github.com/frogy95/stockbot/pull/79
 
 #### 수동 검증 필요 항목
 
-- ⬜ 다음 거래일 08:30 premarket_retry job 동작 확인 (재시도 로그 확인)
+- ⬜ 다음 거래일 08:00 premarket_pipeline job 자동 실행 확인 (Railway 로그)
+- ⬜ 08:30 premarket_retry job이 체인 파이프라인과 독립적으로 실행되는지 확인
 - ⬜ 포털 실패 시 [정보] 알림, 이중 실패 시 [긴급] 알림 발송 확인
+
+---
 
 ---
 

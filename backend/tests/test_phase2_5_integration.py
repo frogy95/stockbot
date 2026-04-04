@@ -139,7 +139,7 @@ async def test_sync_to_db_does_not_touch_stocks():
 
 @pytest.mark.asyncio
 async def test_scheduler_etf_master_before_etf_collect():
-    """etf_master_collect(08:10) → etf_collect(08:15) 시간 순서 확인."""
+    """etf_master_collect → etf_collect 순서는 premarket_pipeline 체인 내에서 보장됨을 확인."""
     from modules.collector.scheduler import CollectorScheduler
     from apscheduler.triggers.cron import CronTrigger
 
@@ -166,13 +166,13 @@ async def test_scheduler_etf_master_before_etf_collect():
     )
     await scheduler.start()
 
-    def get_minute(job_id: str) -> int:
-        job = scheduler._scheduler.get_job(job_id)
-        fields = {f.name: str(f) for f in job.trigger.fields}
-        return int(fields["minute"])
-
-    assert get_minute("etf_master_collect") == 10
-    assert get_minute("etf_collect") == 15
-    assert get_minute("etf_master_collect") < get_minute("etf_collect")
+    # 개별 job 대신 08:00 단일 체인 파이프라인으로 통합됨
+    assert scheduler._scheduler.get_job("etf_master_collect") is None
+    assert scheduler._scheduler.get_job("etf_collect") is None
+    pipeline_job = scheduler._scheduler.get_job("premarket_pipeline")
+    assert pipeline_job is not None
+    fields = {f.name: str(f) for f in pipeline_job.trigger.fields}
+    assert fields["hour"] == "8"
+    assert fields["minute"] == "0"
 
     await scheduler.stop()
