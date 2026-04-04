@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-05T00:00:00+09:00",
+  "lastUpdated": "2026-04-05T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1475,7 +1475,10 @@
           "branch": "phase4.8-sprint1",
           "sprintDoc": "docs/phase/phase4.8/sprint1/sprint1.md",
           "prUrl": "https://github.com/frogy95/stockbot/pull/77",
-          "progress": { "total": 5, "completed": 5 },
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
           "tasks": [
             {
               "id": "task1",
@@ -1531,7 +1534,10 @@
           "branch": "phase4.8-sprint2",
           "sprintDoc": "docs/phase/phase4.8/sprint2/sprint2.md",
           "prUrl": "https://github.com/frogy95/stockbot/pull/78",
-          "progress": { "total": 4, "completed": 4 },
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
           "tasks": [
             {
               "id": "task1",
@@ -1830,6 +1836,14 @@
       "description": "Phase 4.7 Sprint 1 프로덕션 배포 — 1차 스크리닝 3팩터 분리 (volume_factor, momentum_factor, volatility_factor), PrimaryScreener pass_threshold=60.0, RealtimeScreener pass_threshold=75.0, DB/환경변수 변경 없음",
       "prUrl": "https://github.com/frogy95/stockbot/pull/73",
       "status": "completed"
+    },
+    {
+      "date": "2026-04-05",
+      "type": "sprint",
+      "ref": "phase4.8-sprint1, phase4.8-sprint2",
+      "description": "Phase 4.8 프로덕션 배포 — KIS 일봉 폴백 수집기 (Sprint 1), EOD 수집 내결함성 완성 재시도 스케줄 + 알림 + 모니터링 (Sprint 2)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/79",
+      "version": "v1.1.0"
     }
   ]
 }
