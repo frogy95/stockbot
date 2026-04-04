@@ -1465,7 +1465,7 @@
     {
       "id": "phase4.8",
       "title": "EOD 데이터 수집 내결함성 강화",
-      "status": "completed",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase4.8/phase4.8.md",
       "sprints": [
         {
@@ -1598,6 +1598,46 @@
                   "date": "2026-04-05"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "id": "phase4.8-sprint3",
+          "title": "장전 파이프라인 체인 구조 전환",
+          "status": "planned",
+          "branch": "phase4.8-sprint3",
+          "sprintDoc": "docs/phase/phase4.8/sprint3/sprint3.md",
+          "progress": {
+            "total": 3,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "_run_scheduled_pipeline() 래퍼 + start() 리팩토링",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-1-_run_scheduled_pipeline-래퍼--start-리팩토링",
+              "testPlan": "import 검증 + 구조 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "기존 테스트 수정 + 체인 파이프라인 테스트 신규",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-2-기존-테스트-수정--체인-파이프라인-테스트-신규",
+              "testPlan": "pytest tests/test_scheduler.py tests/test_pipeline_chain.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "통합 검증 + 회귀 테스트",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-3-통합-검증--회귀-테스트",
+              "testPlan": "pytest -v 전체 통과",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
             }
           ]
         }
