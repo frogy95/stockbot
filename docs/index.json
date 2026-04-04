@@ -1600,6 +1600,63 @@
               ]
             }
           ]
+        },
+        {
+          "id": "phase4.8-sprint3",
+          "title": "장전 파이프라인 체인 구조 전환",
+          "status": "completed",
+          "branch": "phase4.8-sprint3",
+          "sprintDoc": "docs/phase/phase4.8/sprint3/sprint3.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/80",
+          "progress": {
+            "total": 3,
+            "completed": 3
+          },
+          "lastUpdated": "2026-04-05T00:00:00+09:00",
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "_run_scheduled_pipeline() 래퍼 + start() 리팩토링",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-1-_run_scheduled_pipeline-래퍼--start-리팩토링",
+              "testPlan": "import 검증 + 구조 확인",
+              "testResult": "import OK 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "f82ec79",
+                  "message": "feat(phase4.8-sprint3): task1 -- 장전 파이프라인 체인 구조 전환 (래퍼 추가 + start 리팩토링)"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "기존 테스트 수정 + 체인 파이프라인 테스트 신규",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-2-기존-테스트-수정--체인-파이프라인-테스트-신규",
+              "testPlan": "pytest tests/test_scheduler.py tests/test_pipeline_chain.py -v",
+              "testResult": "4건 신규 PASS",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "c2dc325",
+                  "message": "feat(phase4.8-sprint3): task2 -- job 등록 테스트 수정 + 체인 파이프라인 테스트 추가"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "통합 검증 + 회귀 테스트",
+              "path": "docs/phase/phase4.8/sprint3/sprint3.md#task-3-통합-검증--회귀-테스트",
+              "testPlan": "pytest -v 전체 통과",
+              "testResult": "678 passed (회귀 없음)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "64221d7",
+                  "message": "fix(phase4.8-sprint3): task3 -- 테스트 회귀 수정 + simplify (monotonic 타이머, docstring, 주석)"
+                }
+              ]
+            }
+          ]
         }
       ]
     }

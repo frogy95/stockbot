@@ -33,10 +33,11 @@
 
 - [Phase 4.8 Sprint 1](phase4.8-sprint1-status.md) — KIS 일봉 보조 수집기 + 스케줄러 폴백, ✅ 완료 (2026-04-03) / PR: https://github.com/frogy95/stockbot/pull/77
 - Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/78
+- Phase 4.8 Sprint 3 — 장전 파이프라인 체인 구조 전환, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/80
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — Phase 4.8 완료, 착수 가능
+- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.8 완료, Phase 5 계획 필요)
 
 ## 핵심 주의사항
 
@@ -122,3 +123,7 @@
 - Phase 4.8 Sprint 1: 배치 50종목 단위 commit (부분 실패 복구), 보조 수집 최소 성공률 80%
 - Phase 4.8 Sprint 1: screener._fetch_today_and_prev() date_subq source 필터 확장: "data_go_kr" OR "kis_daily"
 - Phase 4.8 Sprint 1: 동일 종목/날짜에 두 소스 있으면 data_go_kr 우선 (확정 파라미터 #11)
+- Phase 4.8 Sprint 3: 변경 대상 scheduler.py만 — start()에서 장전 CronTrigger 6개 제거, premarket_pipeline 1개 추가
+- Phase 4.8 Sprint 3: test_scheduler.py의 test_scheduler_registers_jobs()에서 job_count=9 → job 구조 변경 필요 (screener 미설정 시 5개)
+- Phase 4.8 Sprint 3: run_premarket_pipeline()의 finally에서 PIPELINE_RUNNING_KEY 삭제 — 래퍼에서 중복 삭제 금지
+- Phase 4.8 Sprint 3: _check_dependency()는 "대기하지 않고 즉시 스킵" — 체인 방식에서는 순차 실행이므로 이 문제 자동 해소
