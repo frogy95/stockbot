@@ -79,6 +79,7 @@ async def test_pipeline_recovery_success_sends_telegram():
         patch("modules.collector.scheduler.DataGoKrCollector") as MockData,
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
+        patch.object(scheduler._validator, "cross_check_prices", new=AsyncMock(return_value=[])),
     ):
         MockData.return_value.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockMaster.return_value.collect = AsyncMock(
