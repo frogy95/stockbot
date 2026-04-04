@@ -1,6 +1,6 @@
 # Phase 4.8: EOD 데이터 수집 내결함성 강화 — 실행 계획
 
-> **Status**: Sprint 1 완료 (2026-04-03), Sprint 2 완료 (2026-04-05), Sprint 3 계획 수립 (2026-04-05)
+> **Status**: Sprint 1 완료 (2026-04-03), Sprint 2 완료 (2026-04-05), Sprint 3 완료 (2026-04-05) — Phase 4.8 전체 완료
 > **ROADMAP 참조**: `ROADMAP.md` Phase 4.8
 > **검토 리포트**:
 >
@@ -93,7 +93,7 @@
 |--------|------|----------|--------|
 | 1 ✅ | KIS 일봉 보조 수집기 + 스케줄러 폴백 | KIS 일봉 API 메서드, KISDailyCollector, 스케줄러 폴백 로직, 스크리닝 소스 필터 확장 | 없음 |
 | 2 ✅ | 재시도 스케줄 + 알림 + 모니터링 | 08:30 재시도 job, 텔레그램 알림, cross-check 로깅, 검증 강화 | Sprint 1 |
-| 3 | 장전 파이프라인 체인 구조 전환 | 개별 CronTrigger 6개 제거, `_run_scheduled_pipeline()` 래퍼 추가, 08:00 단일 CronTrigger 등록, 테스트 수정 | Sprint 2 |
+| 3 ✅ | 장전 파이프라인 체인 구조 전환 | 개별 CronTrigger 6개 제거, `_run_scheduled_pipeline()` 래퍼 추가, 08:00 단일 CronTrigger 등록, 테스트 수정 | Sprint 2 |
 
 ---
 
@@ -157,8 +157,10 @@
 
 ---
 
-## Sprint 3 상세 — 장전 파이프라인 체인 구조 전환
+## Sprint 3 상세 — 장전 파이프라인 체인 구조 전환 ✅ 완료
 
+> PR #80 머지 대기 (2026-04-05). 678개 테스트 통과. 코드 리뷰 이슈 없음.
+>
 > **배경**: 스케줄러의 개별 CronTrigger 구조는 KIS 폴백 수집(~3~5분)이 08:10 이전에 완료되지 않으면 primary_screen이 스킵되어 당일 자동 스크리닝이 전체 무력화되는 설계 결함. 수동 복구용 `run_premarket_pipeline()`은 이미 올바른 체인 방식으로 구현되어 있으므로, 이를 자동 스케줄에도 적용한다.
 >
 > **검토 보고서**: `docs/phase/phase4.8/phase4.8-sprint3-review.md` (전문가 4명 전원 합의)
@@ -246,4 +248,4 @@ async def _run_scheduled_pipeline(self) -> None:
 | 데이터 cross-check | 종가 1% 괴리 warning 로깅 | ✅ 완료 |
 | pipeline_healthy 연동 | 보조 수집 성공 시 healthy, 이중 실패 시 false | ✅ 완료 |
 | 통합 테스트 | 포털 실패 → KIS 폴백 → 스크리닝 정상 동작 시나리오 | ✅ 완료 |
-| 장전 파이프라인 체인 전환 | 08:00 단일 CronTrigger, 개별 장전 job 제거, 락 보호 | ⬜ Sprint 3 |
+| 장전 파이프라인 체인 전환 | 08:00 단일 CronTrigger, 개별 장전 job 제거, 락 보호 | ✅ 완료 |
