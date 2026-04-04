@@ -1530,7 +1530,7 @@
           "status": "completed",
           "branch": "phase4.8-sprint2",
           "sprintDoc": "docs/phase/phase4.8/sprint2/sprint2.md",
-          "prUrl": null,
+          "prUrl": "https://github.com/frogy95/stockbot/pull/78",
           "progress": { "total": 4, "completed": 4 },
           "tasks": [
             {

@@ -10,6 +10,7 @@
 **이전 스프린트:** Sprint 1 (661 passed, PR #77)
 **브랜치명:** `phase4.8-sprint2`
 **상태:** ✅ 완료 (2026-04-05)
+**PR:** https://github.com/frogy95/stockbot/pull/78
 
 ---
 

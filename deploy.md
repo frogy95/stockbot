@@ -7,7 +7,7 @@
 
 ### Phase 4.8 Sprint 2: 재시도 스케줄 + 알림 + 모니터링 (2026-04-05)
 
-PR: (sprint-review 완료 후 업데이트 예정)
+PR: https://github.com/frogy95/stockbot/pull/78
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
