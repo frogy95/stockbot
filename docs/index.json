@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-05T10:30:00+09:00",
+  "lastUpdated": "2026-04-05T08:40:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1799,6 +1799,24 @@
           "hash": "b2c70f2",
           "message": "fix(etf-collector): market_data upsert에서 updated_at → collected_at 수정",
           "date": "2026-04-02"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-fix-premarket-date-fallback",
+      "name": "포털 수집기 날짜 폴백 제거 — 최신 거래일 0건 시 KIS 폴백 발동",
+      "status": "deployed",
+      "path": "docs/hotfix/fix-premarket-date-fallback/hotfix.md",
+      "assignee": "frogy95",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/82",
+      "deployedAt": "2026-04-05",
+      "description": "collect_all()의 날짜 폴백 for 루프 제거. 최신 거래일 데이터 0건 시 collected=0 반환하여 상위 레이어에서 KIS 폴백 발동. stale 전일 데이터 성공 반환 버그 수정.",
+      "commits": [
+        {
+          "hash": "1aa42c9",
+          "message": "fix: 포털 수집기 날짜 폴백 제거 — 최신 거래일 0건 시 KIS 폴백 발동",
+          "date": "2026-04-05"
         }
       ]
     }
