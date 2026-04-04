@@ -248,6 +248,21 @@ class CollectorScheduler:
             msg = "<b>[복구 실패]</b> 장전 파이프라인 일부 실패 — 수동 확인 필요"
         await self._telegram_bot.send_notification(msg)
 
+    async def _run_scheduled_pipeline(self) -> None:
+        """08:00 CronTrigger용 장전 파이프라인. 락 선점 후 체인 실행."""
+        existing = await self._redis.get(PIPELINE_RUNNING_KEY)
+        if existing:
+            logger.warning("파이프라인 이미 실행 중 -- 자동 스케줄 스킵")
+            return
+        await self._redis.set(PIPELINE_RUNNING_KEY, "auto", ttl=STATE_TTL)
+        start_time = datetime.now()
+        logger.info("장전 파이프라인 시작 (자동 스케줄)")
+        try:
+            await self.run_premarket_pipeline()
+        finally:
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info("장전 파이프라인 종료 (자동 스케줄, 소요: %.1f초)", elapsed)
+
     async def run_premarket_pipeline(self) -> dict:
         """장전 파이프라인 수동 실행 오케스트레이터.
 
@@ -296,22 +311,11 @@ class CollectorScheduler:
         """스케줄러 시작 + job 등록."""
         await self._load_state_from_redis()
         tz = ZoneInfo(settings.MARKET_TIMEZONE)
+        # 장전 파이프라인: 08:00 단일 체인 (개별 CronTrigger 대신 래퍼로 순차 실행)
         self._scheduler.add_job(
-            self._premarket_collect,
+            self._run_scheduled_pipeline,
             CronTrigger(hour=8, minute=0, timezone=tz),
-            id="premarket_collect",
-            misfire_grace_time=MISFIRE_GRACE_TIME,
-        )
-        self._scheduler.add_job(
-            self._etf_master_collect,
-            CronTrigger(hour=8, minute=10, timezone=tz),
-            id="etf_master_collect",
-            misfire_grace_time=MISFIRE_GRACE_TIME,
-        )
-        self._scheduler.add_job(
-            self._etf_collect,
-            CronTrigger(hour=8, minute=15, timezone=tz),
-            id="etf_collect",
+            id="premarket_pipeline",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         self._scheduler.add_job(
@@ -332,28 +336,7 @@ class CollectorScheduler:
             id="market_open_recovery",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
-        # 1차 스크리닝: 08:10 (공공데이터포털 수집 완료 후)
-        if self._primary_screener:
-            self._scheduler.add_job(
-                self._primary_screen,
-                CronTrigger(hour=8, minute=10, timezone=tz),
-                id="primary_screen",
-                misfire_grace_time=MISFIRE_GRACE_TIME,
-            )
-        # 보조 데이터: 08:15 DART 재무, 08:20 네이버 센티멘트 (1차 스크리닝 후)
-        self._scheduler.add_job(
-            self._dart_collect,
-            CronTrigger(hour=8, minute=15, timezone=tz),
-            id="dart_collect",
-            misfire_grace_time=MISFIRE_GRACE_TIME,
-        )
-        self._scheduler.add_job(
-            self._sentiment_collect,
-            CronTrigger(hour=8, minute=20, timezone=tz),
-            id="sentiment_collect",
-            misfire_grace_time=MISFIRE_GRACE_TIME,
-        )
-        # 08:30 포털 재시도: 포털 수집이 실패했을 때 재시도
+        # 08:30 포털 재시도: 포털 수집이 실패했을 때 재시도 (체인 외 독립 실행)
         self._scheduler.add_job(
             self._premarket_retry,
             CronTrigger(hour=8, minute=30, timezone=tz),
