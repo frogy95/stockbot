@@ -6,7 +6,9 @@
 
 **Tech Stack:** APScheduler CronTrigger, Redis 락
 
-**Sprint 기간:** 2026-04-05 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-05 ~ 2026-04-05
+**상태:** ✅ 완료
+**PR:** (작성 예정)
 **이전 스프린트:** Sprint 2 (674 passed, PR #78)
 **브랜치명:** `phase4.8-sprint3`
 
@@ -93,9 +95,9 @@ git commit -m "feat(phase4.8-sprint3): task1 -- 장전 파이프라인 체인 �
 ```
 
 **완료 기준:**
-- ⬜ `_run_scheduled_pipeline()` 래퍼 메서드가 락 선점 + 체인 호출 + 시간 로깅을 수행
-- ⬜ `start()`에서 장전 CronTrigger 6개 제거, `premarket_pipeline` 1개 등록
-- ⬜ 유지 대상 job 5개 (`market_open`, `market_close`, `market_open_recovery`, `premarket_retry`, `secondary_screen`) 영향 없음
+- ✅ `_run_scheduled_pipeline()` 래퍼 메서드가 락 선점 + 체인 호출 + 시간 로깅을 수행
+- ✅ `start()`에서 장전 CronTrigger 6개 제거, `premarket_pipeline` 1개 등록
+- ✅ 유지 대상 job 5개 (`market_open`, `market_close`, `market_open_recovery`, `premarket_retry`, `secondary_screen`) 영향 없음
 
 ---
 
@@ -141,8 +143,8 @@ git commit -m "feat(phase4.8-sprint3): task2 -- job 등록 테스트 수정 + �
 ```
 
 **완료 기준:**
-- ⬜ `test_scheduler_registers_jobs()` 새 job 구조 반영
-- ⬜ `test_pipeline_chain.py` 4건 PASS (등록/락 선점/락 충돌/시간 로깅)
+- ✅ `test_scheduler_registers_jobs()` 새 job 구조 반영
+- ✅ `test_pipeline_chain.py` 4건 PASS (등록/락 선점/락 충돌/시간 로깅)
 
 ---
 
@@ -177,8 +179,8 @@ git commit -m "fix(phase4.8-sprint3): task3 -- 테스트 회귀 수정"
 회귀 없이 전체 통과하면 커밋 불필요.
 
 **완료 기준:**
-- ⬜ 전체 pytest 통과 (회귀 없음)
-- ⬜ 스케줄러 관련 통합 테스트 전체 통과
+- ✅ 전체 pytest 통과 (회귀 없음, 678 passed)
+- ✅ 스케줄러 관련 통합 테스트 전체 통과
 
 ---
 

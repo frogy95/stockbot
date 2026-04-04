@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.8 Sprint 2 완료
-- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) 🔄 진행 중
-- 현재 Sprint: Phase 4.8 Sprint 3 (장전 파이프라인 체인 구조 전환)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05)
+- 전체 진행률: Phase 0~4.8 Sprint 3 완료 (Phase 4.8 완료)
+- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) ✅ 완료
+- 현재 Sprint: Phase 5 준비 중
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
@@ -635,7 +635,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.8: EOD 데이터 수집 내결함성 강화 (Sprint 1~3) 🔄
+## Phase 4.8: EOD 데이터 수집 내결함성 강화 (Sprint 1~3) ✅
 
 #### Sprint 1: KIS 일봉 보조 수집기 + 스케줄러 폴백 ✅ (2026-04-03)
 
@@ -656,7 +656,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 포털 vs KIS 데이터 cross-check (종가 1% 괴리 warning)
 - 재시도 성공 시 포털 데이터 우선 로직
 
-#### Sprint 3: 장전 파이프라인 체인 구조 전환 🔄
+#### Sprint 3: 장전 파이프라인 체인 구조 전환 ✅ (2026-04-05)
 - 개별 CronTrigger 6개 제거 (premarket_collect, etf_master_collect, primary_screen, etf_collect, dart_collect, sentiment_collect)
 - `_run_scheduled_pipeline()` 래퍼 추가 (락 선점 + 체인 실행)
 - 08:00 단일 CronTrigger 등록
