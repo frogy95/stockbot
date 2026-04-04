@@ -39,6 +39,8 @@ logger = logging.getLogger(__name__)
 MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
 REALTIME_CACHE_TTL = 5  # 초
 STATE_TTL = 86400  # 초 (Redis 상태 TTL — 24시간)
+ALERT_MAX_LEN = 200  # 알림 메시지 에러 문자열 최대 길이
+RECOVERY_INSTRUCTION = "POST /api/v1/collector/trigger/premarket-pipeline"
 REDIS_STATE_KEY_PREFIX = "scheduler:last_"
 PIPELINE_STATUS_KEY = "scheduler:pipeline_status"
 PIPELINE_HEALTHY_KEY = "scheduler:pipeline_healthy"
@@ -208,8 +210,31 @@ class CollectorScheduler:
             return
         msg = (
             f"<b>[장애]</b> {step} 실패\n"
-            f"에러: {error[:200]}\n"
-            f"수동 복구: POST /api/v1/collector/trigger/premarket-pipeline"
+            f"에러: {error[:ALERT_MAX_LEN]}\n"
+            f"수동 복구: {RECOVERY_INSTRUCTION}"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_fallback_info_alert(self, step: str, portal_reason: str, kis_collected: int) -> None:
+        """포털 실패 → KIS 폴백 성공 시 [정보] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[정보]</b> {step} 포털 수집 실패, KIS 보조 수집 전환\n"
+            f"포털 실패 사유: {portal_reason[:ALERT_MAX_LEN]}\n"
+            f"KIS 보조 수집: {kis_collected}건"
+        )
+        await self._telegram_bot.send_notification(msg)
+
+    async def _send_double_failure_alert(self, step: str, portal_reason: str, kis_reason: str) -> None:
+        """포털 + KIS 이중 실패 시 [긴급] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[긴급]</b> {step} 이중 실패 — 수동 복구 필요\n"
+            f"포털 실패: {portal_reason[:ALERT_MAX_LEN]}\n"
+            f"KIS 실패: {kis_reason[:ALERT_MAX_LEN]}\n"
+            f"수동 복구: {RECOVERY_INSTRUCTION}"
         )
         await self._telegram_bot.send_notification(msg)
 
@@ -493,7 +518,10 @@ class CollectorScheduler:
                 kis_result = await self._run_kis_daily_fallback()
                 kis_validation = self._validator.validate_kis_daily(kis_result)
                 if kis_validation.passed:
-                    await self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation)
+                    await asyncio.gather(
+                        self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation),
+                        self._send_fallback_info_alert("premarket", validation.failure_reason or "", kis_result.collected),
+                    )
                     logger.info("KIS 보조 수집 성공: collected=%d", kis_result.collected)
                     logger.info(
                         "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",
@@ -504,8 +532,10 @@ class CollectorScheduler:
                     return kis_result.collected
                 else:
                     error_msg = f"이중 실패 — 포털: {validation.failure_reason}, KIS: {kis_validation.failure_reason}"
-                    await self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation)
-                    await self._send_failure_alert("premarket", error_msg)
+                    await asyncio.gather(
+                        self._update_step_status("premarket", "failed", error=error_msg, collected_count=kis_result.collected, validation=kis_validation),
+                        self._send_double_failure_alert("premarket", validation.failure_reason or "", kis_validation.failure_reason or ""),
+                    )
                     logger.error("이중 실패: step=premarket %s", error_msg)
             logger.info(
                 "수집 완료: step=premarket collected=%d failed=%d total=%d validation=%s",

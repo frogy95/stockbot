@@ -112,3 +112,55 @@ async def test_no_telegram_when_bot_not_set():
         result = await scheduler._premarket_collect()
 
     assert result == 0  # 실패 시 0 반환
+
+
+@pytest.mark.asyncio
+async def test_kis_fallback_sends_info_alert():
+    """포털 실패 → KIS 폴백 성공 시 [정보] 알림 발송."""
+    mock_bot = AsyncMock()
+    mock_bot.send_notification = AsyncMock()
+
+    scheduler = _make_scheduler(telegram_bot=mock_bot)
+
+    portal_result = CollectionResult(collected=100, total_target=2800, data_date=None, null_counts={})  # 수집 부족 → validation fail
+    kis_result = CollectionResult(collected=2500, total_target=2800, data_date=None, null_counts={})  # 80% 이상 → validation pass
+
+    with (
+        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
+        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+        await scheduler._premarket_collect()
+
+    mock_bot.send_notification.assert_called_once()
+    message = mock_bot.send_notification.call_args[0][0]
+    assert "[정보]" in message
+
+
+@pytest.mark.asyncio
+async def test_double_failure_sends_critical_alert():
+    """포털 + KIS 모두 실패 시 [긴급] 알림 발송 + pipeline_healthy=false."""
+    mock_bot = AsyncMock()
+    mock_bot.send_notification = AsyncMock()
+
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(fake_redis=fake_redis, telegram_bot=mock_bot)
+
+    portal_result = CollectionResult(collected=100, total_target=2800, data_date=None, null_counts={})  # validation fail
+    kis_result = CollectionResult(collected=0, total_target=0, data_date=None, null_counts={})  # total_target=0 → fail
+
+    with (
+        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
+        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
+        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
+        await scheduler._premarket_collect()
+
+    mock_bot.send_notification.assert_called_once()
+    message = mock_bot.send_notification.call_args[0][0]
+    assert "[긴급]" in message
+
+    healthy = await fake_redis.get("scheduler:pipeline_healthy")
+    assert healthy == "false"
