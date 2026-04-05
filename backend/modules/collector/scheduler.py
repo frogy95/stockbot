@@ -1,6 +1,7 @@
 """수집 스케줄러 — APScheduler 기반 장전/장중/장후 데이터 수집 오케스트레이션."""
 
 import asyncio
+import html
 import json
 import logging
 import time
@@ -211,7 +212,7 @@ class CollectorScheduler:
             return
         msg = (
             f"<b>[장애]</b> {step} 실패\n"
-            f"에러: {error[:ALERT_MAX_LEN]}\n"
+            f"에러: {html.escape(error[:ALERT_MAX_LEN])}\n"
             f"수동 복구: {RECOVERY_INSTRUCTION}"
         )
         await self._telegram_bot.send_notification(msg)
@@ -222,7 +223,7 @@ class CollectorScheduler:
             return
         msg = (
             f"<b>[정보]</b> {step} 포털 수집 실패, KIS 보조 수집 전환\n"
-            f"포털 실패 사유: {portal_reason[:ALERT_MAX_LEN]}\n"
+            f"포털 실패 사유: {html.escape(portal_reason[:ALERT_MAX_LEN])}\n"
             f"KIS 보조 수집: {kis_collected}건"
         )
         await self._telegram_bot.send_notification(msg)
@@ -233,8 +234,8 @@ class CollectorScheduler:
             return
         msg = (
             f"<b>[긴급]</b> {step} 이중 실패 — 수동 복구 필요\n"
-            f"포털 실패: {portal_reason[:ALERT_MAX_LEN]}\n"
-            f"KIS 실패: {kis_reason[:ALERT_MAX_LEN]}\n"
+            f"포털 실패: {html.escape(portal_reason[:ALERT_MAX_LEN])}\n"
+            f"KIS 실패: {html.escape(kis_reason[:ALERT_MAX_LEN])}\n"
             f"수동 복구: {RECOVERY_INSTRUCTION}"
         )
         await self._telegram_bot.send_notification(msg)
