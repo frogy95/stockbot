@@ -53,7 +53,10 @@ async def test_premarket_collect_pipeline():
 
     mock_db = AsyncMock()
 
-    with patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client:
+    with (
+        patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client,
+        patch("modules.collector.sources.data_go_kr.DataGoKrCollector._latest_trading_date", return_value="20260329"),
+    ):
         mock_ctx = AsyncMock()
         mock_ctx.get.return_value = mock_resp
         mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)

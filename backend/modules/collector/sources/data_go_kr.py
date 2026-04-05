@@ -74,6 +74,21 @@ class DataGoKrCollector:
             if not items:
                 break
 
+            # 첫 페이지에서 API 응답 날짜 검증 — 포털이 요청 날짜 미배포 시
+            # 이전 거래일 데이터를 반환하는 문제 감지
+            if page == 1:
+                actual_date = items[0].get("basDt", "").strip()
+                if actual_date and actual_date != target_date:
+                    logger.warning(
+                        "포털 응답 날짜 불일치: requested=%s, actual=%s",
+                        target_date, actual_date,
+                    )
+                    return CollectionResult(
+                        collected=0,
+                        data_date=actual_date,
+                        null_counts=null_counts,
+                    )
+
             for item in items:
                 try:
                     await self._upsert_stock(item)
