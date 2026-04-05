@@ -138,12 +138,18 @@ async def test_collect_all_success():
     mock_session = AsyncMock(spec=AsyncSession)
     collector = DataGoKrCollector(mock_session)
 
-    response_json = _make_response_json([SAMPLE_ITEM])
+    # target_date와 basDt가 일치하도록 설정
+    target = "20260403"
+    item = {**SAMPLE_ITEM, "basDt": target}
+    response_json = _make_response_json([item])
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
     mock_resp.json.return_value = response_json
 
-    with patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client:
+    with (
+        patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client,
+        patch.object(DataGoKrCollector, "_latest_trading_date", return_value=target),
+    ):
         mock_ctx = AsyncMock()
         mock_ctx.get.return_value = mock_resp
         mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
@@ -184,3 +190,61 @@ async def test_collect_all_returns_zero_when_no_data():
     assert isinstance(result, CollectionResult)
     assert result.collected == 0
     assert result.data_date is not None
+
+
+@pytest.mark.asyncio
+async def test_collect_all_date_mismatch_returns_zero():
+    """API 응답 basDt가 target_date와 다르면 collected=0 반환."""
+    mock_session = AsyncMock(spec=AsyncSession)
+    collector = DataGoKrCollector(mock_session)
+
+    # target_date는 "20260403"이지만 API가 "20260402" 데이터를 반환
+    stale_item = {**SAMPLE_ITEM, "basDt": "20260402"}
+    response_json = _make_response_json([stale_item])
+    mock_resp = MagicMock()
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.return_value = response_json
+
+    with (
+        patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client,
+        patch.object(DataGoKrCollector, "_latest_trading_date", return_value="20260403"),
+    ):
+        mock_ctx = AsyncMock()
+        mock_ctx.get.return_value = mock_resp
+        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
+        mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        result = await collector.collect_all(retry_delay=0)
+
+    assert result.collected == 0
+    assert result.data_date == "20260402"
+    # DB 저장 시도 없어야 함 (upsert_stock, save_market_data 호출 없음)
+    mock_session.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_collect_all_date_match_proceeds_normally():
+    """API 응답 basDt가 target_date와 일치하면 정상 수집."""
+    mock_session = AsyncMock(spec=AsyncSession)
+    collector = DataGoKrCollector(mock_session)
+
+    matching_item = {**SAMPLE_ITEM, "basDt": "20260403"}
+    response_json = _make_response_json([matching_item])
+    mock_resp = MagicMock()
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.return_value = response_json
+
+    with (
+        patch("modules.collector.sources.data_go_kr.httpx.AsyncClient") as mock_client,
+        patch.object(DataGoKrCollector, "_latest_trading_date", return_value="20260403"),
+    ):
+        mock_ctx = AsyncMock()
+        mock_ctx.get.return_value = mock_resp
+        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_ctx)
+        mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        result = await collector.collect_all(retry_delay=0)
+
+    assert result.collected == 1
+    assert result.data_date == "20260403"
+    assert mock_session.execute.call_count == 2  # upsert_stock + save_market_data

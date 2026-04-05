@@ -5,6 +5,20 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: 포털 수집기 API 응답 날짜 불일치 미감지 (2026-04-06)
+
+PR: (생성 중)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest 전체: 681 passed, 0 failed
+  - pytest 타겟(test_data_go_kr + test_collection_validator): 34 passed, 0 failed
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - 다음 거래일 08:00 premarket_pipeline 실행 시 포털 날짜 불일치 → collected=0 → KIS fallback 발동 확인 (Railway 로그)
+
+---
+
 ### Hotfix: 포털 수집기 날짜 폴백 제거 (2026-04-05)
 
 PR: https://github.com/frogy95/stockbot/pull/82
