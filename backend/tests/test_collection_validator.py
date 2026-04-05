@@ -64,6 +64,18 @@ class TestValidatePremarket:
         assert "T-2" in v.failure_reason
 
 
+    def test_zero_collected_from_date_mismatch_fails(self, validator):
+        """날짜 불일치로 collected=0 반환 시 validation 실패 (KIS fallback 트리거)."""
+        result = CollectionResult(
+            collected=0,
+            data_date="20260402",
+            null_counts={"close_price": 0, "volume": 0},
+        )
+        v = validator.validate_premarket(result)
+        assert v.passed is False
+        assert "1500" in v.failure_reason
+
+
 class TestValidateEtfMaster:
     def test_pass_sanity_ok(self, validator):
         result = CollectionResult(collected=500)

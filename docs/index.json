@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-05T08:40:00+09:00",
+  "lastUpdated": "2026-04-06T09:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1817,6 +1817,24 @@
           "hash": "1aa42c9",
           "message": "fix: 포털 수집기 날짜 폴백 제거 — 최신 거래일 0건 시 KIS 폴백 발동",
           "date": "2026-04-05"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-premarket-date-validation",
+      "name": "포털 수집기 API 응답 날짜 불일치 미감지 — basDt 검증 추가",
+      "status": "deployed",
+      "path": "docs/hotfix/premarket-date-validation/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "",
+      "deployedAt": "2026-04-06",
+      "description": "collect_all() 첫 페이지 수신 시 basDt vs target_date 비교, 불일치 시 collected=0 즉시 반환하여 KIS fallback 자동 발동. 포털이 당일 데이터 미배포 시 이전 날짜 데이터를 반환해도 stale 데이터 수집 성공으로 판정되던 버그 수정.",
+      "commits": [
+        {
+          "hash": "4cf4003",
+          "message": "fix: 포털 수집기 API 응답 날짜 불일치 미감지 — basDt 검증 추가로 stale 데이터 수집 차단",
+          "date": "2026-04-06"
         }
       ]
     }
