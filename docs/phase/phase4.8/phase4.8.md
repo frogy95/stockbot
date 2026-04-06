@@ -232,6 +232,7 @@ async def _run_scheduled_pipeline(self) -> None:
 | 5 | 포털 재시도 성공 시 KIS 보조 데이터와 공존 | ⚠️ | 박퀀트 | 스크리닝에서 동일 종목/날짜에 두 소스 있으면 data_go_kr 우선 |
 | 6 | ~~KIS 폴백 성공 시 `_premarket_collect()` 반환값이 포털 실패 건수를 반환~~ | ~~⚠️ Medium~~ | - | ✅ 해결 — Sprint 2에서 `return kis_result.collected` 경로 확인 완료 (PR #78) |
 | 7 | `_premarket_retry` 재시도 성공 후 cross_check_prices 호출 누락 | ⚠️ Medium | - | Sprint 2 코드 리뷰 발견. Phase 5에서 개선 권장 — 재시도 성공 후에도 cross-check 실행 필요 |
+| 8 | **장전 파이프라인 복원력 부족** — KIS fallback이 장 전 시간대에 완료 불가 + premarket 실패 시 DB 데이터 있어도 스크리닝 차단 | 🔴 High | - | 2026-04-06 프로덕션 장애로 발견. 수정 계획: [premarket-pipeline-resilience.md](../../../../.claude/plans/premarket-pipeline-resilience.md) |
 
 ---
 
