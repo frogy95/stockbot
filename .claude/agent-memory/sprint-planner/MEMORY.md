@@ -35,9 +35,11 @@
 - Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/78
 - Phase 4.8 Sprint 3 — 장전 파이프라인 체인 구조 전환, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/80
 
+- Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.8 완료, Phase 5 계획 필요)
+- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.9 완료, Phase 5 계획 필요)
 
 ## 핵심 주의사항
 
@@ -127,3 +129,8 @@
 - Phase 4.8 Sprint 3: test_scheduler.py의 test_scheduler_registers_jobs()에서 job_count=9 → job 구조 변경 필요 (screener 미설정 시 5개)
 - Phase 4.8 Sprint 3: run_premarket_pipeline()의 finally에서 PIPELINE_RUNNING_KEY 삭제 — 래퍼에서 중복 삭제 금지
 - Phase 4.8 Sprint 3: _check_dependency()는 "대기하지 않고 즉시 스킵" — 체인 방식에서는 순차 실행이므로 이 문제 자동 해소
+- Phase 4.9 Sprint 1: validate_screening_readiness 소스 필터 ["data_go_kr", "kis_daily"]는 screener._fetch_today_and_prev() date_subq와 반드시 일치 필요
+- Phase 4.9 Sprint 1: pipeline_healthy=false 유지 원칙 — _are_core_steps_healthy()가 premarket "success" 요구하므로 자연 차단, 코드 리뷰 확인 필수
+- Phase 4.9 Sprint 1: _premarket_retry 후 재실행 시 PIPELINE_RUNNING_KEY 락 확인 필수 (수동 트리거 충돌 방지)
+- Phase 4.9 Sprint 1: DB 폴백 검증 실패 시 기존 의존성 체크 따름 (안전한 실패 패턴)
+- Phase 4.9 Sprint 1: 수정 대상 2파일 (validator.py, scheduler.py) + 신규 테스트 2파일

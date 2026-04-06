@@ -240,6 +240,18 @@ class CollectorScheduler:
         )
         await self._telegram_bot.send_notification(msg)
 
+    async def _send_stale_data_alert(self, details: dict) -> None:
+        """DB 폴백 스크리닝 — T-2 데이터 사용 시 [경고] 알림 발송."""
+        if self._telegram_bot is None:
+            return
+        msg = (
+            f"<b>[경고]</b> DB 폴백 스크리닝 -- T-2 데이터 사용\n"
+            f"최신 데이터: {details.get('latest_date')}\n"
+            f"건수: {details.get('total_count')}건\n"
+            f"소스: {details.get('source_counts')}"
+        )
+        await self._telegram_bot.send_notification(msg)
+
     async def _send_recovery_alert(self, success: bool) -> None:
         """수동 복구 결과 알림 발송."""
         if self._telegram_bot is None:
@@ -602,6 +614,22 @@ class CollectorScheduler:
                             await self._validator.cross_check_prices(db_session, result.data_date)
                     except Exception as e:
                         logger.warning("cross-check 오류 (비중단): %s", e)
+                pipeline_status, existing_lock = await asyncio.gather(
+                    self._get_pipeline_status(),
+                    self._redis.get(PIPELINE_RUNNING_KEY),
+                )
+                screen_status = pipeline_status.get("primary_screen", {}).get("status")
+                if screen_status in ("skipped", "failed"):
+                    if existing_lock:
+                        logger.warning("파이프라인 실행 중 -- 재시도 후 재실행 스킵")
+                    else:
+                        logger.info("포털 재시도 성공 -> 스크리닝 + 후속 단계 재실행")
+                        try:
+                            await self._primary_screen()
+                            await self._dart_collect()
+                            await self._sentiment_collect()
+                        except Exception as e:
+                            logger.exception("재시도 후 재실행 실패: %s", e)
             else:
                 logger.warning(
                     "포털 재시도 실패 (KIS 보조 데이터 유지): reason=%s",
@@ -729,9 +757,30 @@ class CollectorScheduler:
     async def _primary_screen(self) -> dict:
         """08:10 1차 스크리닝: DB 정적 필터 + 팩터 스코어링."""
         if not await self._check_dependency("primary_screen"):
-            logger.warning("1차 스크리닝 스킵: premarket 선행 실패")
-            await self._update_step_status("primary_screen", "skipped")
-            return {"skipped": True, "candidates": 0, "passed": 0}
+            # pipeline_status 실패 시 DB 데이터 충분성 폴백 체크
+            try:
+                async with self._session_factory() as db_session:
+                    readiness = await self._validator.validate_screening_readiness(db_session)
+                if readiness.passed:
+                    logger.warning(
+                        "premarket 실패지만 DB 데이터 충분 -- 스크리닝 진행 (DB 폴백): %s",
+                        readiness.details,
+                    )
+                    if readiness.severity == "warning":
+                        await self._send_stale_data_alert(readiness.details)
+                else:
+                    logger.warning(
+                        "1차 스크리닝 스킵: premarket 실패 + DB 데이터 부족 (%s)",
+                        readiness.failure_reason,
+                    )
+                    await self._update_step_status(
+                        "primary_screen", "skipped", error=readiness.failure_reason
+                    )
+                    return {"skipped": True, "candidates": 0, "passed": 0}
+            except Exception as e:
+                logger.warning("DB 충분성 검증 실패 -- 스크리닝 스킵: %s", e)
+                await self._update_step_status("primary_screen", "skipped")
+                return {"skipped": True, "candidates": 0, "passed": 0}
         logger.info("1차 스크리닝 시작")
         try:
             async with self._session_factory() as db_session:
