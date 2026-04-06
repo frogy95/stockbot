@@ -43,7 +43,7 @@ PostgreSQL 오류: `operator does not exist: date = character varying`
 ### 커밋 이력
 | 해시 | 메시지 | 날짜 |
 |------|--------|------|
-| (커밋 후 기록) | fix(collector): cross_check_prices 날짜 타입 불일치 수정 | 2026-04-06 |
+| `5f3fddd` | fix(collector): cross_check_prices 날짜 타입 불일치 수정 | 2026-04-06 |
 
 ---
 
@@ -60,6 +60,6 @@ PostgreSQL 오류: `operator does not exist: date = character varying`
 ---
 
 ## PR
-- **URL:** (생성 후 기록)
+- **URL:** https://github.com/frogy95/stockbot/pull/92
 - **대상:** main
-- **역머지:** ⬜ develop에 역머지 필요
+- **역머지:** ✅ develop에 역머지 완료

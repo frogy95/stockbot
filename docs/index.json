@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-06T23:59:00+09:00",
+  "lastUpdated": "2026-04-06T19:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1894,13 +1894,31 @@
       "path": "docs/hotfix/premarket-date-validation/hotfix.md",
       "assignee": "ChoiJiSeon",
       "reviewer": "hotfix-close agent",
-      "pr": "",
+      "pr": "https://github.com/frogy95/stockbot/pull/88",
       "deployedAt": "2026-04-06",
       "description": "collect_all() 첫 페이지 수신 시 basDt vs target_date 비교, 불일치 시 collected=0 즉시 반환하여 KIS fallback 자동 발동. 포털이 당일 데이터 미배포 시 이전 날짜 데이터를 반환해도 stale 데이터 수집 성공으로 판정되던 버그 수정.",
       "commits": [
         {
           "hash": "4cf4003",
           "message": "fix: 포털 수집기 API 응답 날짜 불일치 미감지 — basDt 검증 추가로 stale 데이터 수집 차단",
+          "date": "2026-04-06"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-cross-check-date-type-cast",
+      "name": "cross_check_prices 날짜 타입 불일치 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/cross-check-date-type-cast/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/92",
+      "deployedAt": "2026-04-06",
+      "description": "cross_check_prices 함수가 date 타입만 처리하는데 scheduler.py에서 YYYYMMDD 문자열을 전달하여 PostgreSQL에서 operator does not exist: date = character varying 오류 발생. 함수 시그니처를 date | str 유니온으로 변경하고 문자열 입력 시 date 변환 로직 추가. 종가 교차검증이 항상 실패하던 버그 수정.",
+      "commits": [
+        {
+          "hash": "5f3fddd",
+          "message": "fix(collector): cross_check_prices 날짜 타입 불일치 수정",
           "date": "2026-04-06"
         }
       ]

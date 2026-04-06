@@ -12,22 +12,23 @@ PR: https://github.com/frogy95/stockbot/pull/91
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
-
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+- ⬜ 다음 거래일 08:00 premarket_pipeline 실행 시 포털 이중 실패 → DB 폴백 발동 확인 (Railway 로그)
+- ⬜ 08:30 premarket_retry job 후속 재실행 체인 동작 확인
+- ⬜ 이중 실패 시 [긴급] 알림 발송 확인 (텔레그램)
 
 ---
 
-### Hotfix: 포털 수집기 날짜 폴백 제거 (2026-04-05)
+### Hotfix: cross_check_prices 날짜 타입 불일치 수정 (2026-04-06)
 
-PR: https://github.com/frogy95/stockbot/pull/82
+PR: https://github.com/frogy95/stockbot/pull/92
 
 - ✅ 자동 검증 완료 항목:
-  - pytest 타겟(test_data_go_kr.py): 8 passed, 0 failed
-  - 헬스체크 API: /api/v1/health — healthy
+  - pytest 전체: 694 passed, 0 failed
+  - 타겟 API 검증: 해당 없음 (내부 로직, 엔드포인트 미노출)
 
 - ⬜ 수동 검증 필요 항목:
   - docker compose up --build (코드 반영)
-  - 다음 거래일 08:00 premarket_pipeline 실행 시 포털 0건 → KIS 폴백 발동 확인 (Railway 로그)
+  - 다음 거래일 08:00 premarket_pipeline 실행 시 cross_check_prices 정상 동작 확인 (Railway 로그)
 
 ---
 
