@@ -149,6 +149,72 @@ class CollectionValidator:
             )
         return ValidationResult(passed=True, severity="info")
 
+    async def validate_screening_readiness(self, session: AsyncSession) -> ValidationResult:
+        """DB에 스크리닝 가능한 데이터가 충분한지 검증.
+
+        pipeline_status 기반 의존성 체크 실패 시 _primary_screen()의 폴백으로 호출된다.
+        T-2 이내 market_data 건수 >= 1500 + close_price null 비율 < 5% 이면 passed.
+        T-2 이상 오래된 데이터는 severity="warning"으로 진행 허용.
+        """
+        today = datetime.now(KST).date()
+        boundary = get_prev_trading_day(today, n=2)
+        sources = ["data_go_kr", "kis_daily"]
+
+        total_stmt = select(func.count(), func.max(MarketData.data_date)).where(
+            MarketData.data_date >= boundary,
+            MarketData.source.in_(sources),
+        )
+        total_result = await session.execute(total_stmt)
+        total_count, latest_date = total_result.one()
+
+        if total_count < 1500:
+            return ValidationResult(
+                passed=False,
+                failure_type="data_insufficient",
+                failure_reason=f"DB 스크리닝 데이터 부족: {total_count} < 1500",
+                details={"total_count": total_count, "boundary_date": str(boundary)},
+            )
+
+        # null 비율 + 소스별 건수를 단일 쿼리로 집계 (DB 왕복 1회)
+        stats_stmt = (
+            select(
+                MarketData.source,
+                func.count(),
+                func.count().filter(MarketData.close_price.is_(None)),
+            )
+            .where(MarketData.data_date >= boundary, MarketData.source.in_(sources))
+            .group_by(MarketData.source)
+        )
+        stats_result = await session.execute(stats_stmt)
+        rows = stats_result.all()
+        null_count = sum(r[2] for r in rows)
+        source_counts = {r[0]: r[1] for r in rows}
+        null_ratio = null_count / total_count
+
+        if null_ratio >= 0.05:
+            return ValidationResult(
+                passed=False,
+                failure_type="data_quality",
+                failure_reason=f"close_price null 비율 초과: {null_ratio:.1%}",
+                details={"total_count": total_count, "null_ratio": null_ratio},
+            )
+
+        prev_trading_day = get_prev_trading_day(today, n=1)
+        is_stale = latest_date is not None and latest_date < prev_trading_day
+        severity = "warning" if is_stale else "info"
+
+        return ValidationResult(
+            passed=True,
+            severity=severity,
+            details={
+                "total_count": total_count,
+                "null_ratio": null_ratio,
+                "latest_date": str(latest_date) if latest_date else None,
+                "source_counts": source_counts,
+                "is_stale": is_stale,
+            },
+        )
+
     async def validate_premarket_db(self, session: AsyncSession) -> ValidationResult:
         """DB에 적재된 장전 데이터 건수 + null 비율 검증."""
         today = datetime.now(KST).date()

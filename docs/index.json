@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-06T09:00:00+09:00",
+  "lastUpdated": "2026-04-06T23:59:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1659,6 +1659,73 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase4.9",
+      "title": "장전 파이프라인 복원력 강화",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase4.9/phase4.9.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "DB 기반 스크리닝 의존성 + 재시도 후 재실행",
+          "status": "completed",
+          "branch": "phase4.9-sprint1",
+          "sprintDoc": "docs/phase/phase4.9/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/90",
+          "progress": {
+            "total": 3,
+            "completed": 3
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "validate_screening_readiness() 구현 + 단위 테스트",
+              "path": "docs/phase/phase4.9/sprint1/sprint1.md#task-1-validate_screening_readiness-구현--단위-테스트",
+              "testPlan": "pytest tests/test_screening_readiness.py — 5개 테스트 (T-1 정상, T-2 경고, 데이터 부족, null 비율, 빈 DB)",
+              "testResult": "5 passed",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "5578096",
+                  "message": "feat(phase4.9-sprint1): task1 -- validate_screening_readiness 구현 + 단위 테스트",
+                  "date": "2026-04-06"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "_primary_screen DB 폴백 + 텔레그램 알림 + 재시도 후 재실행",
+              "path": "docs/phase/phase4.9/sprint1/sprint1.md#task-2-_primary_screen-db-폴백--텔레그램-알림--재시도-후-재실행",
+              "testPlan": "pytest tests/test_scheduler_dependency.py + test_scheduler_retry.py 기존 테스트 회귀 없음",
+              "testResult": "기존 테스트 회귀 없음",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "1f8149f",
+                  "message": "feat(phase4.9-sprint1): task2 -- _primary_screen DB 폴백 + 텔레그램 알림 + 재시도 후 재실행",
+                  "date": "2026-04-06"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "DB 폴백 스크리닝 + 재시도 후 재실행 통합 테스트",
+              "path": "docs/phase/phase4.9/sprint1/sprint1.md#task-3-db-폴백-스크리닝--재시도-후-재실행-통합-테스트",
+              "testPlan": "pytest tests/test_pipeline_db_fallback.py — 8개 테스트 + pytest -v 전체 회귀",
+              "testResult": "8 passed, 전체 694 passed",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "3e01898",
+                  "message": "feat(phase4.9-sprint1): task3 -- DB 폴백 스크리닝 + 재시도 후 재실행 통합 테스트",
+                  "date": "2026-04-06"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
@@ -1945,6 +2012,15 @@
       "description": "Phase 4.8 Sprint 3 프로덕션 배포 — 장전 파이프라인 체인 구조 전환 (CronTrigger 6개 → 단일 premarket_pipeline 체인)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/81",
       "version": "v1.2.0"
+    },
+    {
+      "date": "2026-04-06",
+      "type": "sprint",
+      "ref": "phase4.9-sprint1",
+      "version": "v1.3.0",
+      "description": "Phase 4.9 Sprint 1 프로덕션 배포 — DB 기반 스크리닝 의존성 + 재시도 후 재실행 (validate_screening_readiness 폴백 검증, _primary_screen DB 폴백, _premarket_retry 후속 재실행, _send_stale_data_alert 알림)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/91",
+      "status": "completed"
     }
   ]
 }
