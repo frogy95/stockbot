@@ -2012,6 +2012,15 @@
       "description": "Phase 4.8 Sprint 3 프로덕션 배포 — 장전 파이프라인 체인 구조 전환 (CronTrigger 6개 → 단일 premarket_pipeline 체인)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/81",
       "version": "v1.2.0"
+    },
+    {
+      "date": "2026-04-06",
+      "type": "sprint",
+      "ref": "phase4.9-sprint1",
+      "version": "v1.3.0",
+      "description": "Phase 4.9 Sprint 1 프로덕션 배포 — DB 기반 스크리닝 의존성 + 재시도 후 재실행 (validate_screening_readiness 폴백 검증, _primary_screen DB 폴백, _premarket_retry 후속 재실행, _send_stale_data_alert 알림)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/91",
+      "status": "completed"
     }
   ]
 }
