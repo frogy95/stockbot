@@ -269,12 +269,14 @@ class CollectionValidator:
             },
         )
 
-    async def cross_check_prices(self, session: AsyncSession, data_date: date) -> list[dict]:
+    async def cross_check_prices(self, session: AsyncSession, data_date: date | str) -> list[dict]:
         """포털(data_go_kr) vs KIS(kis_daily) 종가를 in-memory join하여 1% 초과 괴리 종목 반환.
 
         Returns:
             괴리 종목 목록. 각 항목: {"stock_code", "portal_close", "kis_close", "divergence_pct"}
         """
+        if isinstance(data_date, str):
+            data_date = datetime.strptime(data_date, "%Y%m%d").date()
         portal_stmt = select(MarketData.stock_code, MarketData.close_price).where(
             MarketData.data_date == data_date,
             MarketData.source == "data_go_kr",
