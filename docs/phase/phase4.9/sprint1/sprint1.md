@@ -6,9 +6,11 @@
 
 **Tech Stack:** SQLAlchemy (async), Redis, APScheduler, pytest
 
-**Sprint 기간:** 2026-04-06 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-06 ~ 2026-04-06
 **이전 스프린트:** Phase 4.8 Sprint 3 (pytest passed, PR #80)
 **브랜치명:** `phase4.9-sprint1`
+**상태:** ✅ 완료 (2026-04-06)
+**PR:** https://github.com/frogy95/stockbot/pull/90
 
 ---
 
@@ -85,8 +87,8 @@ git commit -m "feat(phase4.9-sprint1): task1 -- validate_screening_readiness 구
 ```
 
 **완료 기준:**
-- ⬜ pytest tests/test_screening_readiness.py 5개 PASS
-- ⬜ 기존 테스트 회귀 없음
+- ✅ pytest tests/test_screening_readiness.py 5개 PASS
+- ✅ 기존 테스트 회귀 없음
 
 ---
 
@@ -156,10 +158,10 @@ git commit -m "feat(phase4.9-sprint1): task2 -- _primary_screen DB 폴백 + 텔�
 ```
 
 **완료 기준:**
-- ⬜ 기존 scheduler 테스트 전체 PASS (test_scheduler*.py)
-- ⬜ _primary_screen DB 폴백 로직 구현
-- ⬜ _premarket_retry 후속 재실행 로직 구현
-- ⬜ _send_stale_data_alert 구현
+- ✅ 기존 scheduler 테스트 전체 PASS (test_scheduler*.py)
+- ✅ _primary_screen DB 폴백 로직 구현
+- ✅ _premarket_retry 후속 재실행 로직 구현
+- ✅ _send_stale_data_alert 구현
 
 ---
 
@@ -214,8 +216,8 @@ git commit -m "feat(phase4.9-sprint1): task3 -- DB 폴백 스크리닝 + 재시�
 ```
 
 **완료 기준:**
-- ⬜ pytest tests/test_pipeline_db_fallback.py 8개 PASS
-- ⬜ pytest -v 전체 회귀 없음
+- ✅ pytest tests/test_pipeline_db_fallback.py 8개 PASS
+- ✅ pytest -v 전체 회귀 없음 (694 passed)
 
 ---
 

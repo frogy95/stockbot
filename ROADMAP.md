@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.8 완료, Phase 4.9 계획 수립
-- 현재 Phase: Phase 4.9 (장전 파이프라인 복원력 강화) 🔄 진행 중
-- 현재 Sprint: Phase 4.9 Sprint 1 🔄 진행 중
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05)
+- 전체 진행률: Phase 0~4.9 완료, Phase 5 예정
+- 현재 Phase: Phase 4.9 (장전 파이프라인 복원력 강화) ✅ 완료
+- 현재 Sprint: Phase 5 Sprint 1 대기 중
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 4.9 → Phase 5 — 완전 자동 모드 + 성과 분석
+- 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
 
 ## 기술 아키텍처 결정 사항
 
@@ -678,7 +678,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.9: 장전 파이프라인 복원력 강화 (Sprint 1) 🔄
+## Phase 4.9: 장전 파이프라인 복원력 강화 (Sprint 1) ✅
 
 ### 목표
 2026-04-06 프로덕션 장애 대응. 이중 실패(포털+KIS) 시에도 DB에 유효 데이터가 있으면 스크리닝을 진행하도록 의존성 체크를 DB 기반으로 전환. 08:30 재시도 성공 시 스크리닝 + 후속 단계 자동 재실행.

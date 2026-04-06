@@ -35,11 +35,11 @@
 - Phase 4.8 Sprint 2 — 재시도 스케줄 + 알림 + 모니터링, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/78
 - Phase 4.8 Sprint 3 — 장전 파이프라인 체인 구조 전환, ✅ 완료 (2026-04-05) / PR: https://github.com/frogy95/stockbot/pull/80
 
-- Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, 🔄 계획 수립 완료 (2026-04-06)
+- Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.9 완료 후, Phase 5 계획 필요)
+- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.9 완료, Phase 5 계획 필요)
 
 ## 핵심 주의사항
 
