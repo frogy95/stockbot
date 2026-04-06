@@ -1,13 +1,15 @@
 """KIS REST 일봉 보조 수집기 — 공공데이터포털 장전 수집 실패 시 폴백으로 동작한다."""
 
 import logging
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.clients.kis_rest import DailyPrice, KISRestClient
+from core.config import settings
 from core.models.market_data import MarketData
 from core.models.stock import Stock
 from core.trading_calendar import get_prev_trading_day
@@ -28,7 +30,7 @@ class KISDailyCollector:
     async def collect_all(self, target_date: str | None = None) -> CollectionResult:
         """전체 활성 주식 종목 일봉 수집. target_date가 None이면 전일(T-1)."""
         if target_date is None:
-            prev_day = get_prev_trading_day(date.today(), n=1)
+            prev_day = get_prev_trading_day(datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(), n=1)
             target_date = prev_day.strftime("%Y%m%d")
 
         codes = await self._get_active_stock_codes()

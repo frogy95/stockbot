@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-06T23:59:00+09:00",
+  "lastUpdated": "2026-04-07T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1902,6 +1902,29 @@
           "hash": "4cf4003",
           "message": "fix: 포털 수집기 API 응답 날짜 불일치 미감지 — basDt 검증 추가로 stale 데이터 수집 차단",
           "date": "2026-04-06"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-collector-timezone-kst",
+      "name": "ETF/일봉 수집기 UTC 날짜 불일치 수정 (KST 기준으로 변경)",
+      "status": "deployed",
+      "path": "docs/hotfix/collector-timezone-kst/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "",
+      "deployedAt": "2026-04-07",
+      "description": "kis_collector._save_etf_price()와 kis_daily_collector.collect_all()에서 date.today() 사용으로 Railway(UTC) 서버에서 KST 날짜와 불일치 발생, ETF DB 검증 실패(db_validation.passed=false) 버그 수정. datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date() 패턴으로 통일.",
+      "commits": [
+        {
+          "hash": "3a45144",
+          "message": "fix(collector): ETF/일봉 수집기 date.today() → KST 기준 datetime.now() 수정",
+          "date": "2026-04-07"
+        },
+        {
+          "hash": "cef616c",
+          "message": "docs(hotfix): collector-timezone-kst 핫픽스 문서 추가",
+          "date": "2026-04-07"
         }
       ]
     }
