@@ -54,6 +54,7 @@ backend/
 - **환경변수**: `core/config.py`의 Settings 클래스로 관리, 하드코딩 금지
 - **환경변수 추가 시**: `core/config.py`에 추가하는 동시에 `.env.example`에도 반드시 추가 (주석으로 용도 명시)
 - **프로덕션 필수 환경변수**: Railway 등 외부 인프라에 수동 설정이 필요한 경우, deploy.md 수동 검증 항목에 `Railway 환경변수 추가 확인: VAR_NAME` 형식으로 기록
+- **타임존**: `date.today()` 사용 금지 — Railway 서버는 UTC로 동작하므로 KST 기준 날짜와 불일치. 반드시 `datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()` 사용. 테스트 코드에서도 프로덕션 동작을 모사할 때는 동일 패턴 적용
 
 ## 모델 규칙
 

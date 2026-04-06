@@ -1,13 +1,15 @@
 """한투 REST ETF 수집기 — ETF 개별 시세 조회 + DB 저장."""
 
 import logging
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.clients.kis_rest import KISRestClient, StockPrice
+from core.config import settings
 from core.models.market_data import MarketData
 from core.models.stock import Stock
 from modules.collector.models import CollectionResult
@@ -68,7 +70,7 @@ class KISCollector:
 
     async def _save_etf_price(self, stock_code: str, price: StockPrice) -> None:
         """market_data 테이블에 ETF 시세 저장."""
-        today = date.today()
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
 
         stmt = pg_insert(MarketData).values(
             stock_code=stock_code,
