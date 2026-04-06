@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.8 Sprint 3 완료 (Phase 4.8 완료)
-- 현재 Phase: Phase 4.8 (EOD 데이터 수집 내결함성 강화) ✅ 완료
-- 현재 Sprint: Phase 5 준비 중
+- 전체 진행률: Phase 0~4.8 완료, Phase 4.9 계획 수립
+- 현재 Phase: Phase 4.9 (장전 파이프라인 복원력 강화) 🔄 진행 중
+- 현재 Sprint: Phase 4.9 Sprint 1 준비 중
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 5 — 완전 자동 모드 + 성과 분석
+- 다음 마일스톤: Phase 4.9 → Phase 5 — 완전 자동 모드 + 성과 분석
 
 ## 기술 아키텍처 결정 사항
 
@@ -57,6 +57,7 @@ Phase 0 (완료)
                           │           └─> Phase 4.6: 데이터 수집 파이프라인 근본 수리
                           │                 └─> Phase 4.7: 1차 스크리닝 스코어링 구조 수정
                           │                       └─> Phase 4.8: EOD 데이터 수집 내결함성 강화
+                          │                             └─> Phase 4.9: 장전 파이프라인 복원력 강화
                           └─> Phase 5: 완전 자동 모드 + 성과 분석
                                 └─> Phase 6: 고도화 + 안정화
 ```
@@ -70,6 +71,7 @@ Phase 0 (완료)
 - Phase 3 -> 4: 매매 데이터(포지션, 주문, 신호)가 대시보드 표시 대상
 - Phase 4.6 -> 4.7: 수집 파이프라인 정상화 후 스크리닝 스코어링 구조 수정
 - Phase 4.7 -> 4.8: 스크리닝 정상화 후 데이터 수집 SPOF 해소 (공공데이터포털 단일 의존 → KIS 일봉 보조)
+- Phase 4.8 -> 4.9: KIS 폴백 구현 후 남은 복원력 결함 해소 (DB 기반 스크리닝 의존성 + 재시도 후 재실행)
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
 - Phase 4, 5 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
@@ -672,6 +674,33 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - market_data.source 필드로 "kis_daily" 구분 (ETF용 "kis_rest"와 별도)
 
 > Phase 상세 계획: `docs/phase/phase4.8/phase4.8.md` (2026-04-02)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 윤에이피(API 개발자) — 4명 검토 완료
+
+---
+
+## Phase 4.9: 장전 파이프라인 복원력 강화 (Sprint 1) 🔄
+
+### 목표
+2026-04-06 프로덕션 장애 대응. 이중 실패(포털+KIS) 시에도 DB에 유효 데이터가 있으면 스크리닝을 진행하도록 의존성 체크를 DB 기반으로 전환. 08:30 재시도 성공 시 스크리닝 + 후속 단계 자동 재실행.
+
+### 작업 목록
+#### Sprint 1: DB 기반 스크리닝 의존성 + 재시도 후 재실행
+- CollectionValidator.validate_screening_readiness() 추가 (DB 데이터 충분성 검증)
+- _primary_screen() 의존성 체크: pipeline_status 우선 + DB 폴백
+- _premarket_retry() 성공 후 primary_screen + dart + sentiment 재실행
+- pipeline_healthy=false 유지 원칙 (DB 폴백 스크리닝이 성공해도)
+- 텔레그램 알림 (DB 폴백 경고, T-2 데이터 경고)
+- 단위 테스트 + 통합 테스트
+
+### 미확정 사항
+- 없음 (전문가 4명 검토 완료, 11건 파라미터 확정)
+
+### 기술 고려사항
+- validate_screening_readiness의 소스 필터를 screener의 date_subq와 반드시 동일하게 유지
+- pipeline_healthy와 screening_ready는 분리 개념 — 수집 실패 시 healthy=false 유지 필수
+- _premarket_retry 후 재실행 시 PIPELINE_RUNNING_KEY 락 확인
+
+> Phase 상세 계획: `docs/phase/phase4.9/phase4.9.md` (2026-04-06)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 윤에이피(API 개발자) — 4명 검토 완료
 
 ---
