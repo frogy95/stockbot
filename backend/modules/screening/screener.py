@@ -23,6 +23,7 @@ from modules.screening.scorer import FactorScorer, PRIMARY_FACTORS, PRIMARY_WEIG
 
 logger = logging.getLogger(__name__)
 
+FALLBACK_CANDIDATE_LIMIT = 15  # 적응형 필터 0건 시 기본 후보 수
 
 class PrimaryScreener:
     """장전 1차 스크리닝: DB 정적 데이터 기반 필터 + 팩터 스코어링."""
@@ -53,8 +54,16 @@ class PrimaryScreener:
 
         rows = list(today_prev.values())
         filtered, is_relaxed = self._apply_filters_with_adaptive(rows)
+
         if not filtered:
-            return []
+            fallback = self._get_fallback_candidates(rows)
+            if fallback:
+                logger.warning(
+                    "1차 스크리닝 0건 — 기본 후보 %d개 투입 (거래량 상위, 시총 500억+)",
+                    len(fallback),
+                )
+            return fallback
+
         if len(filtered) < 5:
             logger.warning("1차 스크리닝 필터 통과 종목 %d개 — 소수 후보 시 백분위 왜곡 가능", len(filtered))
 
@@ -109,6 +118,27 @@ class PrimaryScreener:
             self.adaptive_steps[-1] if self.adaptive_steps else self.filters.volume_ratio,
         )
         return last_passed, True
+
+    def _get_fallback_candidates(self, rows: list[dict]) -> list[dict]:
+        """적응형 필터 0건 시 거래량 상위 N개(시총 min 이상)를 기본 후보로 반환."""
+        eligible = [r for r in rows if r.get("market_cap", 0) >= self.filters.market_cap_min]
+        eligible.sort(key=lambda r: r.get("volume", 0), reverse=True)
+        return [
+            {
+                **item,
+                "is_fallback": True,
+                "is_relaxed": True,
+                "auto_trade_blocked": True,
+                "position_size_ratio": 0.5,
+                "score": 0,
+                "rank": i,
+                "is_passed": True,
+                "factors": {},
+                "volume_ratio": 0.0,
+                "is_hot": False,
+            }
+            for i, item in enumerate(eligible[:FALLBACK_CANDIDATE_LIMIT], 1)
+        ]
 
     def _build_candidates(
         self, filtered: list[dict], recent_data: dict[str, list[dict]]

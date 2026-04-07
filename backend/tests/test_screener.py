@@ -638,3 +638,121 @@ class TestPrevVolumeFallback:
         result = await screener._get_fallback_prev_volumes(session, ["005930"])
 
         assert "005930" not in result
+
+
+# ---------------------------------------------------------------------------
+# 기본 후보 선정 테스트 (0건 시 거래량 상위 15개)
+# ---------------------------------------------------------------------------
+
+class TestFallbackCandidates:
+    """적응형 필터 0건 시 기본 후보(거래량 상위 15개, 시총 500억+) 선정 검증."""
+
+    def _make_rows_bulk(self, count: int, volume: int, market_cap: int, base_code: int = 0) -> list[dict]:
+        return [
+            _make_row(
+                f"{base_code + i:06d}", f"종목{base_code + i}",
+                volume=volume - i * 100,  # 거래량 내림차순 보장
+                prev_volume=0,
+                market_cap=market_cap,
+                change_rate=0.5,  # 필터 미통과 (1.0 미만)
+            )
+            for i in range(count)
+        ]
+
+    @pytest.mark.asyncio
+    async def test_fallback_returns_top_15(self):
+        """적응형 필터 0건 시 거래량 상위 15개 반환."""
+        screener = PrimaryScreener()
+        # 20개 종목 모두 필터 미통과 (change_rate=0.5 < 1.0)
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        assert len(result) == 15
+
+    @pytest.mark.asyncio
+    async def test_fallback_market_cap_filter(self):
+        """시총 500억 미만 종목은 기본 후보에서 제외."""
+        screener = PrimaryScreener()
+        # 10개: 시총 500억+ / 5개: 시총 500억 미만
+        rows_ok = self._make_rows_bulk(10, volume=200_000, market_cap=100_000_000_000, base_code=0)
+        rows_small = self._make_rows_bulk(5, volume=300_000, market_cap=10_000_000_000, base_code=100)
+        today_prev = {r["stock_code"]: r for r in rows_ok + rows_small}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        codes = {r["stock_code"] for r in result}
+        # 시총 500억 미만 종목(base_code=100+)은 결과에 없어야 함
+        assert not any(c.startswith("1") for c in codes)
+
+    @pytest.mark.asyncio
+    async def test_fallback_flags(self):
+        """기본 후보에 is_fallback, auto_trade_blocked, position_size_ratio 플래그 설정."""
+        screener = PrimaryScreener()
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        for item in result:
+            assert item.get("is_fallback") is True
+            assert item.get("is_relaxed") is True
+            assert item.get("auto_trade_blocked") is True
+            assert item.get("position_size_ratio") == 0.5
+
+    @pytest.mark.asyncio
+    async def test_fallback_skips_scoring(self):
+        """기본 후보는 스코어링 skip — score=0, factors={}."""
+        screener = PrimaryScreener()
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        for item in result:
+            assert item.get("score") == 0
+            assert item.get("factors") == {}
+
+    @pytest.mark.asyncio
+    async def test_no_fallback_when_candidates_exist(self):
+        """필터 통과 후보가 있으면 기본 후보 미생성."""
+        screener = PrimaryScreener()
+        # 12개 종목 필터 통과 (volume_ratio=2.0, change_rate=3.0)
+        rows = [
+            _make_row(f"{i:06d}", f"종목{i}", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0)
+            for i in range(12)
+        ]
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        # 기본 후보가 아닌 일반 스코어링 결과여야 함
+        for item in result:
+            assert item.get("is_fallback") is not True
