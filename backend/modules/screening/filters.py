@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class PrimaryFilters:
     """장전 1차 스크리닝 필터 (DB 정적 데이터 기반)."""
 
-    volume_ratio: float = 2.0
+    volume_ratio: float = 1.5
     volume_min_stock: int = 50_000
     volume_min_etf: int = 10_000
     market_cap_min: int = 50_000_000_000

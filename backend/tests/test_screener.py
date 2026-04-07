@@ -526,3 +526,115 @@ class TestSaveResults:
         assert count == 2
         assert session.add.call_count == 2
         session.commit.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# 적응형 필터 테스트
+# ---------------------------------------------------------------------------
+
+class TestAdaptiveFilter:
+    """_apply_filters_with_adaptive 단계적 완화 로직 검증."""
+
+    def _make_rows_with_ratio(self, count: int, volume_ratio: float, base_code: int = 0) -> list[dict]:
+        """volume_ratio를 정확히 가지는 행 생성."""
+        rows = []
+        for i in range(count):
+            prev = 100_000
+            vol = int(prev * volume_ratio)
+            rows.append(_make_row(
+                f"{base_code + i:06d}", f"종목{base_code + i}",
+                volume=vol, prev_volume=prev,
+                market_cap=100_000_000_000, change_rate=3.0,
+            ))
+        return rows
+
+    def test_no_relaxation_when_enough(self):
+        """1.5 기본 필터로 10개 이상 → is_relaxed=False."""
+        screener = PrimaryScreener()
+        # volume_ratio=2.0 → 1.5 통과 12개
+        rows = self._make_rows_with_ratio(12, volume_ratio=2.0)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is False
+
+    def test_adaptive_relaxes_when_below_min(self):
+        """1.5 통과 <10개, 1.2 통과 >=10개 → is_relaxed=True."""
+        screener = PrimaryScreener()
+        # volume_ratio=1.6 → 1.5 통과 5개
+        rows_pass_15 = self._make_rows_with_ratio(5, volume_ratio=1.6, base_code=0)
+        # volume_ratio=1.3 → 1.2 통과 but 1.5 미통과 10개
+        rows_pass_12 = self._make_rows_with_ratio(10, volume_ratio=1.3, base_code=100)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows_pass_15 + rows_pass_12)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+
+    def test_adaptive_stops_at_1_2(self):
+        """모든 adaptive_step 소진해도 0건이면 is_relaxed=True로 마지막 결과 반환."""
+        screener = PrimaryScreener()
+        # volume_ratio=1.0 → 1.2도 미통과 (1.0 < 1.2)
+        rows = self._make_rows_with_ratio(5, volume_ratio=1.05, base_code=0)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        # 1.2 기준 통과 불가 → 빈 결과 or 소수
+        assert is_relaxed is True  # 완화 시도는 했음
+
+    @pytest.mark.asyncio
+    async def test_is_relaxed_flag_on_screen_result(self):
+        """적응형 완화 발생 시 screen() 결과 모든 항목에 is_relaxed=True."""
+        screener = PrimaryScreener()
+        # 1.5 통과 5개, 1.2 통과 10개
+        rows_15 = self._make_rows_with_ratio(5, volume_ratio=1.6, base_code=0)
+        rows_12 = self._make_rows_with_ratio(10, volume_ratio=1.3, base_code=100)
+        today_prev = {r["stock_code"]: r for r in rows_15 + rows_12}
+        recent_data = {}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = recent_data
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("is_relaxed") is True
+
+
+# ---------------------------------------------------------------------------
+# prev_volume 폴백 테스트
+# ---------------------------------------------------------------------------
+
+class TestPrevVolumeFallback:
+    """prev_volume=0 시 5일 평균 폴백 동작 검증."""
+
+    @pytest.mark.asyncio
+    async def test_fallback_5day_avg(self):
+        """prev_volume=0 종목에 5일 평균 거래량 폴백 적용 (일괄 조회)."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        volumes = [100_000, 120_000, 110_000]  # 3일 유효 데이터
+
+        # session.execute → result.all() → [(code, vol), ...]
+        fallback_result = MagicMock()
+        fallback_result.all.return_value = [("005930", v) for v in volumes]
+        session.execute = AsyncMock(return_value=fallback_result)
+
+        result = await screener._get_fallback_prev_volumes(session, ["005930"])
+
+        expected = sum(volumes) // len(volumes)
+        assert result.get("005930") == expected
+
+    @pytest.mark.asyncio
+    async def test_fallback_insufficient_data(self):
+        """유효 데이터 2일 이하면 해당 종목 미포함."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        # 2일치만 반환
+        fallback_result = MagicMock()
+        fallback_result.all.return_value = [("005930", 80_000), ("005930", 90_000)]
+        session.execute = AsyncMock(return_value=fallback_result)
+
+        result = await screener._get_fallback_prev_volumes(session, ["005930"])
+
+        assert "005930" not in result
