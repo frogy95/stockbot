@@ -1802,6 +1802,96 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "sprint2",
+          "title": "완전 자동 모드 + 텔레그램 고도화",
+          "status": "completed",
+          "branch": "phase5-sprint2",
+          "sprintDoc": "docs/phase/phase5/sprint2/sprint2.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/102",
+          "completedAt": "2026-04-07",
+          "lastUpdated": "2026-04-07T00:00:00+09:00",
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "trading_mode 설정 추가 + 모드 전환 API 확장",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-1-trading_mode-설정-추가--모드-전환-api-확장",
+              "testPlan": "trading_mode seed 확인, PUT /settings/trading-mode 비밀번호/장중/포지션 체크",
+              "testResult": "PASS — trading_mode seed 존재, PUT /api/v1/settings/trading-mode 정상 동작",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "88780e8",
+                  "message": "feat(phase5-sprint2): task1 -- trading_mode 설정 추가 + 모드 전환 API",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "매매 엔진 자동 모드 분기 + 안전장치",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-2-매매-엔진-자동-모드-분기--안전장치",
+              "testPlan": "auto/semi-auto/manual 분기, is_fallback 반자동 강제, position_size_ratio 50%",
+              "testResult": "PASS — auto 즉시 주문, is_fallback 반자동 강제, size_ratio 50% 정상 동작",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "24a15a1",
+                  "message": "feat(phase5-sprint2): task2 -- 매매 엔진 자동 모드 분기 + 안전장치",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "일일 마감 리포트 스케줄 + 시스템 경고 알림",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-3-일일-마감-리포트-스케줄--시스템-경고-알림",
+              "testPlan": "market_close 시 send_daily_report 호출, send_system_alert 포맷 확인",
+              "testResult": "PASS — market_close 리포트 자동 발송, 비상 정지 알림, 텔레그램 미설정 스킵 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "1a4a7ee",
+                  "message": "feat(phase5-sprint2): task3 -- 일일 마감 리포트 자동 발송 + 시스템 경고 알림",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "매매 모드 전환 UI (3단계: manual/semi-auto/auto)",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-4-매매-모드-전환-ui-3단계-manualsemi-autoauto",
+              "testPlan": "설정 페이지 모드 전환, 2단계 확인 모달, 모드 인디케이터 배지, tsc --noEmit",
+              "testResult": "PASS — TradingModeSwitch 2단계 모달, ModeIndicator 배지, tsc 에러 없음",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "eb25794",
+                  "message": "feat(phase5-sprint2): task4 -- 매매 모드 전환 UI + 모드 인디케이터",
+                  "date": "2026-04-07"
+                },
+                {
+                  "hash": "1c5d7f0",
+                  "message": "feat(phase5-sprint2): task4 -- shadcn Select 컴포넌트 추가",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task5",
+              "title": "통합 검증",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-5-통합-검증",
+              "testPlan": "pytest 전체 통과, API 수동 검증, 프론트 타입체크",
+              "testResult": "PASS — 733 passed, 0 failed / tsc --noEmit 에러 없음",
+              "status": "completed",
+              "commits": []
+            }
+          ]
         }
       ]
     }

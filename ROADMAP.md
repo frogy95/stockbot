@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5 Sprint 1 완료, Phase 5 Sprint 2 예정
+- 전체 진행률: Phase 0~5 Sprint 2 완료, Phase 5 Sprint 3 예정
 - 현재 Phase: Phase 5 (1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석) 🔄 진행 중
-- 현재 Sprint: Phase 5 Sprint 2 📋 예정 (완전 자동 모드 + 텔레그램 고도화)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07)
+- 현재 Sprint: Phase 5 Sprint 3 예정 (성과 분석 대시보드)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화 (Sprint 1 배포 후 5거래일 관찰 필요)
+- 다음 마일스톤: Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 기술 아키텍처 결정 사항
 
@@ -724,13 +724,13 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - ✅ 0건 시 기본 후보 (거래량 상위 15개, 시총 500억+, 2차 직접 투입)
 - ✅ date.today() → KST 전환 (5개 파일, risk_manager.py 최우선)
 
-#### Sprint 2: 완전 자동 모드 + 텔레그램 고도화
+#### Sprint 2: 완전 자동 모드 + 텔레그램 고도화 ✅ 완료 (2026-04-07)
 > Sprint 1 배포 후 5거래일 관찰 후 착수 (검토팀 확정)
-- 완전 자동 모드 (신호 -> 즉시 주문, 알림만 발송)
-- 반자동/자동 모드 전환 (웹 설정에서만, 확인 절차)
-- 기본 후보/적응형 후보 자동 매매 금지 (반자동만, 50% 사이징)
-- 일일 마감 리포트 (텔레그램 손익 요약)
-- 시스템 오류/경고 알림 강화
+- ✅ 완전 자동 모드 (신호 -> 즉시 주문, 알림만 발송)
+- ✅ 반자동/자동 모드 전환 (웹 설정에서만, 확인 절차)
+- ✅ 기본 후보/적응형 후보 자동 매매 금지 (반자동만, 50% 사이징)
+- ✅ 일일 마감 리포트 (텔레그램 손익 요약)
+- ✅ 시스템 오류/경고 알림 강화
 
 #### Sprint 3: 성과 분석
 - 수익률 차트 (기간별)

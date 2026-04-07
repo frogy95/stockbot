@@ -139,6 +139,8 @@ async def lifespan(app: FastAPI):
         app.state.command_handler = command_handler
         logger.info("텔레그램 알림 모듈 초기화 완료")
         collector_scheduler.set_telegram_bot(telegram_bot)
+        collector_scheduler.set_notifier_manager(notifier_manager)
+        risk_manager.set_notifier(notifier_manager)
 
     # 매매 엔진 초기화
     strategy = MomentumBreakoutStrategy()

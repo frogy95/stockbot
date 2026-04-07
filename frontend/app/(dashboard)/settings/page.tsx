@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { apiGet, apiPut } from "@/lib/api";
-import { ModeSwitch } from "@/components/settings/mode-switch";
+import { ModeSwitch, TradingModeSwitch } from "@/components/settings/mode-switch";
+import { ModeIndicator } from "@/components/mode-indicator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,6 +233,10 @@ function SettingsTable({
   );
 }
 
+interface TradingModeSetting {
+  trading_mode: string;
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
 
@@ -246,6 +251,9 @@ export default function SettingsPage() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[] | null>(null);
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditError, setAuditError] = useState(false);
+
+  const [tradingMode, setTradingMode] = useState<string | null>(null);
+  const [tradingModeLoading, setTradingModeLoading] = useState(true);
 
   const marketHours = isMarketHours();
 
@@ -288,11 +296,24 @@ export default function SettingsPage() {
     }
   }, []);
 
+  const fetchTradingMode = useCallback(async () => {
+    setTradingModeLoading(true);
+    try {
+      const data = await apiGet<TradingModeSetting>("/api/v1/settings/trading_mode");
+      setTradingMode(data.trading_mode);
+    } catch {
+      // 조회 실패 시 null 유지
+    } finally {
+      setTradingModeLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchRisk();
     fetchTrading();
     fetchAuditLogs();
-  }, [fetchRisk, fetchTrading, fetchAuditLogs]);
+    fetchTradingMode();
+  }, [fetchRisk, fetchTrading, fetchAuditLogs, fetchTradingMode]);
 
   // 리스크 장중 잠금 여부: market_hours=true 이고 risk_lock_during_trading 설정이 "true"일 때
   const riskLockSetting = riskSettings?.find(
@@ -332,7 +353,30 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Section 2: 리스크 설정 */}
+      {/* Section 2: 매매 모드 */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold tracking-tight">매매 모드</h2>
+        <div className="rounded-lg border border-border/50 bg-card p-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                현재 모드
+              </span>
+              <ModeIndicator />
+            </div>
+            {tradingModeLoading ? (
+              <Skeleton className="h-8 w-36" />
+            ) : (
+              <TradingModeSwitch
+                currentMode={tradingMode ?? "manual"}
+                onSuccess={fetchTradingMode}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3: 리스크 설정 */}
       <SettingsTable
         title="리스크 설정"
         settings={riskSettings}
@@ -342,7 +386,7 @@ export default function SettingsPage() {
         onRefresh={fetchRisk}
       />
 
-      {/* Section 3: 매매 설정 */}
+      {/* Section 4: 매매 설정 */}
       <SettingsTable
         title="매매 설정"
         settings={tradingSettings}
@@ -352,7 +396,7 @@ export default function SettingsPage() {
         onRefresh={fetchTrading}
       />
 
-      {/* Section 4: 감사 로그 */}
+      {/* Section 5: 감사 로그 */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-tight">감사 로그</h2>

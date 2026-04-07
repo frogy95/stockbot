@@ -98,6 +98,7 @@ class CollectorScheduler:
         self._last_sentiment: datetime | None = None
         self._last_etf_master: datetime | None = None
         self._telegram_bot = None  # 텔레그램 봇 (main.py에서 후속 주입)
+        self._notifier_manager = None  # 알림 매니저 (main.py에서 후속 주입)
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
         self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
 
@@ -109,6 +110,10 @@ class CollectorScheduler:
     def set_telegram_bot(self, bot) -> None:
         """텔레그램 봇 참조 설정 (main.py에서 후속 주입)."""
         self._telegram_bot = bot
+
+    def set_notifier_manager(self, manager) -> None:
+        """알림 매니저 참조 설정 (main.py에서 후속 주입)."""
+        self._notifier_manager = manager
 
     def set_trading_engine(self, engine) -> None:
         """매매 엔진 참조 설정 (main.py에서 후속 주입)."""
@@ -751,6 +756,14 @@ class CollectorScheduler:
             logger.info("WS 종료 완료")
         except Exception:
             logger.exception("WS 종료 실패")
+
+        # 일일 마감 리포트 발송
+        if self._notifier_manager is not None:
+            try:
+                await self._notifier_manager.send_daily_report(self._session_factory)
+                logger.info("일일 마감 리포트 발송 완료")
+            except Exception:
+                logger.exception("일일 마감 리포트 발송 실패")
 
     # ── 스크리닝 job ─────────────────────────────────────
 

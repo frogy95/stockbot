@@ -85,6 +85,25 @@ class TelegramBot:
             f"총금액: {total_amount:,}원"
         )
 
+    def format_system_alert(self, alert_type: str, details: str) -> str:
+        """시스템 경고 데이터를 HTML 메시지로 변환한다.
+
+        Args:
+            alert_type: 경고 유형 ("emergency_stop", "pipeline_failure", "consecutive_loss", "risk_warning")
+            details: 경고 상세 내용
+
+        Returns:
+            HTML 형식 메시지 문자열
+        """
+        prefix_map = {
+            "emergency_stop": "⛔ [비상 정지]",
+            "pipeline_failure": "🚨 [파이프라인 실패]",
+            "consecutive_loss": "⚠️ [연속 손절 경고]",
+            "risk_warning": "📊 [리스크 경고]",
+        }
+        prefix = prefix_map.get(alert_type, "⚠️ [시스템 경고]")
+        return f"<b>{prefix}</b>\n{details}"
+
     def format_daily_report(self, stats: dict) -> str:
         """일일 리포트 통계를 HTML 메시지로 변환한다."""
         total_trades = stats.get("total_trades", 0)

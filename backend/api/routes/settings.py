@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, time as dt_time
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -29,6 +30,11 @@ class SettingUpdate(BaseModel):
 
 class ModeSwitchRequest(BaseModel):
     target_env: str
+    password: str
+
+
+class TradingModeRequest(BaseModel):
+    target_mode: Literal["manual", "semi-auto", "auto"]
     password: str
 
 
@@ -126,6 +132,57 @@ async def switch_trading_mode(
 
     switched_at = datetime.now(timezone.utc).isoformat()
     return {"trading_env": body.target_env, "switched_at": switched_at}
+
+
+@router.put("/trading-mode")
+async def switch_trading_mode_setting(
+    body: TradingModeRequest,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """매매 모드 전환 (manual/semi-auto/auto). auto 전환 시 포지션 체크 + 장중 차단."""
+    if body.password != settings.ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="비밀번호가 올바르지 않습니다")
+
+    if _is_market_hours():
+        raise HTTPException(status_code=423, detail="장중(09:00~15:30)에는 모드를 전환할 수 없습니다")
+
+    # auto로 전환 시에만 활성 포지션 체크 (semi-auto/manual로의 전환은 허용)
+    if body.target_mode == "auto":
+        position_count_result = await db.execute(select(func.count(PositionRecord.id)))
+        if position_count_result.scalar_one() > 0:
+            raise HTTPException(status_code=409, detail="활성 포지션이 있어 자동 모드로 전환할 수 없습니다")
+
+    setting_result = await db.execute(
+        select(SystemSetting).where(SystemSetting.key == "trading_mode")
+    )
+    row = setting_result.scalar_one_or_none()
+    old_value = row.value if row else None
+
+    if row:
+        row.value = body.target_mode
+    else:
+        db.add(SystemSetting(
+            key="trading_mode",
+            value=body.target_mode,
+            value_type="string",
+            category="trading",
+            description="매매 모드 (manual/semi-auto/auto)",
+        ))
+
+    db.add(AuditLog(
+        action="trading_mode_switch",
+        target_key="trading_mode",
+        old_value=old_value,
+        new_value=body.target_mode,
+        actor=current_user.username,
+        ip_address=_get_client_ip(request),
+    ))
+    await db.commit()
+
+    switched_at = datetime.now(timezone.utc).isoformat()
+    return {"trading_mode": body.target_mode, "switched_at": switched_at}
 
 
 @router.put("/{key}")

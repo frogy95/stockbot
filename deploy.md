@@ -5,9 +5,9 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 5 Sprint 1: 1차 스크리닝 안정화 (2026-04-07)
+### Phase 5 Sprint 2: 완전 자동 모드 + 텔레그램 고도화 (2026-04-07)
 
-PR: https://github.com/frogy95/stockbot/pull/101
+PR: https://github.com/frogy95/stockbot/pull/102
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

@@ -6,6 +6,9 @@ import logging
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import select
+
+from core.models.settings import SystemSetting
 from core.redis import RedisClient
 from modules.trading.eod_liquidator import EodLiquidator
 from modules.trading.order_manager import OrderManager
@@ -32,6 +35,7 @@ class TradingEngine:
         eod_liquidator: EodLiquidator,
         redis_client: RedisClient,
         notifier_manager=None,
+        session_factory=None,
     ):
         self._signal_generator = signal_generator
         self._order_manager = order_manager
@@ -41,6 +45,7 @@ class TradingEngine:
         self._eod_liquidator = eod_liquidator
         self._redis = redis_client
         self._notifier = notifier_manager
+        self._session_factory = session_factory
         self._running = False
         self._monitor_task: asyncio.Task | None = None
 
@@ -63,6 +68,35 @@ class TradingEngine:
         await self._order_manager.stop()
         logger.info("매매 엔진 종료")
 
+    async def _get_trading_mode(self) -> str:
+        """settings 테이블에서 trading_mode 조회 (Redis 캐시 활용, TTL 60초).
+
+        session_factory가 없으면 Redis만 참조하고, 캐시 미스 시 "semi-auto" 반환.
+        """
+        # Redis 캐시 확인
+        cached = await self._redis.get("trading:mode")
+        if cached:
+            return cached
+
+        # session_factory가 없으면 기본값 반환
+        if self._session_factory is None:
+            return "semi-auto"
+
+        # settings 테이블 조회
+        try:
+            async with self._session_factory() as session:
+                stmt = select(SystemSetting).where(SystemSetting.key == "trading_mode")
+                result = await session.execute(stmt)
+                row = result.scalar_one_or_none()
+                mode = row.value if row else "semi-auto"
+
+            # Redis에 60초 캐시
+            await self._redis.set("trading:mode", mode, 60)
+            return mode
+        except Exception:
+            logger.exception("trading_mode 조회 실패 — 기본값 semi-auto 사용")
+            return "semi-auto"
+
     async def process_screening_results(
         self, screened_candidates: list[dict]
     ) -> None:
@@ -78,12 +112,25 @@ class TradingEngine:
             logger.info("신규 진입 차단 시간대 — 신호 생성 스킵")
             return
 
+        # 매매 모드 조회
+        mode = await self._get_trading_mode()
+
         # 신호 생성
         signals = await self._signal_generator.generate_signals(screened_candidates)
         if not signals:
             return
 
+        # stock_code → 후보 dict 매핑 (플래그 조회용)
+        candidate_map: dict[str, dict] = {
+            c["stock_code"]: c for c in screened_candidates if "stock_code" in c
+        }
+
         for signal in signals:
+            # manual 모드: 신호 생성(DB 저장)만, 주문/승인 모두 스킵
+            if mode == "manual":
+                logger.info("manual 모드 — 신호 저장만: %s", signal.stock_code)
+                continue
+
             # 레버리지 여부 판별
             is_leverage = "레버리지" in signal.reason.get("is_leverage", "") if isinstance(
                 signal.reason.get("is_leverage"), str
@@ -97,36 +144,60 @@ class TradingEngine:
                 )
                 continue
 
+            # 후보 플래그 확인 (is_fallback, is_relaxed)
+            candidate = candidate_map.get(signal.stock_code, {})
+            auto_trade_blocked = (
+                candidate.get("is_fallback", False) or candidate.get("is_relaxed", False)
+            )
+            size_ratio: float = candidate.get("position_size_ratio", 1.0)
+
             # 포지션 사이징
             position_size = await self._position_sizer.calculate(
-                signal.stock_code, signal.entry_price, 0
+                signal.stock_code, signal.entry_price, 0, size_ratio=size_ratio
             )
             if position_size.quantity == 0:
                 logger.info("주문 수량 0 — 스킵: %s", signal.stock_code)
                 continue
 
-            # 반자동 모드: 승인 요청 / 자동 모드: 즉시 주문
-            if self._notifier:
-                timeout = self._get_approval_timeout()
-                token = await self._notifier.notify_signal(
-                    signal, position_size.quantity, timeout
-                )
-                logger.info(
-                    "승인 요청: %s %d주 @%d (token=%s, timeout=%ds)",
-                    signal.stock_code,
-                    position_size.quantity,
-                    signal.entry_price,
-                    token,
-                    timeout,
-                )
-            else:
+            # 모드 분기
+            if mode == "auto" and not auto_trade_blocked:
+                # 완전 자동: 즉시 주문 + 알림
                 await self._order_manager.submit_order(signal, position_size)
                 logger.info(
-                    "주문 제출: %s %d주 @%d",
+                    "자동 주문 제출: %s %d주 @%d",
                     signal.stock_code,
                     position_size.quantity,
                     signal.entry_price,
                 )
+                if self._notifier:
+                    text = (
+                        f"[자동 주문 알림] {signal.stock_code} "
+                        f"{position_size.quantity}주 @{signal.entry_price:,}원 주문 완료"
+                    )
+                    await self._notifier.send_notification(text)
+            else:
+                # 반자동 (semi-auto 또는 auto+blocked): 승인 요청
+                if self._notifier:
+                    timeout = self._get_approval_timeout()
+                    token = await self._notifier.notify_signal(
+                        signal, position_size.quantity, timeout
+                    )
+                    logger.info(
+                        "승인 요청: %s %d주 @%d (token=%s, timeout=%ds)",
+                        signal.stock_code,
+                        position_size.quantity,
+                        signal.entry_price,
+                        token,
+                        timeout,
+                    )
+                else:
+                    await self._order_manager.submit_order(signal, position_size)
+                    logger.info(
+                        "주문 제출: %s %d주 @%d",
+                        signal.stock_code,
+                        position_size.quantity,
+                        signal.entry_price,
+                    )
 
     async def monitor_positions(self) -> list[dict]:
         """포지션 모니터링: 청산 조건 확인 및 처리."""

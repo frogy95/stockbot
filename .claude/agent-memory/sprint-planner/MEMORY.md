@@ -39,9 +39,10 @@
 
 - Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), ✅ 완료 (2026-04-07) / PR: (생성 중)
 
+- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, 🔄 계획 수립 완료 (2026-04-07)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화 (Sprint 1 배포 후 5거래일 관찰 필요)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
@@ -144,3 +145,15 @@
 - Phase 5 Sprint 1: 적응형 필터 반환값 tuple[list[dict], bool]로 is_relaxed 전달 — screen() 결과에 플래그 전파
 - Phase 5 Sprint 1: 기본 후보 is_fallback/auto_trade_blocked/position_size_ratio 플래그는 factors JSON에 저장 — Sprint 2에서 engine이 소비
 - Phase 5 Sprint 1: dart.py의 datetime.now().year는 연도만 사용하므로 UTC/KST 무관 — 수정 불필요
+- Phase 5 Sprint 2: engine.py process_screening_results()에서 notifier 존재 여부로 반자동/직접 주문 분기 (line 109) — trading_mode 기반 분기로 변경 필요
+- Phase 5 Sprint 2: seed_settings.py에 trading_mode 미존재 — 추가 필요 (key=trading_mode, value=semi-auto, category=trading)
+- Phase 5 Sprint 2: settings.py에 switch_trading_mode(ModeSwitchRequest) 이미 존재 — trading_env 전환용. trading_mode 전환은 별도 엔드포인트 필요
+- Phase 5 Sprint 2: screener.py의 기본 후보 플래그 (is_fallback, auto_trade_blocked, position_size_ratio) — engine에서 stock_code 기준으로 매핑 필요
+- Phase 5 Sprint 2: NotifierManager.send_daily_report() 이미 구현 (manager.py:102) — 스케줄러 연결만 필요
+- Phase 5 Sprint 2: scheduler._market_close()는 WS 종료만 수행 — send_daily_report 호출 추가 필요
+- Phase 5 Sprint 2: CollectorScheduler에 notifier_manager 참조 없음 — set_notifier_manager() 메서드 추가 필요 (set_telegram_bot 패턴)
+- Phase 5 Sprint 2: RiskManager.__init__에 notifier 파라미터 없음 — 비상 정지 알림 위해 set_notifier() 추가 필요
+- Phase 5 Sprint 2: PositionSizer.calculate(stock_code, current_price, balance_amount)에 size_ratio 파라미터 없음 — 추가 필요
+- Phase 5 Sprint 2: main.py lifespan에서 notifier_manager 생성 후 collector_scheduler/risk_manager에 주입 순서 중요
+- Phase 5 Sprint 2: frontend/(dashboard)/settings/page.tsx에 ModeSwitch 컴포넌트 사용 중 — trading_mode 전환 UI는 별도 섹션으로 추가
+- Phase 5 Sprint 2: frontend/components/settings/mode-switch.tsx는 모의/실전(paper/live) 전환 전용 — TradingModeSwitch는 별도로 추가
