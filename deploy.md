@@ -7,7 +7,7 @@
 
 ### Phase 5 Sprint 1: 1차 스크리닝 안정화 (2026-04-07)
 
-PR: (생성 중)
+PR: https://github.com/frogy95/stockbot/pull/101
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
