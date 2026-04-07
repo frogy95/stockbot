@@ -65,6 +65,7 @@ class RiskManager:
         self._redis = redis_client
         self._settings: dict[str, str] = {}
         self._loaded = False
+        self._notifier = None  # 알림 매니저 (main.py에서 후속 주입)
 
     # ------------------------------------------------------------------
     # 설정 로드
@@ -334,6 +335,9 @@ class RiskManager:
             loss_pct = (total_pnl / total_capital) * 100
             if loss_pct <= emergency_pct:
                 await self._redis.set(REDIS_EMERGENCY_STOP, "1")
+                if self._notifier is not None:
+                    details = f"일일 손실률 {loss_pct:.2f}% (한도: {emergency_pct:.2f}%)"
+                    await self._notifier.send_system_alert("emergency_stop", details)
 
     async def reset_daily_counters(self) -> None:
         """일일 카운터 초기화 (장 시작 전 호출)."""
@@ -388,3 +392,7 @@ class RiskManager:
             raise RiskSettingsLocked(
                 "장중(09:00~15:30)에는 리스크 설정을 변경할 수 없습니다"
             )
+
+    def set_notifier(self, notifier) -> None:
+        """알림 매니저 참조 설정 (main.py에서 후속 주입)."""
+        self._notifier = notifier
