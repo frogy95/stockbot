@@ -3,19 +3,20 @@
 import { Badge } from "@/components/ui/badge";
 import { usePolling } from "@/lib/hooks/use-polling";
 
-interface TradingModeSetting {
-  trading_mode: string; // "manual" | "semi-auto" | "auto"
+interface SettingResponse {
+  key: string;
+  value: string;
 }
 
 export function ModeIndicator() {
-  const { data, isLoading } = usePolling<TradingModeSetting>(
+  const { data, isLoading } = usePolling<SettingResponse>(
     "/api/v1/settings/trading_mode",
     60_000
   );
 
   if (isLoading || !data) return null;
 
-  const mode = data.trading_mode;
+  const mode = data.value;
 
   if (mode === "auto") {
     return (
