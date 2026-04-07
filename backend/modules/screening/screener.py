@@ -24,6 +24,7 @@ from modules.screening.scorer import FactorScorer, PRIMARY_FACTORS, PRIMARY_WEIG
 logger = logging.getLogger(__name__)
 
 FALLBACK_CANDIDATE_LIMIT = 15  # 적응형 필터 0건 시 기본 후보 수
+CHANGE_RATE_FLOOR = -5.0  # change_rate_min 적응형 완화 최저 하한
 
 class PrimaryScreener:
     """장전 1차 스크리닝: DB 정적 데이터 기반 필터 + 팩터 스코어링."""
@@ -34,6 +35,7 @@ class PrimaryScreener:
         scorer: FactorScorer | None = None,
         adaptive_steps: list[float] | None = None,
         adaptive_min_candidates: int = 10,
+        change_rate_adaptive_steps: list[float] | None = None,
     ):
         self.filters = filters or PrimaryFilters()
         self.scorer = scorer or FactorScorer(
@@ -43,6 +45,11 @@ class PrimaryScreener:
         )
         self.adaptive_steps = adaptive_steps if adaptive_steps is not None else [1.5, 1.2]
         self.adaptive_min_candidates = adaptive_min_candidates
+        self.change_rate_adaptive_steps = (
+            change_rate_adaptive_steps
+            if change_rate_adaptive_steps is not None
+            else [-2.0, -3.0]
+        )
 
     async def screen(self, session: AsyncSession) -> list[dict]:
         """1차 스크리닝 실행: DB 조회 → 필터 → 스코어링 → 상위 N종목 반환."""
@@ -97,25 +104,46 @@ class PrimaryScreener:
     def _apply_filters_with_adaptive(
         self, rows: list[dict]
     ) -> tuple[list[dict], bool]:
-        """필터 통과 종목 수가 adaptive_min_candidates 미만이면 단계적 완화."""
+        """필터 통과 종목 수가 adaptive_min_candidates 미만이면 단계적 완화.
+
+        완화 순서: 1) volume_ratio 단계적 완화 → 2) change_rate_min 단계적 완화.
+        change_rate_min의 최저 하한은 CHANGE_RATE_FLOOR.
+        """
         passed = self._apply_filters(rows)
         if len(passed) >= self.adaptive_min_candidates:
             return passed, False
 
+        # 1단계: volume_ratio 완화
         last_passed = passed
-        for step in self.adaptive_steps:
-            temp_filters = replace(self.filters, volume_ratio=step)
+        last_volume_ratio = self.filters.volume_ratio
+        for vr_step in self.adaptive_steps:
+            temp_filters = replace(self.filters, volume_ratio=vr_step)
+            last_passed = self._apply_filters(rows, temp_filters)
+            last_volume_ratio = vr_step
+            if len(last_passed) >= self.adaptive_min_candidates:
+                logger.warning(
+                    "적응형 필터 적용: volume_ratio %.1f, 후보 %d개", vr_step, len(last_passed)
+                )
+                return last_passed, True
+
+        # 2단계: change_rate 완화 (volume_ratio는 마지막 완화 단계 유지)
+        for cr_step in self.change_rate_adaptive_steps:
+            clamped = max(cr_step, CHANGE_RATE_FLOOR)
+            temp_filters = replace(
+                self.filters, volume_ratio=last_volume_ratio, change_rate_min=clamped
+            )
             last_passed = self._apply_filters(rows, temp_filters)
             if len(last_passed) >= self.adaptive_min_candidates:
                 logger.warning(
-                    "적응형 필터 적용: volume_ratio %.1f, 후보 %d개", step, len(last_passed)
+                    "적응형 필터 적용: change_rate_min %.1f, 후보 %d개", clamped, len(last_passed)
                 )
                 return last_passed, True
 
         logger.warning(
-            "적응형 필터 소진: 최종 후보 %d개 (volume_ratio %.1f 기준)",
+            "적응형 필터 소진: 최종 후보 %d개 (volume_ratio %.1f, change_rate_min %.1f 기준)",
             len(last_passed),
-            self.adaptive_steps[-1] if self.adaptive_steps else self.filters.volume_ratio,
+            last_volume_ratio,
+            self.change_rate_adaptive_steps[-1] if self.change_rate_adaptive_steps else self.filters.change_rate_min,
         )
         return last_passed, True
 
