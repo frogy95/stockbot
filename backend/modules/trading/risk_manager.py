@@ -1,7 +1,7 @@
 """리스크 매니저 — 매매 전 리스크 체크 및 비상 정지 관리."""
 from __future__ import annotations
 
-from datetime import datetime, time, date, timedelta
+from datetime import datetime, time, date, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -181,7 +181,7 @@ class RiskManager:
             # 오늘 실현 손익 합계
             today_start = datetime.combine(
                 datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(), time.min
-            )
+            ).replace(tzinfo=timezone.utc)
             realized_stmt = select(
                 func.coalesce(func.sum(TradeHistory.realized_pnl), 0)
             ).where(TradeHistory.exit_time >= today_start)
@@ -314,7 +314,7 @@ class RiskManager:
 
             today_start = datetime.combine(
                 datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(), time.min
-            )
+            ).replace(tzinfo=timezone.utc)
             realized_stmt = select(
                 func.coalesce(func.sum(TradeHistory.realized_pnl), 0)
             ).where(TradeHistory.exit_time >= today_start)
