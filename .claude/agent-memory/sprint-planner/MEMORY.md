@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-02 업데이트)
+## 스프린트 현황 (2026-04-07 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -37,9 +37,11 @@
 
 - Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
 
+- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), 🔄 계획 수립 완료 (2026-04-07)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.9 완료, Phase 5 계획 필요)
+- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화 (Sprint 1 배포 후 5거래일 관찰 필요)
 
 ## 핵심 주의사항
 
@@ -134,3 +136,10 @@
 - Phase 4.9 Sprint 1: _premarket_retry 후 재실행 시 PIPELINE_RUNNING_KEY 락 확인 필수 (수동 트리거 충돌 방지)
 - Phase 4.9 Sprint 1: DB 폴백 검증 실패 시 기존 의존성 체크 따름 (안전한 실패 패턴)
 - Phase 4.9 Sprint 1: 수정 대상 2파일 (validator.py, scheduler.py) + 신규 테스트 2파일
+- Phase 5 Sprint 1: date.today() 프로덕션 5개 파일 + datetime.now() 2개소 — risk_manager.py(180,268,311,377), manager.py(105), commands.py(47), dashboard.py(33), trading.py(57)
+- Phase 5 Sprint 1: risk_manager.py의 check_time_restriction()과 assert_settings_unlocked()에 datetime.now() 미보호 사용 — KST 전환 필수
+- Phase 5 Sprint 1: PrimaryFilters.volume_ratio 기본값 2.0 -> 1.5 변경 시 test_filters.py::TestPrimaryFilters 업데이트 필요
+- Phase 5 Sprint 1: screener._fetch_today_and_prev()에서 prev_volume=0 처리 — session 파라미터 이미 전달받고 있어 폴백 쿼리 추가 가능
+- Phase 5 Sprint 1: 적응형 필터 반환값 tuple[list[dict], bool]로 is_relaxed 전달 — screen() 결과에 플래그 전파
+- Phase 5 Sprint 1: 기본 후보 is_fallback/auto_trade_blocked/position_size_ratio 플래그는 factors JSON에 저장 — Sprint 2에서 engine이 소비
+- Phase 5 Sprint 1: dart.py의 datetime.now().year는 연도만 사용하므로 UTC/KST 무관 — 수정 불필요

@@ -1730,9 +1730,59 @@
     {
       "id": "phase5",
       "title": "1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase5/phase5.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "1차 스크리닝 안정화",
+          "status": "planned",
+          "branch": "phase5-sprint1",
+          "sprintDoc": "docs/phase/phase5/sprint1/sprint1.md",
+          "progress": {
+            "total": 4,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "date.today() KST 전환",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-1-datetoday-kst-전환",
+              "testPlan": "risk_manager KST 날짜/시간 검증, date.today() 프로덕션 잔존 0건",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "volume_ratio 완화 + 적응형 필터 + prev_volume 폴백",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-2-volume_ratio-완화--적응형-필터--prev_volume-폴백",
+              "testPlan": "volume_ratio 1.5, 적응형 [1.5, 1.2], prev_volume 5일 평균 폴백",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "기본 후보 선정 (0건 시 거래량 상위 15개)",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-3-기본-후보-선정-0건-시-거래량-상위-15개",
+              "testPlan": "0건 시 거래량 상위 15개, 시총 500억+, 플래그 설정, 스코어링 skip",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "통합 검증",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-4-통합-검증",
+              "testPlan": "pytest 전체 통과, date.today() 잔존 0건, 적응형 메서드 존재",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
