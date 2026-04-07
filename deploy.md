@@ -5,6 +5,21 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
+### Hotfix: KIS 일봉 수동 수집 API 추가 (2026-04-07)
+
+PR: (PR 생성 후 업데이트)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest 타겟(test_scheduler.py + test_kis_daily_collector.py): 22 passed
+
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - T-2 데이터 보충: `curl -X POST https://api.stockbot.choiji.kr/api/v1/collector/trigger/kis-daily/20260402`
+  - pipeline-status에서 premarket.db_validation 날짜 분포 확인
+  - 1차 스크리닝 재트리거: `curl -X POST https://api.stockbot.choiji.kr/api/v1/screening/trigger/primary`
+
+---
+
 ### Hotfix: ETF/일봉 수집기 UTC 날짜 불일치 수정 (2026-04-07)
 
 PR: (생성 중)
