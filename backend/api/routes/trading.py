@@ -1,12 +1,14 @@
 """매매 관련 API 라우터 — 리스크 상태, 포지션, 매매 이력, 신호, 주문, 엔진 상태 조회."""
 
 from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_db, get_current_user
+from core.config import settings
 from core.models.trading import Order, PositionRecord, TradeHistory, TradeSignal
 
 router = APIRouter(
@@ -54,7 +56,7 @@ async def get_history(
 ):
     """매매 이력 조회 (날짜 필터)."""
     if target_date is None:
-        target_date = date.today()
+        target_date = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
 
     day_start = datetime.combine(target_date, time.min)
     day_end = datetime.combine(target_date, time.max)

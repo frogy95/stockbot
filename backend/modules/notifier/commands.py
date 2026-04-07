@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import date, datetime, time
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
@@ -44,7 +45,7 @@ class CommandHandler:
 
     async def handle_today(self, chat_id: int) -> str:
         """당일 매매 요약."""
-        today = date.today()
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
         day_start = datetime.combine(today, time.min)
         day_end = datetime.combine(today, time.max)
 
