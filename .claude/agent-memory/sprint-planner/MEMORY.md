@@ -37,9 +37,11 @@
 
 - Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
 
-- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), ✅ 완료 (2026-04-07) / PR: (생성 중)
+- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/101
 
-- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, 🔄 계획 수립 완료 (2026-04-07)
+- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/102
+
+- Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, 🔄 계획 수립 완료 (2026-04-08)
 
 ## 다음 사용 가능한 스프린트
 
@@ -157,3 +159,9 @@
 - Phase 5 Sprint 2: main.py lifespan에서 notifier_manager 생성 후 collector_scheduler/risk_manager에 주입 순서 중요
 - Phase 5 Sprint 2: frontend/(dashboard)/settings/page.tsx에 ModeSwitch 컴포넌트 사용 중 — trading_mode 전환 UI는 별도 섹션으로 추가
 - Phase 5 Sprint 2: frontend/components/settings/mode-switch.tsx는 모의/실전(paper/live) 전환 전용 — TradingModeSwitch는 별도로 추가
+- Phase 5.1 Sprint 1: PrimaryFilters.change_rate_min 현재값 1.0 -> -2.0 변경, change_rate_max=7.0 유지
+- Phase 5.1 Sprint 1: 적응형 필터 확장 — volume_ratio [1.5, 1.2] 다음에 change_rate [-2.0, -3.0] 순차 완화, 최저 하한 -5.0
+- Phase 5.1 Sprint 1: 하락 종목 안전장치 — change_rate < 0: auto_trade_blocked=True, change_rate <= -2.0: position_size_ratio=0.5
+- Phase 5.1 Sprint 1: 필터별 탈락 통계 로깅 — _log_filter_stats 헬퍼 메서드로 구현, passes_primary_filter 시그니처 변경 없음
+- Phase 5.1 Sprint 1: test_filters.py의 test_fail_change_rate_too_low (change_rate=0.5) 수정 필요 — 0.5 >= -2.0이므로 이제 통과
+- Phase 5.1 Sprint 1: 수정 대상 2파일 (filters.py, screener.py) + 테스트 2파일 (test_filters.py, test_screener.py)
