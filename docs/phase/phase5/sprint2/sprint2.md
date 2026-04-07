@@ -6,8 +6,10 @@
 
 **Tech Stack:** FastAPI, SQLAlchemy, Redis, APScheduler, python-telegram-bot, Next.js, shadcn/ui
 
-**Sprint 기간:** 2026-04-07 ~ (사용자 검토 후 구현)
-**이전 스프린트:** Sprint 1 (709 passed, PR 생성 중)
+**Sprint 기간:** 2026-04-07 ~ 2026-04-07
+**상태:** ✅ 완료 (2026-04-07)
+**PR:** https://github.com/frogy95/stockbot/pull/102
+**이전 스프린트:** Sprint 1 (709 passed, PR #101)
 **브랜치명:** `phase5-sprint2`
 
 ---
@@ -93,9 +95,9 @@ git commit -m "feat(phase5-sprint2): task1 -- trading_mode 설정 추가 + 모�
 ```
 
 **완료 기준:**
-- ⬜ pytest 테스트 통과
-- ⬜ seed_settings에 trading_mode 항목 존재
-- ⬜ PUT /api/v1/settings/trading-mode 정상 동작
+- ✅ pytest 테스트 통과
+- ✅ seed_settings에 trading_mode 항목 존재
+- ✅ PUT /api/v1/settings/trading-mode 정상 동작
 
 ---
 
@@ -160,11 +162,11 @@ git commit -m "feat(phase5-sprint2): task2 -- 매매 엔진 자동 모드 분기
 ```
 
 **완료 기준:**
-- ⬜ auto 모드에서 승인 없이 즉시 주문 동작
-- ⬜ is_fallback/is_relaxed 종목은 auto에서도 반자동 강제
-- ⬜ position_size_ratio 50% 사이징 동작
-- ⬜ manual 모드에서 신호 저장만 확인
-- ⬜ 기존 engine_approval 테스트 회귀 없음
+- ✅ auto 모드에서 승인 없이 즉시 주문 동작
+- ✅ is_fallback/is_relaxed 종목은 auto에서도 반자동 강제
+- ✅ position_size_ratio 50% 사이징 동작
+- ✅ manual 모드에서 신호 저장만 확인
+- ✅ 기존 engine_approval 테스트 회귀 없음
 
 ---
 
@@ -236,9 +238,9 @@ git commit -m "feat(phase5-sprint2): task3 -- 일일 마감 리포트 자동 발
 ```
 
 **완료 기준:**
-- ⬜ 15:30 market_close 시 일일 리포트 텔레그램 자동 발송
-- ⬜ 비상 정지 발동 시 텔레그램 경고 알림
-- ⬜ 텔레그램 미설정 환경에서 에러 없이 스킵
+- ✅ 15:30 market_close 시 일일 리포트 텔레그램 자동 발송
+- ✅ 비상 정지 발동 시 텔레그램 경고 알림
+- ✅ 텔레그램 미설정 환경에서 에러 없이 스킵
 
 ---
 
@@ -295,10 +297,10 @@ git commit -m "feat(phase5-sprint2): task4 -- 매매 모드 전환 UI + 모드 �
 ```
 
 **완료 기준:**
-- ⬜ 설정 페이지에서 manual/semi-auto/auto 모드 전환 가능
-- ⬜ 자동 모드 전환 시 2단계 확인 모달 동작
-- ⬜ 레이아웃 상단에 현재 모드 배지 표시
-- ⬜ tsc --noEmit 에러 없음
+- ✅ 설정 페이지에서 manual/semi-auto/auto 모드 전환 가능
+- ✅ 자동 모드 전환 시 2단계 확인 모달 동작
+- ✅ 레이아웃 상단에 현재 모드 배지 표시
+- ✅ tsc --noEmit 에러 없음
 
 ---
 
@@ -327,9 +329,9 @@ git add -A && git commit -m "fix(phase5-sprint2): task5 -- 통합 검증 수정"
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 통과
-- ⬜ API 응답 정상 확인
-- ⬜ 프론트 타입체크 통과
+- ✅ pytest 전체 통과 (733 passed)
+- ✅ API 응답 정상 확인
+- ✅ 프론트 타입체크 통과 (tsc --noEmit 에러 없음)
 
 ---
 
