@@ -234,7 +234,8 @@ function SettingsTable({
 }
 
 interface TradingModeSetting {
-  trading_mode: string;
+  key: string;
+  value: string;
 }
 
 export default function SettingsPage() {
@@ -300,7 +301,7 @@ export default function SettingsPage() {
     setTradingModeLoading(true);
     try {
       const data = await apiGet<TradingModeSetting>("/api/v1/settings/trading_mode");
-      setTradingMode(data.trading_mode);
+      setTradingMode(data.value);
     } catch {
       // 조회 실패 시 null 유지
     } finally {
