@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -22,6 +23,7 @@ from modules.screening.scorer import FactorScorer, PRIMARY_FACTORS, PRIMARY_WEIG
 
 logger = logging.getLogger(__name__)
 
+FALLBACK_CANDIDATE_LIMIT = 15  # 적응형 필터 0건 시 기본 후보 수
 
 class PrimaryScreener:
     """장전 1차 스크리닝: DB 정적 데이터 기반 필터 + 팩터 스코어링."""
@@ -30,6 +32,8 @@ class PrimaryScreener:
         self,
         filters: PrimaryFilters | None = None,
         scorer: FactorScorer | None = None,
+        adaptive_steps: list[float] | None = None,
+        adaptive_min_candidates: int = 10,
     ):
         self.filters = filters or PrimaryFilters()
         self.scorer = scorer or FactorScorer(
@@ -37,6 +41,8 @@ class PrimaryScreener:
             factor_weights=PRIMARY_WEIGHTS,
             pass_threshold=60.0,
         )
+        self.adaptive_steps = adaptive_steps if adaptive_steps is not None else [1.5, 1.2]
+        self.adaptive_min_candidates = adaptive_min_candidates
 
     async def screen(self, session: AsyncSession) -> list[dict]:
         """1차 스크리닝 실행: DB 조회 → 필터 → 스코어링 → 상위 N종목 반환."""
@@ -47,9 +53,17 @@ class PrimaryScreener:
         recent_data = await self._get_recent_market_data(session, days=5)
 
         rows = list(today_prev.values())
-        filtered = self._apply_filters(rows)
+        filtered, is_relaxed = self._apply_filters_with_adaptive(rows)
+
         if not filtered:
-            return []
+            fallback = self._get_fallback_candidates(rows)
+            if fallback:
+                logger.warning(
+                    "1차 스크리닝 0건 — 기본 후보 %d개 투입 (거래량 상위, 시총 500억+)",
+                    len(fallback),
+                )
+            return fallback
+
         if len(filtered) < 5:
             logger.warning("1차 스크리닝 필터 통과 종목 %d개 — 소수 후보 시 백분위 왜곡 가능", len(filtered))
 
@@ -57,10 +71,16 @@ class PrimaryScreener:
         scored = self.scorer.score_candidates(candidates)
         result = self._truncate_and_rank(scored)
         self._mark_hot_stocks(result)
+        if is_relaxed:
+            for item in result:
+                item["is_relaxed"] = True
         return result
 
-    def _apply_filters(self, rows: list[dict]) -> list[dict]:
+    def _apply_filters(
+        self, rows: list[dict], filters: PrimaryFilters | None = None
+    ) -> list[dict]:
         """필터 통과 종목만 반환."""
+        f = filters or self.filters
         passed = []
         for row in rows:
             stock_data = {
@@ -70,9 +90,55 @@ class PrimaryScreener:
                 "change_rate": float(row["change_rate"]),
                 "stock_type": row["stock_type"],
             }
-            if passes_primary_filter(stock_data, self.filters):
+            if passes_primary_filter(stock_data, f):
                 passed.append(row)
         return passed
+
+    def _apply_filters_with_adaptive(
+        self, rows: list[dict]
+    ) -> tuple[list[dict], bool]:
+        """필터 통과 종목 수가 adaptive_min_candidates 미만이면 단계적 완화."""
+        passed = self._apply_filters(rows)
+        if len(passed) >= self.adaptive_min_candidates:
+            return passed, False
+
+        last_passed = passed
+        for step in self.adaptive_steps:
+            temp_filters = replace(self.filters, volume_ratio=step)
+            last_passed = self._apply_filters(rows, temp_filters)
+            if len(last_passed) >= self.adaptive_min_candidates:
+                logger.warning(
+                    "적응형 필터 적용: volume_ratio %.1f, 후보 %d개", step, len(last_passed)
+                )
+                return last_passed, True
+
+        logger.warning(
+            "적응형 필터 소진: 최종 후보 %d개 (volume_ratio %.1f 기준)",
+            len(last_passed),
+            self.adaptive_steps[-1] if self.adaptive_steps else self.filters.volume_ratio,
+        )
+        return last_passed, True
+
+    def _get_fallback_candidates(self, rows: list[dict]) -> list[dict]:
+        """적응형 필터 0건 시 거래량 상위 N개(시총 min 이상)를 기본 후보로 반환."""
+        eligible = [r for r in rows if r.get("market_cap", 0) >= self.filters.market_cap_min]
+        eligible.sort(key=lambda r: r.get("volume", 0), reverse=True)
+        return [
+            {
+                **item,
+                "is_fallback": True,
+                "is_relaxed": True,
+                "auto_trade_blocked": True,
+                "position_size_ratio": 0.5,
+                "score": 0,
+                "rank": i,
+                "is_passed": True,
+                "factors": {},
+                "volume_ratio": 0.0,
+                "is_hot": False,
+            }
+            for i, item in enumerate(eligible[:FALLBACK_CANDIDATE_LIMIT], 1)
+        ]
 
     def _build_candidates(
         self, filtered: list[dict], recent_data: dict[str, list[dict]]
@@ -126,6 +192,44 @@ class PrimaryScreener:
         """거래량 비율 500%+ 종목에 is_hot 플래그 설정."""
         for item in results:
             item["is_hot"] = is_hot_stock(item.get("volume_ratio", 0))
+
+    async def _get_fallback_prev_volumes(
+        self, session: AsyncSession, stock_codes: list[str]
+    ) -> dict[str, int]:
+        """prev_volume=0 종목들의 최근 5일 평균 거래량을 일괄 반환 (유효 3일+ 조건)."""
+        if not stock_codes:
+            return {}
+
+        date_subq = (
+            select(MarketData.data_date)
+            .where(MarketData.source.in_(["data_go_kr", "kis_daily"]))
+            .distinct()
+            .order_by(desc(MarketData.data_date))
+            .limit(5)
+            .subquery()
+        )
+        stmt = (
+            select(MarketData.stock_code, MarketData.volume)
+            .where(
+                MarketData.stock_code.in_(stock_codes),
+                MarketData.data_date.in_(select(date_subq.c.data_date)),
+                MarketData.source.in_(["data_go_kr", "kis_daily"]),
+                MarketData.volume > 0,
+            )
+            .order_by(MarketData.stock_code, desc(MarketData.data_date))
+        )
+        result = await session.execute(stmt)
+
+        volumes_by_code: dict[str, list[int]] = defaultdict(list)
+        for code, volume in result.all():
+            if volume:
+                volumes_by_code[code].append(int(volume))
+
+        return {
+            code: sum(vols) // len(vols)
+            for code, vols in volumes_by_code.items()
+            if len(vols) >= 3
+        }
 
     async def _fetch_today_and_prev(
         self, session: AsyncSession
@@ -200,6 +304,14 @@ class PrimaryScreener:
                 "high_price": int(today_row["high_price"] or 0),
                 "low_price": int(today_row["low_price"] or 0),
             }
+
+        # prev_volume=0 종목 일괄 폴백 (N+1 방지)
+        zero_codes = [code for code, data in mapped.items() if data["prev_volume"] == 0]
+        if zero_codes:
+            fallback_map = await self._get_fallback_prev_volumes(session, zero_codes)
+            for code, fallback_vol in fallback_map.items():
+                mapped[code]["prev_volume"] = fallback_vol
+
         return mapped
 
     async def _get_recent_market_data(

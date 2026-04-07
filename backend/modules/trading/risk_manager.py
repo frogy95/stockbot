@@ -1,14 +1,16 @@
 """리스크 매니저 — 매매 전 리스크 체크 및 비상 정지 관리."""
 from __future__ import annotations
 
-from datetime import datetime, time, date, timedelta
+from datetime import datetime, time, date, timedelta, timezone
 from decimal import Decimal
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
+from core.config import settings
 from core.models.settings import SystemSetting
 from core.models.trading import PositionRecord, TradeHistory
 from core.redis import RedisClient
@@ -177,7 +179,9 @@ class RiskManager:
             unrealized_pnl = int(unrealized_result.scalar_one())
 
             # 오늘 실현 손익 합계
-            today_start = datetime.combine(date.today(), time.min)
+            today_start = datetime.combine(
+                datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(), time.min
+            ).replace(tzinfo=timezone.utc)
             realized_stmt = select(
                 func.coalesce(func.sum(TradeHistory.realized_pnl), 0)
             ).where(TradeHistory.exit_time >= today_start)
@@ -265,7 +269,7 @@ class RiskManager:
         Returns:
             True이면 매매 가능, False이면 시간 제한
         """
-        now = datetime.now().time()
+        now = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).time()
         no_entry_start = self._get_time("no_entry_start")
         no_entry_end = self._get_time("no_entry_end")
         no_new_entry = self._get_time("no_new_entry_time")
@@ -308,7 +312,9 @@ class RiskManager:
             unrealized_result = await session.execute(unrealized_stmt)
             unrealized_pnl = int(unrealized_result.scalar_one())
 
-            today_start = datetime.combine(date.today(), time.min)
+            today_start = datetime.combine(
+                datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(), time.min
+            ).replace(tzinfo=timezone.utc)
             realized_stmt = select(
                 func.coalesce(func.sum(TradeHistory.realized_pnl), 0)
             ).where(TradeHistory.exit_time >= today_start)
@@ -374,7 +380,7 @@ class RiskManager:
         if self._get("risk_lock_during_trading").lower() != "true":
             return
 
-        now = datetime.now().time()
+        now = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).time()
         market_open = time(9, 0)
         market_close = time(15, 30)
 

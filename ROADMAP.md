@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~4.9 완료, Phase 5 예정
+- 전체 진행률: Phase 0~5 Sprint 1 완료, Phase 5 Sprint 2 예정
 - 현재 Phase: Phase 5 (1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석) 🔄 진행 중
-- 현재 Sprint: Phase 5 Sprint 1 대기 중 (1차 스크리닝 안정화)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06)
+- 현재 Sprint: Phase 5 Sprint 2 📋 예정 (완전 자동 모드 + 텔레그램 고도화)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백)
+- 다음 마일스톤: Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화 (Sprint 1 배포 후 5거래일 관찰 필요)
 
 ## 기술 아키텍처 결정 사항
 
@@ -705,7 +705,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 5: 1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석 (Sprint 1~3) 🔄
+## Phase 5: 1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석 (Sprint 1~3) 🔄 진행 중
 
 ### 목표
 프로덕션 모니터링 이슈(1차 스크리닝 통과 0건) 해결 후, 완전 자동 매매 모드 구현, 성과 분석 차트 및 일일 리포트 생성. Should 기능 완성.
@@ -717,12 +717,12 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 핫픽스 3건 선 처리 완료 (PR #93, #95~#99)
 
 ### 작업 목록
-#### Sprint 1: 1차 스크리닝 안정화
-- volume_ratio 임계값 완화 (2.0 → 1.5)
-- 적응형 필터 ([1.5, 1.2] 단계적 완화, 최소 10개 후보)
-- prev_volume=0 폴백 (최근 5일 평균, 유효 3일+ 조건)
-- 0건 시 기본 후보 (거래량 상위 15개, 시총 500억+, 2차 직접 투입)
-- date.today() → KST 전환 (5개 파일, risk_manager.py 최우선)
+#### Sprint 1: 1차 스크리닝 안정화 ✅ (2026-04-07 완료)
+- ✅ volume_ratio 임계값 완화 (2.0 → 1.5)
+- ✅ 적응형 필터 ([1.5, 1.2] 단계적 완화, 최소 10개 후보)
+- ✅ prev_volume=0 폴백 (최근 5일 평균, 유효 3일+ 조건)
+- ✅ 0건 시 기본 후보 (거래량 상위 15개, 시총 500억+, 2차 직접 투입)
+- ✅ date.today() → KST 전환 (5개 파일, risk_manager.py 최우선)
 
 #### Sprint 2: 완전 자동 모드 + 텔레그램 고도화
 > Sprint 1 배포 후 5거래일 관찰 후 착수 (검토팀 확정)

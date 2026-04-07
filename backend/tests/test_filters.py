@@ -14,7 +14,7 @@ class TestPrimaryFilters:
 
     def test_default_values(self):
         f = PrimaryFilters()
-        assert f.volume_ratio == 2.0
+        assert f.volume_ratio == 1.5
         assert f.volume_min_stock == 50_000
         assert f.volume_min_etf == 10_000
         assert f.market_cap_min == 50_000_000_000

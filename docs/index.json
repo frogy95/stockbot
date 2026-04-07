@@ -1730,9 +1730,80 @@
     {
       "id": "phase5",
       "title": "1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase5/phase5.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "1차 스크리닝 안정화",
+          "status": "completed",
+          "branch": "phase5-sprint1",
+          "sprintDoc": "docs/phase/phase5/sprint1/sprint1.md",
+          "prUrl": "",
+          "completedAt": "2026-04-07",
+          "lastUpdated": "2026-04-07T00:00:00+09:00",
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "date.today() KST 전환",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-1-datetoday-kst-전환",
+              "testPlan": "risk_manager KST 날짜/시간 검증, date.today() 프로덕션 잔존 0건",
+              "testResult": "PASS — date.today() 프로덕션 잔존 0건, 기존 pytest 전체 회귀 없음",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "e0ee8fd",
+                  "message": "feat(phase5-sprint1): task1 -- date.today()/datetime.now() KST 전환",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "volume_ratio 완화 + 적응형 필터 + prev_volume 폴백",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-2-volume_ratio-완화--적응형-필터--prev_volume-폴백",
+              "testPlan": "volume_ratio 1.5, 적응형 [1.5, 1.2], prev_volume 5일 평균 폴백",
+              "testResult": "PASS — PrimaryFilters().volume_ratio == 1.5, 적응형 필터 메서드 존재 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "579da4b",
+                  "message": "feat(phase5-sprint1): task2 -- volume_ratio 1.5 완화 + 적응형 필터 + prev_volume 폴백",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "기본 후보 선정 (0건 시 거래량 상위 15개)",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-3-기본-후보-선정-0건-시-거래량-상위-15개",
+              "testPlan": "0건 시 거래량 상위 15개, 시총 500억+, 플래그 설정, 스코어링 skip",
+              "testResult": "PASS — is_fallback, auto_trade_blocked, position_size_ratio 플래그 정상 설정",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "bb95957",
+                  "message": "feat(phase5-sprint1): task3 -- 기본 후보 선정 (0건 시 거래량 상위 15개, 시총 500억+)",
+                  "date": "2026-04-07"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "통합 검증",
+              "path": "docs/phase/phase5/sprint1/sprint1.md#task-4-통합-검증",
+              "testPlan": "pytest 전체 통과, date.today() 잔존 0건, 적응형 메서드 존재",
+              "testResult": "PASS — 709 passed, 0 failed",
+              "status": "completed",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

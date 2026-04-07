@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 
+from core.config import settings
 from core.models.trading import TradeHistory
 from modules.trading.strategy import TradeSignalData
 
@@ -102,9 +104,10 @@ class NotifierManager:
         # session_factory 파라미터 우선, 없으면 생성자 주입 값 사용
         factory = session_factory or self._session_factory
 
-        today_start = datetime.combine(date.today(), datetime.min.time()).replace(
-            tzinfo=timezone.utc
-        )
+        today_start = datetime.combine(
+            datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(),
+            datetime.min.time(),
+        ).replace(tzinfo=timezone.utc)
 
         async with factory() as session:
             # 당일 trade_history 조회
