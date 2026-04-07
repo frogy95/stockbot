@@ -62,6 +62,7 @@ class PrimaryScreener:
     def _apply_filters(self, rows: list[dict]) -> list[dict]:
         """필터 통과 종목만 반환."""
         passed = []
+        reject_counts = {"prev_volume_zero": 0, "volume_ratio": 0, "volume_min": 0, "market_cap": 0, "change_rate": 0}
         for row in rows:
             stock_data = {
                 "volume": row["volume"],
@@ -70,9 +71,36 @@ class PrimaryScreener:
                 "change_rate": float(row["change_rate"]),
                 "stock_type": row["stock_type"],
             }
-            if passes_primary_filter(stock_data, self.filters):
+            reject_reason = self._check_filter_reject(stock_data)
+            if reject_reason:
+                reject_counts[reject_reason] += 1
+            else:
                 passed.append(row)
+        logger.info(
+            "1차 필터 결과: 입력=%d, 통과=%d, 탈락={prev_volume_zero=%d, volume_ratio=%d, volume_min=%d, market_cap=%d, change_rate=%d}",
+            len(rows), len(passed),
+            reject_counts["prev_volume_zero"], reject_counts["volume_ratio"],
+            reject_counts["volume_min"], reject_counts["market_cap"], reject_counts["change_rate"],
+        )
         return passed
+
+    def _check_filter_reject(self, stock_data: dict) -> str | None:
+        """필터 탈락 사유 반환. 통과 시 None."""
+        prev_volume = stock_data["prev_volume"]
+        if prev_volume == 0:
+            return "prev_volume_zero"
+        volume = stock_data["volume"]
+        if volume / prev_volume < self.filters.volume_ratio:
+            return "volume_ratio"
+        volume_min = self.filters.volume_min_etf if stock_data["stock_type"] == "ETF" else self.filters.volume_min_stock
+        if volume < volume_min:
+            return "volume_min"
+        if stock_data["market_cap"] < self.filters.market_cap_min:
+            return "market_cap"
+        change_rate = stock_data["change_rate"]
+        if change_rate < self.filters.change_rate_min or change_rate > self.filters.change_rate_max:
+            return "change_rate"
+        return None
 
     def _build_candidates(
         self, filtered: list[dict], recent_data: dict[str, list[dict]]
@@ -171,7 +199,17 @@ class PrimaryScreener:
         rows = result.mappings().all()
 
         if not rows:
+            logger.warning("_fetch_today_and_prev: DB에서 조회된 행이 0건")
             return {}
+
+        # 날짜 분포 디버그
+        date_counts: dict[str, int] = {}
+        source_counts: dict[str, int] = {}
+        for row in rows:
+            d = str(row["data_date"])
+            date_counts[d] = date_counts.get(d, 0) + 1
+            # source는 메인 쿼리에 없으므로 date로만 집계
+        logger.info("_fetch_today_and_prev: 총 %d행, 날짜별=%s", len(rows), date_counts)
 
         # 종목별로 당일/전일 매핑
         stock_dates: dict[str, list[dict]] = defaultdict(list)
