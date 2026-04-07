@@ -37,11 +37,12 @@
 
 - Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
 
-- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), 🔄 계획 수립 완료 (2026-04-07)
+- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), ✅ 완료 (2026-04-07) / PR: (생성 중)
 
 ## 다음 사용 가능한 스프린트
 
 - Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화 (Sprint 1 배포 후 5거래일 관찰 필요)
+- Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
 

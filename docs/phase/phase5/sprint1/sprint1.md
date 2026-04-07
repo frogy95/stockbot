@@ -6,7 +6,8 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 (async), pytest
 
-**Sprint 기간:** 2026-04-07 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-07 ~ 2026-04-07
+**상태:** ✅ 완료 (2026-04-07)
 **이전 스프린트:** Phase 4.9 Sprint 1 (완료, PR #90)
 **브랜치명:** `phase5-sprint1`
 
@@ -117,9 +118,9 @@ git commit -m "feat(phase5-sprint1): task1 -- date.today()/datetime.now() KST �
 ```
 
 **완료 기준:**
-- ⬜ test_kst_date.py 테스트 통과
-- ⬜ 기존 pytest 전체 회귀 없음
-- ⬜ `grep -r "date.today()" backend/ --include="*.py"` 결과에 프로덕션 코드 없음 (테스트 코드는 허용)
+- ✅ test_kst_date.py 테스트 통과
+- ✅ 기존 pytest 전체 회귀 없음
+- ✅ `grep -r "date.today()" backend/ --include="*.py"` 결과에 프로덕션 코드 없음 (테스트 코드는 허용)
 
 ---
 
@@ -213,11 +214,11 @@ git commit -m "feat(phase5-sprint1): task2 -- volume_ratio 1.5 완화 + 적응�
 ```
 
 **완료 기준:**
-- ⬜ volume_ratio 기본값 1.5
-- ⬜ 적응형 필터 [1.5, 1.2] 단계 동작
-- ⬜ prev_volume=0 시 5일 평균 폴백 (유효 3일+ 조건)
-- ⬜ is_relaxed 플래그 정상 설정
-- ⬜ pytest 전체 통과
+- ✅ volume_ratio 기본값 1.5
+- ✅ 적응형 필터 [1.5, 1.2] 단계 동작
+- ✅ prev_volume=0 시 5일 평균 폴백 (유효 3일+ 조건)
+- ✅ is_relaxed 플래그 정상 설정
+- ✅ pytest 전체 통과
 
 ---
 
@@ -279,11 +280,11 @@ git commit -m "feat(phase5-sprint1): task3 -- 기본 후보 선정 (0건 시 거
 ```
 
 **완료 기준:**
-- ⬜ 0건 시 기본 후보 15개 반환
-- ⬜ 시총 500억+ 필터 적용
-- ⬜ is_fallback, auto_trade_blocked, position_size_ratio 플래그 설정
-- ⬜ 스코어링 skip (score=0, factors={})
-- ⬜ pytest 전체 통과
+- ✅ 0건 시 기본 후보 15개 반환
+- ✅ 시총 500억+ 필터 적용
+- ✅ is_fallback, auto_trade_blocked, position_size_ratio 플래그 설정
+- ✅ 스코어링 skip (score=0, factors={})
+- ✅ pytest 전체 통과
 
 ---
 
@@ -322,10 +323,10 @@ print('OK: 적응형 필터 메서드 존재 확인')
 - 예상: `PrimaryFilters volume_ratio: 1.5`, `OK: 적응형 필터 메서드 존재 확인`
 
 **완료 기준:**
-- ⬜ pytest 전체 통과
-- ⬜ date.today() 프로덕션 잔존 0건
-- ⬜ datetime.now() 미보호 호출 0건
-- ⬜ PrimaryFilters().volume_ratio == 1.5 확인
+- ✅ pytest 전체 통과 (709 passed, 0 failed)
+- ✅ date.today() 프로덕션 잔존 0건
+- ✅ datetime.now() 미보호 호출 0건
+- ✅ PrimaryFilters().volume_ratio == 1.5 확인
 
 ---
 
