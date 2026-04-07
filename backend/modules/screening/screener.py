@@ -76,7 +76,7 @@ class PrimaryScreener:
                 reject_counts[reject_reason] += 1
             else:
                 passed.append(row)
-        logger.info(
+        logger.warning(
             "1차 필터 결과: 입력=%d, 통과=%d, 탈락={prev_volume_zero=%d, volume_ratio=%d, volume_min=%d, market_cap=%d, change_rate=%d}",
             len(rows), len(passed),
             reject_counts["prev_volume_zero"], reject_counts["volume_ratio"],
@@ -209,7 +209,7 @@ class PrimaryScreener:
             d = str(row["data_date"])
             date_counts[d] = date_counts.get(d, 0) + 1
             # source는 메인 쿼리에 없으므로 date로만 집계
-        logger.info("_fetch_today_and_prev: 총 %d행, 날짜별=%s", len(rows), date_counts)
+        logger.warning("_fetch_today_and_prev: 총 %d행, 날짜별=%s", len(rows), date_counts)
 
         # 종목별로 당일/전일 매핑
         stock_dates: dict[str, list[dict]] = defaultdict(list)
