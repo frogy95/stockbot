@@ -57,13 +57,14 @@ class DataGoKrCollector:
         """가장 최근 완료된 거래일을 YYYYMMDD 문자열로 반환한다."""
         return DataGoKrCollector._get_trading_dates(1)[0]
 
-    async def collect_all(self, retry_delay: float = RETRY_DELAY) -> CollectionResult:
-        """최신 거래일 전 종목 일괄 수집. CollectionResult를 반환한다.
+    async def collect_all(self, retry_delay: float = RETRY_DELAY, target_date: str | None = None) -> CollectionResult:
+        """전 종목 일괄 수집. CollectionResult를 반환한다.
 
-        최신 거래일 데이터만 시도한다. 0건이면 collected=0을 반환하여
-        상위 레이어(스케줄러)에서 KIS 폴백을 결정하도록 한다.
+        target_date가 None이면 최신 거래일을 자동 결정한다.
+        0건이면 collected=0을 반환하여 상위 레이어(스케줄러)에서 KIS 폴백을 결정하도록 한다.
         """
-        target_date = self._latest_trading_date()
+        if target_date is None:
+            target_date = self._latest_trading_date()
         logger.info("공공데이터포털 수집 기준일: %s", target_date)
         total_collected = 0
         null_counts: dict[str, int] = {"close_price": 0, "volume": 0}

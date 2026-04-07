@@ -488,6 +488,30 @@ class CollectorScheduler:
         count = await self._premarket_collect()
         return {"stocks_collected": count}
 
+    async def trigger_premarket_date(self, target_date: str) -> dict:
+        """수동 장전 수집 트리거 (특정 날짜 지정, 공공데이터포털 사용).
+
+        Args:
+            target_date: YYYYMMDD 형식의 수집 대상 날짜
+        """
+        logger.info("수동 장전 수집 시작: target_date=%s", target_date)
+        try:
+            async with self._session_factory() as db_session:
+                collector = DataGoKrCollector(db_session)
+                result = await collector.collect_all(target_date=target_date)
+            logger.info(
+                "수동 장전 수집 완료: target_date=%s collected=%d",
+                target_date, result.collected,
+            )
+            return {
+                "target_date": target_date,
+                "collected": result.collected,
+                "data_date": result.data_date,
+            }
+        except Exception as e:
+            logger.exception("수동 장전 수집 실패: target_date=%s reason=%s", target_date, e)
+            return {"target_date": target_date, "error": str(e)}
+
     async def trigger_kis_daily(self, target_date: str) -> dict:
         """수동 KIS 일봉 수집 트리거 (특정 날짜 지정).
 
