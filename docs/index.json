@@ -1802,6 +1802,64 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "sprint2",
+          "title": "완전 자동 모드 + 텔레그램 고도화",
+          "status": "planned",
+          "branch": "phase5-sprint2",
+          "sprintDoc": "docs/phase/phase5/sprint2/sprint2.md",
+          "progress": {
+            "total": 5,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "trading_mode 설정 추가 + 모드 전환 API 확장",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-1-trading_mode-설정-추가--모드-전환-api-확장",
+              "testPlan": "trading_mode seed 확인, PUT /settings/trading-mode 비밀번호/장중/포지션 체크",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "매매 엔진 자동 모드 분기 + 안전장치",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-2-매매-엔진-자동-모드-분기--안전장치",
+              "testPlan": "auto/semi-auto/manual 분기, is_fallback 반자동 강제, position_size_ratio 50%",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "일일 마감 리포트 스케줄 + 시스템 경고 알림",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-3-일일-마감-리포트-스케줄--시스템-경고-알림",
+              "testPlan": "market_close 시 send_daily_report 호출, send_system_alert 포맷 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "매매 모드 전환 UI (3단계: manual/semi-auto/auto)",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-4-매매-모드-전환-ui-3단계-manualsemi-autoauto",
+              "testPlan": "설정 페이지 모드 전환, 2단계 확인 모달, 모드 인디케이터 배지, tsc --noEmit",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "통합 검증",
+              "path": "docs/phase/phase5/sprint2/sprint2.md#task-5-통합-검증",
+              "testPlan": "pytest 전체 통과, API 수동 검증, 프론트 타입체크",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     }
