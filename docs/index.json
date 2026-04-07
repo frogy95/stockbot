@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-07T12:00:00+09:00",
+  "lastUpdated": "2026-04-07T17:10:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1730,7 +1730,7 @@
     {
       "id": "phase5",
       "title": "1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase5/phase5.md",
       "sprints": [
         {
@@ -2212,6 +2212,15 @@
       "description": "Phase 4.9 Sprint 1 프로덕션 배포 — DB 기반 스크리닝 의존성 + 재시도 후 재실행 (validate_screening_readiness 폴백 검증, _primary_screen DB 폴백, _premarket_retry 후속 재실행, _send_stale_data_alert 알림)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/91",
       "status": "completed"
+    },
+    {
+      "date": "2026-04-07",
+      "type": "sprint",
+      "ref": "phase5-sprint1, phase5-sprint2",
+      "version": "v1.4.0",
+      "description": "Phase 5 프로덕션 배포 — Sprint 1 (date.today() KST 전환, volume_ratio 완화, 기본 후보 선정), Sprint 2 (trading_mode 설정 + 모드 전환 API, 완전 자동 모드 분기 + 안전장치, 일일 마감 리포트 + 시스템 경고 알림, 매매 모드 전환 UI + ModeIndicator)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/104",
+      "status": "in_progress"
     }
   ]
 }
