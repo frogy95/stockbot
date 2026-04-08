@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5 Sprint 3 예정
-- 현재 Phase: Phase 5.1 (1차 스크리닝 change_rate 필터 수정) ✅ 완료
-- 현재 Sprint: Phase 5 Sprint 3 예정 (성과 분석 대시보드)
+- 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5.2 계획 수립
+- 현재 Phase: Phase 5.2 (KIS WebSocket 모의 환경 안정화) 🔄 진행 중
+- 현재 Sprint: Phase 5.2 Sprint 1 예정 (WS 구독 제한 + 재연결 안정화)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 5 Sprint 3 — 성과 분석 대시보드
+- 다음 마일스톤: Phase 5.2 Sprint 1 — WS 구독 제한 + 재연결 안정화
 
 ## 기술 아키텍처 결정 사항
 
@@ -60,7 +60,8 @@ Phase 0 (완료)
                           │                             └─> Phase 4.9: 장전 파이프라인 복원력 강화
                           └─> Phase 5: 스크리닝 안정화 + 완전 자동 + 성과 분석
                                 └─> Phase 5.1: change_rate 필터 수정
-                                      └─> Phase 6: 고도화 + 안정화
+                                      └─> Phase 5.2: WS 모의 환경 안정화
+                                            └─> Phase 6: 고도화 + 안정화
 ```
 
 - Phase 0 -> 0.5: API 검증 결과가 Phase 1 이후 아키텍처/전략 결정의 전제
@@ -75,7 +76,8 @@ Phase 0 (완료)
 - Phase 4.8 -> 4.9: KIS 폴백 구현 후 남은 복원력 결함 해소 (DB 기반 스크리닝 의존성 + 재시도 후 재실행)
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
 - Phase 5 -> 5.1: 1차 스크리닝 통과 0건 재발 → change_rate 필터 과도 엄격성 수정
-- Phase 4, 5, 5.1 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
+- Phase 5.1 -> 5.2: WS 재연결 반복으로 장중 실시간 파이프라인 마비 -> 구독 수 제한 + 재연결 안정화
+- Phase 4, 5, 5.1, 5.2 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
 ## MVP 범위 (Must)
 
@@ -795,6 +797,43 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 > Phase 상세 계획: `docs/phase/phase5.1/phase5.1.md` ✅ 계획 수립 완료 (2026-04-08)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
+
+---
+
+## Phase 5.2: KIS WebSocket 모의 환경 안정화 (Sprint 1) 🔄
+
+### 목표
+모의 환경(paper)에서 KIS WebSocket이 구독 수 초과로 재연결을 반복하여 장중 실시간 파이프라인(2차 스크리닝 + 매매 신호)이 마비되는 문제를 수정한다. 환경별 구독 제한 + 재연결 로직 안정화 + 2차 스크리닝 WS 연동.
+
+### 배경 (2026-04-08 프로덕션 이슈)
+- WSSubscriptionManager.max=35 -> 30종목 x 2 tr_id = 60 WS 구독 > 모의 한도 ~40
+- 재연결 시 전체 구독 한번에 복원 -> 서버 과부하 -> 즉시 재해제 -> 무한 루프
+- 2차 스크리닝 10:14 이후 실질 중단 (Redis TTL=5초 만료)
+
+### 작업 목록
+#### Sprint 1: WS 구독 제한 + 재연결 안정화
+- 환경별 max_ws_subscriptions (paper=20, live=35)
+- 재연결 구독 복원 딜레이 (0.5초/종목)
+- 재연결 파라미터 조정 (최대 7회, 백오프 2초, ping_timeout=10초)
+- ConnectionClosed close code/reason 로깅
+- 재연결 실패 시 텔레그램 긴급 알림
+- 2차 스크리닝 WS 미연결 시 스킵 + 연속 3회 텔레그램 경고
+- REALTIME_CACHE_TTL 5초 -> 10초
+- 재연결 후 체결강도 5초 웜업 구간
+- 테스트
+
+### 완료 기준 (Definition of Done)
+- 모의 환경 WS 연속 1시간 안정 연결
+- 2차 스크리닝 30초 주기 정상 실행 (10회 연속)
+- pytest 전체 통과
+
+### 기술 고려사항
+- KIS 모의 WS(port 31000)는 tr_id 단위로 구독 카운트 (비공식 ~40건 한도)
+- 모의 서버 10~30분 간격 자체 불안정 -> 재연결 견고성이 핵심
+- 실전 전환 시 live=35 자동 적용, 별도 검증 Sprint 불필요
+
+> Phase 상세 계획: `docs/phase/phase5.2/phase5.2.md` ✅ 계획 수립 완료 (2026-04-08)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
 
 ---
 

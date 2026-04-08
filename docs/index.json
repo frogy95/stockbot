@@ -1959,6 +1959,13 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase5.2",
+      "title": "KIS WebSocket 모의 환경 안정화",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase5.2/phase5.2.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [
