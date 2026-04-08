@@ -5,13 +5,24 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Sprint 마무리 - Phase 5.1 Sprint 1 (2026-04-08)
+### 프로덕션 배포 - v1.5.0 (2026-04-08)
 
-PR: https://github.com/frogy95/stockbot/pull/105
+포함 스프린트: Phase 5 Sprint 1+2, Phase 5.1 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/104
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
+#### 자동 검증 완료 항목
+- ✅ pytest 742 passed, 0 failed
+- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음
+- ✅ 신규 환경변수 없음 (Railway 설정 변경 불필요)
+
+#### 수동 검증 필요 항목
+- ⬜ /api/v1/health 헬스체크 확인
+- ⬜ 프론트엔드 메인 페이지 접속 확인
+- ⬜ 프로덕션 1차 스크리닝 통과 >0건 확인 (장중)
+- ⬜ Railway 로그에서 "1차 필터 통계" WARNING 로그 출력 확인
 
 ---
 

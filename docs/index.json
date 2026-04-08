@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-07T17:10:00+09:00",
+  "lastUpdated": "2026-04-08T09:57:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2284,6 +2284,15 @@
       "ref": "phase5-sprint1, phase5-sprint2",
       "version": "v1.4.0",
       "description": "Phase 5 프로덕션 배포 — Sprint 1 (date.today() KST 전환, volume_ratio 완화, 기본 후보 선정), Sprint 2 (trading_mode 설정 + 모드 전환 API, 완전 자동 모드 분기 + 안전장치, 일일 마감 리포트 + 시스템 경고 알림, 매매 모드 전환 UI + ModeIndicator)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/104",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-08",
+      "type": "sprint",
+      "ref": "phase5.1-sprint1",
+      "version": "v1.5.0",
+      "description": "Phase 5.1 Sprint 1 프로덕션 배포 — 1차 스크리닝 change_rate_min 완화(-2.0), 적응형 change_rate 확장(change_rate_adaptive_steps=[-2.0, -3.0]), 하락 종목 안전장치(_apply_negative_change_rate_safety), 필터별 탈락 통계 로깅(_log_filter_stats)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/104",
       "status": "in_progress"
     }
