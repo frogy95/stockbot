@@ -5,6 +5,8 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import logging
+
 import pytest
 import pytest_asyncio
 
@@ -597,6 +599,175 @@ class TestAdaptiveFilter:
         assert len(result) > 0
         for item in result:
             assert item.get("is_relaxed") is True
+
+    def test_adaptive_change_rate_relaxation(self):
+        """volume_ratio 완화로 부족하면 change_rate_min 완화 동작 확인."""
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0])
+        # volume_ratio=2.0 → 기본 1.5 통과, change_rate=-2.5 → 기본 -2.0 탈락, -3.0 완화 시 통과
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=-2.5,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+
+    def test_adaptive_volume_first_then_change_rate(self):
+        """volume_ratio 완화만으로 충분하면 change_rate 완화는 적용되지 않음."""
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0])
+        # volume_ratio=1.3 → 기본 1.5 탈락, 1.2 완화 통과, change_rate=3.0 → 항상 통과
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=130_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=3.0,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+        # change_rate 값이 원본 유지 (완화되지 않음)
+        for row in passed:
+            assert row["change_rate"] == 3.0
+
+    def test_adaptive_change_rate_floor(self):
+        """change_rate_min이 CHANGE_RATE_FLOOR(-5.0) 아래로 내려가지 않음."""
+        from modules.screening.screener import CHANGE_RATE_FLOOR
+
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0, -6.0])
+        # -6.0 단계에서 CHANGE_RATE_FLOOR(-5.0)로 클램핑되는지 검증
+        # change_rate=-5.5인 종목 15개: -5.0 클램핑 시에도 통과 불가
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=-5.5,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        # -6.0이 -5.0으로 클램핑되므로 change_rate=-5.5는 통과 불가 → passed 비어야 함
+        assert len(passed) == 0
+        assert is_relaxed is True
+
+
+# ---------------------------------------------------------------------------
+# 하락 종목 안전장치 테스트
+# ---------------------------------------------------------------------------
+
+class TestNegativeChangeRateSafety:
+    """하락 종목 auto_trade_blocked + position_size_ratio 안전장치 검증."""
+
+    def _make_rows_for_screen(self, count: int, change_rate: float) -> dict:
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=change_rate,
+            )
+            for i in range(count)
+        ]
+        return {r["stock_code"]: r for r in rows}
+
+    @pytest.mark.asyncio
+    async def test_negative_change_rate_auto_trade_blocked(self):
+        """change_rate < 0 종목에 auto_trade_blocked=True."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=-1.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("auto_trade_blocked") is True
+
+    @pytest.mark.asyncio
+    async def test_deep_negative_position_size_ratio(self):
+        """change_rate <= change_rate_min 종목에 position_size_ratio=0.5."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=-2.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("position_size_ratio") == 0.5
+
+    @pytest.mark.asyncio
+    async def test_positive_change_rate_no_safety(self):
+        """change_rate > 0 종목에 안전장치 미적용."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=3.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert "auto_trade_blocked" not in item
+            assert "position_size_ratio" not in item
+
+
+# ---------------------------------------------------------------------------
+# 필터 통계 로깅 테스트
+# ---------------------------------------------------------------------------
+
+class TestFilterStatsLogging:
+    """_log_filter_stats WARNING 로그 출력 검증."""
+
+    def test_filter_stats_logged(self, caplog):
+        """다양한 탈락 사유 혼합 시 WARNING 로그에 '1차 필터 통계' 포함 확인."""
+        screener = PrimaryScreener()
+        rows = [
+            # prev_volume=0 탈락 2개
+            _make_row("000001", "A", prev_volume=0),
+            _make_row("000002", "B", prev_volume=0),
+            # volume_ratio 탈락 3개 (volume=50_000 / prev=100_000 = 0.5 < 1.5)
+            _make_row("000003", "C", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            _make_row("000004", "D", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            _make_row("000005", "E", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            # market_cap 탈락 1개 (시총 100억 < 500억)
+            _make_row("000006", "F", volume=200_000, prev_volume=100_000,
+                      market_cap=10_000_000_000, change_rate=3.0),
+            # change_rate 탈락 2개 (< -2.0)
+            _make_row("000007", "G", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=-3.0),
+            _make_row("000008", "H", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=-3.0),
+            # 통과 5개
+            *[
+                _make_row(f"{9 + i:06d}", f"통과{i}", volume=200_000, prev_volume=100_000,
+                          market_cap=100_000_000_000, change_rate=3.0)
+                for i in range(5)
+            ],
+        ]
+
+        with caplog.at_level(logging.WARNING, logger="modules.screening.screener"):
+            screener._log_filter_stats(rows, screener.filters)
+
+        assert any("1차 필터 통계" in record.message for record in caplog.records)
+        log_msg = next(r.message for r in caplog.records if "1차 필터 통계" in r.message)
+        assert f"입력 {len(rows)}" in log_msg
+        assert "통과 5" in log_msg
 
 
 # ---------------------------------------------------------------------------
