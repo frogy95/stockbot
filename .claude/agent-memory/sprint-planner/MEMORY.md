@@ -41,7 +41,7 @@
 
 - Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/102
 
-- Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, 🔄 계획 수립 완료 (2026-04-08)
+- Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, ✅ 완료 (2026-04-08)
 
 ## 다음 사용 가능한 스프린트
 

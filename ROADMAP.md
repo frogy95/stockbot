@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5 Sprint 2 완료, Phase 5 Sprint 3 예정
-- 현재 Phase: Phase 5.1 (1차 스크리닝 change_rate 필터 수정) 🔄 진행 중
-- 현재 Sprint: Phase 5.1 Sprint 1 🔄 진행 중 (change_rate 필터 수정 + 적응형 확장)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07)
+- 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5 Sprint 3 예정
+- 현재 Phase: Phase 5.1 (1차 스크리닝 change_rate 필터 수정) ✅ 완료
+- 현재 Sprint: Phase 5 Sprint 3 예정 (성과 분석 대시보드)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 Sprint 3 — 성과 분석 대시보드
 
@@ -764,7 +764,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 5.1: 1차 스크리닝 change_rate 필터 수정 (Sprint 1) 🔄 진행 중
+## Phase 5.1: 1차 스크리닝 change_rate 필터 수정 (Sprint 1) ✅ 완료
 
 ### 목표
 Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+7%)가 여전히 과도하게 엄격하여 평시 장에서 1차 스크리닝 통과 0건 문제 재발. change_rate_min 완화 + 적응형 필터 확장 + 하락 종목 안전장치 도입.

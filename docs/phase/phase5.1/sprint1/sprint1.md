@@ -6,9 +6,11 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 (async), pytest
 
-**Sprint 기간:** 2026-04-08 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-08 ~ 2026-04-08
 **이전 스프린트:** Phase 5 Sprint 2 (완료, PR #102)
 **브랜치명:** `phase5.1-sprint1`
+**상태:** ✅ 완료 (2026-04-08)
+**PR:** (업데이트 예정)
 
 ---
 
@@ -79,10 +81,10 @@ git commit -m "feat(phase5.1-sprint1): task1 -- change_rate_min -2.0 완화 + �
 ```
 
 **완료 기준:**
-- ⬜ PrimaryFilters().change_rate_min == -2.0
-- ⬜ PrimaryScreener().change_rate_adaptive_steps == [-2.0, -3.0]
-- ⬜ _apply_filters_with_adaptive가 volume_ratio -> change_rate 순서로 완화
-- ⬜ 기존 pytest 회귀 없음
+- ✅ PrimaryFilters().change_rate_min == -2.0
+- ✅ PrimaryScreener().change_rate_adaptive_steps == [-2.0, -3.0]
+- ✅ _apply_filters_with_adaptive가 volume_ratio -> change_rate 순서로 완화
+- ✅ 기존 pytest 회귀 없음
 
 ---
 
@@ -127,10 +129,10 @@ git commit -m "feat(phase5.1-sprint1): task2 -- 하락 종목 안전장치 + 필
 ```
 
 **완료 기준:**
-- ⬜ change_rate < 0 종목에 auto_trade_blocked=True
-- ⬜ change_rate <= -2.0 종목에 position_size_ratio=0.5
-- ⬜ 필터별 탈락 통계 WARNING 로그 출력
-- ⬜ passes_primary_filter 시그니처 변경 없음
+- ✅ change_rate < 0 종목에 auto_trade_blocked=True
+- ✅ change_rate <= -2.0 종목에 position_size_ratio=0.5
+- ✅ 필터별 탈락 통계 WARNING 로그 출력
+- ✅ passes_primary_filter 시그니처 변경 없음
 
 ---
 
@@ -207,11 +209,11 @@ git commit -m "feat(phase5.1-sprint1): task3 -- 테스트 업데이트 (change_r
 ```
 
 **완료 기준:**
-- ⬜ test_filters.py: change_rate_min=-2.0 기본값 + 음수 change_rate 통과/탈락 테스트
-- ⬜ test_screener.py: 적응형 change_rate 완화 테스트 3종
-- ⬜ test_screener.py: 하락 종목 안전장치 테스트 3종
-- ⬜ test_screener.py: 필터별 탈락 통계 로깅 테스트
-- ⬜ pytest 전체 통과
+- ✅ test_filters.py: change_rate_min=-2.0 기본값 + 음수 change_rate 통과/탈락 테스트
+- ✅ test_screener.py: 적응형 change_rate 완화 테스트 3종
+- ✅ test_screener.py: 하락 종목 안전장치 테스트 3종
+- ✅ test_screener.py: 필터별 탈락 통계 로깅 테스트
+- ✅ pytest 전체 통과 (742 passed, 0 failed)
 
 ---
 
