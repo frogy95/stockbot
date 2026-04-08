@@ -13,8 +13,8 @@ from core.clients.token_manager import KISTokenManager
 
 logger = logging.getLogger(__name__)
 
-MAX_RECONNECT_ATTEMPTS = 5
-BACKOFF_BASE = 1  # 초기 대기 1초, 지수 백오프
+MAX_RECONNECT_ATTEMPTS = 7
+BACKOFF_BASE = 2  # 초기 대기 2초, 지수 백오프
 
 
 class KISWebSocketClient:
@@ -35,6 +35,8 @@ class KISWebSocketClient:
         self._connected: bool = False
         self._receive_task: asyncio.Task | None = None
         self._on_data: Callable | None = None
+        self._on_ws_failure: Callable | None = None
+        self._on_reconnect_success: Callable | None = None
         self._approval_key: str | None = None
 
     # ── 공개 속성 ──────────────────────────────────────────
@@ -51,6 +53,14 @@ class KISWebSocketClient:
         """실시간 데이터 수신 콜백 등록. callback(tr_id, raw_data) 시그니처."""
         self._on_data = callback
 
+    def set_on_ws_failure(self, callback: Callable) -> None:
+        """WS 재연결 최대 실패 시 호출할 콜백 등록."""
+        self._on_ws_failure = callback
+
+    def set_on_reconnect_success(self, callback: Callable) -> None:
+        """WS 재연결 성공 후 구독 복원 완료 시 호출할 콜백 등록."""
+        self._on_reconnect_success = callback
+
     # ── 연결 / 해제 ────────────────────────────────────────
 
     async def connect(self) -> None:
@@ -59,6 +69,7 @@ class KISWebSocketClient:
         self._ws = await websockets.connect(
             self._env.ws_url,
             ping_interval=30,
+            ping_timeout=10,
         )
         self._connected = True
         self._receive_task = asyncio.create_task(self._receive_loop())
@@ -123,13 +134,27 @@ class KISWebSocketClient:
                 try:
                     message = await self._ws.recv()
                     await self._on_message(message)
-                except ConnectionClosed:
+                except ConnectionClosed as e:
                     if self._connected:
-                        logger.warning("WebSocket 연결 끊김, 재연결 시도")
+                        code = e.rcvd.code if e.rcvd else None
+                        reason = e.rcvd.reason if e.rcvd else ""
+                        logger.warning("WebSocket 연결 끊김: code=%s reason=%s", code, reason)
                         await self._reconnect()
                     break
         except asyncio.CancelledError:
             pass
+
+    async def _invoke_callback(self, callback: Callable | None, name: str) -> None:
+        """콜백을 안전하게 호출한다. 코루틴 여부를 자동 감지하여 await 처리."""
+        if callback is None:
+            return
+        try:
+            if asyncio.iscoroutinefunction(callback):
+                await callback()
+            else:
+                callback()
+        except Exception:
+            logger.exception("%s 콜백 실행 오류", name)
 
     async def _on_message(self, message: str) -> None:
         """수신 메시지 처리.
@@ -166,20 +191,42 @@ class KISWebSocketClient:
                 self._ws = await websockets.connect(
                     self._env.ws_url,
                     ping_interval=30,
+                    ping_timeout=10,
                 )
                 self._connected = True
                 logger.info("재연결 성공")
 
-                # 기존 구독 복원
+                # 기존 구독 복원 (종목 간 딜레이로 구독 버스트 방지)
+                stocks: dict[str, list[str]] = {}
                 for stock_code, tr_id in subscriptions_snapshot:
-                    await self.subscribe(stock_code, tr_id)
+                    stocks.setdefault(stock_code, []).append(tr_id)
+
+                total = len(stocks)
+                for idx, (stock_code, tr_ids) in enumerate(stocks.items(), start=1):
+                    for tr_id in tr_ids:
+                        await self.subscribe(stock_code, tr_id)
+                    if idx < total:
+                        await asyncio.sleep(self._env.ws_reconnect_delay)
+                    if idx % 10 == 0 or idx == total:
+                        logger.info("구독 복원 중: %d/%d 종목", idx, total)
 
                 # 수신 루프 재시작
                 self._receive_task = asyncio.create_task(self._receive_loop())
+
+                await self._invoke_callback(self._on_reconnect_success, "WS 재연결 성공")
                 return
 
             except Exception as e:
                 logger.error("재연결 실패 (%d/%d): %s", attempt + 1, MAX_RECONNECT_ATTEMPTS, e)
+                # 연결이 열려 있으면 닫아 누수 방지
+                if self._ws is not None:
+                    try:
+                        await self._ws.close()
+                    except Exception:
+                        pass
+                    self._ws = None
+                self._connected = False
 
         self._connected = False
         logger.error("최대 재연결 횟수 초과, 연결 종료")
+        await self._invoke_callback(self._on_ws_failure, "WS 실패")

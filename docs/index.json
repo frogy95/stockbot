@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-08T09:57:00+09:00",
+  "lastUpdated": "2026-04-08T11:20:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1959,6 +1959,84 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase5.2",
+      "title": "KIS WebSocket 모의 환경 안정화",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase5.2/phase5.2.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "WS 재연결 안정화 + 구독 제한",
+          "status": "completed",
+          "branch": "phase5.2-sprint1",
+          "sprintDoc": "docs/phase/phase5.2/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/106",
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KISEnvironment max_ws_subscriptions + 재연결 파라미터 변경",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-1-kisenvironment-max_ws_subscriptions--재연결-파라미터-변경",
+              "testPlan": "PAPER.max_ws_subscriptions==25, LIVE==35, MAX_RECONNECT_ATTEMPTS==7, BACKOFF_BASE==2",
+              "testResult": "PAPER.max_ws_subscriptions==25, LIVE==35, PAPER.ws_reconnect_delay==0.5, MAX_RECONNECT_ATTEMPTS==7, BACKOFF_BASE==2 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "92faa13",
+                  "message": "feat(phase5.2-sprint1): task1 -- KISEnvironment max_ws_subscriptions + 재연결 파라미터 조정"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "_reconnect() 구독 복원 딜레이 + close code 로깅 + 실패 콜백",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-2-_reconnect-구독-복원-딜레이--close-code-로깅--실패-콜백",
+              "testPlan": "종목 간 ws_reconnect_delay 대기, ConnectionClosed code/reason 로깅, on_ws_failure 콜백 호출",
+              "testResult": "구독 복원 딜레이, close code 로깅, ping_timeout=10, on_ws_failure 콜백 구현 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "26fc7a4",
+                  "message": "feat(phase5.2-sprint1): task2 -- _reconnect 구독 복원 딜레이 + close code 로깅 + 실패 콜백"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "WSSubscriptionManager 환경 기반 max + 캐시 TTL + 2차 스크리닝 WS 가드 + 체결강도 웜업",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-3-wssubscriptionmanager-환경-기반-max--캐시-ttl--2차-스크리닝-ws-가드--체결강도-웜업",
+              "testPlan": "REALTIME_CACHE_TTL==10, 체결강도 웜업 50.0, WS 미연결 스킵 + 연속 3회 텔레그램 경고, WS 실패 알림",
+              "testResult": "REALTIME_CACHE_TTL==10, set_warmup/set_warmup_all 구현, WS 가드 + 텔레그램 경고, 환경 기반 max 주입 확인",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "9dc3526",
+                  "message": "feat(phase5.2-sprint1): task3 -- 캐시 TTL 10초 + 2차 스크리닝 WS 가드 + 체결강도 웜업 + WS 실패 알림"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "테스트 업데이트 + 통합 검증",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-4-테스트-업데이트--통합-검증",
+              "testPlan": "test_kis_ws.py 수정 통과, test_ws_stability.py 전체 통과, pytest 전체 회귀 없음",
+              "testResult": "pytest 751 passed, 0 failed",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "7761bd2",
+                  "message": "feat(phase5.2-sprint1): task4 -- 재연결 딜레이/실패 콜백/WS 가드/웜업 테스트"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [
@@ -2312,6 +2390,15 @@
       "version": "v1.5.0",
       "description": "Phase 5.1 Sprint 1 프로덕션 배포 — 1차 스크리닝 change_rate_min 완화(-2.0), 적응형 change_rate 확장(change_rate_adaptive_steps=[-2.0, -3.0]), 하락 종목 안전장치(_apply_negative_change_rate_safety), 필터별 탈락 통계 로깅(_log_filter_stats)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/104",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-08",
+      "type": "sprint",
+      "ref": "phase5.2-sprint1",
+      "version": "v1.6.0",
+      "description": "Phase 5.2 Sprint 1 프로덕션 배포 — KIS WebSocket 재연결 안정화 (구독 버스트 방지, close code 로깅), 환경별 WS 구독 상한(PAPER=25, LIVE=35), 2차 스크리닝 WS 연결 상태 가드, 체결강도 재연결 후 웜업, 캐시 TTL 10초",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/107",
       "status": "in_progress"
     }
   ]
