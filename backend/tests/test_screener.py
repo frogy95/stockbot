@@ -5,6 +5,8 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import logging
+
 import pytest
 import pytest_asyncio
 
@@ -526,3 +528,402 @@ class TestSaveResults:
         assert count == 2
         assert session.add.call_count == 2
         session.commit.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# 적응형 필터 테스트
+# ---------------------------------------------------------------------------
+
+class TestAdaptiveFilter:
+    """_apply_filters_with_adaptive 단계적 완화 로직 검증."""
+
+    def _make_rows_with_ratio(self, count: int, volume_ratio: float, base_code: int = 0) -> list[dict]:
+        """volume_ratio를 정확히 가지는 행 생성."""
+        rows = []
+        for i in range(count):
+            prev = 100_000
+            vol = int(prev * volume_ratio)
+            rows.append(_make_row(
+                f"{base_code + i:06d}", f"종목{base_code + i}",
+                volume=vol, prev_volume=prev,
+                market_cap=100_000_000_000, change_rate=3.0,
+            ))
+        return rows
+
+    def test_no_relaxation_when_enough(self):
+        """1.5 기본 필터로 10개 이상 → is_relaxed=False."""
+        screener = PrimaryScreener()
+        # volume_ratio=2.0 → 1.5 통과 12개
+        rows = self._make_rows_with_ratio(12, volume_ratio=2.0)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is False
+
+    def test_adaptive_relaxes_when_below_min(self):
+        """1.5 통과 <10개, 1.2 통과 >=10개 → is_relaxed=True."""
+        screener = PrimaryScreener()
+        # volume_ratio=1.6 → 1.5 통과 5개
+        rows_pass_15 = self._make_rows_with_ratio(5, volume_ratio=1.6, base_code=0)
+        # volume_ratio=1.3 → 1.2 통과 but 1.5 미통과 10개
+        rows_pass_12 = self._make_rows_with_ratio(10, volume_ratio=1.3, base_code=100)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows_pass_15 + rows_pass_12)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+
+    def test_adaptive_stops_at_1_2(self):
+        """모든 adaptive_step 소진해도 0건이면 is_relaxed=True로 마지막 결과 반환."""
+        screener = PrimaryScreener()
+        # volume_ratio=1.0 → 1.2도 미통과 (1.0 < 1.2)
+        rows = self._make_rows_with_ratio(5, volume_ratio=1.05, base_code=0)
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        # 1.2 기준 통과 불가 → 빈 결과 or 소수
+        assert is_relaxed is True  # 완화 시도는 했음
+
+    @pytest.mark.asyncio
+    async def test_is_relaxed_flag_on_screen_result(self):
+        """적응형 완화 발생 시 screen() 결과 모든 항목에 is_relaxed=True."""
+        screener = PrimaryScreener()
+        # 1.5 통과 5개, 1.2 통과 10개
+        rows_15 = self._make_rows_with_ratio(5, volume_ratio=1.6, base_code=0)
+        rows_12 = self._make_rows_with_ratio(10, volume_ratio=1.3, base_code=100)
+        today_prev = {r["stock_code"]: r for r in rows_15 + rows_12}
+        recent_data = {}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = recent_data
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("is_relaxed") is True
+
+    def test_adaptive_change_rate_relaxation(self):
+        """volume_ratio 완화로 부족하면 change_rate_min 완화 동작 확인."""
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0])
+        # volume_ratio=2.0 → 기본 1.5 통과, change_rate=-2.5 → 기본 -2.0 탈락, -3.0 완화 시 통과
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=-2.5,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+
+    def test_adaptive_volume_first_then_change_rate(self):
+        """volume_ratio 완화만으로 충분하면 change_rate 완화는 적용되지 않음."""
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0])
+        # volume_ratio=1.3 → 기본 1.5 탈락, 1.2 완화 통과, change_rate=3.0 → 항상 통과
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=130_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=3.0,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        assert len(passed) >= 10
+        assert is_relaxed is True
+        # change_rate 값이 원본 유지 (완화되지 않음)
+        for row in passed:
+            assert row["change_rate"] == 3.0
+
+    def test_adaptive_change_rate_floor(self):
+        """change_rate_min이 CHANGE_RATE_FLOOR(-5.0) 아래로 내려가지 않음."""
+        from modules.screening.screener import CHANGE_RATE_FLOOR
+
+        screener = PrimaryScreener(change_rate_adaptive_steps=[-2.0, -3.0, -6.0])
+        # -6.0 단계에서 CHANGE_RATE_FLOOR(-5.0)로 클램핑되는지 검증
+        # change_rate=-5.5인 종목 15개: -5.0 클램핑 시에도 통과 불가
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=-5.5,
+            )
+            for i in range(15)
+        ]
+        passed, is_relaxed = screener._apply_filters_with_adaptive(rows)
+        # -6.0이 -5.0으로 클램핑되므로 change_rate=-5.5는 통과 불가 → passed 비어야 함
+        assert len(passed) == 0
+        assert is_relaxed is True
+
+
+# ---------------------------------------------------------------------------
+# 하락 종목 안전장치 테스트
+# ---------------------------------------------------------------------------
+
+class TestNegativeChangeRateSafety:
+    """하락 종목 auto_trade_blocked + position_size_ratio 안전장치 검증."""
+
+    def _make_rows_for_screen(self, count: int, change_rate: float) -> dict:
+        rows = [
+            _make_row(
+                f"{i:06d}", f"종목{i}",
+                volume=200_000, prev_volume=100_000,
+                market_cap=100_000_000_000, change_rate=change_rate,
+            )
+            for i in range(count)
+        ]
+        return {r["stock_code"]: r for r in rows}
+
+    @pytest.mark.asyncio
+    async def test_negative_change_rate_auto_trade_blocked(self):
+        """change_rate < 0 종목에 auto_trade_blocked=True."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=-1.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("auto_trade_blocked") is True
+
+    @pytest.mark.asyncio
+    async def test_deep_negative_position_size_ratio(self):
+        """change_rate <= change_rate_min 종목에 position_size_ratio=0.5."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=-2.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert item.get("position_size_ratio") == 0.5
+
+    @pytest.mark.asyncio
+    async def test_positive_change_rate_no_safety(self):
+        """change_rate > 0 종목에 안전장치 미적용."""
+        screener = PrimaryScreener()
+        today_prev = self._make_rows_for_screen(12, change_rate=3.0)
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            result = await screener.screen(AsyncMock())
+
+        assert len(result) > 0
+        for item in result:
+            assert "auto_trade_blocked" not in item
+            assert "position_size_ratio" not in item
+
+
+# ---------------------------------------------------------------------------
+# 필터 통계 로깅 테스트
+# ---------------------------------------------------------------------------
+
+class TestFilterStatsLogging:
+    """_log_filter_stats WARNING 로그 출력 검증."""
+
+    def test_filter_stats_logged(self, caplog):
+        """다양한 탈락 사유 혼합 시 WARNING 로그에 '1차 필터 통계' 포함 확인."""
+        screener = PrimaryScreener()
+        rows = [
+            # prev_volume=0 탈락 2개
+            _make_row("000001", "A", prev_volume=0),
+            _make_row("000002", "B", prev_volume=0),
+            # volume_ratio 탈락 3개 (volume=50_000 / prev=100_000 = 0.5 < 1.5)
+            _make_row("000003", "C", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            _make_row("000004", "D", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            _make_row("000005", "E", volume=50_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0),
+            # market_cap 탈락 1개 (시총 100억 < 500억)
+            _make_row("000006", "F", volume=200_000, prev_volume=100_000,
+                      market_cap=10_000_000_000, change_rate=3.0),
+            # change_rate 탈락 2개 (< -2.0)
+            _make_row("000007", "G", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=-3.0),
+            _make_row("000008", "H", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=-3.0),
+            # 통과 5개
+            *[
+                _make_row(f"{9 + i:06d}", f"통과{i}", volume=200_000, prev_volume=100_000,
+                          market_cap=100_000_000_000, change_rate=3.0)
+                for i in range(5)
+            ],
+        ]
+
+        with caplog.at_level(logging.WARNING, logger="modules.screening.screener"):
+            screener._log_filter_stats(rows, screener.filters)
+
+        assert any("1차 필터 통계" in record.message for record in caplog.records)
+        log_msg = next(r.message for r in caplog.records if "1차 필터 통계" in r.message)
+        assert f"입력 {len(rows)}" in log_msg
+        assert "통과 5" in log_msg
+
+
+# ---------------------------------------------------------------------------
+# prev_volume 폴백 테스트
+# ---------------------------------------------------------------------------
+
+class TestPrevVolumeFallback:
+    """prev_volume=0 시 5일 평균 폴백 동작 검증."""
+
+    @pytest.mark.asyncio
+    async def test_fallback_5day_avg(self):
+        """prev_volume=0 종목에 5일 평균 거래량 폴백 적용 (일괄 조회)."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        volumes = [100_000, 120_000, 110_000]  # 3일 유효 데이터
+
+        # session.execute → result.all() → [(code, vol), ...]
+        fallback_result = MagicMock()
+        fallback_result.all.return_value = [("005930", v) for v in volumes]
+        session.execute = AsyncMock(return_value=fallback_result)
+
+        result = await screener._get_fallback_prev_volumes(session, ["005930"])
+
+        expected = sum(volumes) // len(volumes)
+        assert result.get("005930") == expected
+
+    @pytest.mark.asyncio
+    async def test_fallback_insufficient_data(self):
+        """유효 데이터 2일 이하면 해당 종목 미포함."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+
+        # 2일치만 반환
+        fallback_result = MagicMock()
+        fallback_result.all.return_value = [("005930", 80_000), ("005930", 90_000)]
+        session.execute = AsyncMock(return_value=fallback_result)
+
+        result = await screener._get_fallback_prev_volumes(session, ["005930"])
+
+        assert "005930" not in result
+
+
+# ---------------------------------------------------------------------------
+# 기본 후보 선정 테스트 (0건 시 거래량 상위 15개)
+# ---------------------------------------------------------------------------
+
+class TestFallbackCandidates:
+    """적응형 필터 0건 시 기본 후보(거래량 상위 15개, 시총 500억+) 선정 검증."""
+
+    def _make_rows_bulk(self, count: int, volume: int, market_cap: int, base_code: int = 0) -> list[dict]:
+        return [
+            _make_row(
+                f"{base_code + i:06d}", f"종목{base_code + i}",
+                volume=volume - i * 100,  # 거래량 내림차순 보장
+                prev_volume=0,
+                market_cap=market_cap,
+                change_rate=0.5,  # 필터 미통과 (1.0 미만)
+            )
+            for i in range(count)
+        ]
+
+    @pytest.mark.asyncio
+    async def test_fallback_returns_top_15(self):
+        """적응형 필터 0건 시 거래량 상위 15개 반환."""
+        screener = PrimaryScreener()
+        # 20개 종목 모두 필터 미통과 (change_rate=0.5 < 1.0)
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        assert len(result) == 15
+
+    @pytest.mark.asyncio
+    async def test_fallback_market_cap_filter(self):
+        """시총 500억 미만 종목은 기본 후보에서 제외."""
+        screener = PrimaryScreener()
+        # 10개: 시총 500억+ / 5개: 시총 500억 미만
+        rows_ok = self._make_rows_bulk(10, volume=200_000, market_cap=100_000_000_000, base_code=0)
+        rows_small = self._make_rows_bulk(5, volume=300_000, market_cap=10_000_000_000, base_code=100)
+        today_prev = {r["stock_code"]: r for r in rows_ok + rows_small}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        codes = {r["stock_code"] for r in result}
+        # 시총 500억 미만 종목(base_code=100+)은 결과에 없어야 함
+        assert not any(c.startswith("1") for c in codes)
+
+    @pytest.mark.asyncio
+    async def test_fallback_flags(self):
+        """기본 후보에 is_fallback, auto_trade_blocked, position_size_ratio 플래그 설정."""
+        screener = PrimaryScreener()
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        for item in result:
+            assert item.get("is_fallback") is True
+            assert item.get("is_relaxed") is True
+            assert item.get("auto_trade_blocked") is True
+            assert item.get("position_size_ratio") == 0.5
+
+    @pytest.mark.asyncio
+    async def test_fallback_skips_scoring(self):
+        """기본 후보는 스코어링 skip — score=0, factors={}."""
+        screener = PrimaryScreener()
+        rows = self._make_rows_bulk(20, volume=200_000, market_cap=100_000_000_000)
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        for item in result:
+            assert item.get("score") == 0
+            assert item.get("factors") == {}
+
+    @pytest.mark.asyncio
+    async def test_no_fallback_when_candidates_exist(self):
+        """필터 통과 후보가 있으면 기본 후보 미생성."""
+        screener = PrimaryScreener()
+        # 12개 종목 필터 통과 (volume_ratio=2.0, change_rate=3.0)
+        rows = [
+            _make_row(f"{i:06d}", f"종목{i}", volume=200_000, prev_volume=100_000,
+                      market_cap=100_000_000_000, change_rate=3.0)
+            for i in range(12)
+        ]
+        today_prev = {r["stock_code"]: r for r in rows}
+
+        with patch.object(screener, "_fetch_today_and_prev", new_callable=AsyncMock) as mf, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mr:
+            mf.return_value = today_prev
+            mr.return_value = {}
+            session = AsyncMock()
+            result = await screener.screen(session)
+
+        # 기본 후보가 아닌 일반 스코어링 결과여야 함
+        for item in result:
+            assert item.get("is_fallback") is not True

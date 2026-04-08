@@ -1,4 +1,5 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -30,7 +31,7 @@ async def get_summary(
     session: AsyncSession = Depends(get_db),
     _user: UserInfo = Depends(get_current_user),
 ):
-    today = date.today()
+    today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
     today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
 
     # 오늘 거래 이력 집계

@@ -14,11 +14,11 @@ class TestPrimaryFilters:
 
     def test_default_values(self):
         f = PrimaryFilters()
-        assert f.volume_ratio == 2.0
+        assert f.volume_ratio == 1.5
         assert f.volume_min_stock == 50_000
         assert f.volume_min_etf == 10_000
         assert f.market_cap_min == 50_000_000_000
-        assert f.change_rate_min == 1.0
+        assert f.change_rate_min == -2.0
         assert f.change_rate_max == 7.0
         assert f.max_candidates == 30
 
@@ -106,10 +106,30 @@ class TestPassesPrimaryFilter:
             "volume": 200_000,
             "prev_volume": 100_000,
             "market_cap": 100_000_000_000,
-            "change_rate": 0.5,  # 1.0 미만
+            "change_rate": -3.0,  # -2.0 미만
             "stock_type": "STOCK",
         }
         assert passes_primary_filter(data, filters) is False
+
+    def test_pass_negative_change_rate(self, filters):
+        data = {
+            "volume": 200_000,
+            "prev_volume": 100_000,
+            "market_cap": 100_000_000_000,
+            "change_rate": -1.5,  # -2.0 이상 → 통과
+            "stock_type": "STOCK",
+        }
+        assert passes_primary_filter(data, filters) is True
+
+    def test_pass_zero_change_rate(self, filters):
+        data = {
+            "volume": 200_000,
+            "prev_volume": 100_000,
+            "market_cap": 100_000_000_000,
+            "change_rate": 0.0,  # -2.0 이상 → 통과
+            "stock_type": "STOCK",
+        }
+        assert passes_primary_filter(data, filters) is True
 
     def test_fail_change_rate_too_high(self, filters):
         data = {

@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 
+from core.config import settings
 from core.models.trading import TradeHistory
 from modules.trading.strategy import TradeSignalData
 
@@ -97,14 +99,28 @@ class NotifierManager:
         else:
             logger.warning("notify_timeout: token=%s 에 해당하는 pending 메시지 없음", token)
 
+    async def send_system_alert(self, alert_type: str, details: str) -> None:
+        """시스템 경고 알림을 텔레그램으로 발송한다.
+
+        Args:
+            alert_type: 경고 유형 ("emergency_stop", "pipeline_failure", "consecutive_loss", "risk_warning")
+            details: 경고 상세 내용
+        """
+        if self._bot is None:
+            return
+
+        text = self._bot.format_system_alert(alert_type, details)
+        await self._bot.send_notification(text)
+
     async def send_daily_report(self, session_factory=None) -> None:
         """당일 거래 내역을 집계하여 일일 리포트 알림을 발송한다."""
         # session_factory 파라미터 우선, 없으면 생성자 주입 값 사용
         factory = session_factory or self._session_factory
 
-        today_start = datetime.combine(date.today(), datetime.min.time()).replace(
-            tzinfo=timezone.utc
-        )
+        today_start = datetime.combine(
+            datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date(),
+            datetime.min.time(),
+        ).replace(tzinfo=timezone.utc)
 
         async with factory() as session:
             # 당일 trade_history 조회

@@ -41,6 +41,7 @@ SEED_DATA = [
     ("eod_force_close_time", "14:50", "string", "trading", "당일 강제 청산 시각"),
     ("no_new_entry_time", "14:30", "string", "trading", "신규 진입 차단 시각"),
     ("risk_lock_during_trading", "true", "bool", "risk", "장중 리스크 설정 변경 불가"),
+    ("trading_mode", "semi-auto", "string", "trading", "매매 모드 (manual/semi-auto/auto)"),
 ]
 
 

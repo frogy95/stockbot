@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -22,6 +23,8 @@ from modules.screening.scorer import FactorScorer, PRIMARY_FACTORS, PRIMARY_WEIG
 
 logger = logging.getLogger(__name__)
 
+FALLBACK_CANDIDATE_LIMIT = 15  # 적응형 필터 0건 시 기본 후보 수
+CHANGE_RATE_FLOOR = -5.0  # change_rate_min 적응형 완화 최저 하한
 
 class PrimaryScreener:
     """장전 1차 스크리닝: DB 정적 데이터 기반 필터 + 팩터 스코어링."""
@@ -30,12 +33,22 @@ class PrimaryScreener:
         self,
         filters: PrimaryFilters | None = None,
         scorer: FactorScorer | None = None,
+        adaptive_steps: list[float] | None = None,
+        adaptive_min_candidates: int = 10,
+        change_rate_adaptive_steps: list[float] | None = None,
     ):
         self.filters = filters or PrimaryFilters()
         self.scorer = scorer or FactorScorer(
             factors={"STOCK": PRIMARY_FACTORS, "ETF": PRIMARY_FACTORS},
             factor_weights=PRIMARY_WEIGHTS,
             pass_threshold=60.0,
+        )
+        self.adaptive_steps = adaptive_steps if adaptive_steps is not None else [1.5, 1.2]
+        self.adaptive_min_candidates = adaptive_min_candidates
+        self.change_rate_adaptive_steps = (
+            change_rate_adaptive_steps
+            if change_rate_adaptive_steps is not None
+            else [-2.0, -3.0]
         )
 
     async def screen(self, session: AsyncSession) -> list[dict]:
@@ -47,9 +60,17 @@ class PrimaryScreener:
         recent_data = await self._get_recent_market_data(session, days=5)
 
         rows = list(today_prev.values())
-        filtered = self._apply_filters(rows)
+        filtered, is_relaxed = self._apply_filters_with_adaptive(rows)
+
         if not filtered:
-            return []
+            fallback = self._get_fallback_candidates(rows)
+            if fallback:
+                logger.warning(
+                    "1차 스크리닝 0건 — 기본 후보 %d개 투입 (거래량 상위, 시총 500억+)",
+                    len(fallback),
+                )
+            return fallback
+
         if len(filtered) < 5:
             logger.warning("1차 스크리닝 필터 통과 종목 %d개 — 소수 후보 시 백분위 왜곡 가능", len(filtered))
 
@@ -57,12 +78,18 @@ class PrimaryScreener:
         scored = self.scorer.score_candidates(candidates)
         result = self._truncate_and_rank(scored)
         self._mark_hot_stocks(result)
+        self._apply_negative_change_rate_safety(result, self.filters.change_rate_min)
+        if is_relaxed:
+            for item in result:
+                item["is_relaxed"] = True
         return result
 
-    def _apply_filters(self, rows: list[dict]) -> list[dict]:
+    def _apply_filters(
+        self, rows: list[dict], filters: PrimaryFilters | None = None
+    ) -> list[dict]:
         """필터 통과 종목만 반환."""
+        f = filters or self.filters
         passed = []
-        reject_counts = {"prev_volume_zero": 0, "volume_ratio": 0, "volume_min": 0, "market_cap": 0, "change_rate": 0}
         for row in rows:
             stock_data = {
                 "volume": row["volume"],
@@ -71,36 +98,77 @@ class PrimaryScreener:
                 "change_rate": float(row["change_rate"]),
                 "stock_type": row["stock_type"],
             }
-            reject_reason = self._check_filter_reject(stock_data)
-            if reject_reason:
-                reject_counts[reject_reason] += 1
-            else:
+            if passes_primary_filter(stock_data, f):
                 passed.append(row)
-        logger.warning(
-            "1차 필터 결과: 입력=%d, 통과=%d, 탈락={prev_volume_zero=%d, volume_ratio=%d, volume_min=%d, market_cap=%d, change_rate=%d}",
-            len(rows), len(passed),
-            reject_counts["prev_volume_zero"], reject_counts["volume_ratio"],
-            reject_counts["volume_min"], reject_counts["market_cap"], reject_counts["change_rate"],
-        )
         return passed
 
-    def _check_filter_reject(self, stock_data: dict) -> str | None:
-        """필터 탈락 사유 반환. 통과 시 None."""
-        prev_volume = stock_data["prev_volume"]
-        if prev_volume == 0:
-            return "prev_volume_zero"
-        volume = stock_data["volume"]
-        if volume / prev_volume < self.filters.volume_ratio:
-            return "volume_ratio"
-        volume_min = self.filters.volume_min_etf if stock_data["stock_type"] == "ETF" else self.filters.volume_min_stock
-        if volume < volume_min:
-            return "volume_min"
-        if stock_data["market_cap"] < self.filters.market_cap_min:
-            return "market_cap"
-        change_rate = stock_data["change_rate"]
-        if change_rate < self.filters.change_rate_min or change_rate > self.filters.change_rate_max:
-            return "change_rate"
-        return None
+    def _apply_filters_with_adaptive(
+        self, rows: list[dict]
+    ) -> tuple[list[dict], bool]:
+        """필터 통과 종목 수가 adaptive_min_candidates 미만이면 단계적 완화.
+
+        완화 순서: 1) volume_ratio 단계적 완화 → 2) change_rate_min 단계적 완화.
+        change_rate_min의 최저 하한은 CHANGE_RATE_FLOOR.
+        """
+        passed = self._apply_filters(rows)
+        self._log_filter_stats(rows, self.filters)
+        if len(passed) >= self.adaptive_min_candidates:
+            return passed, False
+
+        # 1단계: volume_ratio 완화
+        last_passed = passed
+        last_volume_ratio = self.filters.volume_ratio
+        for vr_step in self.adaptive_steps:
+            temp_filters = replace(self.filters, volume_ratio=vr_step)
+            last_passed = self._apply_filters(rows, temp_filters)
+            last_volume_ratio = vr_step
+            if len(last_passed) >= self.adaptive_min_candidates:
+                logger.warning(
+                    "적응형 필터 적용: volume_ratio %.1f, 후보 %d개", vr_step, len(last_passed)
+                )
+                return last_passed, True
+
+        # 2단계: change_rate 완화 (volume_ratio는 마지막 완화 단계 유지)
+        for cr_step in self.change_rate_adaptive_steps:
+            clamped = max(cr_step, CHANGE_RATE_FLOOR)
+            temp_filters = replace(
+                self.filters, volume_ratio=last_volume_ratio, change_rate_min=clamped
+            )
+            last_passed = self._apply_filters(rows, temp_filters)
+            if len(last_passed) >= self.adaptive_min_candidates:
+                logger.warning(
+                    "적응형 필터 적용: change_rate_min %.1f, 후보 %d개", clamped, len(last_passed)
+                )
+                return last_passed, True
+
+        logger.warning(
+            "적응형 필터 소진: 최종 후보 %d개 (volume_ratio %.1f, change_rate_min %.1f 기준)",
+            len(last_passed),
+            last_volume_ratio,
+            self.change_rate_adaptive_steps[-1] if self.change_rate_adaptive_steps else self.filters.change_rate_min,
+        )
+        return last_passed, True
+
+    def _get_fallback_candidates(self, rows: list[dict]) -> list[dict]:
+        """적응형 필터 0건 시 거래량 상위 N개(시총 min 이상)를 기본 후보로 반환."""
+        eligible = [r for r in rows if r.get("market_cap", 0) >= self.filters.market_cap_min]
+        eligible.sort(key=lambda r: r.get("volume", 0), reverse=True)
+        return [
+            {
+                **item,
+                "is_fallback": True,
+                "is_relaxed": True,
+                "auto_trade_blocked": True,
+                "position_size_ratio": 0.5,
+                "score": 0,
+                "rank": i,
+                "is_passed": True,
+                "factors": {},
+                "volume_ratio": 0.0,
+                "is_hot": False,
+            }
+            for i, item in enumerate(eligible[:FALLBACK_CANDIDATE_LIMIT], 1)
+        ]
 
     def _build_candidates(
         self, filtered: list[dict], recent_data: dict[str, list[dict]]
@@ -154,6 +222,119 @@ class PrimaryScreener:
         """거래량 비율 500%+ 종목에 is_hot 플래그 설정."""
         for item in results:
             item["is_hot"] = is_hot_stock(item.get("volume_ratio", 0))
+
+    @staticmethod
+    def _apply_negative_change_rate_safety(
+        results: list[dict], change_rate_min: float
+    ) -> None:
+        """하락 종목에 자동매매 차단 및 포지션 축소 안전장치 적용.
+
+        - change_rate < 0: auto_trade_blocked=True
+        - change_rate <= change_rate_min: position_size_ratio=0.5 (필터 최저 하한 도달 종목)
+        """
+        for item in results:
+            change_rate = item.get("change_rate", 0.0)
+            if change_rate < 0:
+                item["auto_trade_blocked"] = True
+            if change_rate <= change_rate_min:
+                item["position_size_ratio"] = 0.5
+
+    def _log_filter_stats(self, rows: list[dict], filters: PrimaryFilters) -> None:
+        """필터별 탈락 통계를 WARNING 로그로 출력 (최초 1회 — 적응형 루프 제외)."""
+        n_prev_volume_zero = 0
+        n_volume_ratio = 0
+        n_volume_min = 0
+        n_market_cap = 0
+        n_change_rate_low = 0
+        n_change_rate_high = 0
+        n_passed = 0
+
+        for row in rows:
+            prev_volume = row.get("prev_volume", 0)
+            if prev_volume == 0:
+                n_prev_volume_zero += 1
+                continue
+
+            volume = row.get("volume", 0)
+            if volume / prev_volume < filters.volume_ratio:
+                n_volume_ratio += 1
+                continue
+
+            volume_min = (
+                filters.volume_min_etf
+                if row.get("stock_type") == "ETF"
+                else filters.volume_min_stock
+            )
+            if volume < volume_min:
+                n_volume_min += 1
+                continue
+
+            if row.get("market_cap", 0) < filters.market_cap_min:
+                n_market_cap += 1
+                continue
+
+            change_rate = float(row.get("change_rate", 0))
+            if change_rate < filters.change_rate_min:
+                n_change_rate_low += 1
+                continue
+            if change_rate > filters.change_rate_max:
+                n_change_rate_high += 1
+                continue
+
+            n_passed += 1
+
+        logger.warning(
+            "1차 필터 통계: 입력 %d, prev_volume=0 탈락 %d, "
+            "volume_ratio 탈락 %d, volume_min 탈락 %d, market_cap 탈락 %d, "
+            "change_rate 탈락 %d (하한 %d/상한 %d), 통과 %d",
+            len(rows),
+            n_prev_volume_zero,
+            n_volume_ratio,
+            n_volume_min,
+            n_market_cap,
+            n_change_rate_low + n_change_rate_high,
+            n_change_rate_low,
+            n_change_rate_high,
+            n_passed,
+        )
+
+    async def _get_fallback_prev_volumes(
+        self, session: AsyncSession, stock_codes: list[str]
+    ) -> dict[str, int]:
+        """prev_volume=0 종목들의 최근 5일 평균 거래량을 일괄 반환 (유효 3일+ 조건)."""
+        if not stock_codes:
+            return {}
+
+        date_subq = (
+            select(MarketData.data_date)
+            .where(MarketData.source.in_(["data_go_kr", "kis_daily"]))
+            .distinct()
+            .order_by(desc(MarketData.data_date))
+            .limit(5)
+            .subquery()
+        )
+        stmt = (
+            select(MarketData.stock_code, MarketData.volume)
+            .where(
+                MarketData.stock_code.in_(stock_codes),
+                MarketData.data_date.in_(select(date_subq.c.data_date)),
+                MarketData.source.in_(["data_go_kr", "kis_daily"]),
+                MarketData.volume > 0,
+            )
+            .order_by(MarketData.stock_code, desc(MarketData.data_date))
+        )
+        result = await session.execute(stmt)
+
+        volumes_by_code: dict[str, list[int]] = defaultdict(list)
+        for code, volume in result.all():
+            if volume:
+                volumes_by_code[code].append(int(volume))
+
+        return {
+            code: sum(vols) // len(vols)
+            for code, vols in volumes_by_code.items()
+            if len(vols) >= 3
+        }
 
     async def _fetch_today_and_prev(
         self, session: AsyncSession
@@ -238,6 +419,14 @@ class PrimaryScreener:
                 "high_price": int(today_row["high_price"] or 0),
                 "low_price": int(today_row["low_price"] or 0),
             }
+
+        # prev_volume=0 종목 일괄 폴백 (N+1 방지)
+        zero_codes = [code for code, data in mapped.items() if data["prev_volume"] == 0]
+        if zero_codes:
+            fallback_map = await self._get_fallback_prev_volumes(session, zero_codes)
+            for code, fallback_vol in fallback_map.items():
+                mapped[code]["prev_volume"] = fallback_vol
+
         return mapped
 
     async def _get_recent_market_data(

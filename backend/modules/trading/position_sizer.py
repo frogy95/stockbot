@@ -52,7 +52,11 @@ class PositionSizer:
                     self._leverage_position_size_pct = float(row.value)
 
     async def calculate(
-        self, stock_code: str, current_price: int, balance_amount: int
+        self,
+        stock_code: str,
+        current_price: int,
+        balance_amount: int,
+        size_ratio: float = 1.0,
     ) -> PositionSize:
         """투자금과 주문 수량을 계산한다.
 
@@ -64,6 +68,9 @@ class PositionSizer:
             현재가 (원).
         balance_amount : int
             투자 가능 잔고 (원).
+        size_ratio : float
+            포지션 비율 (0.0~1.0). 기본값 1.0 (100%).
+            적응형/기본 후보 등 안전장치 적용 시 0.5 등으로 설정.
 
         Returns
         -------
@@ -77,6 +84,11 @@ class PositionSizer:
 
         invest_amount = int(balance_amount * size_pct / 100)
         quantity = self._compute_quantity(invest_amount, current_price)
+
+        # size_ratio 적용 (후보 플래그로 전달된 비율)
+        if size_ratio != 1.0:
+            quantity = int(quantity * size_ratio)
+            invest_amount = int(invest_amount * size_ratio)
 
         return PositionSize(
             invest_amount=invest_amount,

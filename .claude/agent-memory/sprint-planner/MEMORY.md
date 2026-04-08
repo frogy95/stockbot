@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-02 업데이트)
+## 스프린트 현황 (2026-04-07 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -37,9 +37,15 @@
 
 - Phase 4.9 Sprint 1 — DB 기반 스크리닝 의존성 + 재시도 후 재실행, ✅ 완료 (2026-04-06) / PR: https://github.com/frogy95/stockbot/pull/90
 
+- Phase 5 Sprint 1 — 1차 스크리닝 안정화 (volume_ratio 완화 + 적응형 필터 + 폴백 + date.today() KST), ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/101
+
+- Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/102
+
+- Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, ✅ 완료 (2026-04-08)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 5 Sprint 1 — 완전 자동 모드 + 텔레그램 고도화 (Phase 4.9 완료, Phase 5 계획 필요)
+- Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
 
@@ -134,3 +140,28 @@
 - Phase 4.9 Sprint 1: _premarket_retry 후 재실행 시 PIPELINE_RUNNING_KEY 락 확인 필수 (수동 트리거 충돌 방지)
 - Phase 4.9 Sprint 1: DB 폴백 검증 실패 시 기존 의존성 체크 따름 (안전한 실패 패턴)
 - Phase 4.9 Sprint 1: 수정 대상 2파일 (validator.py, scheduler.py) + 신규 테스트 2파일
+- Phase 5 Sprint 1: date.today() 프로덕션 5개 파일 + datetime.now() 2개소 — risk_manager.py(180,268,311,377), manager.py(105), commands.py(47), dashboard.py(33), trading.py(57)
+- Phase 5 Sprint 1: risk_manager.py의 check_time_restriction()과 assert_settings_unlocked()에 datetime.now() 미보호 사용 — KST 전환 필수
+- Phase 5 Sprint 1: PrimaryFilters.volume_ratio 기본값 2.0 -> 1.5 변경 시 test_filters.py::TestPrimaryFilters 업데이트 필요
+- Phase 5 Sprint 1: screener._fetch_today_and_prev()에서 prev_volume=0 처리 — session 파라미터 이미 전달받고 있어 폴백 쿼리 추가 가능
+- Phase 5 Sprint 1: 적응형 필터 반환값 tuple[list[dict], bool]로 is_relaxed 전달 — screen() 결과에 플래그 전파
+- Phase 5 Sprint 1: 기본 후보 is_fallback/auto_trade_blocked/position_size_ratio 플래그는 factors JSON에 저장 — Sprint 2에서 engine이 소비
+- Phase 5 Sprint 1: dart.py의 datetime.now().year는 연도만 사용하므로 UTC/KST 무관 — 수정 불필요
+- Phase 5 Sprint 2: engine.py process_screening_results()에서 notifier 존재 여부로 반자동/직접 주문 분기 (line 109) — trading_mode 기반 분기로 변경 필요
+- Phase 5 Sprint 2: seed_settings.py에 trading_mode 미존재 — 추가 필요 (key=trading_mode, value=semi-auto, category=trading)
+- Phase 5 Sprint 2: settings.py에 switch_trading_mode(ModeSwitchRequest) 이미 존재 — trading_env 전환용. trading_mode 전환은 별도 엔드포인트 필요
+- Phase 5 Sprint 2: screener.py의 기본 후보 플래그 (is_fallback, auto_trade_blocked, position_size_ratio) — engine에서 stock_code 기준으로 매핑 필요
+- Phase 5 Sprint 2: NotifierManager.send_daily_report() 이미 구현 (manager.py:102) — 스케줄러 연결만 필요
+- Phase 5 Sprint 2: scheduler._market_close()는 WS 종료만 수행 — send_daily_report 호출 추가 필요
+- Phase 5 Sprint 2: CollectorScheduler에 notifier_manager 참조 없음 — set_notifier_manager() 메서드 추가 필요 (set_telegram_bot 패턴)
+- Phase 5 Sprint 2: RiskManager.__init__에 notifier 파라미터 없음 — 비상 정지 알림 위해 set_notifier() 추가 필요
+- Phase 5 Sprint 2: PositionSizer.calculate(stock_code, current_price, balance_amount)에 size_ratio 파라미터 없음 — 추가 필요
+- Phase 5 Sprint 2: main.py lifespan에서 notifier_manager 생성 후 collector_scheduler/risk_manager에 주입 순서 중요
+- Phase 5 Sprint 2: frontend/(dashboard)/settings/page.tsx에 ModeSwitch 컴포넌트 사용 중 — trading_mode 전환 UI는 별도 섹션으로 추가
+- Phase 5 Sprint 2: frontend/components/settings/mode-switch.tsx는 모의/실전(paper/live) 전환 전용 — TradingModeSwitch는 별도로 추가
+- Phase 5.1 Sprint 1: PrimaryFilters.change_rate_min 현재값 1.0 -> -2.0 변경, change_rate_max=7.0 유지
+- Phase 5.1 Sprint 1: 적응형 필터 확장 — volume_ratio [1.5, 1.2] 다음에 change_rate [-2.0, -3.0] 순차 완화, 최저 하한 -5.0
+- Phase 5.1 Sprint 1: 하락 종목 안전장치 — change_rate < 0: auto_trade_blocked=True, change_rate <= -2.0: position_size_ratio=0.5
+- Phase 5.1 Sprint 1: 필터별 탈락 통계 로깅 — _log_filter_stats 헬퍼 메서드로 구현, passes_primary_filter 시그니처 변경 없음
+- Phase 5.1 Sprint 1: test_filters.py의 test_fail_change_rate_too_low (change_rate=0.5) 수정 필요 — 0.5 >= -2.0이므로 이제 통과
+- Phase 5.1 Sprint 1: 수정 대상 2파일 (filters.py, screener.py) + 테스트 2파일 (test_filters.py, test_screener.py)
