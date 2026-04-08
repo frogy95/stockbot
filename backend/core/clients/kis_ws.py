@@ -136,7 +136,9 @@ class KISWebSocketClient:
                     await self._on_message(message)
                 except ConnectionClosed as e:
                     if self._connected:
-                        logger.warning("WebSocket 연결 끊김: code=%s reason=%s", e.code, e.reason)
+                        code = e.rcvd.code if e.rcvd else None
+                        reason = e.rcvd.reason if e.rcvd else ""
+                        logger.warning("WebSocket 연결 끊김: code=%s reason=%s", code, reason)
                         await self._reconnect()
                     break
         except asyncio.CancelledError:
