@@ -1907,7 +1907,7 @@
           "status": "completed",
           "branch": "phase5.1-sprint1",
           "sprintDoc": "docs/phase/phase5.1/sprint1/sprint1.md",
-          "prUrl": "",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/105",
           "progress": {
             "total": 3,
             "completed": 3

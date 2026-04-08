@@ -7,22 +7,11 @@
 
 ### Sprint 마무리 - Phase 5.1 Sprint 1 (2026-04-08)
 
-PR: (생성 후 업데이트 예정)
+PR: https://github.com/frogy95/stockbot/pull/105
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
 
----
-
-### 프로덕션 배포 - v1.4.0 (2026-04-07)
-
-포함 스프린트: Phase 5 Sprint 1, Sprint 2
-PR: https://github.com/frogy95/stockbot/pull/104
-
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
-
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 
 ---
 
