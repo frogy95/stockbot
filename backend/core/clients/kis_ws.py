@@ -218,6 +218,14 @@ class KISWebSocketClient:
 
             except Exception as e:
                 logger.error("재연결 실패 (%d/%d): %s", attempt + 1, MAX_RECONNECT_ATTEMPTS, e)
+                # 연결이 열려 있으면 닫아 누수 방지
+                if self._ws is not None:
+                    try:
+                        await self._ws.close()
+                    except Exception:
+                        pass
+                    self._ws = None
+                self._connected = False
 
         self._connected = False
         logger.error("최대 재연결 횟수 초과, 연결 종료")
