@@ -43,11 +43,12 @@
 
 - Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, ✅ 완료 (2026-04-08)
 
-- Phase 5.2 Sprint 1 — WS 재연결 안정화 + 구독 제한, 🔄 계획 수립 완료 (2026-04-08)
+- Phase 5.2 Sprint 1 — WS 재연결 안정화 + 구독 제한, ✅ 완료 (2026-04-08) / PR: https://github.com/frogy95/stockbot/pull/106
 
 ## 다음 사용 가능한 스프린트
 
 - Phase 5 Sprint 3 — 성과 분석 대시보드
+- Phase 6 Sprint 1 — 고도화 + 안정화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
 ## 핵심 주의사항
 

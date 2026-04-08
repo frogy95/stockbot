@@ -11,6 +11,7 @@
 **상태:** ✅ 완료
 **이전 스프린트:** Phase 5.1 Sprint 1 (완료, PR #105)
 **브랜치명:** `phase5.2-sprint1`
+**PR:** https://github.com/frogy95/stockbot/pull/106
 
 ---
 
