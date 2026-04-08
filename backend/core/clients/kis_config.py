@@ -13,6 +13,8 @@ class KISEnvironment:
     app_secret_env: str
     account_env: str
     rate_limit_interval: float
+    max_ws_subscriptions: int = 35
+    ws_reconnect_delay: float = 0.2
 
     @property
     def base_url(self) -> str:
@@ -40,6 +42,8 @@ PAPER = KISEnvironment(
     app_secret_env="KIS_MOCK_APP_SECRET",
     account_env="KIS_MOCK_ACCOUNT_NO",
     rate_limit_interval=1.5,
+    max_ws_subscriptions=25,
+    ws_reconnect_delay=0.5,
 )
 
 LIVE = KISEnvironment(
@@ -51,6 +55,8 @@ LIVE = KISEnvironment(
     app_secret_env="KIS_APP_SECRET",
     account_env="KIS_ACCOUNT_NO",
     rate_limit_interval=0.07,
+    max_ws_subscriptions=35,
+    ws_reconnect_delay=0.2,
 )
 
 _ENVIRONMENTS = {"paper": PAPER, "live": LIVE}

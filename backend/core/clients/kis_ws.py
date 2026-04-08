@@ -13,8 +13,8 @@ from core.clients.token_manager import KISTokenManager
 
 logger = logging.getLogger(__name__)
 
-MAX_RECONNECT_ATTEMPTS = 5
-BACKOFF_BASE = 1  # 초기 대기 1초, 지수 백오프
+MAX_RECONNECT_ATTEMPTS = 7
+BACKOFF_BASE = 2  # 초기 대기 2초, 지수 백오프
 
 
 class KISWebSocketClient:
