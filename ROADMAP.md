@@ -21,10 +21,10 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5 Sprint 2 완료, Phase 5 Sprint 3 예정
-- 현재 Phase: Phase 5 (1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석) 🔄 진행 중
+- 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5 Sprint 3 예정
+- 현재 Phase: Phase 5.1 (1차 스크리닝 change_rate 필터 수정) ✅ 완료
 - 현재 Sprint: Phase 5 Sprint 3 예정 (성과 분석 대시보드)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5 Sprint 3 — 성과 분석 대시보드
 
@@ -59,7 +59,8 @@ Phase 0 (완료)
                           │                       └─> Phase 4.8: EOD 데이터 수집 내결함성 강화
                           │                             └─> Phase 4.9: 장전 파이프라인 복원력 강화
                           └─> Phase 5: 스크리닝 안정화 + 완전 자동 + 성과 분석
-                                └─> Phase 6: 고도화 + 안정화
+                                └─> Phase 5.1: change_rate 필터 수정
+                                      └─> Phase 6: 고도화 + 안정화
 ```
 
 - Phase 0 -> 0.5: API 검증 결과가 Phase 1 이후 아키텍처/전략 결정의 전제
@@ -73,7 +74,8 @@ Phase 0 (완료)
 - Phase 4.7 -> 4.8: 스크리닝 정상화 후 데이터 수집 SPOF 해소 (공공데이터포털 단일 의존 → KIS 일봉 보조)
 - Phase 4.8 -> 4.9: KIS 폴백 구현 후 남은 복원력 결함 해소 (DB 기반 스크리닝 의존성 + 재시도 후 재실행)
 - Phase 3 -> 5: 반자동 매매 흐름이 완전 자동의 기반
-- Phase 4, 5 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
+- Phase 5 -> 5.1: 1차 스크리닝 통과 0건 재발 → change_rate 필터 과도 엄격성 수정
+- Phase 4, 5, 5.1 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
 ## MVP 범위 (Must)
 
@@ -759,6 +761,40 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 > Phase 상세 계획: `docs/phase/phase5/phase5.md` ✅ 계획 수립 완료 (2026-04-07)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
 > Sprint 문서: `docs/phase/phase5/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+
+---
+
+## Phase 5.1: 1차 스크리닝 change_rate 필터 수정 (Sprint 1) ✅ 완료
+
+### 목표
+Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+7%)가 여전히 과도하게 엄격하여 평시 장에서 1차 스크리닝 통과 0건 문제 재발. change_rate_min 완화 + 적응형 필터 확장 + 하락 종목 안전장치 도입.
+
+### 배경 (2026-04-08 프로덕션 이슈)
+- change_rate_min=1.0이 전체 종목의 ~70-75%를 즉시 탈락시킴
+- 적응형 필터가 volume_ratio만 완화, change_rate는 고정 → 병목 미해소
+- 전일 하락/횡보 종목 전량 탈락 → 단타 기회 절반 누락
+
+### 작업 목록
+#### Sprint 1: change_rate 필터 수정 + 적응형 확장
+- change_rate_min 완화 (1.0 -> -2.0)
+- 적응형 필터에 change_rate 포함 (volume_ratio -> change_rate 순차 완화)
+- 하락 종목(change_rate < 0) 안전장치 (auto_trade_blocked + 포지션 50%)
+- 필터별 탈락 통계 로깅
+- 테스트 업데이트
+
+### 완료 기준 (Definition of Done)
+- change_rate_min = -2.0 적용, 적응형 [-2.0, -3.0] 동작
+- 하락 종목 자동매매 차단 + 포지션 사이징 50% 정상 동작
+- 평시 장 기준 1차 스크리닝 통과 10건+ 목표
+- pytest 전체 통과
+
+### 기술 고려사항
+- 검토팀 확정: change_rate_min=-2.0, 적응형 [-2.0, -3.0], 최저 하한 -5.0, change_rate_max=7.0 유지
+- 하락 종목 자동매매 금지 (최리스크+김단타+정프로 전원 합의)
+- 절대값 필터(|change_rate| >= 0.3) → Phase 6 이관 (박퀀트: 백테스팅 후 도입)
+
+> Phase 상세 계획: `docs/phase/phase5.1/phase5.1.md` ✅ 계획 수립 완료 (2026-04-08)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
 
 ---
 

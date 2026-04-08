@@ -10,7 +10,7 @@ class PrimaryFilters:
     volume_min_stock: int = 50_000
     volume_min_etf: int = 10_000
     market_cap_min: int = 50_000_000_000
-    change_rate_min: float = 1.0
+    change_rate_min: float = -2.0
     change_rate_max: float = 7.0
     max_candidates: int = 30
 
