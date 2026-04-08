@@ -6,7 +6,9 @@
 
 **Tech Stack:** Python 3.12, FastAPI, websockets, pytest, asyncio
 
-**Sprint 기간:** 2026-04-08 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-08 ~ 2026-04-08
+**완료일:** 2026-04-08
+**상태:** ✅ 완료
 **이전 스프린트:** Phase 5.1 Sprint 1 (완료, PR #105)
 **브랜치명:** `phase5.2-sprint1`
 
@@ -71,9 +73,9 @@ git commit -m "feat(phase5.2-sprint1): task1 -- KISEnvironment max_ws_subscripti
 ```
 
 **완료 기준:**
-- ⬜ PAPER.max_ws_subscriptions == 25, LIVE == 35
-- ⬜ PAPER.ws_reconnect_delay == 0.5, LIVE == 0.2
-- ⬜ MAX_RECONNECT_ATTEMPTS == 7, BACKOFF_BASE == 2
+- ✅ PAPER.max_ws_subscriptions == 25, LIVE == 35
+- ✅ PAPER.ws_reconnect_delay == 0.5, LIVE == 0.2
+- ✅ MAX_RECONNECT_ATTEMPTS == 7, BACKOFF_BASE == 2
 
 ---
 
@@ -136,10 +138,10 @@ git commit -m "feat(phase5.2-sprint1): task2 -- _reconnect 구독 복원 딜레�
 ```
 
 **완료 기준:**
-- ⬜ 구독 복원 시 종목 간 ws_reconnect_delay 대기
-- ⬜ ConnectionClosed에서 code/reason 로깅
-- ⬜ ping_timeout=10 적용 (connect + reconnect)
-- ⬜ 재연결 최대 실패 시 on_ws_failure 콜백 호출
+- ✅ 구독 복원 시 종목 간 ws_reconnect_delay 대기
+- ✅ ConnectionClosed에서 code/reason 로깅
+- ✅ ping_timeout=10 적용 (connect + reconnect)
+- ✅ 재연결 최대 실패 시 on_ws_failure 콜백 호출
 
 ---
 
@@ -227,11 +229,11 @@ git commit -m "feat(phase5.2-sprint1): task3 -- 캐시 TTL 10초 + 2차 스크�
 ```
 
 **완료 기준:**
-- ⬜ REALTIME_CACHE_TTL == 10
-- ⬜ 체결강도 웜업 5초 동작
-- ⬜ 2차 스크리닝 WS 미연결 시 스킵 + 연속 3회 텔레그램 경고
-- ⬜ WS 재연결 실패 시 텔레그램 긴급 알림
-- ⬜ WSSubscriptionManager max가 환경 기반으로 주입
+- ✅ REALTIME_CACHE_TTL == 10
+- ✅ 체결강도 웜업 5초 동작
+- ✅ 2차 스크리닝 WS 미연결 시 스킵 + 연속 3회 텔레그램 경고
+- ✅ WS 재연결 실패 시 텔레그램 긴급 알림
+- ✅ WSSubscriptionManager max가 환경 기반으로 주입
 
 ---
 
@@ -282,9 +284,9 @@ git commit -m "feat(phase5.2-sprint1): task4 -- 재연결 딜레이/실패 콜�
 ```
 
 **완료 기준:**
-- ⬜ 기존 test_kis_ws.py 수정 후 통과
-- ⬜ 신규 test_ws_stability.py 전체 통과
-- ⬜ pytest 전체 회귀 없음
+- ✅ 기존 test_kis_ws.py 수정 후 통과
+- ✅ 신규 test_ws_stability.py 전체 통과
+- ✅ pytest 전체 회귀 없음 (751 passed)
 
 ---
 

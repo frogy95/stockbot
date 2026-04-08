@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5.2 계획 수립
-- 현재 Phase: Phase 5.2 (KIS WebSocket 모의 환경 안정화) 🔄 진행 중
-- 현재 Sprint: Phase 5.2 Sprint 1 🔄 진행 중 (WS 구독 제한 + 재연결 안정화)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08)
+- 전체 진행률: Phase 0~5.2 Sprint 1 완료
+- 현재 Phase: Phase 5.2 (KIS WebSocket 모의 환경 안정화) ✅ 완료
+- 현재 Sprint: Phase 5.2 Sprint 1 ✅ 완료 (WS 구독 제한 + 재연결 안정화, 2026-04-08)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 5.2 Sprint 1 — WS 구독 제한 + 재연결 안정화
+- 다음 마일스톤: Phase 6 Sprint 1 — 고도화 + 안정화
 
 ## 기술 아키텍처 결정 사항
 
@@ -800,7 +800,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 ---
 
-## Phase 5.2: KIS WebSocket 모의 환경 안정화 (Sprint 1) 🔄
+## Phase 5.2: KIS WebSocket 모의 환경 안정화 (Sprint 1) ✅
 
 ### 목표
 모의 환경(paper)에서 KIS WebSocket이 구독 수 초과로 재연결을 반복하여 장중 실시간 파이프라인(2차 스크리닝 + 매매 신호)이 마비되는 문제를 수정한다. 환경별 구독 제한 + 재연결 로직 안정화 + 2차 스크리닝 WS 연동.
@@ -811,7 +811,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 - 2차 스크리닝 10:14 이후 실질 중단 (Redis TTL=5초 만료)
 
 ### 작업 목록
-#### Sprint 1: WS 구독 제한 + 재연결 안정화 🔄 진행 중
+#### Sprint 1: WS 구독 제한 + 재연결 안정화 ✅ 완료 (2026-04-08)
 > Sprint 계획: `docs/phase/phase5.2/sprint1/sprint1.md` (2026-04-08)
 
 - 환경별 max_ws_subscriptions (paper=25, live=35)
