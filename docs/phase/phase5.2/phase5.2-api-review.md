@@ -9,7 +9,7 @@
 
 | 항목 | 판정 |
 |------|------|
-| 원인 분석 | ✅ 통과 — 구독 수 초과가 주 원인으로 정확 |
+| 원인 분석 | ⚠️ 수정 — rev.2: 구독 수 초과가 아닌 재연결 시 버스트 전송이 근본 원인. 초기 30종목(60 tr_id) 구독은 정상 동작 |
 | 환경별 구독 제한 | ✅ 통과 — KISEnvironment에 필드 추가 방식 적절 |
 | 재연결 로직 | ⚠️ 주의 — 구독 복원 딜레이 외 추가 고려사항 있음 |
 | 로깅 | ✅ 통과 — close code/reason 로깅 필수 |
@@ -27,8 +27,8 @@
 
 ### 현재 코드의 구체적 문제
 
-1. **구독 카운팅 불일치**: `WSSubscriptionManager._subscriptions`는 종목 단위(35개)로 관리하지만, 실제 WS 서버는 tr_id 단위로 카운트. 35종목 x 2 = 70건은 40건 한도의 175%
-2. **_reconnect() 구독 복원**: `subscriptions_snapshot`을 순회하며 `self.subscribe()`를 호출하는데, 이때 `subscribe()` 내부에서 다시 `_subscriptions`에 추가하므로 **중복 추가 방지는 되어 있으나**, 70건을 한번에 보내면 서버가 즉시 끊음
+1. **[rev.2 수정] 구독 수 자체는 정상**: 30종목 x 2 tr_id = 60건이 초기 구독 시 정상 등록됨. 구독 수 초과가 원인이 아님
+2. **_reconnect() 버스트 전송이 근본 원인**: `subscriptions_snapshot`을 순회하며 `self.subscribe()`를 딜레이 없이 호출. 60건이 밀리초 단위로 전송되면 모의 서버가 처리하지 못하고 연결을 끊음
 3. **ConnectionClosed 미상세화**: `websockets.exceptions.ConnectionClosed`에는 `code`와 `reason` 속성이 있는데 현재 미사용
 4. **ping_interval=30**: 모의 서버는 ping 응답이 느려서 timeout이 발생할 수 있음. `ping_timeout` 파라미터도 명시 필요
 
@@ -44,7 +44,7 @@
 
 | 항목 | 초안 | 권고 | 근거 |
 |------|------|------|------|
-| paper max_ws_subscriptions | 20 | **20 유지** | 20종목 x 2 tr_id = 40건. 한도의 100%. 여유를 주려면 **18** (36건, 한도 90%)이 이상적이나 20도 수용 가능 |
+| paper max_ws_subscriptions | 20 | **25로 상향** | [rev.2] 30종목도 초기 구독 시 정상 동작 확인. 구독 수 초과가 원인이 아니므로 20은 과도한 제한. 25종목(50 tr_id)으로 재연결 복원 부하를 줄이면서 1차 스크리닝 커버율 확보 |
 | live max_ws_subscriptions | 35 | **35 유지** | 실전 한도가 더 높을 가능성. 추후 실전 테스트 시 조정 |
 | 재연결 구독 복원 딜레이 | 0.3초/종목 | **0.5초/종목 (= 0.25초/tr_id)** | 모의 서버 처리 속도 감안. 실전은 0.2초/종목 |
 | ping_timeout | 미설정 | **10초** | 모의 서버 ping 응답 지연 대비. websockets.connect(ping_timeout=10) |
