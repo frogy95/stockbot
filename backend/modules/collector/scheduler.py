@@ -39,7 +39,7 @@ from core.clients.kis_ws import KISWebSocketClient
 logger = logging.getLogger(__name__)
 
 MISFIRE_GRACE_TIME = 300  # 초 (5분 — Railway 재시작/스케줄러 지연 대응)
-REALTIME_CACHE_TTL = 5  # 초
+REALTIME_CACHE_TTL = 10  # 초
 STATE_TTL = 86400  # 초 (Redis 상태 TTL — 24시간)
 ALERT_MAX_LEN = 200  # 알림 메시지 에러 문자열 최대 길이
 RECOVERY_INSTRUCTION = "POST /api/v1/collector/trigger/premarket-pipeline"
@@ -101,6 +101,7 @@ class CollectorScheduler:
         self._notifier_manager = None  # 알림 매니저 (main.py에서 후속 주입)
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
         self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
+        self._secondary_skip_count: int = 0
 
     @property
     def is_running(self) -> bool:
@@ -708,11 +709,23 @@ class CollectorScheduler:
             await self._send_failure_alert("etf_master", str(e))
             return {"etf_count": 0, "etn_count": 0, "source": "error", "sanity_passed": False}
 
+    async def _on_ws_reconnect_failure(self) -> None:
+        """WS 재연결 7회 실패 시 긴급 알림."""
+        logger.error("WS 재연결 최대 실패 -- 장중 실시간 파이프라인 중단")
+        await self._send_failure_alert("ws_reconnect", "WebSocket 재연결 7회 실패. 장중 2차 스크리닝 중단 상태.")
+
+    async def _on_ws_reconnect_success(self) -> None:
+        """WS 재연결 성공 시 체결강도 웜업 설정."""
+        self._trade_strength.set_warmup_all(5.0)
+        logger.info("WS 재연결 성공: 체결강도 5초 웜업 설정")
+
     async def _market_open(self) -> None:
         """09:00 WS 연결 + 구독 시작 + 2차 스크리닝 활성화."""
         logger.info("장중 시작: WS 연결")
         try:
             self._ws_client.set_on_data(self._on_realtime_data)
+            self._ws_client.set_on_ws_failure(self._on_ws_reconnect_failure)
+            self._ws_client.set_on_reconnect_success(self._on_ws_reconnect_success)
             await self._ws_client.connect()
             # 2차 스크리닝 30초 주기 활성화
             job = self._scheduler.get_job("secondary_screen")
@@ -824,6 +837,17 @@ class CollectorScheduler:
 
     async def _secondary_screen(self) -> dict:
         """장중 30초 주기 2차 스크리닝: 실시간 필터 + 팩터 스코어링."""
+        if not self._ws_client.connected:
+            self._secondary_skip_count += 1
+            logger.warning("2차 스크리닝 스킵: WS 미연결 (연속 %d회)", self._secondary_skip_count)
+            # 3회 첫 경고, 이후 10회마다 재발송 (30초 주기 기준 스팸 방지)
+            n = self._secondary_skip_count
+            if (n == 3 or n % 10 == 0) and self._telegram_bot:
+                await self._telegram_bot.send_notification(
+                    "<b>[경고]</b> 2차 스크리닝 연속 %d회 스킵\nWS 미연결 상태 지속" % n
+                )
+            return {"candidates": 0, "passed": 0, "skipped": True, "reason": "ws_disconnected"}
+
         logger.info("2차 스크리닝 시작")
         try:
             async with self._session_factory() as db_session:
@@ -836,6 +860,7 @@ class CollectorScheduler:
 
             passed = [r for r in results if r.get("is_passed")]
             self._last_secondary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            self._secondary_skip_count = 0
             logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
 
             # 통과 종목을 매매 엔진에 전달

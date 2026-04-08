@@ -60,7 +60,7 @@ async def test_connect_websocket_url(client, token_manager, ws_mock):
     with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock) as mock_connect:
         await client.connect()
 
-    mock_connect.assert_awaited_once_with(PAPER.ws_url, ping_interval=30)
+    mock_connect.assert_awaited_once_with(PAPER.ws_url, ping_interval=30, ping_timeout=10)
 
     await client.disconnect()
 
@@ -232,7 +232,7 @@ async def test_multiple_subscriptions(client, token_manager, ws_mock):
 
 @pytest.mark.asyncio
 async def test_reconnect_resubscribes(client, token_manager, ws_mock):
-    """재연결 시 기존 구독을 복원한다."""
+    """재연결 시 기존 구독을 복원하고 종목 간 딜레이가 삽입된다."""
     new_ws = AsyncMock()
     new_ws.send = AsyncMock()
     new_ws.recv = AsyncMock(side_effect=asyncio.CancelledError)
@@ -241,20 +241,27 @@ async def test_reconnect_resubscribes(client, token_manager, ws_mock):
     with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock):
         await client.connect()
 
-    # 구독 추가
+    # 구독 추가 (2개 종목)
     await client.subscribe("005930", "H0STCNT0")
     await client.subscribe("000660", "H0STCNT0")
 
-    # 재연결 (asyncio.sleep을 mock하여 대기 생략)
+    sleep_calls = []
+
+    async def mock_sleep(seconds):
+        sleep_calls.append(seconds)
+
     with (
         patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=new_ws),
-        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+        patch("core.clients.kis_ws.asyncio.sleep", side_effect=mock_sleep),
     ):
         await client._reconnect()
 
     # 재연결 후 구독 복원 확인 — send가 2번 호출됨 (2개 종목)
     assert new_ws.send.await_count == 2
     assert client.connected is True
+    # 2개 종목: 첫 번째 이후 딜레이 1회 (마지막 종목은 딜레이 없음)
+    delay_calls = [s for s in sleep_calls if s == PAPER.ws_reconnect_delay]
+    assert len(delay_calls) == 1
 
     await client.disconnect()
 
@@ -274,9 +281,9 @@ async def test_reconnect_exponential_backoff(client, token_manager):
     ):
         await client._reconnect()
 
-    # 5회 시도, 1/2/4/8/16초 대기
+    # 7회 시도, 2/4/8/16/32/64/128초 대기
     assert len(sleep_calls) == MAX_RECONNECT_ATTEMPTS
-    assert sleep_calls == [1, 2, 4, 8, 16]
+    assert sleep_calls == [2, 4, 8, 16, 32, 64, 128]
     assert client.connected is False
 
 
@@ -290,6 +297,76 @@ async def test_reconnect_max_attempts_exceeded(client, token_manager):
         await client._reconnect()
 
     assert client.connected is False
+
+
+@pytest.mark.asyncio
+async def test_reconnect_calls_failure_callback(client, token_manager):
+    """최대 재연결 횟수 초과 시 on_ws_failure 콜백을 호출한다."""
+    failure_callback = AsyncMock()
+    client.set_on_ws_failure(failure_callback)
+
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, side_effect=Exception("연결 실패")),
+        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await client._reconnect()
+
+    assert client.connected is False
+    failure_callback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_reconnect_calls_success_callback(client, token_manager, ws_mock):
+    """재연결 성공 시 on_reconnect_success 콜백을 호출한다."""
+    new_ws = AsyncMock()
+    new_ws.send = AsyncMock()
+    new_ws.recv = AsyncMock(side_effect=asyncio.CancelledError)
+    new_ws.close = AsyncMock()
+
+    success_callback = AsyncMock()
+    client.set_on_reconnect_success(success_callback)
+
+    with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock):
+        await client.connect()
+
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=new_ws),
+        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await client._reconnect()
+
+    assert client.connected is True
+    success_callback.assert_awaited_once()
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_receive_loop_logs_close_code(client, token_manager, ws_mock, caplog):
+    """ConnectionClosed 예외에서 code/reason을 로깅한다."""
+    from websockets.exceptions import ConnectionClosed
+    from websockets.frames import Close
+    import logging
+
+    close_exc = ConnectionClosed(Close(1001, "going away"), None)
+    ws_mock.recv = AsyncMock(side_effect=close_exc)
+
+    # _reconnect를 no-op으로 모킹하여 재연결 없이 로그만 확인
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock),
+        patch.object(client, "_reconnect", new_callable=AsyncMock),
+        caplog.at_level(logging.WARNING, logger="core.clients.kis_ws"),
+    ):
+        await client.connect()
+        if client._receive_task:
+            try:
+                await asyncio.wait_for(asyncio.shield(client._receive_task), timeout=1.0)
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                pass
+
+    assert "code=" in caplog.text or "reason=" in caplog.text
+
+    await client.disconnect()
 
 
 # ── 초기 상태 테스트 ──────────────────────────────────────
