@@ -78,6 +78,7 @@ class PrimaryScreener:
         scored = self.scorer.score_candidates(candidates)
         result = self._truncate_and_rank(scored)
         self._mark_hot_stocks(result)
+        self._apply_negative_change_rate_safety(result, self.filters.change_rate_min)
         if is_relaxed:
             for item in result:
                 item["is_relaxed"] = True
@@ -110,6 +111,7 @@ class PrimaryScreener:
         change_rate_min의 최저 하한은 CHANGE_RATE_FLOOR.
         """
         passed = self._apply_filters(rows)
+        self._log_filter_stats(rows, self.filters)
         if len(passed) >= self.adaptive_min_candidates:
             return passed, False
 
@@ -220,6 +222,81 @@ class PrimaryScreener:
         """거래량 비율 500%+ 종목에 is_hot 플래그 설정."""
         for item in results:
             item["is_hot"] = is_hot_stock(item.get("volume_ratio", 0))
+
+    @staticmethod
+    def _apply_negative_change_rate_safety(
+        results: list[dict], change_rate_min: float
+    ) -> None:
+        """하락 종목에 자동매매 차단 및 포지션 축소 안전장치 적용.
+
+        - change_rate < 0: auto_trade_blocked=True
+        - change_rate <= change_rate_min: position_size_ratio=0.5 (필터 최저 하한 도달 종목)
+        """
+        for item in results:
+            change_rate = item.get("change_rate", 0.0)
+            if change_rate < 0:
+                item["auto_trade_blocked"] = True
+            if change_rate <= change_rate_min:
+                item["position_size_ratio"] = 0.5
+
+    def _log_filter_stats(self, rows: list[dict], filters: PrimaryFilters) -> None:
+        """필터별 탈락 통계를 WARNING 로그로 출력 (최초 1회 — 적응형 루프 제외)."""
+        n_prev_volume_zero = 0
+        n_volume_ratio = 0
+        n_volume_min = 0
+        n_market_cap = 0
+        n_change_rate_low = 0
+        n_change_rate_high = 0
+        n_passed = 0
+
+        for row in rows:
+            prev_volume = row.get("prev_volume", 0)
+            if prev_volume == 0:
+                n_prev_volume_zero += 1
+                continue
+
+            volume = row.get("volume", 0)
+            if volume / prev_volume < filters.volume_ratio:
+                n_volume_ratio += 1
+                continue
+
+            volume_min = (
+                filters.volume_min_etf
+                if row.get("stock_type") == "ETF"
+                else filters.volume_min_stock
+            )
+            if volume < volume_min:
+                n_volume_min += 1
+                continue
+
+            if row.get("market_cap", 0) < filters.market_cap_min:
+                n_market_cap += 1
+                continue
+
+            change_rate = float(row.get("change_rate", 0))
+            if change_rate < filters.change_rate_min:
+                n_change_rate_low += 1
+                continue
+            if change_rate > filters.change_rate_max:
+                n_change_rate_high += 1
+                continue
+
+            n_passed += 1
+
+        logger.warning(
+            "1차 필터 통계: 입력 %d, prev_volume=0 탈락 %d, "
+            "volume_ratio 탈락 %d, volume_min 탈락 %d, market_cap 탈락 %d, "
+            "change_rate 탈락 %d (하한 %d/상한 %d), 통과 %d",
+            len(rows),
+            n_prev_volume_zero,
+            n_volume_ratio,
+            n_volume_min,
+            n_market_cap,
+            n_change_rate_low + n_change_rate_high,
+            n_change_rate_low,
+            n_change_rate_high,
+            n_passed,
+        )
 
     async def _get_fallback_prev_volumes(
         self, session: AsyncSession, stock_codes: list[str]
