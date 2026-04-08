@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
     # 수집 모듈 초기화
     session_factory = get_session_factory()
     trade_strength = TradeStrengthCalculator()
-    ws_manager = WSSubscriptionManager(ws_client)
+    ws_manager = WSSubscriptionManager(ws_client, max_subscriptions=env.max_ws_subscriptions)
 
     # 스크리닝 모듈 초기화
     primary_screener = PrimaryScreener()

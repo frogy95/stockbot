@@ -17,6 +17,8 @@ class TradeStrengthCalculator:
         self._data: dict[str, deque[tuple[float, int, str]]] = {}
         # {stock_code: first_timestamp} — 누적 시작 시점
         self._first_ts: dict[str, float] = {}
+        # {stock_code: warmup_end_timestamp} — 재연결 후 웜업 기간
+        self._warmup_until: dict[str, float] = {}
 
     def add_execution(
         self, stock_code: str, timestamp: float, volume: int, sell_or_buy: str
@@ -28,13 +30,30 @@ class TradeStrengthCalculator:
 
         self._data[stock_code].append((timestamp, volume, sell_or_buy))
 
-    def get_strength(self, stock_code: str, now: float | None = None) -> float:
-        """체결강도 계산. 누적 5분 미만이면 중립값 50.0 반환."""
-        if stock_code not in self._data:
-            return 50.0
+    def set_warmup(self, stock_code: str, duration: float = 5.0) -> None:
+        """특정 종목에 웜업 기간을 설정한다. 웜업 중에는 중립값(50.0)을 반환한다."""
+        self._warmup_until[stock_code] = time.time() + duration
 
+    def set_warmup_all(self, duration: float = 5.0) -> None:
+        """현재 데이터가 있는 모든 종목에 웜업 기간을 설정한다."""
+        end = time.time() + duration
+        for stock_code in self._data:
+            self._warmup_until[stock_code] = end
+
+    def get_strength(self, stock_code: str, now: float | None = None) -> float:
+        """체결강도 계산. 누적 5분 미만이거나 웜업 중이면 중립값 50.0 반환."""
         if now is None:
             now = time.time()
+
+        # 재연결 후 웜업 기간에는 중립값 반환
+        warmup_end = self._warmup_until.get(stock_code)
+        if warmup_end is not None:
+            if now < warmup_end:
+                return 50.0
+            del self._warmup_until[stock_code]
+
+        if stock_code not in self._data:
+            return 50.0
 
         self._cleanup(stock_code, now)
 
@@ -62,6 +81,7 @@ class TradeStrengthCalculator:
         """종목 데이터 초기화."""
         self._data.pop(stock_code, None)
         self._first_ts.pop(stock_code, None)
+        self._warmup_until.pop(stock_code, None)
 
     def _cleanup(self, stock_code: str, now: float) -> None:
         """윈도우 밖 만료 데이터 정리."""
