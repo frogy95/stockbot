@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-08T09:57:00+09:00",
+  "lastUpdated": "2026-04-08T15:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -1963,9 +1963,59 @@
     {
       "id": "phase5.2",
       "title": "KIS WebSocket 모의 환경 안정화",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase5.2/phase5.2.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "WS 재연결 안정화 + 구독 제한",
+          "status": "planned",
+          "branch": "phase5.2-sprint1",
+          "sprintDoc": "docs/phase/phase5.2/sprint1/sprint1.md",
+          "progress": {
+            "total": 4,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KISEnvironment max_ws_subscriptions + 재연결 파라미터 변경",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-1-kisenvironment-max_ws_subscriptions--재연결-파라미터-변경",
+              "testPlan": "PAPER.max_ws_subscriptions==25, LIVE==35, MAX_RECONNECT_ATTEMPTS==7, BACKOFF_BASE==2",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "_reconnect() 구독 복원 딜레이 + close code 로깅 + 실패 콜백",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-2-_reconnect-구독-복원-딜레이--close-code-로깅--실패-콜백",
+              "testPlan": "종목 간 ws_reconnect_delay 대기, ConnectionClosed code/reason 로깅, on_ws_failure 콜백 호출",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "WSSubscriptionManager 환경 기반 max + 캐시 TTL + 2차 스크리닝 WS 가드 + 체결강도 웜업",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-3-wssubscriptionmanager-환경-기반-max--캐시-ttl--2차-스크리닝-ws-가드--체결강도-웜업",
+              "testPlan": "REALTIME_CACHE_TTL==10, 체결강도 웜업 50.0, WS 미연결 스킵 + 연속 3회 텔레그램 경고, WS 실패 알림",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "테스트 업데이트 + 통합 검증",
+              "path": "docs/phase/phase5.2/sprint1/sprint1.md#task-4-테스트-업데이트--통합-검증",
+              "testPlan": "test_kis_ws.py 수정 통과, test_ws_stability.py 전체 통과, pytest 전체 회귀 없음",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-07 업데이트)
+## 스프린트 현황 (2026-04-08 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -42,6 +42,8 @@
 - Phase 5 Sprint 2 — 완전 자동 모드 + 텔레그램 고도화, ✅ 완료 (2026-04-07) / PR: https://github.com/frogy95/stockbot/pull/102
 
 - Phase 5.1 Sprint 1 — change_rate 필터 수정 + 적응형 확장, ✅ 완료 (2026-04-08)
+
+- Phase 5.2 Sprint 1 — WS 재연결 안정화 + 구독 제한, 🔄 계획 수립 완료 (2026-04-08)
 
 ## 다음 사용 가능한 스프린트
 
@@ -165,3 +167,11 @@
 - Phase 5.1 Sprint 1: 필터별 탈락 통계 로깅 — _log_filter_stats 헬퍼 메서드로 구현, passes_primary_filter 시그니처 변경 없음
 - Phase 5.1 Sprint 1: test_filters.py의 test_fail_change_rate_too_low (change_rate=0.5) 수정 필요 — 0.5 >= -2.0이므로 이제 통과
 - Phase 5.1 Sprint 1: 수정 대상 2파일 (filters.py, screener.py) + 테스트 2파일 (test_filters.py, test_screener.py)
+- Phase 5.2 Sprint 1: KISEnvironment는 frozen=True dataclass — 새 필드 추가 시 PAPER/LIVE 인스턴스에 값 명시 필수
+- Phase 5.2 Sprint 1: kis_ws.py _reconnect() 174~175줄이 핵심 수정 대상 — 딜레이 없이 60건 버스트 전송이 근본 원인
+- Phase 5.2 Sprint 1: WSSubscriptionManager.__init__에 max_subscriptions=35 기본값 — 환경 기반 주입으로 변경 필요 (main.py에서)
+- Phase 5.2 Sprint 1: TradeStrengthCalculator에 reset() 메서드 이미 존재 — warmup 메커니즘만 추가
+- Phase 5.2 Sprint 1: scheduler._secondary_screen()에 WS 연결 상태 가드 없음 — 추가 필요 (연속 3회 스킵 시 텔레그램 경고)
+- Phase 5.2 Sprint 1: scheduler._send_failure_alert(step, error) 기존 메서드 재사용 가능 — WS 재연결 실패 알림에 활용
+- Phase 5.2 Sprint 1: test_kis_ws.py의 test_reconnect_exponential_backoff에서 sleep_calls==[1,2,4,8,16] 검증 — BACKOFF_BASE 변경 후 [2,4,8,16,32,64,128]으로 수정 필요
+- Phase 5.2 Sprint 1: on_reconnect_success 콜백을 kis_ws.py에 추가하여 scheduler에서 체결강도 웜업 연결

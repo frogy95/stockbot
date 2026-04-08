@@ -23,7 +23,7 @@
 
 - 전체 진행률: Phase 0~5.1 Sprint 1 완료, Phase 5.2 계획 수립
 - 현재 Phase: Phase 5.2 (KIS WebSocket 모의 환경 안정화) 🔄 진행 중
-- 현재 Sprint: Phase 5.2 Sprint 1 예정 (WS 구독 제한 + 재연결 안정화)
+- 현재 Sprint: Phase 5.2 Sprint 1 🔄 진행 중 (WS 구독 제한 + 재연결 안정화)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 5.2 Sprint 1 — WS 구독 제한 + 재연결 안정화
@@ -811,8 +811,10 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 - 2차 스크리닝 10:14 이후 실질 중단 (Redis TTL=5초 만료)
 
 ### 작업 목록
-#### Sprint 1: WS 구독 제한 + 재연결 안정화
-- 환경별 max_ws_subscriptions (paper=20, live=35)
+#### Sprint 1: WS 구독 제한 + 재연결 안정화 🔄 진행 중
+> Sprint 계획: `docs/phase/phase5.2/sprint1/sprint1.md` (2026-04-08)
+
+- 환경별 max_ws_subscriptions (paper=25, live=35)
 - 재연결 구독 복원 딜레이 (0.5초/종목)
 - 재연결 파라미터 조정 (최대 7회, 백오프 2초, ping_timeout=10초)
 - ConnectionClosed close code/reason 로깅
