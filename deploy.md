@@ -28,24 +28,25 @@ PR: https://github.com/frogy95/stockbot/pull/106
 
 ---
 
-### 프로덕션 배포 - v1.5.0 (2026-04-08)
+### 프로덕션 배포 - v1.6.0 (2026-04-08)
 
-포함 스프린트: Phase 5 Sprint 1+2, Phase 5.1 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/104
+포함 스프린트: Phase 5.2 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/107
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
 
 #### 자동 검증 완료 항목
-- ✅ pytest 742 passed, 0 failed
+- ✅ pytest 751 passed, 0 failed
 - ✅ 코드 리뷰 완료 — Critical/High 이슈 없음
 - ✅ 신규 환경변수 없음 (Railway 설정 변경 불필요)
 
 #### 수동 검증 필요 항목
 - ⬜ /api/v1/health 헬스체크 확인
 - ⬜ 프론트엔드 메인 페이지 접속 확인
-- ⬜ 프로덕션 1차 스크리닝 통과 >0건 확인 (장중)
-- ⬜ Railway 로그에서 "1차 필터 통계" WARNING 로그 출력 확인
+- ⬜ 모의 환경 WS 연속 1시간 안정 연결 확인 (장중)
+- ⬜ 2차 스크리닝 30초 주기 10회 연속 실행 확인 (Railway 로그)
+- ⬜ WS 재연결 시 종목 간 딜레이 로그 확인 ("구독 복원 중: N/M 종목")
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-08T20:00:00+09:00",
+  "lastUpdated": "2026-04-08T11:20:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2372,6 +2372,15 @@
       "version": "v1.5.0",
       "description": "Phase 5.1 Sprint 1 프로덕션 배포 — 1차 스크리닝 change_rate_min 완화(-2.0), 적응형 change_rate 확장(change_rate_adaptive_steps=[-2.0, -3.0]), 하락 종목 안전장치(_apply_negative_change_rate_safety), 필터별 탈락 통계 로깅(_log_filter_stats)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/104",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-08",
+      "type": "sprint",
+      "ref": "phase5.2-sprint1",
+      "version": "v1.6.0",
+      "description": "Phase 5.2 Sprint 1 프로덕션 배포 — KIS WebSocket 재연결 안정화 (구독 버스트 방지, close code 로깅), 환경별 WS 구독 상한(PAPER=25, LIVE=35), 2차 스크리닝 WS 연결 상태 가드, 체결강도 재연결 후 웜업, 캐시 TTL 10초",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/107",
       "status": "in_progress"
     }
   ]
