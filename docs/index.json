@@ -2347,6 +2347,24 @@
           "date": "2026-04-07"
         }
       ]
+    },
+    {
+      "id": "hotfix-manual-kis-daily-trigger",
+      "name": "KIS 일봉 수동 수집 API 추가",
+      "status": "deployed",
+      "path": "docs/hotfix/manual-kis-daily-trigger/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "",
+      "deployedAt": "2026-04-07",
+      "description": "초기 프로덕션 배포 후 DB에 T-1 데이터만 존재하여 prev_volume=0으로 1차 스크리닝 전 종목 탈락. T-2 이전 데이터 수동 보충을 위해 POST /api/v1/collector/trigger/kis-daily/{YYYYMMDD} 엔드포인트 및 trigger_kis_daily() 메서드 추가.",
+      "commits": [
+        {
+          "hash": "952bb7a",
+          "message": "feat: KIS 일봉 수동 수집 API 추가 (target_date 지정)",
+          "date": "2026-04-07"
+        }
+      ]
     }
   ],
   "deployHistory": [

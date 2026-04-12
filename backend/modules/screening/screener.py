@@ -380,7 +380,17 @@ class PrimaryScreener:
         rows = result.mappings().all()
 
         if not rows:
+            logger.warning("_fetch_today_and_prev: DB에서 조회된 행이 0건")
             return {}
+
+        # 날짜 분포 디버그
+        date_counts: dict[str, int] = {}
+        source_counts: dict[str, int] = {}
+        for row in rows:
+            d = str(row["data_date"])
+            date_counts[d] = date_counts.get(d, 0) + 1
+            # source는 메인 쿼리에 없으므로 date로만 집계
+        logger.warning("_fetch_today_and_prev: 총 %d행, 날짜별=%s", len(rows), date_counts)
 
         # 종목별로 당일/전일 매핑
         stock_dates: dict[str, list[dict]] = defaultdict(list)

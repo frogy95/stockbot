@@ -29,6 +29,40 @@ async def trigger_premarket(background_tasks: BackgroundTasks, request: Request)
     return {"triggered": True, "message": "수집 시작됨. /api/v1/collector/status 에서 last_premarket 확인"}
 
 
+@router.post("/collector/trigger/premarket/{target_date}")
+async def trigger_premarket_date(target_date: str, request: Request):
+    """수동 장전 수집 트리거 (특정 날짜 지정, 공공데이터포털 사용, 동기 실행).
+
+    target_date: YYYYMMDD 형식 (예: 20260402)
+    """
+    if len(target_date) != 8 or not target_date.isdigit():
+        raise HTTPException(status_code=400, detail="target_date는 YYYYMMDD 형식이어야 합니다")
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    result = await scheduler.trigger_premarket_date(target_date)
+    return {"triggered": True, **result}
+
+
+@router.post("/collector/trigger/kis-daily/{target_date}")
+async def trigger_kis_daily(target_date: str, background_tasks: BackgroundTasks, request: Request):
+    """수동 KIS 일봉 수집 트리거 (특정 날짜 지정, 백그라운드 실행).
+
+    target_date: YYYYMMDD 형식 (예: 20260402)
+    """
+    if len(target_date) != 8 or not target_date.isdigit():
+        raise HTTPException(status_code=400, detail="target_date는 YYYYMMDD 형식이어야 합니다")
+    scheduler = getattr(request.app.state, "collector_scheduler", None)
+    if scheduler is None:
+        return {"triggered": False, "message": "스케줄러 미초기화"}
+    background_tasks.add_task(scheduler.trigger_kis_daily, target_date)
+    return {
+        "triggered": True,
+        "target_date": target_date,
+        "message": f"KIS 일봉 수집({target_date}) 시작됨. /api/v1/collector/pipeline-status 에서 확인",
+    }
+
+
 @router.post("/collector/trigger/etf")
 async def trigger_etf(background_tasks: BackgroundTasks, request: Request):
     """수동 ETF 수집 트리거 (백그라운드 실행)."""
