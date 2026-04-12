@@ -98,7 +98,7 @@ class CommandHandler:
         healthy_label = "🟢 정상" if healthy == "true" else "🔴 비정상"
 
         lines = [f"🔧 <b>파이프라인 상태</b>  {healthy_label}"]
-        if running == "true":
+        if running:
             lines.append("⚙️ <i>현재 실행 중...</i>")
         lines.append("")
 
@@ -127,7 +127,7 @@ class CommandHandler:
             return "⚠️ 스케줄러 미초기화"
 
         running = await self._redis.get(PIPELINE_RUNNING_KEY)
-        if running == "true":
+        if running:
             return "⚙️ 파이프라인이 이미 실행 중입니다.\n/pipeline 으로 진행 상황을 확인하세요."
 
         # 락 선점 후 백그라운드 실행
