@@ -61,7 +61,8 @@ async def test_run_scheduled_pipeline_acquires_lock():
 
     scheduler.run_premarket_pipeline = AsyncMock(return_value={"completed": True, "pipeline_status": {}})
 
-    await scheduler._run_scheduled_pipeline()
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._run_scheduled_pipeline()
 
     scheduler.run_premarket_pipeline.assert_awaited_once()
 
@@ -89,7 +90,10 @@ async def test_chain_pipeline_logs_duration(caplog):
 
     scheduler.run_premarket_pipeline = AsyncMock(return_value={"completed": True, "pipeline_status": {}})
 
-    with caplog.at_level(logging.INFO, logger="modules.collector.scheduler"):
+    with (
+        caplog.at_level(logging.INFO, logger="modules.collector.scheduler"),
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
+    ):
         await scheduler._run_scheduled_pipeline()
 
     assert any("장전 파이프라인 시작" in r.message for r in caplog.records)

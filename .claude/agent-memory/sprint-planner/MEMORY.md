@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-08 업데이트)
+## 스프린트 현황 (2026-04-12 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -45,10 +45,12 @@
 
 - Phase 5.2 Sprint 1 — WS 재연결 안정화 + 구독 제한, ✅ 완료 (2026-04-08) / PR: https://github.com/frogy95/stockbot/pull/106
 
+- Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어 (WS ConcurrencyError/좀비, 가드 or, market_open 알림, is_trading_day), 🔄 계획 수립 완료 (2026-04-12)
+
 ## 다음 사용 가능한 스프린트
 
+- Phase 6 Sprint 2 — 복원력 강화 + 불필요 실행 방지 (KIS REST 재시도, recovery 단계적, 나머지 is_trading_day)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
-- Phase 6 Sprint 1 — 고도화 + 안정화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 
 ## 핵심 주의사항
 
@@ -176,3 +178,12 @@
 - Phase 5.2 Sprint 1: scheduler._send_failure_alert(step, error) 기존 메서드 재사용 가능 — WS 재연결 실패 알림에 활용
 - Phase 5.2 Sprint 1: test_kis_ws.py의 test_reconnect_exponential_backoff에서 sleep_calls==[1,2,4,8,16] 검증 — BACKOFF_BASE 변경 후 [2,4,8,16,32,64,128]으로 수정 필요
 - Phase 5.2 Sprint 1: on_reconnect_success 콜백을 kis_ws.py에 추가하여 scheduler에서 체결강도 웜업 연결
+- Phase 6 Sprint 1: _reconnect()에 disconnect() 패턴(cancel+await) 그대로 적용 — 82~87줄 참조
+- Phase 6 Sprint 1: 구독 복원을 try/except로 감싸되, _receive_task 생성은 except 바깥에서 항상 실행
+- Phase 6 Sprint 1: ws_manager.py 45줄/74줄 가드 `and` -> `or` — 한쪽만 비정상이어도 차단
+- Phase 6 Sprint 1: _market_open() except에 _send_failure_alert("market_open", str(e)) 한 줄 추가
+- Phase 6 Sprint 1: _market_open_recovery() 판단: ws_manager.count -> _ws_client.connected로 변경
+- Phase 6 Sprint 1: is_trading_day() import 추가 필요 (from core.trading_calendar import is_trading_day)
+- Phase 6 Sprint 1: is_trading_day() 가드 대상 2개: _run_scheduled_pipeline, _market_open (Sprint 2에서 나머지)
+- Phase 6 Sprint 1: test_connect_websocket_url 기존 테스트가 open_timeout=10 추가로 assert 수정 필요
+- Phase 6 Sprint 1: test_scheduler_phase6.py 신규 생성 — _make_scheduler 패턴 재사용 (tests/test_scheduler.py의 conftest.FakeRedis)

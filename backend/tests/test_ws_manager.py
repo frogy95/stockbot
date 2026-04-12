@@ -142,6 +142,28 @@ async def test_get_subscribed_stocks():
 
 
 @pytest.mark.asyncio
+async def test_ws_manager_guard_or_condition():
+    """한쪽만 비정상이어도 구독 차단 (or 조건 검증)."""
+    # Case 1: _ws 유효하지만 connected=False
+    ws1 = _make_mock_ws(connected=False, ws_is_none=False)
+    mgr1 = WSSubscriptionManager(ws1, max_subscriptions=35)
+    result1 = await mgr1.subscribe("005930")
+    assert result1 is False
+
+    # Case 2: _ws=None이지만 connected=True (비정상 상태)
+    ws2 = _make_mock_ws(connected=True, ws_is_none=True)
+    mgr2 = WSSubscriptionManager(ws2, max_subscriptions=35)
+    result2 = await mgr2.subscribe("005930")
+    assert result2 is False
+
+    # Case 3: unsubscribe도 동일하게 차단
+    ws3 = _make_mock_ws(connected=False, ws_is_none=False)
+    mgr3 = WSSubscriptionManager(ws3, max_subscriptions=35)
+    result3 = await mgr3.unsubscribe("005930")
+    assert result3 is False
+
+
+@pytest.mark.asyncio
 async def test_unsubscribe_all():
     """전체 구독 해제."""
     ws = _make_mock_ws()

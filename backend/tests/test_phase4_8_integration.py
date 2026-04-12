@@ -176,7 +176,10 @@ async def test_portal_fail_kis_success_retry_success():
     mock_bot.send_notification.reset_mock()
 
     # KIS 폴백 성공 → premarket="success" → retry 스킵 확인
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockSkip:
+    with (
+        patch("modules.collector.scheduler.DataGoKrCollector") as MockSkip,
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
+    ):
         await scheduler._premarket_retry()
         MockSkip.return_value.collect_all.assert_not_called()
 
@@ -195,6 +198,7 @@ async def test_portal_fail_kis_success_retry_success():
         patch("modules.collector.scheduler.DataGoKrCollector") as MockRetry,
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
         patch.object(scheduler._validator, "cross_check_prices", new=AsyncMock(return_value=[])),
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
         MockRetry.return_value.collect_all = AsyncMock(return_value=portal_ok)
         await scheduler._premarket_retry()

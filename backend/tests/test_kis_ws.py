@@ -60,7 +60,7 @@ async def test_connect_websocket_url(client, token_manager, ws_mock):
     with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock) as mock_connect:
         await client.connect()
 
-    mock_connect.assert_awaited_once_with(PAPER.ws_url, ping_interval=30, ping_timeout=10)
+    mock_connect.assert_awaited_once_with(PAPER.ws_url, ping_interval=30, ping_timeout=10, open_timeout=10)
 
     await client.disconnect()
 
@@ -367,6 +367,108 @@ async def test_receive_loop_logs_close_code(client, token_manager, ws_mock, capl
     assert "code=" in caplog.text or "reason=" in caplog.text
 
     await client.disconnect()
+
+
+# ── Phase 6 Sprint 1 — ConcurrencyError / 좀비 / open_timeout / subscribe 가드 ──
+
+
+@pytest.mark.asyncio
+async def test_reconnect_cancels_existing_receive_task(client, token_manager, ws_mock):
+    """_reconnect() 진입 시 기존 _receive_task를 cancel+await한다."""
+    new_ws = AsyncMock()
+    new_ws.send = AsyncMock()
+    new_ws.recv = AsyncMock(side_effect=asyncio.CancelledError)
+    new_ws.close = AsyncMock()
+
+    with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock):
+        await client.connect()
+
+    old_task = client._receive_task
+    assert old_task is not None
+
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=new_ws),
+        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await client._reconnect()
+
+    # 기존 task가 취소되고 새 task가 생성됨
+    assert old_task.cancelled()
+    assert client._receive_task is not None
+    assert client._receive_task is not old_task
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_reconnect_starts_receive_loop_on_subscription_failure(client, token_manager, ws_mock):
+    """구독 복원 실패해도 _receive_task가 생성된다 (좀비 방지)."""
+    new_ws = AsyncMock()
+    new_ws.recv = AsyncMock(side_effect=asyncio.CancelledError)
+    new_ws.close = AsyncMock()
+    # subscribe 시 Exception 발생
+    new_ws.send = AsyncMock(side_effect=Exception("구독 실패"))
+
+    with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock):
+        await client.connect()
+
+    # 구독 추가
+    await client.subscribe("005930", "H0STCNT0")
+
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=new_ws),
+        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await client._reconnect()
+
+    # subscribe 실패에도 수신 루프 시작됨
+    assert client._receive_task is not None
+    assert client.connected is True
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_ws_connect_open_timeout(client, token_manager, ws_mock):
+    """connect()와 _reconnect() 모두 open_timeout=10을 전달한다."""
+    with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock) as mock_connect:
+        await client.connect()
+
+    mock_connect.assert_awaited_once_with(
+        PAPER.ws_url, ping_interval=30, ping_timeout=10, open_timeout=10,
+    )
+
+    new_ws = AsyncMock()
+    new_ws.send = AsyncMock()
+    new_ws.recv = AsyncMock(side_effect=asyncio.CancelledError)
+    new_ws.close = AsyncMock()
+
+    with (
+        patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=new_ws) as mock_reconnect,
+        patch("core.clients.kis_ws.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await client._reconnect()
+
+    # _reconnect 내부 connect 호출에도 open_timeout=10 전달
+    mock_reconnect.assert_awaited_with(
+        PAPER.ws_url, ping_interval=30, ping_timeout=10, open_timeout=10,
+    )
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_ws_subscribe_none_guard(client):
+    """_ws=None 상태에서 subscribe/unsubscribe 시 예외 없이 return."""
+    assert client._ws is None
+
+    # subscribe — 예외 없이 조용히 반환
+    await client.subscribe("005930", "H0STCNT0")
+    assert client.subscription_count == 0
+    assert ("005930", "H0STCNT0") not in client._subscriptions
+
+    # unsubscribe — 예외 없이 조용히 반환
+    await client.unsubscribe("005930", "H0STCNT0")
 
 
 # ── 초기 상태 테스트 ──────────────────────────────────────
