@@ -136,7 +136,9 @@ async def test_etf_job():
 async def test_market_open_job():
     """장중 시작 시 WS 연결."""
     scheduler = _make_scheduler()
-    await scheduler._market_open()
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_open()
 
     scheduler._ws_client.set_on_data.assert_called_once()
     scheduler._ws_client.connect.assert_called_once()

@@ -21,6 +21,7 @@ from core.models.stock import Stock
 
 from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
+from core.trading_calendar import is_trading_day
 from modules.collector.models import CollectionResult, ValidationResult
 from modules.collector.validator import CollectionValidator
 from modules.collector.sources.data_go_kr import DataGoKrCollector
@@ -270,6 +271,10 @@ class CollectorScheduler:
 
     async def _run_scheduled_pipeline(self) -> None:
         """08:00 CronTrigger용 장전 파이프라인. 락 선점 후 체인 실행."""
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        if not is_trading_day(today):
+            logger.info("비거래일 스킵: step=premarket_pipeline date=%s", today)
+            return
         existing = await self._redis.get(PIPELINE_RUNNING_KEY)
         if existing:
             logger.warning("파이프라인 이미 실행 중 -- 자동 스케줄 스킵")
@@ -721,6 +726,10 @@ class CollectorScheduler:
 
     async def _market_open(self) -> None:
         """09:00 WS 연결 + 구독 시작 + 2차 스크리닝 활성화."""
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        if not is_trading_day(today):
+            logger.info("비거래일 스킵: step=market_open date=%s", today)
+            return
         logger.info("장중 시작: WS 연결")
         try:
             self._ws_client.set_on_data(self._on_realtime_data)
@@ -733,26 +742,28 @@ class CollectorScheduler:
                 job.resume()
                 logger.info("2차 스크리닝 30초 주기 활성화")
             logger.info("WS 연결 완료, 구독 대기")
-        except Exception:
+        except Exception as e:
             logger.exception("WS 연결 실패")
+            await self._send_failure_alert("market_open", str(e))
 
     async def _market_open_recovery(self) -> None:
         """09:05 WS 연결 상태 확인 — 미연결 시 _market_open 재시도 + 텔레그램 경고."""
-        if self._ws_manager.count > 0:
-            logger.info("market_open 복구 불필요: ws_subscriptions=%d", self._ws_manager.count)
+        if self._ws_client.connected:
+            logger.info("market_open 복구 불필요: ws_connected=True, subscriptions=%d", self._ws_manager.count)
             return
-        logger.warning("market_open 복구 시작: ws_subscriptions=0")
+        logger.warning("market_open 복구 시작: ws_connected=False (subscriptions=%d)", self._ws_manager.count)
         if self._telegram_bot:
             await self._telegram_bot.send_notification(
                 "<b>[장애 복구]</b> market_open 미실행 감지\n"
-                "ws_subscriptions=0 → 자동 재시도 중..."
+                "ws_connected=False → 자동 재시도 중..."
             )
         await self._market_open()
         if self._telegram_bot:
             subs = self._ws_manager.count
-            status = "복구 성공" if subs > 0 else "복구 실패"
+            connected = self._ws_client.connected
+            status = "복구 성공" if connected else "복구 실패"
             await self._telegram_bot.send_notification(
-                f"<b>[장애 복구]</b> {status}\nws_subscriptions={subs}"
+                f"<b>[장애 복구]</b> {status}\nws_connected={connected}, subscriptions={subs}"
             )
 
     async def _market_close(self) -> None:

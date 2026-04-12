@@ -70,6 +70,7 @@ class KISWebSocketClient:
             self._env.ws_url,
             ping_interval=30,
             ping_timeout=10,
+            open_timeout=10,
         )
         self._connected = True
         self._receive_task = asyncio.create_task(self._receive_loop())
@@ -94,6 +95,9 @@ class KISWebSocketClient:
 
     async def subscribe(self, stock_code: str, tr_id: str = "H0STCNT0") -> None:
         """실시간 시세 구독 요청."""
+        if self._ws is None:
+            logger.warning("WS 미연결 상태에서 구독 시도: %s (%s)", stock_code, tr_id)
+            return
         msg = self._build_subscription_message(stock_code, tr_id, tr_type="1")
         await self._ws.send(json.dumps(msg))
         self._subscriptions.add((stock_code, tr_id))
@@ -101,6 +105,9 @@ class KISWebSocketClient:
 
     async def unsubscribe(self, stock_code: str, tr_id: str = "H0STCNT0") -> None:
         """실시간 시세 구독 해제 요청."""
+        if self._ws is None:
+            logger.warning("WS 미연결 상태에서 구독 해제 시도: %s (%s)", stock_code, tr_id)
+            return
         msg = self._build_subscription_message(stock_code, tr_id, tr_type="2")
         await self._ws.send(json.dumps(msg))
         self._subscriptions.discard((stock_code, tr_id))
@@ -179,6 +186,15 @@ class KISWebSocketClient:
 
     async def _reconnect(self) -> None:
         """지수 백오프로 자동 재연결, 기존 구독 복원."""
+        # 기존 수신 루프 정리 (ConcurrencyError 방지)
+        if self._receive_task is not None:
+            self._receive_task.cancel()
+            try:
+                await self._receive_task
+            except asyncio.CancelledError:
+                pass
+            self._receive_task = None
+
         subscriptions_snapshot = set(self._subscriptions)
 
         for attempt in range(MAX_RECONNECT_ATTEMPTS):
@@ -192,25 +208,29 @@ class KISWebSocketClient:
                     self._env.ws_url,
                     ping_interval=30,
                     ping_timeout=10,
+                    open_timeout=10,
                 )
                 self._connected = True
                 logger.info("재연결 성공")
 
                 # 기존 구독 복원 (종목 간 딜레이로 구독 버스트 방지)
-                stocks: dict[str, list[str]] = {}
-                for stock_code, tr_id in subscriptions_snapshot:
-                    stocks.setdefault(stock_code, []).append(tr_id)
+                try:
+                    stocks: dict[str, list[str]] = {}
+                    for stock_code, tr_id in subscriptions_snapshot:
+                        stocks.setdefault(stock_code, []).append(tr_id)
 
-                total = len(stocks)
-                for idx, (stock_code, tr_ids) in enumerate(stocks.items(), start=1):
-                    for tr_id in tr_ids:
-                        await self.subscribe(stock_code, tr_id)
-                    if idx < total:
-                        await asyncio.sleep(self._env.ws_reconnect_delay)
-                    if idx % 10 == 0 or idx == total:
-                        logger.info("구독 복원 중: %d/%d 종목", idx, total)
+                    total = len(stocks)
+                    for idx, (stock_code, tr_ids) in enumerate(stocks.items(), start=1):
+                        for tr_id in tr_ids:
+                            await self.subscribe(stock_code, tr_id)
+                        if idx < total:
+                            await asyncio.sleep(self._env.ws_reconnect_delay)
+                        if idx % 10 == 0 or idx == total:
+                            logger.info("구독 복원 중: %d/%d 종목", idx, total)
+                except Exception:
+                    logger.exception("구독 복원 실패 — 수신 루프는 시작")
 
-                # 수신 루프 재시작
+                # 수신 루프는 구독 복원 성공/실패 관계없이 항상 시작
                 self._receive_task = asyncio.create_task(self._receive_loop())
 
                 await self._invoke_callback(self._on_reconnect_success, "WS 재연결 성공")
