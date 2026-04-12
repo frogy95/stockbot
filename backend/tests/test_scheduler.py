@@ -148,7 +148,9 @@ async def test_market_open_job():
 async def test_market_close_job():
     """장후 WS 구독 해제."""
     scheduler = _make_scheduler()
-    await scheduler._market_close()
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_close()
 
     scheduler._ws_manager.unsubscribe_all.assert_called_once()
     scheduler._ws_client.disconnect.assert_called_once()

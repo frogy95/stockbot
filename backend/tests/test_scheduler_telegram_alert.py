@@ -45,7 +45,7 @@ def _make_scheduler(fake_redis: FakeRedis | None = None, telegram_bot=None):
 
 @pytest.mark.asyncio
 async def test_premarket_failure_sends_telegram():
-    """_premarket_collect 실패 시 telegram_bot.send_notification 호출 — [장애] + 수동 복구 문구 포함."""
+    """_premarket_collect 실패 시 telegram 알림 — 예외 경로에서 KIS 폴백도 실패하면 이중 실패 알림."""
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
 
@@ -58,11 +58,11 @@ async def test_premarket_failure_sends_telegram():
 
         await scheduler._premarket_collect()
 
-    mock_bot.send_notification.assert_called_once()
-    message = mock_bot.send_notification.call_args[0][0]
-    assert "[장애]" in message
-    assert "premarket" in message
-    assert "수동 복구" in message
+    mock_bot.send_notification.assert_called()
+    # 예외 경로에서 KIS 폴백도 실패하면 이중 실패([긴급]) 또는 폴백 예외 시 [장애] 알림
+    all_messages = [call[0][0] for call in mock_bot.send_notification.call_args_list]
+    assert any("[긴급]" in msg or "[장애]" in msg for msg in all_messages)
+    assert any("premarket" in msg for msg in all_messages)
 
 
 @pytest.mark.asyncio

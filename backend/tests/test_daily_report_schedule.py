@@ -1,7 +1,7 @@
 """일일 마감 리포트 스케줄 연결 테스트 — _market_close 호출 시 send_daily_report 발송 확인."""
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -46,7 +46,8 @@ async def test_market_close_calls_send_daily_report():
     mock_notifier.send_daily_report = AsyncMock()
     scheduler.set_notifier_manager(mock_notifier)
 
-    await scheduler._market_close()
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_close()
 
     mock_notifier.send_daily_report.assert_awaited_once()
 

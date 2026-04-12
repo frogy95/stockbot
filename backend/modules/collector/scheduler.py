@@ -568,8 +568,26 @@ class CollectorScheduler:
             return result.collected
         except Exception as e:
             logger.exception("수집 실패: step=premarket reason=%s", e)
-            await self._update_step_status("premarket", "failed", error=str(e))
-            await self._send_failure_alert("premarket", str(e))
+            # 예외 경로에서도 KIS 폴백 시도
+            try:
+                logger.info("예외 경로 KIS 폴백 시도: step=premarket")
+                kis_result = await self._run_kis_daily_fallback()
+                kis_validation = self._validator.validate_kis_daily(kis_result)
+                if kis_validation.passed:
+                    await asyncio.gather(
+                        self._update_step_status("premarket", "success", collected_count=kis_result.collected, validation=kis_validation),
+                        self._send_fallback_info_alert("premarket", str(e), kis_result.collected),
+                    )
+                    logger.info("예외 경로 KIS 폴백 성공: collected=%d", kis_result.collected)
+                    await self._run_db_validation("premarket", "validate_premarket_db")
+                    return kis_result.collected
+                else:
+                    await self._update_step_status("premarket", "failed", error=str(e))
+                    await self._send_double_failure_alert("premarket", str(e), kis_validation.failure_reason or "")
+            except Exception as fallback_err:
+                logger.exception("예외 경로 KIS 폴백도 실패: %s", fallback_err)
+                await self._update_step_status("premarket", "failed", error=str(e))
+                await self._send_failure_alert("premarket", str(e))
             return 0
 
     async def _run_kis_daily_fallback(self) -> CollectionResult:
@@ -599,6 +617,10 @@ class CollectorScheduler:
         성공 시 pipeline_status를 포털 데이터 기준으로 success로 업데이트하고
         [복구] 태그 알림을 발송한다. 실패 시에는 KIS 보조 데이터가 이미 있으므로 경고 로그만 기록.
         """
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        if not is_trading_day(today):
+            logger.info("비거래일 스킵: step=premarket_retry date=%s", today)
+            return
         pipeline_status = await self._get_pipeline_status()
         premarket_status = pipeline_status.get("premarket", {}).get("status")
         if premarket_status == "success":
@@ -747,27 +769,53 @@ class CollectorScheduler:
             await self._send_failure_alert("market_open", str(e))
 
     async def _market_open_recovery(self) -> None:
-        """09:05 WS 연결 상태 확인 — 미연결 시 _market_open 재시도 + 텔레그램 경고."""
+        """09:05/09:10/09:15 WS 연결 상태 확인 — 미연결 시 단계적 재시도 (최대 3회, 5분 간격)."""
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        if not is_trading_day(today):
+            logger.info("비거래일 스킵: step=market_open_recovery date=%s", today)
+            return
         if self._ws_client.connected:
             logger.info("market_open 복구 불필요: ws_connected=True, subscriptions=%d", self._ws_manager.count)
             return
-        logger.warning("market_open 복구 시작: ws_connected=False (subscriptions=%d)", self._ws_manager.count)
+
+        max_attempts = 3
+        retry_interval = 300  # 5분
+        for attempt in range(1, max_attempts + 1):
+            logger.warning("market_open 복구 시도 %d/%d: ws_connected=False (subscriptions=%d)", attempt, max_attempts, self._ws_manager.count)
+            if self._telegram_bot:
+                await self._telegram_bot.send_notification(
+                    f"<b>[장애 복구]</b> market_open 미실행 감지 ({attempt}/{max_attempts})\n"
+                    "ws_connected=False → 자동 재시도 중..."
+                )
+            await self._market_open()
+
+            if self._ws_client.connected:
+                subs = self._ws_manager.count
+                if self._telegram_bot:
+                    await self._telegram_bot.send_notification(
+                        f"<b>[장애 복구]</b> 복구 성공 ({attempt}/{max_attempts})\nws_connected=True, subscriptions={subs}"
+                    )
+                return
+
+            if attempt < max_attempts:
+                logger.info("market_open 복구 대기: %d초 후 재시도", retry_interval)
+                await asyncio.sleep(retry_interval)
+
+        # 3회 모두 실패
+        logger.error("market_open 복구 최종 실패: %d회 시도 모두 실패", max_attempts)
         if self._telegram_bot:
             await self._telegram_bot.send_notification(
-                "<b>[장애 복구]</b> market_open 미실행 감지\n"
-                "ws_connected=False → 자동 재시도 중..."
-            )
-        await self._market_open()
-        if self._telegram_bot:
-            subs = self._ws_manager.count
-            connected = self._ws_client.connected
-            status = "복구 성공" if connected else "복구 실패"
-            await self._telegram_bot.send_notification(
-                f"<b>[장애 복구]</b> {status}\nws_connected={connected}, subscriptions={subs}"
+                f"<b>[긴급]</b> market_open 복구 최종 실패\n"
+                f"{max_attempts}회 시도 모두 실패 — 장중 실시간 파이프라인 마비 상태\n"
+                "수동 확인 필요"
             )
 
     async def _market_close(self) -> None:
         """15:30 WS 구독 해제 + 연결 종료 + 2차 스크리닝 중지."""
+        today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+        if not is_trading_day(today):
+            logger.info("비거래일 스킵: step=market_close date=%s", today)
+            return
         logger.info("장후 시작: WS 종료")
         try:
             # 2차 스크리닝 일시 정지
