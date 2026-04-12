@@ -1,6 +1,6 @@
 # Phase 6: 스케줄러 + WS 복원력 강화 — 실행 계획
 
-> **Status**: 계획 수립 완료 (2026-04-12)
+> **Status**: ✅ 완료 (2026-04-12, PR #108)
 > **ROADMAP 참조**: `ROADMAP.md` Phase 6
 > **검토 리포트**:
 >
@@ -77,12 +77,14 @@ Phase C: 불필요한 실행 방지 (2개 파일)
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | 치명적 버그 수정 + 최소 방어 | Phase A 5건 + is_trading_day() 핵심 가드 + WS open_timeout + subscribe _ws 가드 | 없음 |
-| 2 | 복원력 강화 + 불필요 실행 방지 | Phase B 3건 + Phase C 나머지 (전체 핸들러 is_trading_day) | Sprint 1 |
+| 1 ✅ | 치명적 버그 수정 + 최소 방어 | Phase A 5건 + is_trading_day() 핵심 가드 + WS open_timeout + subscribe _ws 가드 | 없음 |
+| 2 ✅ | 복원력 강화 + 불필요 실행 방지 | Phase B 3건 + Phase C 나머지 (전체 핸들러 is_trading_day) | Sprint 1 |
 
 ---
 
-## Sprint 1 상세 — 치명적 버그 수정 + 최소 방어
+## Sprint 1 상세 — 치명적 버그 수정 + 최소 방어 ✅ 완료
+
+> PR #108 (2026-04-12). pytest 771 passed, 0 failed.
 
 ### 백엔드
 
@@ -120,7 +122,9 @@ Phase C: 불필요한 실행 방지 (2개 파일)
 
 ---
 
-## Sprint 2 상세 — 복원력 강화 + 불필요 실행 방지
+## Sprint 2 상세 — 복원력 강화 + 불필요 실행 방지 ✅ 완료
+
+> PR #108 (2026-04-12). Sprint 1과 동일 브랜치 연속 구현. pytest 771 passed, 0 failed.
 
 ### 백엔드
 
