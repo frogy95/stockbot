@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-12T00:00:00+09:00",
+  "lastUpdated": "2026-04-12T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2043,7 +2043,57 @@
       "title": "스케줄러 + WS 복원력 강화",
       "status": "planned",
       "phaseDoc": "docs/phase/phase6/phase6.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "치명적 버그 수정 + 최소 방어",
+          "status": "planned",
+          "branch": "phase6-sprint1",
+          "sprintDoc": "docs/phase/phase6/sprint1/sprint1.md",
+          "progress": {
+            "total": 4,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "kis_ws.py _reconnect() ConcurrencyError + 좀비 연결 + open_timeout + subscribe None 가드",
+              "path": "docs/phase/phase6/sprint1/sprint1.md#task-1-kis_wspy-_reconnect-concurrencyerror--좀비-연결--open_timeout--subscribe-none-가드",
+              "testPlan": "test_reconnect_cancels, test_reconnect_starts, test_ws_connect_open_timeout, test_ws_subscribe_none_guard",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "ws_manager.py 가드 조건 and -> or",
+              "path": "docs/phase/phase6/sprint1/sprint1.md#task-2-ws_managerpy-가드-조건-and---or",
+              "testPlan": "test_ws_manager_guard_or_condition",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "scheduler.py _market_open() 에러 처리 + _market_open_recovery() 판단 기준 + is_trading_day() 가드",
+              "path": "docs/phase/phase6/sprint1/sprint1.md#task-3-schedulerpy-_market_open-에러-처리--_market_open_recovery-판단-기준--is_trading_day-가드",
+              "testPlan": "test_market_open_failure_sends_telegram, test_market_open_recovery_checks_connected, test_scheduled_pipeline_skips_non_trading_day",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "통합 검증",
+              "path": "docs/phase/phase6/sprint1/sprint1.md#task-4-통합-검증",
+              "testPlan": "pytest 전체 통과",
+              "testResult": null,
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "sharedDocs": [

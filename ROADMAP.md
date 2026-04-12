@@ -878,7 +878,8 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 > Phase 상세 계획: `docs/phase/phase6/phase6.md` ✅ 계획 수립 완료 (2026-04-12)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
-> Sprint 문서: `docs/phase/phase6/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+> Sprint 1: `docs/phase/phase6/sprint1/sprint1.md` 🔄 진행 중 (2026-04-12)
+> Sprint 2: 미계획
 
 ---
 
