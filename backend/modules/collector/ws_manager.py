@@ -41,8 +41,8 @@ class WSSubscriptionManager:
     async def subscribe(self, stock_code: str, priority: float = 0.0) -> bool:
         """종목 구독. 성공 시 True, 실패 시 False."""
         async with self._lock:
-            # _ws None 가드 (미해결 #3)
-            if self._ws._ws is None and not self._ws.connected:
+            # _ws None 가드 (Phase 6에서 and→or 수정)
+            if self._ws._ws is None or not self._ws.connected:
                 logger.warning("WS 미연결 상태에서 구독 시도: %s", stock_code)
                 return False
 
@@ -71,7 +71,7 @@ class WSSubscriptionManager:
     async def unsubscribe(self, stock_code: str) -> bool:
         """종목 구독 해제."""
         async with self._lock:
-            if self._ws._ws is None and not self._ws.connected:
+            if self._ws._ws is None or not self._ws.connected:
                 logger.warning("WS 미연결 상태에서 구독 해제 시도: %s", stock_code)
                 return False
 

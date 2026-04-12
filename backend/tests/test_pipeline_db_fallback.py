@@ -67,6 +67,7 @@ async def _retry_patches(scheduler, portal_result, screen_result=None):
         patch.object(scheduler, "_primary_screen", AsyncMock(return_value=screen_result or {"candidates": 0, "passed": 0})) as mock_screen,
         patch.object(scheduler, "_dart_collect", AsyncMock(return_value=0)) as mock_dart,
         patch.object(scheduler, "_sentiment_collect", AsyncMock(return_value=0)) as mock_sentiment,
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
         mock_instance = AsyncMock()
         mock_instance.collect_all = AsyncMock(return_value=portal_result)

@@ -1,8 +1,11 @@
 """KIS REST 일봉 보조 수집기 — 공공데이터포털 장전 수집 실패 시 폴백으로 동작한다."""
 
+import asyncio
 import logging
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
+
+import httpx
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -18,6 +21,9 @@ from modules.collector.models import CollectionResult
 logger = logging.getLogger(__name__)
 
 _BATCH_SIZE = 50
+_MAX_RETRIES = 3
+_BACKOFF_BASE = 2  # 초 (2-4-8)
+_RETRYABLE_STATUS_CODES = {500, 502, 503, 429}
 
 
 class KISDailyCollector:
@@ -42,7 +48,7 @@ class KISDailyCollector:
             batch = codes[batch_start : batch_start + _BATCH_SIZE]
             for code in batch:
                 try:
-                    prices = await self._rest.get_daily_price(code, target_date, target_date)
+                    prices = await self._fetch_with_retry(code, target_date)
                     if prices:
                         await self._save_daily_price(code, prices[0])
                         collected += 1
@@ -61,6 +67,23 @@ class KISDailyCollector:
             total_target=total,
             data_date=target_date,
         )
+
+    async def _fetch_with_retry(self, code: str, target_date: str) -> list:
+        """KIS REST 일봉 조회 — 일시적 에러(500/502/503/429) 시 지수 백오프 재시도."""
+        for attempt in range(_MAX_RETRIES):
+            try:
+                return await self._rest.get_daily_price(code, target_date, target_date)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code in _RETRYABLE_STATUS_CODES and attempt < _MAX_RETRIES - 1:
+                    wait = _BACKOFF_BASE * (2 ** attempt)
+                    logger.warning(
+                        "일봉 수집 재시도: %s HTTP %d (%d/%d, %d초 대기)",
+                        code, e.response.status_code, attempt + 1, _MAX_RETRIES, wait,
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    raise
+        return []
 
     async def _get_active_stock_codes(self) -> list[str]:
         result = await self._db.execute(

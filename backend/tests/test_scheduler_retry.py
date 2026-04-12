@@ -102,6 +102,7 @@ async def test_retry_executes_when_premarket_failed():
         patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector,
         patch.object(scheduler, "_update_step_status", new=AsyncMock()) as mock_update,
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
         mock_instance = AsyncMock()
         mock_instance.collect_all = AsyncMock(return_value=success_result)
@@ -146,6 +147,7 @@ async def test_retry_portal_success_overrides_kis():
     with (
         patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector,
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
         mock_instance = AsyncMock()
         mock_instance.collect_all = AsyncMock(return_value=portal_result)
