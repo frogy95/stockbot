@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-08T11:20:00+09:00",
+  "lastUpdated": "2026-04-12T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2037,6 +2037,13 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase6",
+      "title": "스케줄러 + WS 복원력 강화",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase6/phase6.md",
+      "sprints": []
     }
   ],
   "sharedDocs": [

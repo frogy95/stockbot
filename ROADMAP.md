@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5.2 Sprint 1 완료
-- 현재 Phase: Phase 5.2 (KIS WebSocket 모의 환경 안정화) ✅ 완료
-- 현재 Sprint: Phase 5.2 Sprint 1 ✅ 완료 (WS 구독 제한 + 재연결 안정화, 2026-04-08)
+- 전체 진행률: Phase 0~5.2 완료, Phase 6 계획 수립
+- 현재 Phase: Phase 6 (스케줄러 + WS 복원력 강화) 🔄 진행 중
+- 현재 Sprint: Phase 6 Sprint 1 계획 수립 완료 (치명적 버그 수정 + 최소 방어, 2026-04-12)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 6 Sprint 1 — 고도화 + 안정화
+- 다음 마일스톤: Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어
 
 ## 기술 아키텍처 결정 사항
 
@@ -61,7 +61,8 @@ Phase 0 (완료)
                           └─> Phase 5: 스크리닝 안정화 + 완전 자동 + 성과 분석
                                 └─> Phase 5.1: change_rate 필터 수정
                                       └─> Phase 5.2: WS 모의 환경 안정화
-                                            └─> Phase 6: 고도화 + 안정화
+                                            └─> Phase 6: 스케줄러 + WS 복원력 강화
+                                                  └─> Phase 7: 고도화 + 안정화
 ```
 
 - Phase 0 -> 0.5: API 검증 결과가 Phase 1 이후 아키텍처/전략 결정의 전제
@@ -308,7 +309,7 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 - **핵심 변경**: 장전 스크리닝은 공공데이터포털 일괄 수집 기반 (한투 REST 개별 호출 아님)
 - 공공데이터포털 일 1,000건 한도 → 전 종목 6회로 충분 (Phase 0.5 검증)
 - 체결강도: 현재가 API에서 N/A → 웹소켓 체결 누적으로 직접 계산 (Phase 0.5 발견)
-- DART: 재무 데이터만 활용, 실시간 공시는 Phase 6으로 이동 (Phase 0.5 Conditional)
+- DART: 재무 데이터만 활용, 실시간 공시는 Phase 7으로 이동 (Phase 0.5 Conditional)
 - 네이버: 센티멘트 배치만, 속보 용도 부적합 (대형주 외 1시간+ 지연, Phase 0.5 검증)
 - ETF: 공공데이터포털 미제공 → 한투 REST 개별 조회 + 재무 팩터 제외 (괴리율만 포함)
 - 스코어링 알고리즘은 단순 팩터 모델로 시작, 과적합 방지 (박퀀트 원칙)
@@ -489,7 +490,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 한국 증시 색상 관례: 빨강=손실, 파랑=수익 (한유엑 조언)
 - 정보 과부하 방지: 핵심 -> 상세 흐름 (한유엑 원칙)
 - HTTPS 적용 (Cloudflare SSL + Vercel 자동 SSL)
-- 모바일 반응형은 Phase 6에서 고도화
+- 모바일 반응형은 Phase 7에서 고도화
 
 > Phase 상세 계획: `docs/phase/phase4/phase4.md` ✅ 생성 완료 (2026-03-31)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 한유엑(UX), 윤에이피(API) -- 4명 검토 완료
@@ -758,7 +759,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 기본 후보 안전장치: 반자동만, 50% 사이징, 플래그 표시 (최리스크 확정)
 - 완전 자동 모드에서도 리스크 한도(일일 손실, 포지션 수)는 반드시 적용
 - 성과 지표: 수익률, 샤프 비율, MDD (박퀀트 조언)
-- 장세 판별 모듈: Phase 6 이관 (전원 동의)
+- 장세 판별 모듈: Phase 7 이관 (전원 동의)
 
 > Phase 상세 계획: `docs/phase/phase5/phase5.md` ✅ 계획 수립 완료 (2026-04-07)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
@@ -793,7 +794,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 ### 기술 고려사항
 - 검토팀 확정: change_rate_min=-2.0, 적응형 [-2.0, -3.0], 최저 하한 -5.0, change_rate_max=7.0 유지
 - 하락 종목 자동매매 금지 (최리스크+김단타+정프로 전원 합의)
-- 절대값 필터(|change_rate| >= 0.3) → Phase 6 이관 (박퀀트: 백테스팅 후 도입)
+- 절대값 필터(|change_rate| >= 0.3) → Phase 7 이관 (박퀀트: 백테스팅 후 도입)
 
 > Phase 상세 계획: `docs/phase/phase5.1/phase5.1.md` ✅ 계획 수립 완료 (2026-04-08)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
@@ -839,10 +840,52 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 ---
 
-## Phase 6: 고도화 + 안정화 (Sprint 1~2) 📋
+## Phase 6: 스케줄러 + WS 복원력 강화 (Sprint 1~2) 🔄
 
 ### 목표
-모바일 반응형 고도화, 뉴스 센티멘트 시각화, 성능 최적화, 모의->실전 전환 최종 검증. Could 기능 및 프로덕션 안정화.
+2026-04-10 프로덕션 장애(장전 수집 -> 스크리닝 -> WS 구독 전체 파이프라인 실패) 분석 결과를 바탕으로, 치명적 버그 수정 + 복원력 강화 + 불필요 실행 방지를 수행한다.
+
+### 작업 목록
+#### Sprint 1: 치명적 버그 수정 + 최소 방어
+- `_reconnect()` ConcurrencyError 수정 (기존 `_receive_task` cancel+await)
+- `_reconnect()` 좀비 연결 수정 (구독 복원 실패해도 수신 루프 시작, Phase 5.2 미해결 #6)
+- WS 가드 조건 `and` -> `or` (ws_manager.py subscribe/unsubscribe)
+- `_market_open()` bare exception -> 텔레그램 알림 + 상태 기록
+- `_market_open_recovery()` 판단 기준: `ws_manager.count` -> `_ws_client.connected`
+- `is_trading_day()` 가드: `_run_scheduled_pipeline`, `_market_open`에 추가
+- WS `open_timeout=10` + `subscribe()` `_ws None` 가드
+
+#### Sprint 2: 복원력 강화 + 불필요 실행 방지
+- KIS REST 재시도/백오프 (kis_daily_collector.py, 최대 3회, HTTP 500/502/503/429)
+- `_market_open_recovery()` 단계적 재시도 (09:05/09:10/09:15, 3회)
+- `_premarket_collect()` 예외 경로 KIS 폴백 트리거
+- 나머지 핸들러에 `is_trading_day()` 가드 추가
+
+### 완료 기준 (Definition of Done)
+- `_reconnect()` ConcurrencyError 및 좀비 연결 해소
+- WS 가드 조건 `or` 적용
+- `_market_open()` 실패 시 텔레그램 알림 수신
+- recovery 3단계 재시도 동작 확인
+- KIS REST 500 에러 재시도 동작 확인
+- 주말/공휴일 스케줄러 스킵 확인
+- pytest 전체 통과
+
+### 기술 고려사항
+- 검토팀 확정: 15건 파라미터 (전문가 4명 검토 완료, 2026-04-12)
+- Phase 5.2 미해결 #6 (좀비 연결) Sprint 1에서 해결 (최리스크 강력 요구)
+- KIS REST 재시도는 kis_daily_collector.py에만 적용, 주문 API 제외 (윤에이피 권고)
+- ROADMAP 기존 Phase 6 범위(모바일, 센티멘트, DART)는 Phase 7로 이관
+
+> Phase 상세 계획: `docs/phase/phase6/phase6.md` ✅ 계획 수립 완료 (2026-04-12)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
+> Sprint 문서: `docs/phase/phase6/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+
+---
+
+## Phase 7: 고도화 + 안정화 (Sprint 1~2) 📋
+
+### 목표
+모바일 반응형 고도화, 뉴스 센티멘트 시각화, 성능 최적화, 모의->실전 전환 최종 검증. 기존 Phase 6 범위에서 이관.
 
 ### 작업 목록
 #### Sprint 1: 모바일 반응형 + 센티멘트/공시 고도화
@@ -850,6 +893,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 - 뉴스 센티멘트 분석 고도화 + 시각화 (Phase 2 배치 모듈 기반)
 - DART 실시간 공시 모니터링 (Phase 2에서 이동)
 - UI/UX 개선사항 반영
+- WS 완전 실패 시 REST 폴백 가격 감시 (Phase 5.2 미해결 #2)
 
 #### Sprint 2: 성능 최적화 + 실전 전환 검증
 - API 응답 시간 최적화 (95th < 500ms 유지)
@@ -870,8 +914,8 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 - Railway 리소스 모니터링 (사용량 기반 과금 주의)
 - 데이터 보존 최소 1년 (매매 이력)
 
-> Phase 상세 계획: `docs/phase/phase6/phase6.md` (phase-planner가 생성)
-> Sprint 문서: `docs/phase/phase6/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase7/phase7.md` (phase-planner가 생성)
+> Sprint 문서: `docs/phase/phase7/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
 
 ---
 
