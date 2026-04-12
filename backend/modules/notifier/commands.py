@@ -127,7 +127,7 @@ class CommandHandler:
             return "⚠️ 스케줄러 미초기화"
 
         running = await self._redis.get(PIPELINE_RUNNING_KEY)
-        if running == "true":
+        if running:
             return "⚙️ 파이프라인이 이미 실행 중입니다.\n/pipeline 으로 진행 상황을 확인하세요."
 
         # 락 선점 후 백그라운드 실행

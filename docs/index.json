@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-12T12:00:00+09:00",
+  "lastUpdated": "2026-04-12T14:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2508,6 +2508,15 @@
       "version": "v1.6.0",
       "description": "Phase 5.2 Sprint 1 프로덕션 배포 — KIS WebSocket 재연결 안정화 (구독 버스트 방지, close code 로깅), 환경별 WS 구독 상한(PAPER=25, LIVE=35), 2차 스크리닝 WS 연결 상태 가드, 체결강도 재연결 후 웜업, 캐시 TTL 10초",
       "prUrl": "https://github.com/frogy95/stockbot/pull/107",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-12",
+      "type": "sprint",
+      "ref": "phase6-sprint1, phase6-sprint2",
+      "version": "v1.7.0",
+      "description": "Phase 6 프로덕션 배포 — Sprint 1 (kis_ws.py ConcurrencyError 수정·좀비 연결 방지·open_timeout·subscribe None 가드, ws_manager.py 가드 조건 and→or, scheduler.py _market_open 텔레그램 알림·is_trading_day 가드), Sprint 2 (KIS REST 500/502/503/429 재시도/백오프, recovery 단계적 재시도 3회, premarket 예외 폴백, 나머지 핸들러 is_trading_day 가드)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/109",
       "status": "in_progress"
     }
   ]

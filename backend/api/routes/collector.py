@@ -209,7 +209,7 @@ async def trigger_premarket_pipeline(background_tasks: BackgroundTasks, request:
     락 확인 직후 즉시 Redis에 락을 선점하여 동시 요청의 race condition을 방지한다.
     """
     running = await redis_client.get(PIPELINE_RUNNING_KEY)
-    if running == "true":
+    if running:
         raise HTTPException(status_code=409, detail="파이프라인이 이미 실행 중입니다")
 
     scheduler = getattr(request.app.state, "collector_scheduler", None)
