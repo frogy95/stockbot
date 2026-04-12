@@ -6,7 +6,8 @@
 
 **Tech Stack:** Python 3.12, asyncio, websockets, APScheduler, pytest
 
-**Sprint 기간:** 2026-04-12 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-12 ~ 2026-04-12
+**상태:** ✅ 완료
 **이전 스프린트:** Phase 5.2 Sprint 1 (WS 재연결 안정화, PR #106)
 **브랜치명:** `phase6-sprint1`
 
@@ -163,11 +164,11 @@ git commit -m "feat(phase6-sprint1): task1 -- _reconnect() ConcurrencyError/좀�
 ```
 
 **완료 기준:**
-- ⬜ `test_reconnect_cancels_existing_receive_task` PASS
-- ⬜ `test_reconnect_starts_receive_loop_on_subscription_failure` PASS
-- ⬜ `test_ws_connect_open_timeout` PASS
-- ⬜ `test_ws_subscribe_none_guard` PASS
-- ⬜ 기존 test_kis_ws.py 전체 회귀 PASS
+- ✅ `test_reconnect_cancels_existing_receive_task` PASS
+- ✅ `test_reconnect_starts_receive_loop_on_subscription_failure` PASS
+- ✅ `test_ws_connect_open_timeout` PASS
+- ✅ `test_ws_subscribe_none_guard` PASS
+- ✅ 기존 test_kis_ws.py 전체 회귀 PASS
 
 ---
 
@@ -207,8 +208,8 @@ git commit -m "feat(phase6-sprint1): task2 -- ws_manager 가드 조건 and -> or
 ```
 
 **완료 기준:**
-- ⬜ `test_ws_manager_guard_or_condition` PASS
-- ⬜ 기존 test_ws_manager.py 전체 회귀 PASS
+- ✅ `test_ws_manager_guard_or_condition` PASS
+- ✅ 기존 test_ws_manager.py 전체 회귀 PASS
 
 ---
 
@@ -321,10 +322,10 @@ git commit -m "feat(phase6-sprint1): task3 -- _market_open 텔레그램 알림 +
 ```
 
 **완료 기준:**
-- ⬜ `test_market_open_failure_sends_telegram` PASS
-- ⬜ `test_market_open_recovery_checks_connected` PASS
-- ⬜ `test_scheduled_pipeline_skips_non_trading_day` PASS
-- ⬜ 기존 scheduler 테스트 전체 회귀 PASS
+- ✅ `test_market_open_failure_sends_telegram` PASS
+- ✅ `test_market_open_recovery_checks_connected` PASS
+- ✅ `test_scheduled_pipeline_skips_non_trading_day` PASS
+- ✅ 기존 scheduler 테스트 전체 회귀 PASS
 
 ---
 
@@ -341,7 +342,7 @@ git commit -m "feat(phase6-sprint1): task3 -- _market_open 텔레그램 알림 +
 - 회귀 수정이 있었다면 해당 파일 커밋
 
 **완료 기준:**
-- ⬜ pytest 전체 통과
+- ✅ pytest 전체 통과 (771 passed, 0 failed)
 
 ---
 

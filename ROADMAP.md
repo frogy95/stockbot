@@ -21,12 +21,12 @@
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~5.2 완료, Phase 6 계획 수립
-- 현재 Phase: Phase 6 (스케줄러 + WS 복원력 강화) 🔄 진행 중
-- 현재 Sprint: Phase 6 Sprint 1 계획 수립 완료 (치명적 버그 수정 + 최소 방어, 2026-04-12)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08)
+- 전체 진행률: Phase 0~6 완료
+- 현재 Phase: Phase 7 (고도화 + 안정화) 📋 예정
+- 현재 Sprint: Phase 6 Sprint 1+2 완료 (2026-04-12)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어
+- 다음 마일스톤: Phase 7 Sprint 1 — 모바일 반응형 + 센티멘트/공시 고도화
 
 ## 기술 아키텍처 결정 사항
 
@@ -840,7 +840,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 ---
 
-## Phase 6: 스케줄러 + WS 복원력 강화 (Sprint 1~2) 🔄
+## Phase 6: 스케줄러 + WS 복원력 강화 (Sprint 1~2) ✅
 
 ### 목표
 2026-04-10 프로덕션 장애(장전 수집 -> 스크리닝 -> WS 구독 전체 파이프라인 실패) 분석 결과를 바탕으로, 치명적 버그 수정 + 복원력 강화 + 불필요 실행 방지를 수행한다.
@@ -878,8 +878,8 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 
 > Phase 상세 계획: `docs/phase/phase6/phase6.md` ✅ 계획 수립 완료 (2026-04-12)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
-> Sprint 1: `docs/phase/phase6/sprint1/sprint1.md` 🔄 진행 중 (2026-04-12)
-> Sprint 2: 미계획
+> Sprint 1: `docs/phase/phase6/sprint1/sprint1.md` ✅ 완료 (2026-04-12)
+> Sprint 2: `docs/phase/phase6/sprint2/sprint2.md` ✅ 완료 (2026-04-12)
 
 ---
 

@@ -2,6 +2,8 @@
 
 **Goal:** KIS REST 500 에러 재시도/백오프, recovery 단계적 재시도(09:05/09:10/09:15), premarket 예외 경로 KIS 폴백, 나머지 핸들러 is_trading_day 가드 추가.
 
+**Sprint 기간:** 2026-04-12 ~ 2026-04-12
+**상태:** ✅ 완료
 **브랜치명:** `phase6-sprint1` (Sprint 1과 동일 브랜치에서 연속 구현)
 
 ---
