@@ -123,8 +123,10 @@ class SignalGenerator:
         prev_close = candidate.get("prev_close") or (recent_closes[-1] if recent_closes else current_price)
         prev_high = candidate.get("prev_high") or (recent_highs[-1] if recent_highs else current_price)
 
-        # KIS 체결 데이터에는 당일 open/high/low 없음 — current_price로 폴백
-        open_price = candidate.get("open_price") or current_price
+        # KIS 체결 데이터에 intraday open/high/low 없음.
+        # open_price는 prev_close로 폴백 → gap_rate=0으로 처리되어 전략이 prev_high 돌파 로직 진입.
+        # (current_price로 폴백하면 gap_rate≥3% 오판정 → breakout_ref=high=current_price → 자기돌파 False)
+        open_price = candidate.get("open_price") or prev_close or current_price
         high = candidate.get("high") or current_price
         low = candidate.get("low") or current_price
 
