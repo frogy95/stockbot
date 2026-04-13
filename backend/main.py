@@ -22,6 +22,7 @@ from core.database import get_session_factory
 from modules.collector.ws_manager import WSSubscriptionManager
 from modules.collector.trade_strength import TradeStrengthCalculator
 from modules.collector.scheduler import CollectorScheduler
+from modules.collector.volume_aggregator import VolumeAggregator
 from api.routes.auth import router as auth_router
 from api.routes.dashboard import router as dashboard_router
 from api.routes.health import router as health_router
@@ -94,6 +95,8 @@ async def lifespan(app: FastAPI):
         trade_strength_calc=trade_strength,
     )
 
+    volume_aggregator = VolumeAggregator(redis_client)
+
     collector_scheduler = CollectorScheduler(
         session_factory=session_factory,
         rest_client=rest_client,
@@ -104,6 +107,7 @@ async def lifespan(app: FastAPI):
         primary_screener=primary_screener,
         realtime_screener=realtime_screener,
         inquiry_client=inquiry_client,
+        volume_aggregator=volume_aggregator,
     )
 
     app.state.trade_strength = trade_strength
@@ -111,6 +115,7 @@ async def lifespan(app: FastAPI):
     app.state.primary_screener = primary_screener
     app.state.realtime_screener = realtime_screener
     app.state.collector_scheduler = collector_scheduler
+    app.state.volume_aggregator = volume_aggregator
 
     await collector_scheduler.start()
     await collector_scheduler.check_and_recover_market_open()
