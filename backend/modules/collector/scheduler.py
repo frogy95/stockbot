@@ -809,12 +809,19 @@ class CollectorScheduler:
             self._ws_client.set_on_ws_failure(self._on_ws_reconnect_failure)
             self._ws_client.set_on_reconnect_success(self._on_ws_reconnect_success)
             await self._ws_client.connect()
+            # DB에서 최신 1차 스크리닝 결과 읽어 WS 구독 복구
+            async with self._session_factory() as db_session:
+                codes = await self._get_latest_primary_codes(db_session)
+            if codes:
+                for code in codes:
+                    await self._ws_manager.subscribe(code)
+                logger.info("WS 구독 복구: %d종목", len(codes))
             # 2차 스크리닝 30초 주기 활성화
             job = self._scheduler.get_job("secondary_screen")
             if job:
                 job.resume()
                 logger.info("2차 스크리닝 30초 주기 활성화")
-            logger.info("WS 연결 완료, 구독 대기")
+            logger.info("WS 연결 완료, 구독 %d개", self._ws_manager.count)
         except Exception as e:
             logger.exception("WS 연결 실패")
             await self._send_failure_alert("market_open", str(e))
