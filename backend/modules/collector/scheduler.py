@@ -1118,15 +1118,19 @@ class CollectorScheduler:
     # ── 내부 헬퍼 ────────────────────────────────────────
 
     async def _get_latest_primary_codes(self, db_session: AsyncSession) -> list[str]:
-        """최신 1차 스크리닝 통과 종목 코드 목록을 반환한다 (단일 쿼리)."""
+        """최신 1차 스크리닝 통과 종목 코드 목록을 rank 오름차순으로 반환한다 (단일 쿼리)."""
         latest_subq = (
             select(func.max(ScreeningResult.screened_at))
             .where(ScreeningResult.screening_type == "primary")
             .scalar_subquery()
         )
-        stmt = select(ScreeningResult.stock_code).where(
-            ScreeningResult.screening_type == "primary",
-            ScreeningResult.screened_at == latest_subq,
+        stmt = (
+            select(ScreeningResult.stock_code)
+            .where(
+                ScreeningResult.screening_type == "primary",
+                ScreeningResult.screened_at == latest_subq,
+            )
+            .order_by(ScreeningResult.rank.asc().nulls_last())
         )
         result = await db_session.execute(stmt)
         return [row[0] for row in result.all()]
