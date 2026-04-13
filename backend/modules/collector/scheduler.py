@@ -1189,14 +1189,12 @@ class CollectorScheduler:
         if msg_tr_id == "H0STCNT0":
             execution = parse_execution(body)
             if execution:
-                # 진단: 가끔 raw sell_or_buy 값 로깅 (1000건당 1회)
+                # 진단: 필드 15-22 샘플링 (300건당 1회) — 체결강도/체결구분 위치 확인
                 import random
-                if random.randint(1, 1000) == 1:
-                    logger.info(
-                        "체결 샘플: code=%s sob=%r vol=%d (body 필드수=%d)",
-                        execution.stock_code, execution.sell_or_buy, execution.volume,
-                        len(body.split("^")),
-                    )
+                if random.randint(1, 300) == 1:
+                    fields = body.split("^")
+                    sample = {i: fields[i] if i < len(fields) else "?" for i in range(15, 23)}
+                    logger.info("체결 필드 샘플 code=%s: %s", execution.stock_code, sample)
                 # Redis 캐싱
                 await self._redis.set(
                     f"realtime:{execution.stock_code}:execution",
