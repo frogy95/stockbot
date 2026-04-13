@@ -64,7 +64,15 @@ class KISWebSocketClient:
     # ── 연결 / 해제 ────────────────────────────────────────
 
     async def connect(self) -> None:
-        """WebSocket 연결 및 수신 루프 시작. 항상 새 approval_key를 발급받는다."""
+        """WebSocket 연결 및 수신 루프 시작. 항상 새 approval_key를 발급받는다.
+
+        기존 연결이 있으면 먼저 정리(disconnect)한 뒤 새로 연결한다.
+        """
+        # 기존 연결 정리 (연결 누수 방지)
+        if self._ws is not None or self._receive_task is not None:
+            logger.info("기존 WS 연결 정리 후 재연결")
+            await self.disconnect()
+
         self._approval_key = await self._token_manager.get_fresh_approval_key()
         self._ws = await websockets.connect(
             self._env.ws_url,
@@ -166,13 +174,25 @@ class KISWebSocketClient:
     async def _on_message(self, message: str) -> None:
         """수신 메시지 처리.
 
-        - JSON 메시지: 서버 응답(구독 확인 등) 로깅
+        - JSON 메시지: 서버 응답(구독 확인 등) 로깅, 에러 감지
         - 파이프 구분 메시지: tr_id 추출 후 on_data 콜백 호출
         """
         # JSON 응답 (구독 확인, 에러 등)
         try:
             data = json.loads(message)
-            logger.info("서버 응답: %s", data)
+            body = data.get("body", {})
+            rt_cd = body.get("rt_cd")
+            msg_cd = body.get("msg_cd", "")
+            msg1 = body.get("msg1", "")
+
+            if rt_cd == "0":
+                logger.info("구독 확인: %s", msg1)
+            elif rt_cd is not None:
+                logger.warning("서버 에러 응답: rt_cd=%s msg_cd=%s msg=%s", rt_cd, msg_cd, msg1)
+                if msg_cd == "OPSP8996":
+                    logger.error("ALREADY IN USE appkey — 이전 세션 잔존, 재연결 필요")
+            else:
+                logger.info("서버 응답: %s", data)
             return
         except (json.JSONDecodeError, TypeError):
             pass
