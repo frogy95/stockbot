@@ -206,8 +206,8 @@ async def test_build_snapshot_assembly(
     snapshot = call_args[0][0]
     assert isinstance(snapshot, MarketSnapshot)
     assert snapshot.stock_code == "005930"
-    # candidate에 open_price 없음 → current_price로 폴백
-    assert snapshot.open_price == 73000
+    # candidate에 open_price 없음 → prev_close로 폴백 (전략 gap_rate=0 처리용)
+    assert snapshot.open_price == 69500
     assert snapshot.prev_close == 69500
     assert snapshot.prev_high == 70500
     assert len(snapshot.recent_highs) == 5
