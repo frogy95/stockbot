@@ -52,7 +52,7 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 - 전체 진행률: Phase 0~6 완료
 - 현재 Phase: Phase 6.1 (매매 전략 거래량 시간가중 보정) 🔄 진행 중
-- 현재 Sprint: Phase 6.1 Sprint 1 계획 수립 완료 (2026-04-13)
+- 현재 Sprint: Phase 6.1 Sprint 1 🔄 진행 중 (2026-04-13)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 6.1 Sprint 1 — 거래량 시간가중 보정 + 돌파 강도 연동 + 5분봉 수집 구축
@@ -955,7 +955,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 (1차 + 2차) 완료
 > Phase 상세 계획: `docs/phase/phase6.1/phase6.1.md`
-> Sprint 문서: `docs/phase/phase6.1/sprint1/sprint1.md` (sprint-planner가 생성)
+> Sprint 1: `docs/phase/phase6.1/sprint1/sprint1.md` 🔄 진행 중 (2026-04-13)
 
 ---
 
