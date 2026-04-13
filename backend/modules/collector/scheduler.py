@@ -1189,6 +1189,14 @@ class CollectorScheduler:
         if msg_tr_id == "H0STCNT0":
             execution = parse_execution(body)
             if execution:
+                # 진단: 가끔 raw sell_or_buy 값 로깅 (1000건당 1회)
+                import random
+                if random.randint(1, 1000) == 1:
+                    logger.info(
+                        "체결 샘플: code=%s sob=%r vol=%d (body 필드수=%d)",
+                        execution.stock_code, execution.sell_or_buy, execution.volume,
+                        len(body.split("^")),
+                    )
                 # Redis 캐싱
                 await self._redis.set(
                     f"realtime:{execution.stock_code}:execution",
