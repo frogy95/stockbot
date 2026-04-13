@@ -22,11 +22,11 @@
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~6 완료
-- 현재 Phase: Phase 7 (고도화 + 안정화) 📋 예정
-- 현재 Sprint: Phase 6 Sprint 1+2 완료 (2026-04-12)
+- 현재 Phase: Phase 6.1 (매매 전략 거래량 시간가중 보정) 🔄 진행 중
+- 현재 Sprint: Phase 6.1 Sprint 1 계획 수립 완료 (2026-04-13)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7 Sprint 1 — 모바일 반응형 + 센티멘트/공시 고도화
+- 다음 마일스톤: Phase 6.1 Sprint 1 — 거래량 시간가중 보정 구현
 
 ## 기술 아키텍처 결정 사항
 
@@ -62,7 +62,8 @@ Phase 0 (완료)
                                 └─> Phase 5.1: change_rate 필터 수정
                                       └─> Phase 5.2: WS 모의 환경 안정화
                                             └─> Phase 6: 스케줄러 + WS 복원력 강화
-                                                  └─> Phase 7: 고도화 + 안정화
+                                                  └─> Phase 6.1: 매매 전략 거래량 시간가중 보정
+                                                        └─> Phase 7: 고도화 + 안정화
 ```
 
 - Phase 0 -> 0.5: API 검증 결과가 Phase 1 이후 아키텍처/전략 결정의 전제
@@ -79,6 +80,7 @@ Phase 0 (완료)
 - Phase 5 -> 5.1: 1차 스크리닝 통과 0건 재발 → change_rate 필터 과도 엄격성 수정
 - Phase 5.1 -> 5.2: WS 재연결 반복으로 장중 실시간 파이프라인 마비 -> 구독 수 제한 + 재연결 안정화
 - Phase 4, 5, 5.1, 5.2 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
+- Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정)
 
 ## MVP 범위 (Must)
 
@@ -880,6 +882,35 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
 > Sprint 1: `docs/phase/phase6/sprint1/sprint1.md` ✅ 완료 (2026-04-12)
 > Sprint 2: `docs/phase/phase6/sprint2/sprint2.md` ✅ 완료 (2026-04-12)
+
+---
+
+## Phase 6.1: 매매 전략 거래량 시간가중 보정 (Sprint 1) 🔄
+
+### 목표
+momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마감 누적"을 직접 비교하는 단위 불일치 오류를 시간가중 보정으로 해결. 장 전반부에도 매매 신호 생성 가능하도록 수정.
+
+### 작업 목록
+#### Sprint 1: 거래량 시간가중 보정 구현
+- calc_market_progress() 함수: 장 경과 비율(0.0~1.0) 계산
+- 시간가중 보정 공식: adjusted_ratio = volume / (prev_volume * progress)
+- 안전장치: MIN_MARKET_PROGRESS=0.15, MIN_VOLUME_FLOOR=0.3
+- 기존 테스트 수정 + 시간대별 보정 테스트 추가
+
+### 완료 기준 (Definition of Done)
+- 시간가중 보정 적용 후 장 전반부에서도 거래량 급증 종목 감지 가능
+- 안전장치(min_progress, 절대 거래량 하한) 동작 확인
+- 단위 테스트 통과 (기존 수정 + 신규 5건 이상)
+- 프로덕션 배포 후 3거래일 모니터링
+
+### 기술 고려사항
+- 선형 보정은 장 중반에 ~10-20% 보수적 (리스크 관리에 유리)
+- U자형 비선형 보정은 Phase 7+에서 20거래일 데이터 축적 후 검토
+- 의존성: Phase 6 (스케줄러 + WS 안정화 완료 전제)
+
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 완료
+> Phase 상세 계획: `docs/phase/phase6.1/phase6.1.md`
+> Sprint 문서: `docs/phase/phase6.1/sprint1/sprint1.md` (sprint-planner가 생성)
 
 ---
 
