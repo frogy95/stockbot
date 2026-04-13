@@ -19,6 +19,21 @@ async def get_collector_status(request: Request):
     return scheduler.get_status()
 
 
+@router.get("/collector/vol5m/{stock_code}")
+async def get_vol5m(stock_code: str, request: Request):
+    """5분봉 거래량 슬롯 조회 (최근 12개 버킷, Phase 7 디버깅용)."""
+    aggregator = getattr(request.app.state, "volume_aggregator", None)
+    if aggregator is None:
+        raise HTTPException(status_code=503, detail="VolumeAggregator 미초기화")
+    slots = await aggregator.get_recent_slots(stock_code, count=12)
+    first_seen = await aggregator.get_first_seen_date()
+    return {
+        "stock_code": stock_code,
+        "slots": slots,
+        "vol5m_first_seen_date": first_seen,
+    }
+
+
 @router.post("/collector/trigger/premarket")
 async def trigger_premarket(background_tasks: BackgroundTasks, request: Request):
     """수동 장전 수집 트리거 (백그라운드 실행, /collector/status 로 완료 확인)."""

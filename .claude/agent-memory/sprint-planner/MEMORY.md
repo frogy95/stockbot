@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-12 업데이트)
+## 스프린트 현황 (2026-04-13 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -45,11 +45,14 @@
 
 - Phase 5.2 Sprint 1 — WS 재연결 안정화 + 구독 제한, ✅ 완료 (2026-04-08) / PR: https://github.com/frogy95/stockbot/pull/106
 
-- Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어 (WS ConcurrencyError/좀비, 가드 or, market_open 알림, is_trading_day), 🔄 계획 수립 완료 (2026-04-12)
+- Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어, ✅ 완료 (2026-04-12) / PR: https://github.com/frogy95/stockbot/pull/108
+- Phase 6 Sprint 2 — 복원력 강화 + 불필요 실행 방지, ✅ 완료 (2026-04-12) / PR: https://github.com/frogy95/stockbot/pull/108
+
+- Phase 6.1 Sprint 1 — 시간가중 거래량 보정 + 5분봉 수집 선행 구축, ✅ 완료 (2026-04-13) / PR: (생성 후 기입)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 6 Sprint 2 — 복원력 강화 + 불필요 실행 방지 (KIS REST 재시도, recovery 단계적, 나머지 is_trading_day)
+- Phase 7 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
@@ -187,3 +190,10 @@
 - Phase 6 Sprint 1: is_trading_day() 가드 대상 2개: _run_scheduled_pipeline, _market_open (Sprint 2에서 나머지)
 - Phase 6 Sprint 1: test_connect_websocket_url 기존 테스트가 open_timeout=10 추가로 assert 수정 필요
 - Phase 6 Sprint 1: test_scheduler_phase6.py 신규 생성 — _make_scheduler 패턴 재사용 (tests/test_scheduler.py의 conftest.FakeRedis)
+- Phase 6.1 Sprint 1: momentum_breakout.py에 calc_market_progress() 함수 추가 — now_kst 파라미터로 테스트 주입 가능하게 설계
+- Phase 6.1 Sprint 1: RedisClient에 INCRBY/HINCRBY 미노출 — volume_aggregator는 GET-수정-SET 패턴 사용 (단일 프로세스 race condition 없음)
+- Phase 6.1 Sprint 1: scheduler._process_realtime_data의 H0STCNT0 분기에 volume_aggregator 호출 추가 — try/except로 감싸서 집계 실패가 실시간 처리 방해 금지
+- Phase 6.1 Sprint 1: ExecutionData.time 형식은 "HHMMSS" 문자열 — volume_aggregator에서 hour/minute 파싱 필요
+- Phase 6.1 Sprint 1: CollectorScheduler.__init__에 volume_aggregator 파라미터 추가 — 기존 _make_scheduler 테스트 헬퍼에도 추가 필요
+- Phase 6.1 Sprint 1: main.py lifespan에서 VolumeAggregator(redis_client) 생성 후 scheduler에 주입 + app.state에 저장
+- Phase 6.1 Sprint 1: Phase 문서의 Redis 키 스키마 `vol5m:{stock_code}:{date}:{slot_index}` 확정 (Phase 7 연동 시 동일 키 패턴)

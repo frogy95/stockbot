@@ -35,6 +35,7 @@ from modules.collector.sources.kis_realtime import (
 )
 from modules.collector.ws_manager import WSSubscriptionManager
 from modules.collector.trade_strength import TradeStrengthCalculator
+from modules.collector.volume_aggregator import VolumeAggregator
 from core.clients.kis_ws import KISWebSocketClient
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ class CollectorScheduler:
         primary_screener=None,
         realtime_screener=None,
         inquiry_client: KISRestClient | None = None,
+        volume_aggregator: VolumeAggregator | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._rest_client = rest_client
@@ -88,6 +90,7 @@ class CollectorScheduler:
         self._redis = redis
         self._primary_screener = primary_screener
         self._realtime_screener = realtime_screener
+        self._volume_aggregator = volume_aggregator
         self._validator = CollectionValidator()
         self._scheduler = AsyncIOScheduler()
         self._running = False
@@ -1150,6 +1153,18 @@ class CollectorScheduler:
                     execution.volume,
                     execution.sell_or_buy,
                 )
+
+                # 5분봉 거래량 집계 (Phase 7용 선행 수집)
+                if self._volume_aggregator is not None:
+                    try:
+                        await self._volume_aggregator.aggregate_execution(
+                            execution.stock_code,
+                            execution.time,
+                            execution.volume,
+                            execution.sell_or_buy,
+                        )
+                    except Exception:
+                        logger.debug("vol5m 집계 실패 (무시)", exc_info=True)
 
         elif msg_tr_id == "H0STASP0":
             orderbook = parse_orderbook(body)
