@@ -1,6 +1,6 @@
 # Phase 6.1: 매매 전략 거래량 시간가중 보정 — 실행 계획
 
-> **Status**: 계획 수립 완료 (2026-04-13)
+> **Status**: ✅ 완료 (2026-04-13, PR #125)
 > **ROADMAP 참조**: `ROADMAP.md` Phase 6.1
 > **검토 리포트**:
 >
@@ -182,13 +182,13 @@ def calc_5min_slot(hour: int, minute: int) -> int:
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | 거래량 시간가중 보정 구현 | progress 계산 + 보정 공식 + 안전장치 + 테스트 | 없음 |
+| ✅ 1 | 거래량 시간가중 보정 구현 | progress 계산 + 보정 공식 + 안전장치 + 테스트 | 없음 |
 
 단일 Sprint. 코드 변경 범위가 파일 2~3개, 파라미터 확정 완료.
 
 ---
 
-## Sprint 1 상세 — 거래량 시간가중 보정 구현
+## Sprint 1 상세 — 거래량 시간가중 보정 구현 ✅ 완료 (PR #125, 2026-04-13)
 
 ### 백엔드
 
@@ -261,6 +261,8 @@ def calc_market_progress(timezone: str = "Asia/Seoul") -> float:
 | 5 | 장기 개선: 거래량 가속도 지표 | Phase 7 | 5분봉 데이터 20거래일 축적 후 착수 (이 Phase에서 축적 시작) |
 | 6 | 장기 개선: 동시간대 Z-score | Phase 8 | Phase 7에서 시간대별 DB 구축 후 축적 필요 |
 | 7 | 장기 개선: U자형 비선형 보정 | Phase 9+ | 3~6개월 운영 데이터 필요 (과적합 방지) |
+| 8 | [Medium] generate_signal에서 effective_progress 이중 적용 | 낮음 | `calc_market_progress()`가 이미 `max(raw, MIN_MARKET_PROGRESS)` 보장하므로 88행 `effective_progress = max(progress, MIN_MARKET_PROGRESS)` 중복. 무해하지만 코드 명확성 저하. Sprint 2+에서 개선 권장 |
+| 9 | [Medium] `get_first_seen_date`가 매 호출마다 Redis 전체 키 SCAN | 낮음 | 디버깅 엔드포인트(Phase 7용)이므로 호출 빈도 낮음. 키 수 최대 70K. 운영에 미치는 영향 미미. 하지만 Phase 7 정식 활용 전 캐시 또는 별도 추적 키로 개선 권장 |
 
 ---
 
@@ -268,10 +270,10 @@ def calc_market_progress(timezone: str = "Asia/Seoul") -> float:
 
 | 항목 | 기준 | 상태 |
 |------|------|------|
-| 시간가중 보정 구현 | `calc_market_progress()` + 보정 공식 적용 | ⬜ |
-| 돌파 강도 연동 임계값 | 5%+/3~5%/<3% 3단계 volume_threshold | ⬜ |
-| 안전장치 구현 | MIN_MARKET_PROGRESS=0.15 + MIN_VOLUME_FLOOR=0.5 | ⬜ |
-| 5분봉 거래량 수집 | volume_aggregator 모듈 + Redis 적재 동작 확인 | ⬜ |
-| 단위 테스트 | 기존 케이스 수정 + 시간대별 보정 + 돌파 강도별 + 5분봉 집계 = 10건 이상 | ⬜ |
-| 프로덕션 배포 | Railway 배포 + 장중 1건 이상 신호 생성 확인 | ⬜ |
-| 모니터링 | 3거래일 로그 확인 (adjusted_ratio 분포 + 5분봉 키 축적 확인) | ⬜ |
+| 시간가중 보정 구현 | `calc_market_progress()` + 보정 공식 적용 | ✅ 완료 |
+| 돌파 강도 연동 임계값 | 5%+/3~5%/<3% 3단계 volume_threshold | ✅ 완료 |
+| 안전장치 구현 | MIN_MARKET_PROGRESS=0.15 + MIN_VOLUME_FLOOR=0.5 | ✅ 완료 |
+| 5분봉 거래량 수집 | volume_aggregator 모듈 + Redis 적재 동작 확인 | ✅ 완료 (로컬 검증) |
+| 단위 테스트 | 기존 케이스 수정 + 시간대별 보정 + 돌파 강도별 + 5분봉 집계 = 10건 이상 | ✅ 완료 (38건 추가, 798 passed) |
+| 프로덕션 배포 | Railway 배포 + 장중 1건 이상 신호 생성 확인 | ⬜ develop→main 머지 후 |
+| 모니터링 | 3거래일 로그 확인 (adjusted_ratio 분포 + 5분봉 키 축적 확인) | ⬜ 배포 후 3거래일 |
