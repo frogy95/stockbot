@@ -57,6 +57,7 @@ class RealtimeScreener:
 
         passed_candidates: list[dict] = []
         reject_stats = {"no_data": 0, "no_info": 0, "trade_strength": 0, "ask_zero": 0, "orderbook_ratio": 0}
+        strength_samples: list[tuple[str, float, float]] = []  # (code, strength, ob_ratio)
 
         for code in candidate_codes:
             realtime = await self._get_realtime_data(code)
@@ -70,6 +71,14 @@ class RealtimeScreener:
                 continue
 
             trade_strength = self.trade_strength_calc.get_strength(code)
+
+            # 진단용: 모든 데이터 있는 종목의 실제 체결강도 + 호가비율 기록
+            orderbook_sample = realtime.get("orderbook", {})
+            bid_sample = orderbook_sample.get("total_bid_volume", 0)
+            ask_sample = orderbook_sample.get("total_ask_volume", 0)
+            ob_ratio_sample = (bid_sample / ask_sample) if ask_sample > 0 else 0.0
+            strength_samples.append((code, trade_strength, ob_ratio_sample))
+
             if trade_strength < self.filters.trade_strength_min:
                 reject_stats["trade_strength"] += 1
                 continue
@@ -103,6 +112,11 @@ class RealtimeScreener:
             })
 
         if not passed_candidates:
+            # 진단: 체결강도/호가비율 실제 값 분포 (상위 5개)
+            if strength_samples:
+                top5 = sorted(strength_samples, key=lambda x: x[1], reverse=True)[:5]
+                sample_str = ", ".join(f"{c}(str={s:.1f},ob={r:.2f})" for c, s, r in top5)
+                logger.info("실측값 상위5: %s", sample_str)
             logger.info(
                 "2차 스크리닝 필터 탈락 통계: 데이터없음=%d, 정보없음=%d, 체결강도=%d, 호가비율=%d",
                 reject_stats["no_data"], reject_stats["no_info"],
