@@ -104,3 +104,26 @@ def test_multiple_stocks_independent():
 
     assert s1 == 100.0
     assert s2 == 0.0
+
+
+def test_continuous_stream_calculates_strength():
+    """연속 스트리밍 시에도 5분 경과 후 체결강도가 계산된다 (회귀 테스트).
+
+    버그: _cleanup이 first_ts를 갱신해버려 (now - first_ts)가 절대 5분에 도달 못함.
+    수정: _started_at을 별도 추적하여 최초 수신 시점 기준으로 판단.
+    """
+    calc = TradeStrengthCalculator(window_seconds=300)
+    base_ts = 1000.0
+
+    # 매초마다 데이터 추가 (실제 운영 환경 시뮬레이션)
+    for i in range(400):
+        # 매수 2, 매도 1 비율 (buy 67%)
+        sob = "2" if i % 3 != 0 else "1"
+        calc.add_execution("005930", base_ts + i, 100, sob)
+
+    # 400초 시점 조회 (5분=300초 경과)
+    # 윈도우(300초) 내 데이터: base_ts+100 ~ base_ts+399
+    # 각 3건 중 2건 매수 → strength ≈ 66.67
+    strength = calc.get_strength("005930", now=base_ts + 400)
+    assert strength > 60.0, f"5분 누적 후 계산되어야 하는데 {strength}"
+    assert strength < 70.0, f"매수 비율 계산 오류: {strength}"

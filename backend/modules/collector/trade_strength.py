@@ -15,8 +15,10 @@ class TradeStrengthCalculator:
         self._window = window_seconds
         # {stock_code: deque[(timestamp, volume, sell_or_buy)]}
         self._data: dict[str, deque[tuple[float, int, str]]] = {}
-        # {stock_code: first_timestamp} — 누적 시작 시점
+        # {stock_code: first_timestamp} — 윈도우 내 가장 오래된 데이터 시점 (_cleanup으로 갱신됨)
         self._first_ts: dict[str, float] = {}
+        # {stock_code: original_first_timestamp} — 최초 수신 시점 (절대 갱신 안 함, reset 시만 삭제)
+        self._started_at: dict[str, float] = {}
         # {stock_code: warmup_end_timestamp} — 재연결 후 웜업 기간
         self._warmup_until: dict[str, float] = {}
 
@@ -27,6 +29,9 @@ class TradeStrengthCalculator:
         if stock_code not in self._data:
             self._data[stock_code] = deque()
             self._first_ts[stock_code] = timestamp
+            # 최초 수신 시점은 한 번만 기록 (_cleanup에서 덮어쓰지 않음)
+            if stock_code not in self._started_at:
+                self._started_at[stock_code] = timestamp
 
         self._data[stock_code].append((timestamp, volume, sell_or_buy))
 
@@ -41,7 +46,7 @@ class TradeStrengthCalculator:
             self._warmup_until[stock_code] = end
 
     def get_strength(self, stock_code: str, now: float | None = None) -> float:
-        """체결강도 계산. 누적 5분 미만이거나 웜업 중이면 중립값 50.0 반환."""
+        """체결강도 계산. 최초 수신부터 5분 미만이거나 웜업 중이면 중립값 50.0 반환."""
         if now is None:
             now = time.time()
 
@@ -55,11 +60,14 @@ class TradeStrengthCalculator:
         if stock_code not in self._data:
             return 50.0
 
+        # 최초 수신 시점 기준 5분 미만이면 중립값 (started_at은 _cleanup 영향 없음)
+        started_at = self._started_at.get(stock_code)
+        if started_at is None or (now - started_at) < self._window:
+            return 50.0
+
         self._cleanup(stock_code, now)
 
-        # 누적 시간 확인
-        first_ts = self._first_ts.get(stock_code)
-        if first_ts is None or (now - first_ts) < self._window:
+        if stock_code not in self._data:
             return 50.0
 
         buy_volume = 0
@@ -81,6 +89,7 @@ class TradeStrengthCalculator:
         """종목 데이터 초기화."""
         self._data.pop(stock_code, None)
         self._first_ts.pop(stock_code, None)
+        self._started_at.pop(stock_code, None)
         self._warmup_until.pop(stock_code, None)
 
     def _cleanup(self, stock_code: str, now: float) -> None:
@@ -97,6 +106,8 @@ class TradeStrengthCalculator:
         if not dq:
             self._data.pop(stock_code, None)
             self._first_ts.pop(stock_code, None)
+            # 데이터가 완전히 비면 started_at도 초기화 (재수집 시 재기록)
+            self._started_at.pop(stock_code, None)
         else:
-            # 남은 데이터 중 가장 오래된 것으로 first_ts 갱신
+            # 남은 데이터 중 가장 오래된 것으로 first_ts 갱신 (started_at은 유지)
             self._first_ts[stock_code] = dq[0][0]
