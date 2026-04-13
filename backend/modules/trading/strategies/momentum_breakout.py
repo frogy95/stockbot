@@ -75,11 +75,29 @@ class MomentumBreakoutStrategy(Strategy):
         if snapshot.current_price <= breakout_ref:
             return None
 
-        # 거래량 조건: 전일 대비 200%+
+        # 거래량 조건: 전일 대비 시간가중 보정 + 돌파 강도 연동
         if snapshot.prev_volume == 0:
             return None
-        volume_ratio = snapshot.volume / snapshot.prev_volume
-        if volume_ratio < 2.0:
+
+        # 절대 거래량 하한 (너무 거래 없으면 제외)
+        if snapshot.volume < snapshot.prev_volume * MIN_VOLUME_FLOOR:
+            return None
+
+        # 시간가중 보정
+        progress = calc_market_progress()
+        effective_progress = max(progress, MIN_MARKET_PROGRESS)
+        adjusted_ratio = snapshot.volume / (snapshot.prev_volume * effective_progress)
+
+        # 돌파 강도 연동 임계값 (강한 돌파일수록 낮은 거래량 임계값 허용)
+        breakout_pct = (snapshot.current_price - breakout_ref) / breakout_ref * 100
+        if breakout_pct >= 5.0:
+            volume_threshold = 1.5
+        elif breakout_pct >= 3.0:
+            volume_threshold = 1.8
+        else:
+            volume_threshold = 2.0
+
+        if adjusted_ratio < volume_threshold:
             return None
 
         # 체결강도 조건
@@ -97,7 +115,7 @@ class MomentumBreakoutStrategy(Strategy):
         momentum_score = min(
             (snapshot.current_price - breakout_ref) / breakout_ref * 100 / 5.0, 1.0
         )
-        volume_score = min(volume_ratio / 5.0, 1.0)
+        volume_score = min(adjusted_ratio / 5.0, 1.0)
         strength_score = min((snapshot.trade_strength - 50) / 50, 1.0)
         orderbook_score = min(
             snapshot.total_bid_volume / max(snapshot.total_ask_volume, 1) / 2.0, 1.0
@@ -137,7 +155,11 @@ class MomentumBreakoutStrategy(Strategy):
                 "orderbook_score": round(orderbook_score, 4),
                 "breakout_ref": breakout_ref,
                 "gap_rate": round(gap_rate, 4),
-                "volume_ratio": round(volume_ratio, 2),
+                "volume_ratio": round(snapshot.volume / snapshot.prev_volume, 2),
+                "adjusted_ratio": round(adjusted_ratio, 2),
+                "volume_threshold": volume_threshold,
+                "breakout_pct": round(breakout_pct, 2),
+                "market_progress": round(progress, 4),
                 "atr": round(atr, 2),
                 "is_leverage": is_leverage,
             },
