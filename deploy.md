@@ -20,9 +20,9 @@ PR: https://github.com/frogy95/stockbot/pull/125
   - effective_progress 이중 max() 적용 (무해한 중복 코드)
   - get_first_seen_date Redis 전체 SCAN (디버깅 전용 엔드포인트, 호출 빈도 낮음)
 
-#### 자동 검증 결과 (2026-04-13)
+#### 자동 검증 결과 (2026-04-13, 재검증 2026-04-13)
 
-- ✅ pytest -v: **798 passed, 0 failed** (610초)
+- ✅ pytest -v: **798 passed, 0 failed** (609초, 2회 연속 통과)
 - ✅ 신규 테스트 38건: 전부 통과
 - ✅ API 검증: GET /api/v1/collector/vol5m/005930 → HTTP 200, 슬롯 12개, vol5m_first_seen_date 정상
 - ✅ 헬스체크: GET /api/v1/health → {"status":"healthy","database":"connected","redis":"connected"}
