@@ -105,9 +105,9 @@ class RealtimeScreener:
                 "stock_type": info["stock_type"],
                 "trade_strength": trade_strength,
                 "orderbook_ratio": orderbook_ratio,
-                "volume": execution.get("volume", 0),
-                "prev_volume": execution.get("prev_volume", 0),
-                "current_price": execution.get("current_price", 0),
+                # Redis execution 실제 키: price/acml_volume (이전 오매핑 수정)
+                "volume": execution.get("acml_volume", 0),
+                "current_price": execution.get("price", 0),
                 "change_rate": execution.get("change_rate", 0.0),
                 "total_bid_volume": total_bid_volume,
                 "total_ask_volume": total_ask_volume,
@@ -140,12 +140,17 @@ class RealtimeScreener:
         for candidate in passed_candidates:
             code = candidate["stock_code"]
             recent = recent_data.get(code, [])
+            # recent_data는 ASC(오름차순) 정렬 — 마지막이 최신
             closes = [int(r["close_price"]) for r in recent if r.get("close_price")]
             highs = [int(r["high_price"]) for r in recent if r.get("high_price")]
             lows = [int(r["low_price"]) for r in recent if r.get("low_price")]
+            volumes = [int(r["volume"]) for r in recent if r.get("volume")]
 
             volume = candidate["volume"]
-            prev_volume = candidate["prev_volume"]
+            # prev_volume: DB 최근 일자 거래량 (signal_generator에서 snapshot 조립에도 사용)
+            prev_volume = volumes[-1] if volumes else 0
+            prev_close = closes[-1] if closes else 0
+            prev_high = highs[-1] if highs else 0
 
             volume_factor = calc_volume_factor(volume, prev_volume)
             momentum_factor = calc_momentum_factor(closes) if len(closes) >= 4 else 0.0
@@ -163,6 +168,19 @@ class RealtimeScreener:
                 "stock_type": candidate["stock_type"],
                 "trade_strength": candidate["trade_strength"],
                 "orderbook_ratio": candidate["orderbook_ratio"],
+                # snapshot 조립용 원시 필드
+                "current_price": candidate["current_price"],
+                "change_rate": candidate["change_rate"],
+                "volume": volume,
+                "prev_volume": prev_volume,
+                "prev_close": prev_close,
+                "prev_high": prev_high,
+                "total_bid_volume": candidate["total_bid_volume"],
+                "total_ask_volume": candidate["total_ask_volume"],
+                "recent_highs": highs,
+                "recent_lows": lows,
+                "recent_closes": closes,
+                # 팩터
                 "volume_factor": volume_factor,
                 "momentum_factor": momentum_factor,
                 "volatility_factor": volatility_factor,
@@ -248,6 +266,7 @@ class RealtimeScreener:
                 MarketData.close_price,
                 MarketData.high_price,
                 MarketData.low_price,
+                MarketData.volume,
             )
             .where(
                 MarketData.stock_code.in_(codes),
@@ -265,6 +284,7 @@ class RealtimeScreener:
                 "close_price": row["close_price"],
                 "high_price": row["high_price"],
                 "low_price": row["low_price"],
+                "volume": row["volume"],
             })
         return grouped
 

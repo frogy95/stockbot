@@ -179,7 +179,7 @@ async def test_duplicate_signal_prevented(
 async def test_build_snapshot_assembly(
     mock_session_factory, mock_redis, mock_strategy
 ):
-    """MarketSnapshot 조립 검증: Redis + DB 데이터 결합."""
+    """MarketSnapshot 조립 검증: candidate dict 기반 필드 매핑."""
     from modules.trading.signal_generator import SignalGenerator
 
     factory, session = mock_session_factory
@@ -187,27 +187,27 @@ async def test_build_snapshot_assembly(
     # 중복 없음
     mock_no_dup = MagicMock()
     mock_no_dup.scalars.return_value.first.return_value = None
+    session.execute = AsyncMock(return_value=mock_no_dup)
 
-    # market_data 5일치
-    mock_md = MagicMock()
-    md_rows = []
-    for i in range(5):
-        row = MagicMock()
-        row.high_price = 70500 - i * 500
-        row.low_price = 68000 - i * 500
-        row.close_price = 69500 - i * 500
-        md_rows.append(row)
-    mock_md.scalars.return_value.all.return_value = md_rows
-
-    session.execute = AsyncMock(side_effect=[mock_no_dup, mock_md])
+    # candidate는 realtime_screener가 조립해 넘기는 것을 모사 — recent_*, prev_* 포함
+    candidate = _make_candidate(
+        recent_highs=[70500 - i * 500 for i in range(4, -1, -1)],  # ASC
+        recent_lows=[68000 - i * 500 for i in range(4, -1, -1)],
+        recent_closes=[69500 - i * 500 for i in range(4, -1, -1)],
+        prev_close=69500,
+        prev_high=70500,
+    )
 
     gen = SignalGenerator(factory, mock_redis, mock_strategy)
-    results = await gen.generate_signals([_make_candidate()])
+    await gen.generate_signals([candidate])
 
     # generate_signal이 MarketSnapshot으로 호출되었는지 확인
     call_args = mock_strategy.generate_signal.call_args
     snapshot = call_args[0][0]
     assert isinstance(snapshot, MarketSnapshot)
     assert snapshot.stock_code == "005930"
-    assert snapshot.open_price == 69500  # Redis에서
+    # candidate에 open_price 없음 → current_price로 폴백
+    assert snapshot.open_price == 73000
+    assert snapshot.prev_close == 69500
+    assert snapshot.prev_high == 70500
     assert len(snapshot.recent_highs) == 5
