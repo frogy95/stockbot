@@ -6,9 +6,10 @@
 
 **Tech Stack:** Python 3.12, FastAPI, Redis 7 (INCRBY), pytest-asyncio, zoneinfo
 
-**Sprint 기간:** 2026-04-13 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-13 ~ 2026-04-13
 **이전 스프린트:** Phase 6 Sprint 2 (pytest PASS, PR #108)
 **브랜치명:** `phase6.1-sprint1`
+**상태:** ✅ 완료 (2026-04-13)
 
 ---
 
@@ -89,8 +90,8 @@ git commit -m "feat(phase6.1-sprint1): task1 — calc_market_progress 유틸 + �
 ```
 
 **완료 기준:**
-- ⬜ test_market_progress.py 8개 테스트 통과
-- ⬜ 기존 테스트 회귀 없음 (momentum_breakout.py에 함수만 추가, 기존 로직 미수정)
+- ✅ test_market_progress.py 9개 테스트 통과
+- ✅ 기존 테스트 회귀 없음 (momentum_breakout.py에 함수만 추가, 기존 로직 미수정)
 
 ---
 
@@ -181,9 +182,9 @@ git commit -m "feat(phase6.1-sprint1): task2 — 시간가중 보정 + 돌파 �
 ```
 
 **완료 기준:**
-- ⬜ test_momentum_breakout.py 15개 테스트 통과
-- ⬜ test_market_progress.py 8개 테스트 통과 (회귀 확인)
-- ⬜ 062040 이수페타시스 역산 시나리오 PASS
+- ✅ test_momentum_breakout.py 16개 테스트 통과 (기존 11 + 신규 5)
+- ✅ test_market_progress.py 9개 테스트 통과 (회귀 확인)
+- ✅ 062040 이수페타시스 역산 시나리오 PASS
 
 ---
 
@@ -251,9 +252,9 @@ git commit -m "feat(phase6.1-sprint1): task3 — 5분봉 거래량 집계 모듈
 ```
 
 **완료 기준:**
-- ⬜ test_volume_aggregator.py 10개 테스트 통과
-- ⬜ calc_5min_slot 경계값 검증 완료
-- ⬜ Redis GET-수정-SET 패턴 동작 확인
+- ✅ test_volume_aggregator.py 10개 테스트 통과
+- ✅ calc_5min_slot 경계값 검증 완료
+- ✅ Redis GET-수정-SET 패턴 동작 확인
 
 ---
 
@@ -331,9 +332,9 @@ git commit -m "feat(phase6.1-sprint1): task4 — scheduler 5분봉 연동 + vol5
 ```
 
 **완료 기준:**
-- ⬜ test_scheduler_vol5m.py 3개 테스트 통과
-- ⬜ 전체 pytest 통과 (회귀 없음)
-- ⬜ `curl http://localhost:8000/api/v1/collector/vol5m/005930` 정상 응답
+- ✅ test_scheduler_vol5m.py 3개 테스트 통과
+- ✅ 전체 pytest 통과 (798 passed, 0 failed, 회귀 없음)
+- ✅ `curl http://localhost:8000/api/v1/collector/vol5m/005930` HTTP 200, 슬롯 12개 + first_seen_date 정상 응답
 
 ---
 

@@ -2150,55 +2150,57 @@
     {
       "id": "phase6.1",
       "title": "거래량 시간가중 보정 + 5분봉 수집 구축",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase6.1/phase6.1.md",
+      "lastUpdated": "2026-04-13",
       "sprints": [
         {
           "id": "sprint1",
           "title": "시간가중 거래량 보정 + 5분봉 수집 선행 구축",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase6.1-sprint1",
           "sprintDoc": "docs/phase/phase6.1/sprint1/sprint1.md",
+          "prUrl": "",
           "progress": {
             "total": 4,
-            "completed": 0
+            "completed": 4
           },
           "tasks": [
             {
               "id": "task1",
               "title": "calc_market_progress 유틸 + 단위 테스트",
               "path": "docs/phase/phase6.1/sprint1/sprint1.md#task-1-calc_market_progress-유틸--단위-테스트",
-              "testPlan": "test_market_progress.py 8개: 09:00/12:15/15:30/08:00/16:00/09:30/09:58/10:00 시각별 progress 검증",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testPlan": "test_market_progress.py 9개: 09:00/12:15/15:30/08:00/16:00/09:30/09:58/10:00 시각별 progress 검증",
+              "testResult": "9 passed",
+              "status": "completed",
+              "commits": ["8b40136"]
             },
             {
               "id": "task2",
               "title": "momentum_breakout 전략 수정 + 기존 테스트 업데이트",
               "path": "docs/phase/phase6.1/sprint1/sprint1.md#task-2-momentum_breakout-전략-수정--기존-테스트-업데이트",
-              "testPlan": "test_momentum_breakout.py 15개: 기존 10개 수정 + 신규 5개 (062040 역산, 돌파 강도별, 절대 하한)",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testPlan": "test_momentum_breakout.py 16개: 기존 11개 수정 + 신규 5개 (062040 역산, 돌파 강도별, 절대 하한)",
+              "testResult": "16 passed",
+              "status": "completed",
+              "commits": ["ace4cf5"]
             },
             {
               "id": "task3",
               "title": "volume_aggregator 신규 모듈 + 단위 테스트",
               "path": "docs/phase/phase6.1/sprint1/sprint1.md#task-3-volume_aggregator-신규-모듈--단위-테스트",
               "testPlan": "test_volume_aggregator.py 10개: 슬롯 계산 경계값 + Redis 적재 + 매수/매도 분리 + 조회",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "10 passed",
+              "status": "completed",
+              "commits": ["c0ba061"]
             },
             {
               "id": "task4",
               "title": "scheduler 연동 + 조회 API + 통합 검증",
               "path": "docs/phase/phase6.1/sprint1/sprint1.md#task-4-scheduler-연동--조회-api--통합-검증",
               "testPlan": "test_scheduler_vol5m.py 3개 + 전체 pytest + curl vol5m API",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "3 passed / 전체 798 passed",
+              "status": "completed",
+              "commits": ["281a3ff"]
             }
           ]
         }

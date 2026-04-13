@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-12 업데이트)
+## 스프린트 현황 (2026-04-13 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -48,11 +48,11 @@
 - Phase 6 Sprint 1 — 치명적 버그 수정 + 최소 방어, ✅ 완료 (2026-04-12) / PR: https://github.com/frogy95/stockbot/pull/108
 - Phase 6 Sprint 2 — 복원력 강화 + 불필요 실행 방지, ✅ 완료 (2026-04-12) / PR: https://github.com/frogy95/stockbot/pull/108
 
-- Phase 6.1 Sprint 1 — 시간가중 거래량 보정 + 5분봉 수집 선행 구축, 🔄 계획 수립 완료 (2026-04-13)
+- Phase 6.1 Sprint 1 — 시간가중 거래량 보정 + 5분봉 수집 선행 구축, ✅ 완료 (2026-04-13) / PR: (생성 후 기입)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 7 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후)
+- Phase 7 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
