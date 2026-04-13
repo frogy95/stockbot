@@ -56,18 +56,22 @@ class RealtimeScreener:
         stock_info = await self._get_stock_info(session, candidate_codes)
 
         passed_candidates: list[dict] = []
+        reject_stats = {"no_data": 0, "no_info": 0, "trade_strength": 0, "ask_zero": 0, "orderbook_ratio": 0}
 
         for code in candidate_codes:
             realtime = await self._get_realtime_data(code)
             if realtime is None:
+                reject_stats["no_data"] += 1
                 continue
 
             info = stock_info.get(code)
             if info is None:
+                reject_stats["no_info"] += 1
                 continue
 
             trade_strength = self.trade_strength_calc.get_strength(code)
             if trade_strength < self.filters.trade_strength_min:
+                reject_stats["trade_strength"] += 1
                 continue
 
             orderbook = realtime.get("orderbook", {})
@@ -75,10 +79,12 @@ class RealtimeScreener:
             total_ask_volume = orderbook.get("total_ask_volume", 0)
 
             if total_ask_volume == 0:
+                reject_stats["ask_zero"] += 1
                 continue
 
             orderbook_ratio = total_bid_volume / total_ask_volume
             if orderbook_ratio < self.filters.orderbook_ratio_min:
+                reject_stats["orderbook_ratio"] += 1
                 continue
 
             execution = realtime.get("execution", {})
@@ -97,7 +103,18 @@ class RealtimeScreener:
             })
 
         if not passed_candidates:
+            logger.info(
+                "2차 스크리닝 필터 탈락 통계: 데이터없음=%d, 정보없음=%d, 체결강도=%d, 호가비율=%d",
+                reject_stats["no_data"], reject_stats["no_info"],
+                reject_stats["trade_strength"], reject_stats["orderbook_ratio"],
+            )
             return []
+
+        logger.info(
+            "2차 스크리닝 필터 통과: %d종목 (탈락: 데이터없음=%d, 체결강도=%d, 호가비율=%d)",
+            len(passed_candidates),
+            reject_stats["no_data"], reject_stats["trade_strength"], reject_stats["orderbook_ratio"],
+        )
 
         # 팩터 계산
         codes = [c["stock_code"] for c in passed_candidates]
