@@ -64,8 +64,8 @@ class KISWebSocketClient:
     # ── 연결 / 해제 ────────────────────────────────────────
 
     async def connect(self) -> None:
-        """WebSocket 연결 및 수신 루프 시작."""
-        self._approval_key = await self._token_manager.get_approval_key()
+        """WebSocket 연결 및 수신 루프 시작. 항상 새 approval_key를 발급받는다."""
+        self._approval_key = await self._token_manager.get_fresh_approval_key()
         self._ws = await websockets.connect(
             self._env.ws_url,
             ping_interval=30,
@@ -203,7 +203,7 @@ class KISWebSocketClient:
             await asyncio.sleep(wait)
 
             try:
-                self._approval_key = await self._token_manager.get_approval_key()
+                self._approval_key = await self._token_manager.get_fresh_approval_key()
                 self._ws = await websockets.connect(
                     self._env.ws_url,
                     ping_interval=30,
