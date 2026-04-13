@@ -55,6 +55,13 @@ class KISTokenManager:
         await self._redis.set(self._approval_key_key(), key, ttl=TOKEN_TTL)
         return key
 
+    async def get_fresh_approval_key(self) -> str:
+        """캐시를 무시하고 새 approval_key를 발급받는다. WS 연결 시 사용."""
+        await self._redis.delete(self._approval_key_key())
+        key = await self._request_approval_key()
+        await self._redis.set(self._approval_key_key(), key, ttl=TOKEN_TTL)
+        return key
+
     async def get_hashkey(self, body: dict) -> str:
         return await self._request_hashkey(body)
 
