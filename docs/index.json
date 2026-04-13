@@ -2149,9 +2149,48 @@
     },
     {
       "id": "phase6.1",
-      "title": "매매 전략 거래량 시간가중 보정",
+      "title": "거래량 시간가중 보정 + 5분봉 수집 구축",
       "status": "planned",
       "phaseDoc": "docs/phase/phase6.1/phase6.1.md",
+      "sprints": []
+    },
+    {
+      "id": "phase7",
+      "title": "5분봉 거래량 가속도 지표",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase7/phase7.md",
+      "dataPrerequisite": {
+        "source": "phase6.1",
+        "type": "5분봉 거래량 Redis (vol5m:*)",
+        "minAccumulation": "20거래일",
+        "warningThreshold": "<20거래일"
+      },
+      "sprints": []
+    },
+    {
+      "id": "phase8",
+      "title": "동시간대 Z-score + VWAP 포지션",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase8/phase8.md",
+      "dataPrerequisite": {
+        "source": "phase7",
+        "type": "시간대별 거래량 DB + VWAP 틱데이터",
+        "minAccumulation": "20거래일",
+        "warningThreshold": "<20거래일"
+      },
+      "sprints": []
+    },
+    {
+      "id": "phase9",
+      "title": "U자형 비선형 보정",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase9/phase9.md",
+      "dataPrerequisite": {
+        "source": "phase8",
+        "type": "실전 운영 데이터 전체",
+        "minAccumulation": "3~6개월 (60~120거래일)",
+        "warningThreshold": "<3개월"
+      },
       "sprints": []
     }
   ],
