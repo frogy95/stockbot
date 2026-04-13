@@ -1008,12 +1008,22 @@ class CollectorScheduler:
             self._last_secondary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             self._secondary_skip_count = 0
 
-            # WS 연결 상태인데 실시간 데이터가 없으면 구독 실패 의심 → 자동 재연결
-            if len(candidate_codes) > 0 and len(results) == 0:
+            # 구독된 종목 중 실제로 Redis에 데이터가 있는지 직접 확인 (필터 탈락과 구분)
+            subscribed_codes = self._ws_manager.get_subscribed_stocks()
+            data_count = 0
+            sample_codes = subscribed_codes[:10]  # 상위 10개만 샘플링
+            for code in sample_codes:
+                exec_raw = await self._redis.get(f"realtime:{code}:execution")
+                ob_raw = await self._redis.get(f"realtime:{code}:orderbook")
+                if exec_raw is not None and ob_raw is not None:
+                    data_count += 1
+
+            # 구독 종목이 있는데 샘플 10개 중 데이터가 0건이면 구독 실패 의심
+            if len(subscribed_codes) > 0 and data_count == 0:
                 self._secondary_no_data_count += 1
                 logger.warning(
-                    "2차 스크리닝 데이터 부재: %d후보 중 실시간 데이터 0건 (연속 %d회)",
-                    len(candidate_codes), self._secondary_no_data_count,
+                    "실시간 데이터 부재: 구독 %d종목 샘플 %d개 중 데이터 0건 (연속 %d회)",
+                    len(subscribed_codes), len(sample_codes), self._secondary_no_data_count,
                 )
                 if self._secondary_no_data_count >= 5:
                     logger.error("실시간 데이터 5회 연속 부재 — WS 재연결 시도")
@@ -1022,7 +1032,10 @@ class CollectorScheduler:
             else:
                 self._secondary_no_data_count = 0
 
-            logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
+            logger.info(
+                "2차 스크리닝 완료: %d후보, 구독 %d종목(데이터 %d/%d), %d통과",
+                len(candidate_codes), len(subscribed_codes), data_count, len(sample_codes), len(passed),
+            )
 
             # 통과 종목을 매매 엔진에 전달
             if passed and self._trading_engine:
