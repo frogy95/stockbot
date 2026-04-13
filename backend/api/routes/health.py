@@ -122,3 +122,67 @@ async def db_stats():
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/health/ws-diag")
+async def ws_diagnostic():
+    """WS 연결 진단 — 컨테이너 내부에서 직접 KIS WS 접속 테스트."""
+    import json as _json
+    import websockets
+    from core.clients.kis_config import get_current_environment
+    from core.clients.token_manager import KISTokenManager
+
+    env = get_current_environment()
+    tm = KISTokenManager(env, redis_client)
+    steps = []
+
+    try:
+        await redis_client.delete(f"kis:{env.name}:approval_key")
+        key = await tm.get_approval_key()
+        steps.append({"step": "approval_key", "ok": True, "detail": key[:16] + "..."})
+    except Exception as e:
+        steps.append({"step": "approval_key", "ok": False, "detail": str(e)})
+        return {"steps": steps}
+
+    try:
+        ws = await asyncio.wait_for(
+            websockets.connect(env.ws_url, ping_interval=None, open_timeout=10), timeout=15
+        )
+        steps.append({"step": "connect", "ok": True, "detail": env.ws_url})
+    except Exception as e:
+        steps.append({"step": "connect", "ok": False, "detail": str(e)})
+        return {"steps": steps}
+
+    try:
+        msg = {
+            "header": {"approval_key": key, "custtype": "P", "tr_type": "1", "content-type": "utf-8"},
+            "body": {"input": {"tr_id": "H0STCNT0", "tr_key": "005930"}},
+        }
+        await ws.send(_json.dumps(msg))
+        steps.append({"step": "subscribe_send", "ok": True})
+    except Exception as e:
+        steps.append({"step": "subscribe_send", "ok": False, "detail": str(e)})
+        await ws.close()
+        return {"steps": steps}
+
+    messages = []
+    for i in range(3):
+        try:
+            resp = await asyncio.wait_for(ws.recv(), timeout=10)
+            if len(resp) > 200:
+                messages.append(f"realtime_data(len={len(resp)})")
+            else:
+                messages.append(resp)
+        except asyncio.TimeoutError:
+            messages.append("timeout")
+            break
+        except Exception as e:
+            messages.append(f"error: {e}")
+            break
+
+    steps.append({"step": "recv", "ok": len(messages) > 0, "messages": messages})
+    try:
+        await ws.close()
+    except Exception:
+        pass
+    return {"steps": steps}
