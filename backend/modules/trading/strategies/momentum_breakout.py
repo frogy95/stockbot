@@ -1,10 +1,51 @@
 """모멘텀 브레이크아웃 전략 — 전일 고가 돌파 + 다팩터 신뢰도."""
 
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
+
 from modules.screening.factors import calc_volatility_factor
 from modules.trading.strategy import MarketSnapshot, Strategy, TradeSignalData
 
 # ATR 필터: 현재가 대비 ATR 비율이 이 값을 초과하면 제외
 ATR_FILTER_PCT = 0.05
+
+# 시장 시간 상수 (KST)
+MARKET_OPEN = time(9, 0)
+MARKET_CLOSE = time(15, 30)
+MARKET_MINUTES = 390  # 09:00 ~ 15:30 = 6h30m
+
+# 시간가중 거래량 보정 상수
+MIN_MARKET_PROGRESS = 0.15  # 장 초반 거래량 하한 보정 계수
+MIN_VOLUME_FLOOR = 0.5  # 전일 대비 절대 거래량 하한
+
+_KST = ZoneInfo("Asia/Seoul")
+
+
+def calc_market_progress(now_kst: datetime | None = None) -> float:
+    """장중 시간가중 진행도 반환 (0.15 ~ 1.0).
+
+    - 장 전(09:00 이전): MIN_MARKET_PROGRESS (0.15)
+    - 장 후(15:30 이후): 1.0
+    - 장중: max(elapsed_minutes / 390, MIN_MARKET_PROGRESS)
+
+    Args:
+        now_kst: 테스트 주입용 KST datetime. None이면 현재 KST 시각 사용.
+
+    Returns:
+        0.15 ~ 1.0 범위의 진행도.
+    """
+    if now_kst is None:
+        now_kst = datetime.now(_KST)
+
+    current = now_kst.time()
+    if current < MARKET_OPEN:
+        return MIN_MARKET_PROGRESS
+    if current >= MARKET_CLOSE:
+        return 1.0
+
+    elapsed = (now_kst.hour * 60 + now_kst.minute) - (MARKET_OPEN.hour * 60)
+    raw = elapsed / MARKET_MINUTES
+    return max(raw, MIN_MARKET_PROGRESS)
 
 
 class MomentumBreakoutStrategy(Strategy):
