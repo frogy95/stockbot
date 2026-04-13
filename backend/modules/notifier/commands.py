@@ -7,8 +7,11 @@ from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from core.config import settings
+from core.models.screening_result import ScreeningResult
+from core.models.stock import Stock
 from core.models.trading import PositionRecord, TradeHistory
 from modules.collector.scheduler import PIPELINE_HEALTHY_KEY, PIPELINE_RUNNING_KEY
 
@@ -141,11 +144,47 @@ class CommandHandler:
             "/pipeline 으로 진행 상황 확인"
         )
 
+    async def handle_candidates(self, chat_id: int) -> str:
+        """1차 스크리닝 후보 종목 목록."""
+        async with self._session_factory() as session:
+            # 최신 배치의 screened_at 조회
+            latest = await session.execute(
+                select(ScreeningResult.screened_at)
+                .where(ScreeningResult.screening_type == "primary")
+                .order_by(ScreeningResult.screened_at.desc())
+                .limit(1)
+            )
+            latest_at = latest.scalar_one_or_none()
+            if not latest_at:
+                return "🔍 <b>1차 스크리닝 후보</b>\n\n후보 종목 없음"
+
+            result = await session.execute(
+                select(ScreeningResult, Stock.stock_name)
+                .join(Stock, ScreeningResult.stock_code == Stock.stock_code)
+                .where(
+                    ScreeningResult.screening_type == "primary",
+                    ScreeningResult.screened_at == latest_at,
+                )
+                .order_by(ScreeningResult.rank)
+            )
+            rows = result.all()
+
+        if not rows:
+            return "🔍 <b>1차 스크리닝 후보</b>\n\n후보 종목 없음"
+
+        ts = latest_at.strftime("%H:%M")
+        lines = [f"🔍 <b>1차 스크리닝 후보</b>  ({ts} 기준, {len(rows)}종목)\n"]
+        for sr, name in rows:
+            hot = "🔥" if sr.is_hot else "  "
+            lines.append(f"{hot} {sr.rank}. <b>{sr.stock_code}</b> {name}  <code>{sr.score}</code>")
+        return "\n".join(lines)
+
     async def handle_help(self, chat_id: int) -> str:
         """명령어 목록."""
         return (
             "📋 <b>명령어 목록</b>\n\n"
             "/status — 활성 포지션 현황\n"
+            "/candidates — 1차 스크리닝 후보 종목\n"
             "/today — 오늘 매매 요약\n"
             "/mode — 현재 거래 모드\n"
             "/pipeline — 파이프라인 단계별 상태\n"
@@ -157,6 +196,7 @@ class CommandHandler:
         """명령어를 분기 처리한다."""
         handlers = {
             "/status": self.handle_status,
+            "/candidates": self.handle_candidates,
             "/today": self.handle_today,
             "/mode": self.handle_mode,
             "/pipeline": self.handle_pipeline,
