@@ -51,11 +51,11 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~6.1 완료
-- 현재 Phase: Phase 6.1 (매매 전략 거래량 시간가중 보정) ✅ 완료
-- 현재 Sprint: Phase 6.1 Sprint 1 ✅ 완료 (2026-04-13)
+- 현재 Phase: Phase 6.2 (포털 수집 타이밍 정합성 + 재시도 정책 수정) 🔄 진행 중
+- 현재 Sprint: Phase 6.2 계획 수립 완료 (2026-04-14)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7 Sprint 1 — 5분봉 거래량 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후)
+- 다음 마일스톤: Phase 6.2 Sprint 1 — 포털 수집 정합성 + 재시도 정책 수정
 
 ## 기술 아키텍처 결정 사항
 
@@ -92,6 +92,7 @@ Phase 0 (완료)
                                       └─> Phase 5.2: WS 모의 환경 안정화
                                             └─> Phase 6: 스케줄러 + WS 복원력 강화
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
+                                                        └─> Phase 6.2: 포털 수집 타이밍 정합성 + 재시도 정책 수정
                                                         └─(코드)─> Phase 7: 5분봉 가속도 지표 + DB 구축
                                                         └─(데이터: 20거래일)─> Phase 7
                                                               └─(코드)─> Phase 8: Z-score + VWAP
@@ -117,6 +118,7 @@ Phase 0 (완료)
 - Phase 5.1 -> 5.2: WS 재연결 반복으로 장중 실시간 파이프라인 마비 -> 구독 수 제한 + 재연결 안정화
 - Phase 4, 5, 5.1, 5.2 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
+- Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.1 -> 7: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
 - Phase 7 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
 - Phase 8 -> 9: **(코드)** VWAP 엔진 + 백테스트 데이터셋, **(데이터)** 실전 운영 3~6개월 축적 필수
@@ -956,6 +958,44 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 (1차 + 2차) 완료
 > Phase 상세 계획: `docs/phase/phase6.1/phase6.1.md`
 > Sprint 1: `docs/phase/phase6.1/sprint1/sprint1.md` ✅ 완료 (2026-04-13)
+
+---
+
+## Phase 6.2: 포털 수집 타이밍 정합성 + 재시도 정책 수정 (Sprint 1~2) 🔄
+
+### 목표
+공공데이터포털 갱신 정책(T+1 영업일 13시 이후)과 현행 스케줄(08:00)의 구조적 불일치를 해결. retry 조건을 portal_fresh 기반으로 변경하고, 14:00 보조 cron을 추가하여 포털 데이터 안정 확보. KIS 폴백 연속 3일+ 시 자동매매 차단 및 경고 승급 알림 도입.
+
+### 작업 목록
+#### Sprint 1: 포털 수집 정합성 + 재시도 정책 수정
+- _premarket_retry 조건 변경: portal_fresh 기반 (DB 직접 확인)
+- 14:00 portal_afternoon_collect cron 신규 추가
+- validate_portal_freshness 메서드 신규
+- validate_premarket_db 소스 확장 (data_go_kr + kis_daily)
+- KIS 폴백 streak 카운터 (Redis) + 알림 승급 (3일+ WARNING)
+- pipeline_healthy 조건 강화 (streak 3일+ → false)
+
+#### Sprint 2: 과거 데이터 백필 + 관찰성 강화
+- 2026-04-04 ~ 2026-04-10 포털 백필 (5거래일)
+- 백필 스크립트 (scripts/backfill_portal.py)
+- 포털 연속 실패 요약 알림 (3회 초과 시 일 1회)
+- listed_shares NULL 종목 진단 쿼리
+
+### 완료 기준 (Definition of Done)
+- 08:30 retry가 portal_fresh 기반으로 동작 (KIS 성공과 독립)
+- 14:00 cron이 포털 미확보 시 정상 수집
+- KIS 폴백 streak 3일+ 시 WARNING 알림 + pipeline_healthy=false
+- 4/4~4/10 백필 완료 (각 거래일 1500건+)
+- 기존 테스트 전부 통과
+
+### 기술 고려사항
+- 포털은 실제 T+1 09~11시에 조기 배포되는 경우 잦음 → 08:00 호출 유지 가치 있음
+- 14:00 수집은 "다음 거래일" 스크리닝 품질 보장 목적, 당일 재스크리닝 불필요
+- KIS 일봉은 market_cap=None → stocks.listed_shares * close_price 보정 (이미 screener.py에 구현됨)
+- 공공데이터포털 Rate Limit: 일 1,000건 → 백필 일 2거래일 한도
+
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API 개발자), 박퀀트(퀀트) — 4명 검토 완료
+> Phase 상세 계획: `docs/phase/phase6.2/phase6.2.md`
 
 ---
 
