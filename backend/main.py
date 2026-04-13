@@ -1,7 +1,15 @@
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+# 애플리케이션 로깅 설정 — Railway에서 내부 로그 출력
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    stream=sys.stdout,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.redis import redis_client

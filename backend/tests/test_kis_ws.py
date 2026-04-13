@@ -18,6 +18,7 @@ def token_manager():
     """KISTokenManager mock."""
     tm = AsyncMock()
     tm.get_approval_key.return_value = "test-approval-key"
+    tm.get_fresh_approval_key.return_value = "test-approval-key"
     return tm
 
 
@@ -42,11 +43,11 @@ def client(token_manager):
 
 @pytest.mark.asyncio
 async def test_connect_uses_approval_key(client, token_manager, ws_mock):
-    """connect() 시 approval_key를 요청하고 WebSocket 연결한다."""
+    """connect() 시 fresh approval_key를 요청하고 WebSocket 연결한다."""
     with patch("core.clients.kis_ws.websockets.connect", new_callable=AsyncMock, return_value=ws_mock):
         await client.connect()
 
-    token_manager.get_approval_key.assert_awaited_once()
+    token_manager.get_fresh_approval_key.assert_awaited_once()
     assert client.connected is True
     assert client._approval_key == "test-approval-key"
 
@@ -168,13 +169,28 @@ async def test_unsubscribe_removes_from_subscriptions(client, token_manager, ws_
 @pytest.mark.asyncio
 async def test_on_message_json_logs_server_response(client, caplog):
     """JSON 메시지 수신 시 서버 응답을 로깅한다."""
-    server_resp = json.dumps({"header": {"tr_id": "H0STCNT0"}, "body": {"msg": "OK"}})
+    server_resp = json.dumps({"header": {"tr_id": "H0STCNT0"}, "body": {"rt_cd": "0", "msg_cd": "OPSP0000", "msg1": "SUBSCRIBE SUCCESS"}})
 
     import logging
     with caplog.at_level(logging.INFO, logger="core.clients.kis_ws"):
         await client._on_message(server_resp)
 
-    assert "서버 응답" in caplog.text
+    assert "구독 확인" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_on_message_detects_already_in_use(client, caplog):
+    """OPSP8996 ALREADY IN USE appkey 에러를 감지하고 경고 로깅한다."""
+    error_resp = json.dumps({
+        "header": {"tr_id": "(null)", "tr_key": "", "encrypt": "N"},
+        "body": {"rt_cd": "9", "msg_cd": "OPSP8996", "msg1": "ALREADY IN USE appkey"},
+    })
+
+    import logging
+    with caplog.at_level(logging.WARNING, logger="core.clients.kis_ws"):
+        await client._on_message(error_resp)
+
+    assert "ALREADY IN USE" in caplog.text
 
 
 @pytest.mark.asyncio

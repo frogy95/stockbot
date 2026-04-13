@@ -125,64 +125,46 @@ async def db_stats():
 
 
 @router.get("/health/ws-diag")
-async def ws_diagnostic():
-    """WS 연결 진단 — 컨테이너 내부에서 직접 KIS WS 접속 테스트."""
-    import json as _json
-    import websockets
-    from core.clients.kis_config import get_current_environment
-    from core.clients.token_manager import KISTokenManager
+async def ws_diagnostic(request: Request):
+    """WS + 실시간 데이터 진단 — 스케줄러 WS 상태 및 Redis 캐시 확인."""
+    diag: dict = {}
 
-    env = get_current_environment()
-    tm = KISTokenManager(env, redis_client)
-    steps = []
+    # 1) 스케줄러 WS 상태
+    ws_client = getattr(request.app.state, "kis_ws", None)
+    ws_manager = getattr(request.app.state, "ws_manager", None)
+    diag["ws_connected"] = ws_client.connected if ws_client else False
+    diag["ws_subscription_count"] = ws_manager.count if ws_manager else 0
+    diag["ws_subscribed_stocks"] = ws_manager.get_subscribed_stocks()[:10] if ws_manager else []
 
-    try:
-        await redis_client.delete(f"kis:{env.name}:approval_key")
-        key = await tm.get_approval_key()
-        steps.append({"step": "approval_key", "ok": True, "detail": key[:16] + "..."})
-    except Exception as e:
-        steps.append({"step": "approval_key", "ok": False, "detail": str(e)})
-        return {"steps": steps}
-
-    try:
-        ws = await asyncio.wait_for(
-            websockets.connect(env.ws_url, ping_interval=None, open_timeout=10), timeout=15
-        )
-        steps.append({"step": "connect", "ok": True, "detail": env.ws_url})
-    except Exception as e:
-        steps.append({"step": "connect", "ok": False, "detail": str(e)})
-        return {"steps": steps}
-
-    try:
-        msg = {
-            "header": {"approval_key": key, "custtype": "P", "tr_type": "1", "content-type": "utf-8"},
-            "body": {"input": {"tr_id": "H0STCNT0", "tr_key": "005930"}},
+    # 2) Redis 실시간 데이터 샘플 확인
+    sample_codes = diag["ws_subscribed_stocks"][:5]
+    realtime_check = {}
+    for code in sample_codes:
+        exec_data = await redis_client.get(f"realtime:{code}:execution")
+        ob_data = await redis_client.get(f"realtime:{code}:orderbook")
+        realtime_check[code] = {
+            "execution": exec_data is not None,
+            "orderbook": ob_data is not None,
         }
-        await ws.send(_json.dumps(msg))
-        steps.append({"step": "subscribe_send", "ok": True})
-    except Exception as e:
-        steps.append({"step": "subscribe_send", "ok": False, "detail": str(e)})
-        await ws.close()
-        return {"steps": steps}
+        if exec_data:
+            import json as _json
+            try:
+                parsed = _json.loads(exec_data)
+                realtime_check[code]["exec_price"] = parsed.get("price")
+                realtime_check[code]["exec_time"] = parsed.get("time")
+            except Exception:
+                pass
+    diag["realtime_data"] = realtime_check
 
-    messages = []
-    for i in range(3):
-        try:
-            resp = await asyncio.wait_for(ws.recv(), timeout=10)
-            if len(resp) > 200:
-                messages.append(f"realtime_data(len={len(resp)})")
-            else:
-                messages.append(resp)
-        except asyncio.TimeoutError:
-            messages.append("timeout")
-            break
-        except Exception as e:
-            messages.append(f"error: {e}")
-            break
-
-    steps.append({"step": "recv", "ok": len(messages) > 0, "messages": messages})
+    # 3) 2차 스크리닝 DB 결과 확인
     try:
-        await ws.close()
-    except Exception:
-        pass
-    return {"steps": steps}
+        factory = get_session_factory()
+        async with factory() as session:
+            secondary_count = (await session.execute(
+                text("SELECT COUNT(*) FROM screening_results WHERE screening_type = 'secondary'")
+            )).scalar()
+            diag["secondary_screening_total"] = secondary_count
+    except Exception as e:
+        diag["secondary_screening_total"] = f"error: {e}"
+
+    return diag
