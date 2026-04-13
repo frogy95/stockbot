@@ -15,7 +15,13 @@ EXECUTION_FIELD_MAP = {
     "change_rate": 5,
     "volume": 12,
     "acml_volume": 13,
-    "sell_or_buy": 17,
+    # 필드 15: SELN_CNTG_CSNU (매도체결건수)
+    # 필드 16: SHNU_CNTG_CSNU (매수체결건수)
+    # 필드 17: NTBY_CNTG_CSNU (순매수체결건수) — 과거 sell_or_buy로 오파싱
+    "trade_strength": 18,  # CTTR — KIS 체결강도 (매수/매도 × 100)
+    # 필드 19: SELN_CNTG_SMTN (총매도수량)
+    # 필드 20: SHNU_CNTG_SMTN (총매수수량)
+    "sell_or_buy": 21,  # CNTG_CLS_CODE — "1"=매수, "5"=매도
 }
 
 ORDERBOOK_FIELD_MAP = {
@@ -46,7 +52,8 @@ class ExecutionData:
     change_rate: float
     volume: int
     acml_volume: int
-    sell_or_buy: str  # "1"=매도, "2"=매수
+    trade_strength: float  # KIS CTTR (매수/매도 × 100, 100=균형, >100=매수 우세)
+    sell_or_buy: str  # "1"=매수체결, "5"=매도체결 (KIS CNTG_CLS_CODE)
 
 
 @dataclass
@@ -101,6 +108,7 @@ def parse_execution(body: str) -> ExecutionData | None:
             change_rate=float(fields[fm["change_rate"]]),
             volume=int(fields[fm["volume"]]),
             acml_volume=int(fields[fm["acml_volume"]]),
+            trade_strength=float(fields[fm["trade_strength"]]),
             sell_or_buy=fields[fm["sell_or_buy"]].strip(),
         )
     except (ValueError, IndexError) as e:

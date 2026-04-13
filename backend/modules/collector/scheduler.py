@@ -1189,13 +1189,7 @@ class CollectorScheduler:
         if msg_tr_id == "H0STCNT0":
             execution = parse_execution(body)
             if execution:
-                # 진단: 필드 15-22 샘플링 (300건당 1회) — 체결강도/체결구분 위치 확인
-                import random
-                if random.randint(1, 300) == 1:
-                    fields = body.split("^")
-                    sample = {i: fields[i] if i < len(fields) else "?" for i in range(15, 23)}
-                    logger.info("체결 필드 샘플 code=%s: %s", execution.stock_code, sample)
-                # Redis 캐싱
+                # Redis 캐싱 — KIS가 직접 제공하는 trade_strength(CTTR) 포함
                 await self._redis.set(
                     f"realtime:{execution.stock_code}:execution",
                     json.dumps({
@@ -1205,11 +1199,12 @@ class CollectorScheduler:
                         "volume": execution.volume,
                         "acml_volume": execution.acml_volume,
                         "change_rate": execution.change_rate,
+                        "trade_strength": execution.trade_strength,
                         "sell_or_buy": execution.sell_or_buy,
                     }),
                     ttl=REALTIME_CACHE_TTL,
                 )
-                # 체결강도 업데이트
+                # TradeStrengthCalculator도 계속 업데이트 (호환성 유지, 외부 분석용)
                 import time
                 self._trade_strength.add_execution(
                     execution.stock_code,
