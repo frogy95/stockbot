@@ -70,7 +70,9 @@ class RealtimeScreener:
                 reject_stats["no_info"] += 1
                 continue
 
-            trade_strength = self.trade_strength_calc.get_strength(code)
+            # KIS가 직접 제공하는 체결강도(CTTR) 사용 (100=균형, >100=매수 우세)
+            execution_data = realtime.get("execution", {})
+            trade_strength = execution_data.get("trade_strength", 100.0)
 
             # 진단용: 모든 데이터 있는 종목의 실제 체결강도 + 호가비율 기록
             orderbook_sample = realtime.get("orderbook", {})

@@ -23,13 +23,15 @@ def _make_execution_data(
     volume: int = 200_000,
     prev_volume: int = 50_000,
     change_rate: float = 3.0,
+    trade_strength: float = 150.0,
 ) -> str:
-    """Redis realtime:{code}:execution 저장 형식."""
+    """Redis realtime:{code}:execution 저장 형식 (KIS CTTR 포함)."""
     return json.dumps({
         "current_price": current_price,
         "volume": volume,
         "prev_volume": prev_volume,
         "change_rate": change_rate,
+        "trade_strength": trade_strength,
     })
 
 
@@ -117,18 +119,18 @@ class TestNoSignalPeriod:
 # ---------------------------------------------------------------------------
 
 class TestTradeStrengthFilter:
-    """체결강도 70+ 통과, 미달 제외."""
+    """체결강도(KIS CTTR) 120+ 통과, 미달 제외."""
 
     @pytest.mark.asyncio
     async def test_trade_strength_pass(self):
-        """체결강도 80 → 통과."""
+        """체결강도 150 → 통과 (KIS CTTR 기준, 기본값)."""
         trade_calc = TradeStrengthCalculator(window_seconds=300)
 
         redis_mock = AsyncMock()
 
         async def mock_get(key: str):
             if key == "realtime:005930:execution":
-                return _make_execution_data()
+                return _make_execution_data(trade_strength=150.0)
             if key == "realtime:005930:orderbook":
                 return _make_orderbook_data()
             return None
@@ -142,8 +144,7 @@ class TestTradeStrengthFilter:
         mock_now = datetime(2026, 3, 29, 10, 0, 0)
         with patch("modules.screening.realtime_screener.datetime") as mock_dt, \
              patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock, \
-             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mock_market, \
-             patch.object(trade_calc, "get_strength", return_value=80.0):
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mock_market:
             mock_dt.now.return_value = mock_now
             mock_dt.side_effect = lambda *args, **kw: datetime(*args, **kw)
             mock_stock.return_value = {
@@ -166,18 +167,18 @@ class TestTradeStrengthFilter:
 
         assert len(result) == 1
         assert result[0]["stock_code"] == "005930"
-        assert result[0]["trade_strength"] == 80.0
+        assert result[0]["trade_strength"] == 150.0
 
     @pytest.mark.asyncio
     async def test_trade_strength_fail(self):
-        """체결강도 60 → 제외."""
+        """체결강도 100 → 제외 (KIS CTTR 기준 120 미달)."""
         trade_calc = TradeStrengthCalculator(window_seconds=300)
 
         redis_mock = AsyncMock()
 
         async def mock_get(key: str):
             if key == "realtime:005930:execution":
-                return _make_execution_data()
+                return _make_execution_data(trade_strength=100.0)
             if key == "realtime:005930:orderbook":
                 return _make_orderbook_data()
             return None
@@ -189,8 +190,7 @@ class TestTradeStrengthFilter:
 
         mock_now = datetime(2026, 3, 29, 10, 0, 0)
         with patch("modules.screening.realtime_screener.datetime") as mock_dt, \
-             patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock, \
-             patch.object(trade_calc, "get_strength", return_value=60.0):
+             patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock:
             mock_dt.now.return_value = mock_now
             mock_dt.side_effect = lambda *args, **kw: datetime(*args, **kw)
             mock_stock.return_value = {
