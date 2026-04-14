@@ -48,7 +48,7 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 5  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry
+    assert status["job_count"] == 6  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry, portal_supplement
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_pipeline" in job_ids
@@ -56,6 +56,7 @@ async def test_scheduler_registers_jobs():
     assert "market_close" in job_ids
     assert "market_open_recovery" in job_ids
     assert "premarket_retry" in job_ids
+    assert "portal_supplement" in job_ids
     assert "premarket_collect" not in job_ids
     assert "etf_master_collect" not in job_ids
     assert "primary_screen" not in job_ids
@@ -80,18 +81,19 @@ async def test_scheduler_start_stop():
 
 @pytest.mark.asyncio
 async def test_premarket_job():
-    """장전 수집 job이 공공데이터포털 수집 호출."""
+    """장전 수집 job이 KIS 일봉 수집 호출."""
     scheduler = _make_scheduler()
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
-        MockCollector.return_value = mock_instance
+    kis_result = CollectionResult(collected=2800, total_target=2800, null_counts={"close_price": 0, "volume": 0})
 
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)) as mock_kis,
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         count = await scheduler._premarket_collect()
 
     assert count == 2800
-    mock_instance.collect_all.assert_called_once()
+    mock_kis.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -161,11 +163,12 @@ async def test_trigger_premarket():
     """수동 트리거."""
     scheduler = _make_scheduler()
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
-        MockCollector.return_value = mock_instance
+    kis_result = CollectionResult(collected=2800, total_target=2800, null_counts={"close_price": 0, "volume": 0})
 
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         result = await scheduler.trigger_premarket()
 
     assert result == {"stocks_collected": 2800}
@@ -320,23 +323,23 @@ async def test_premarket_fallback_kis_fail():
 
 
 @pytest.mark.asyncio
-async def test_premarket_no_fallback_on_success():
-    """포털 수집 성공 시 KIS 보조 수집 미호출."""
+async def test_premarket_kis_success_no_extra_calls():
+    """KIS 수집 성공 시 DataGoKrCollector 미호출."""
     scheduler = _make_scheduler(FakeRedis())
 
-    portal_result = CollectionResult(
+    kis_result = CollectionResult(
         collected=2800, total_target=3000,
-        data_date=DataGoKrCollector._latest_trading_date(),
         null_counts={"close_price": 0, "volume": 0},
     )
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
-         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
-
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         await scheduler._premarket_collect()
 
-    MockKIS.return_value.collect_all.assert_not_called()
+    MockPortal.return_value.collect_all.assert_not_called()
 
 
 @pytest.mark.asyncio

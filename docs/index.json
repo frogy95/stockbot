@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-13T22:00:00+09:00",
+  "lastUpdated": "2026-04-14T20:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2207,6 +2207,55 @@
       ]
     },
     {
+      "id": "phase6.2",
+      "title": "장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase6.2/phase6.2.md",
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "장전 수집 단순화 + 포털 장후 보조",
+          "status": "completed",
+          "branch": "phase6.2-sprint1",
+          "sprintDoc": "docs/phase/phase6.2/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/127",
+          "progress": {
+            "total": 3,
+            "completed": 3
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "validate_premarket_db 소스 조건 확장 (data_go_kr + kis_daily)",
+              "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-1-validate_premarket_db-소스-조건-확장",
+              "testPlan": "validate_premarket_db에서 source.in_(['data_go_kr', 'kis_daily']) 적용 + 기존 테스트 회귀 없음",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": ["8c7b85f"]
+            },
+            {
+              "id": "task2",
+              "title": "scheduler.py 단순화 (KIS 직접 + 16:00 포털 cron + 데드코드 제거)",
+              "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-2-schedulerpy-단순화-핵심-변경",
+              "testPlan": "_premarket_collect KIS 직접, _premarket_retry KIS 재시도, portal_supplement 16:00 cron, 폴백 알림 제거",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": ["b1ea5aa"]
+            },
+            {
+              "id": "task3",
+              "title": "기존 테스트 수정 + Phase 6.2 검증 테스트 7건 추가",
+              "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-3-기존-테스트-수정--신규-테스트--통합-검증",
+              "testPlan": "test_scheduler.py job_count=6 + test_scheduler_retry.py KIS 전환 + test_scheduler_phase62.py 7 passed + 전체 pytest PASS",
+              "testResult": "805 passed, 0 failed",
+              "status": "completed",
+              "commits": ["62b1f5a"]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "phase7",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
@@ -2615,6 +2664,24 @@
       "version": "v1.7.0",
       "description": "Phase 6 프로덕션 배포 — Sprint 1 (kis_ws.py ConcurrencyError 수정·좀비 연결 방지·open_timeout·subscribe None 가드, ws_manager.py 가드 조건 and→or, scheduler.py _market_open 텔레그램 알림·is_trading_day 가드), Sprint 2 (KIS REST 500/502/503/429 재시도/백오프, recovery 단계적 재시도 3회, premarket 예외 폴백, 나머지 핸들러 is_trading_day 가드)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/109",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-13",
+      "type": "sprint",
+      "ref": "phase6.1-sprint1",
+      "version": "v1.8.0",
+      "description": "Phase 6.1 Sprint 1 프로덕션 배포 — 시간가중 거래량 보정 + 돌파 강도 연동 임계값 (momentum_breakout.py), 5분봉 거래량 집계 모듈 신규 (volume_aggregator.py), 5분봉 스케줄러 연동 + vol5m 조회 API (GET /api/v1/collector/vol5m/{code}), Phase 7/8/9 데이터 의존성 로드맵 추가",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/126",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-14",
+      "type": "sprint",
+      "ref": "phase6.2-sprint1",
+      "version": "v1.9.0",
+      "description": "Phase 6.2 Sprint 1 프로덕션 배포 — 장전 수집 단순화 (KIS 주경로 직접 수집, 공공데이터포털 폴백 제거), 16:00 portal_supplement cron 신설 (포털 장후 보조), validate_premarket_db 소스 조건 확장 (data_go_kr + kis_daily), 테스트 7건 신규 추가",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/128",
       "status": "in_progress"
     }
   ]

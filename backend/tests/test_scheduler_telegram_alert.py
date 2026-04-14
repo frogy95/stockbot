@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from modules.collector.scheduler import CollectorScheduler
 from modules.collector.models import CollectionResult
-from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
@@ -45,23 +44,18 @@ def _make_scheduler(fake_redis: FakeRedis | None = None, telegram_bot=None):
 
 @pytest.mark.asyncio
 async def test_premarket_failure_sends_telegram():
-    """_premarket_collect 실패 시 telegram 알림 — 예외 경로에서 KIS 폴백도 실패하면 이중 실패 알림."""
+    """_premarket_collect 예외 시 [장애] 알림 발송."""
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
 
     scheduler = _make_scheduler(telegram_bot=mock_bot)
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(side_effect=Exception("API timeout"))
-        MockCollector.return_value = mock_instance
-
+    with patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(side_effect=Exception("API timeout"))):
         await scheduler._premarket_collect()
 
     mock_bot.send_notification.assert_called()
-    # 예외 경로에서 KIS 폴백도 실패하면 이중 실패([긴급]) 또는 폴백 예외 시 [장애] 알림
     all_messages = [call[0][0] for call in mock_bot.send_notification.call_args_list]
-    assert any("[긴급]" in msg or "[장애]" in msg for msg in all_messages)
+    assert any("[장애]" in msg for msg in all_messages)
     assert any("premarket" in msg for msg in all_messages)
 
 
@@ -74,14 +68,13 @@ async def test_pipeline_recovery_success_sends_telegram():
     fake_redis = FakeRedis()
     scheduler = _make_scheduler(fake_redis=fake_redis, telegram_bot=mock_bot)
 
-    # 모든 step을 성공시키는 mock
+    kis_result = CollectionResult(collected=2800, total_target=2800, null_counts={"close_price": 0, "volume": 0})
+
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockData,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
-        patch.object(scheduler._validator, "cross_check_prices", new=AsyncMock(return_value=[])),
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=CollectionResult(collected=2800, data_date=DataGoKrCollector._latest_trading_date(), null_counts={"close_price": 0, "volume": 0}))
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
@@ -104,64 +97,53 @@ async def test_no_telegram_when_bot_not_set():
     """_telegram_bot이 None이면 에러 없이 스킵."""
     scheduler = _make_scheduler(telegram_bot=None)  # bot 미설정
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(side_effect=Exception("network error"))
-        MockCollector.return_value = mock_instance
-
-        # 에러 없이 정상 완료되어야 함
+    with patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(side_effect=Exception("network error"))):
         result = await scheduler._premarket_collect()
 
     assert result == 0  # 실패 시 0 반환
 
 
 @pytest.mark.asyncio
-async def test_kis_fallback_sends_info_alert():
-    """포털 실패 → KIS 폴백 성공 시 [정보] 알림 발송."""
+async def test_kis_failure_sends_alert():
+    """KIS 수집 검증 실패 시 [장애] 알림 발송."""
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
 
     scheduler = _make_scheduler(telegram_bot=mock_bot)
 
-    portal_result = CollectionResult(collected=100, total_target=2800, data_date=None, null_counts={})  # 수집 부족 → validation fail
-    kis_result = CollectionResult(collected=2500, total_target=2800, data_date=None, null_counts={})  # 80% 이상 → validation pass
+    kis_result = CollectionResult(collected=100, total_target=2800, data_date=None, null_counts={})
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
-        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
     ):
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
         await scheduler._premarket_collect()
 
     mock_bot.send_notification.assert_called_once()
     message = mock_bot.send_notification.call_args[0][0]
-    assert "[정보]" in message
+    assert "[장애]" in message
 
 
 @pytest.mark.asyncio
-async def test_double_failure_sends_critical_alert():
-    """포털 + KIS 모두 실패 시 [긴급] 알림 발송 + pipeline_healthy=false."""
+async def test_kis_failure_pipeline_unhealthy():
+    """KIS 수집 실패 시 pipeline_healthy=false."""
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
 
     fake_redis = FakeRedis()
     scheduler = _make_scheduler(fake_redis=fake_redis, telegram_bot=mock_bot)
 
-    portal_result = CollectionResult(collected=100, total_target=2800, data_date=None, null_counts={})  # validation fail
-    kis_result = CollectionResult(collected=0, total_target=0, data_date=None, null_counts={})  # total_target=0 → fail
+    kis_result = CollectionResult(collected=0, total_target=0, data_date=None, null_counts={})
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
-        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
     ):
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
         await scheduler._premarket_collect()
 
     mock_bot.send_notification.assert_called_once()
     message = mock_bot.send_notification.call_args[0][0]
-    assert "[긴급]" in message
+    assert "[장애]" in message
 
     healthy = await fake_redis.get("scheduler:pipeline_healthy")
     assert healthy == "false"

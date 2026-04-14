@@ -245,36 +245,28 @@ async def test_premarket_retry_skips_non_trading_day():
 
 
 @pytest.mark.asyncio
-async def test_premarket_exception_triggers_kis_fallback():
-    """_premarket_collect 예외 경로에서 KIS 폴백 실행."""
+async def test_premarket_collect_calls_kis_directly():
+    """_premarket_collect가 KIS 일봉을 직접 호출하여 수집."""
     scheduler = _make_scheduler()
     telegram = AsyncMock()
     scheduler._telegram_bot = telegram
 
-    # DataGoKrCollector 예외 발생 시뮬레이션
-    mock_fallback_result = MagicMock()
-    mock_fallback_result.collected = 2500
-    mock_fallback_result.failed = 100
-    mock_fallback_result.total_target = 2600
-    mock_fallback_result.data_date = "20260410"
+    kis_result = MagicMock()
+    kis_result.collected = 2500
+    kis_result.failed = 100
+    kis_result.total_target = 2600
 
     mock_validation = MagicMock()
     mock_validation.passed = True
 
-    scheduler._run_kis_daily_fallback = AsyncMock(return_value=mock_fallback_result)
+    scheduler._run_kis_daily_collect = AsyncMock(return_value=kis_result)
     scheduler._validator = MagicMock()
     scheduler._validator.validate_kis_daily.return_value = mock_validation
     scheduler._run_db_validation = AsyncMock()
     scheduler._update_step_status = AsyncMock()
 
-    # DataGoKrCollector.collect_all이 예외 발생
-    with patch("modules.collector.scheduler.DataGoKrCollector") as mock_collector_cls:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(side_effect=Exception("포털 연결 실패"))
-        mock_collector_cls.return_value = mock_instance
+    result = await scheduler._premarket_collect()
 
-        result = await scheduler._premarket_collect()
-
-    # KIS 폴백이 실행되어 2500건 수집
-    scheduler._run_kis_daily_fallback.assert_awaited_once()
+    # KIS 직접 호출 확인
+    scheduler._run_kis_daily_collect.assert_awaited_once()
     assert result == 2500

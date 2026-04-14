@@ -50,12 +50,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~6.1 완료
-- 현재 Phase: Phase 6.1 (매매 전략 거래량 시간가중 보정) ✅ 완료
-- 현재 Sprint: Phase 6.1 Sprint 1 ✅ 완료 (2026-04-13)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13)
+- 전체 진행률: Phase 0~6.2 완료
+- 현재 Phase: Phase 6.2 (장전 수집 단순화: KIS 주경로 + 포털 장후 보조) ✅ 완료
+- 현재 Sprint: Phase 7 Sprint 1 대기 중 (Phase 6.1 배포 + 20거래일 축적 후)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7 Sprint 1 — 5분봉 거래량 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후)
+- 다음 마일스톤: Phase 7 Sprint 1 — 5분봉 가속도 지표 (최소 2026-05-12 이후, 20거래일 데이터 축적 필요)
 
 ## 기술 아키텍처 결정 사항
 
@@ -92,6 +92,7 @@ Phase 0 (완료)
                                       └─> Phase 5.2: WS 모의 환경 안정화
                                             └─> Phase 6: 스케줄러 + WS 복원력 강화
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
+                                                        └─> Phase 6.2: 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)
                                                         └─(코드)─> Phase 7: 5분봉 가속도 지표 + DB 구축
                                                         └─(데이터: 20거래일)─> Phase 7
                                                               └─(코드)─> Phase 8: Z-score + VWAP
@@ -117,6 +118,7 @@ Phase 0 (완료)
 - Phase 5.1 -> 5.2: WS 재연결 반복으로 장중 실시간 파이프라인 마비 -> 구독 수 제한 + 재연결 안정화
 - Phase 4, 5, 5.1, 5.2 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
+- Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.1 -> 7: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
 - Phase 7 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
 - Phase 8 -> 9: **(코드)** VWAP 엔진 + 백테스트 데이터셋, **(데이터)** 실전 운영 3~6개월 축적 필수
@@ -956,6 +958,40 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 (1차 + 2차) 완료
 > Phase 상세 계획: `docs/phase/phase6.1/phase6.1.md`
 > Sprint 1: `docs/phase/phase6.1/sprint1/sprint1.md` ✅ 완료 (2026-04-13)
+
+---
+
+## Phase 6.2: 장전 수집 단순화 — KIS 주경로 + 포털 장후 보조 (Sprint 1) ✅
+
+### 목표
+공공데이터포털 08:00 호출의 구조적 실패(정책: T+1 13시 이후)를 근본적으로 해결. 08:00 수집을 KIS 일봉 직접 호출로 전환하고, 포털은 16:00 장후 보조 수집으로 market_cap/listed_shares만 갱신. 상태 관리(portal_fresh, streak 카운터) 전면 제거로 복잡도 대폭 감소.
+
+### 작업 목록
+#### Sprint 1: 장전 수집 단순화 + 포털 장후 보조
+- `_premarket_collect`: 포털 제거 -> KIS 일봉 직접 호출
+- `_premarket_retry`: 포털 재시도 -> KIS 실패 시 KIS 재시도로 전환
+- `_portal_supplement_collect`: 16:00 포털 보조 cron 신규
+- `validate_premarket_db`: 소스 확장 (data_go_kr + kis_daily)
+- 불필요 코드 제거: portal_fresh, streak 카운터, 알림 승급, 14:00 cron
+- 4/4~4/10 포털 백필 (기존 trigger_premarket_date API 활용)
+
+### 완료 기준 (Definition of Done)
+- 08:00 KIS 일봉 직접 수집 동작
+- 08:30 KIS 실패 시 KIS 재시도 동작
+- 16:00 포털 보조 수집으로 market_cap/listed_shares 갱신
+- validate_premarket_db가 kis_daily 소스 포함
+- 4/4~4/10 백필 완료
+- 기존 테스트 전부 통과
+
+### 기술 고려사항
+- KIS 일봉은 market_cap=None → stocks.listed_shares * close_price 보정 (이미 screener.py에 구현됨)
+- 포털 필요 필드 = 2개뿐 (market_cap, listed_shares) → 장후 1회 수집으로 충분
+- 16:00 수집 = 전 종목 (스크리닝 모수 왜곡 방지)
+- 공공데이터포털 Rate Limit: 일 1,000건 → 정규 수집 ~10건 + 백필 시 하루 2거래일 한도
+
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API 개발자), 박퀀트(퀀트) — 4명 rev.2 검토 완료 (전원 합의)
+> Phase 상세 계획: `docs/phase/phase6.2/phase6.2.md`
+> Sprint 1: `docs/phase/phase6.2/sprint1/sprint1.md` ✅ 완료 (2026-04-14)
 
 ---
 

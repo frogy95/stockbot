@@ -223,7 +223,7 @@ class CollectionValidator:
         # 전체 건수
         total_stmt = select(func.count()).select_from(MarketData).where(
             MarketData.data_date >= boundary,
-            MarketData.source == "data_go_kr",
+            MarketData.source.in_(["data_go_kr", "kis_daily"]),
         )
         total_result = await session.execute(total_stmt)
         total_count = total_result.scalar_one()
@@ -239,7 +239,7 @@ class CollectionValidator:
         # close_price null 건수
         null_stmt = select(func.count()).select_from(MarketData).where(
             MarketData.data_date >= boundary,
-            MarketData.source == "data_go_kr",
+            MarketData.source.in_(["data_go_kr", "kis_daily"]),
             MarketData.close_price.is_(None),
         )
         null_result = await session.execute(null_stmt)

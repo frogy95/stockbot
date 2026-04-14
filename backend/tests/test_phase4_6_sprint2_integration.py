@@ -156,18 +156,15 @@ class TestSchedulerPipelineIntegration:
         )
 
         # 각 수집기 mock
+        kis_result = CollectionResult(
+            collected=2800, total_target=2800,
+            null_counts={"close_price": 0, "volume": 0},
+        )
         with (
-            patch("modules.collector.scheduler.DataGoKrCollector") as MockDataGoKr,
+            patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
             patch("modules.collector.scheduler.KISCollector") as MockKIS,
             patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         ):
-            MockDataGoKr.return_value.collect_all = AsyncMock(
-                return_value=CollectionResult(
-                    collected=2800,
-                    data_date=datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d"),
-                    null_counts={"close_price": 0, "volume": 0},
-                )
-            )
             MockMaster.return_value.collect = AsyncMock(
                 return_value={"etf_count": 500, "etn_count": 50, "source": "kis", "sanity_passed": True}
             )
