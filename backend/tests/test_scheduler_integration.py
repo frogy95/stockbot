@@ -18,7 +18,7 @@ from tests.conftest import FakeRedis
 def _premarket_result(collected: int = 2800) -> CollectionResult:
     return CollectionResult(
         collected=collected,
-        data_date=DataGoKrCollector._latest_trading_date(),
+        total_target=collected,
         null_counts={"close_price": 0, "volume": 0},
     )
 
@@ -74,11 +74,10 @@ async def test_full_pipeline_success_flow():
     scheduler = _make_scheduler(fake_redis)
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockData,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=_premarket_result())),
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=_premarket_result())
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )
@@ -109,12 +108,10 @@ async def test_premarket_failure_cascades():
     scheduler = _make_scheduler(fake_redis)
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockData,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(side_effect=Exception("API 장애"))),
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        # premarket 실패
-        MockData.return_value.collect_all = AsyncMock(side_effect=Exception("API 장애"))
         # etf_master는 독립 → 성공
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
@@ -147,8 +144,7 @@ async def test_manual_pipeline_recovers():
     scheduler = _make_scheduler(fake_redis)
 
     # 1단계: premarket 실패 시뮬레이션
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockData:
-        MockData.return_value.collect_all = AsyncMock(side_effect=Exception("초기 장애"))
+    with patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(side_effect=Exception("초기 장애"))):
         await scheduler._premarket_collect()
 
     healthy_before = await fake_redis.get(PIPELINE_HEALTHY_KEY)
@@ -156,11 +152,10 @@ async def test_manual_pipeline_recovers():
 
     # 2단계: 수동 복구 실행
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockData,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=_premarket_result())),
         patch("modules.collector.scheduler.KISMasterCollector") as MockMaster,
         patch("modules.collector.scheduler.KISCollector") as MockKIS,
     ):
-        MockData.return_value.collect_all = AsyncMock(return_value=_premarket_result())
         MockMaster.return_value.collect = AsyncMock(
             return_value={"etf_count": 700, "etn_count": 50, "source": "mst", "sanity_passed": True}
         )

@@ -56,22 +56,16 @@ async def _set_pipeline_status(redis: FakeRedis, status: dict) -> None:
 
 
 @asynccontextmanager
-async def _retry_patches(scheduler, portal_result, screen_result=None):
+async def _retry_patches(scheduler, kis_result, screen_result=None):
     """_premarket_retry 테스트 공통 패치 컨텍스트."""
-    validation_ok = ValidationResult(passed=True, severity="info")
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector,
-        patch.object(scheduler._validator, "validate_premarket", return_value=validation_ok),
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
         patch.object(scheduler._validator, "validate_premarket_db", AsyncMock(return_value=ValidationResult(passed=True))),
-        patch.object(scheduler._validator, "cross_check_prices", AsyncMock(return_value=[])),
         patch.object(scheduler, "_primary_screen", AsyncMock(return_value=screen_result or {"candidates": 0, "passed": 0})) as mock_screen,
         patch.object(scheduler, "_dart_collect", AsyncMock(return_value=0)) as mock_dart,
         patch.object(scheduler, "_sentiment_collect", AsyncMock(return_value=0)) as mock_sentiment,
         patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=portal_result)
-        MockCollector.return_value = mock_instance
         yield mock_screen, mock_dart, mock_sentiment
 
 
@@ -169,8 +163,8 @@ async def test_premarket_retry_triggers_rerun():
         "primary_screen": {"status": "skipped"},
     })
 
-    portal_result = CollectionResult(collected=1800, data_date="20260405")
-    async with _retry_patches(scheduler, portal_result) as (mock_screen, mock_dart, mock_sentiment):
+    kis_result = CollectionResult(collected=1800, total_target=1800)
+    async with _retry_patches(scheduler, kis_result) as (mock_screen, mock_dart, mock_sentiment):
         await scheduler._premarket_retry()
 
     mock_screen.assert_called_once()
@@ -188,8 +182,8 @@ async def test_premarket_retry_no_rerun_when_screen_success():
         "primary_screen": {"status": "success"},
     })
 
-    portal_result = CollectionResult(collected=1800, data_date="20260405")
-    async with _retry_patches(scheduler, portal_result) as (mock_screen, mock_dart, mock_sentiment):
+    kis_result = CollectionResult(collected=1800, total_target=1800)
+    async with _retry_patches(scheduler, kis_result) as (mock_screen, mock_dart, mock_sentiment):
         await scheduler._premarket_retry()
 
     mock_screen.assert_not_called()
@@ -206,8 +200,8 @@ async def test_premarket_retry_rerun_blocked_by_running_lock():
     })
     await redis.set(PIPELINE_RUNNING_KEY, "manual")
 
-    portal_result = CollectionResult(collected=1800, data_date="20260405")
-    async with _retry_patches(scheduler, portal_result) as (mock_screen, mock_dart, mock_sentiment):
+    kis_result = CollectionResult(collected=1800, total_target=1800)
+    async with _retry_patches(scheduler, kis_result) as (mock_screen, mock_dart, mock_sentiment):
         await scheduler._premarket_retry()
 
     mock_screen.assert_not_called()

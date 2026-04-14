@@ -109,13 +109,15 @@ async def test_premarket_validation_pass():
     fake_redis = FakeRedis()
     scheduler, _ = _make_scheduler(fake_redis)
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockData:
-        MockData.return_value.collect_all = AsyncMock(
-            return_value=CollectionResult(
-                collected=2800, data_date=_latest_date(),
-                null_counts={"close_price": 0, "volume": 0},
-            )
-        )
+    kis_result = CollectionResult(
+        collected=2800, total_target=2800,
+        null_counts={"close_price": 0, "volume": 0},
+    )
+
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         count = await scheduler._premarket_collect()
 
     assert count == 2800
@@ -133,13 +135,15 @@ async def test_premarket_validation_fail_low_count():
     fake_redis = FakeRedis()
     scheduler, _ = _make_scheduler(fake_redis)
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockData:
-        MockData.return_value.collect_all = AsyncMock(
-            return_value=CollectionResult(
-                collected=100, data_date=_latest_date(),
-                null_counts={"close_price": 0, "volume": 0},
-            )
-        )
+    kis_result = CollectionResult(
+        collected=100, total_target=2800,
+        null_counts={"close_price": 0, "volume": 0},
+    )
+
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         count = await scheduler._premarket_collect()
 
     assert count == 100
