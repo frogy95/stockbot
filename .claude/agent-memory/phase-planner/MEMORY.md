@@ -18,5 +18,5 @@
 - [Phase 5.2 계획](project_phase5.2.md) — KIS WS 모의 환경 안정화, 전문가 4명 검토, 단일 Sprint, rev.2: 재연결 버스트가 근본 원인(구독 수 초과 아님), paper=25종목 + 재연결 딜레이 0.5초/종목(핵심) + 7회/2초 백오프 + 캐시 TTL 10초
 - [Phase 6 계획](project_phase6.md) — 스케줄러 + WS 복원력 강화, 전문가 4명 검토, 2 Sprint, 15건 파라미터 확정 (ConcurrencyError+좀비연결 수정, 가드 or, recovery 3단계, KIS REST 재시도 3회, is_trading_day 가드)
 - [Phase 6.1 계획](project_phase6.1.md) — 거래량 시간가중 보정 + 5분봉 수집, 전문가 4명 1차+2차 검토, 돌파 강도 연동(5%+:1.5/3~5%:1.8/<3%:2.0) + MIN_VOLUME_FLOOR 0.5 + vol5m Redis 축적
-- [Phase 6.2 계획](project_phase6.2.md) — 포털 수집 타이밍 정합성 + 재시도 정책 수정, 전문가 4명 검토, 2 Sprint, portal_fresh 기반 retry + 14:00 cron + KIS streak 3일 차단
+- [Phase 6.2 계획](project_phase6.2.md) — 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조), 전문가 4명 rev.2 검토, 단일 Sprint, 08:00 KIS 직접 + 16:00 포털 보조 + 상태관리 전면 제거
 - [Phase 7/8/9 로드맵](project_phase_data_roadmap.md) — 데이터 의존성 체인: 6.1→7(20일)→8(20일)→9(3~6개월), 착수 경고 기준 명기

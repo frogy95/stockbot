@@ -1,7 +1,7 @@
-# Phase 6.2 API 개발자 검토 리포트 — 윤에이피
+# Phase 6.2 rev.2 API 개발자 검토 리포트 — 윤에이피
 
-> **검토일**: 2026-04-14
-> **검토 대상**: 포털 수집 타이밍 불일치 해결 아키텍처 초안
+> **검토일**: 2026-04-14 (단순화 방향 재검토)
+> **검토 대상**: 포털 수집 단순화 아키텍처 (KIS 주경로 + 포털 장후 보조)
 
 ---
 
@@ -9,81 +9,107 @@
 
 | 항목 | 판정 |
 |------|------|
-| 포털 정책 해석 | ✅ 통과 — T+1 13시 정확 |
-| 08:00 유지 + 14:00 보조 | ✅ 통과 |
-| retry 조건 변경 | ✅ 통과 — portal_fresh 플래그 도입 |
-| 백필 API 설계 | ⚠️ 주의 — Rate Limit 고려 필요 |
+| 08:00 포털 제거 -> KIS 직접 | ✅ 통과 — 구조적 실패 경로 제거 |
+| 08:30 retry 전환 | ✅ 통과 — KIS 실패 시 KIS 재시도로 |
+| 14:00 cron 제거 | ✅ 통과 — 16:00으로 대체 |
+| 16:00 포털 수집 신규 | ✅ 통과 — 구현 간단 |
 | validate_premarket_db 수정 | ✅ 통과 |
+| 백필 전략 | ✅ 통과 — 기존 API 활용 |
 
 ---
 
 ## 항목별 검증 결과
 
-### 1. 공공데이터포털 정책 해석
-- **판정**: ✅ 정확
-- 공식: "기준일자로부터 영업일 하루 뒤 오후 1시 이후 업데이트, 일 1회"
-- 금요일 데이터 → 월요일 13시 이후 (영업일 기준 T+1)
-- 08:00 호출은 구조적으로 T-1 데이터 미배포 시점 → 간헐 성공은 조기 배포 덕분
-- **실전 팁**: 포털은 실제로 T+1 09:00~11:00 사이에 조기 배포되는 경우가 잦음. 08:00 시도는 이 패턴을 활용하는 것이므로 제거하면 안 됨
+### 1. 08:00 포털 제거의 기술적 타당성
+- **판정**: ✅ 명확히 타당
+- 공공데이터포털 공식 정책: "기준일자로부터 영업일 하루 뒤 오후 1시 이후 업데이트"
+- 08:00 호출 = T-1 데이터가 아직 미배포 → 구조적 실패
+- **실전 팁**: 포털은 때때로 09~11시에 조기 배포하는 경우가 있으나, 이에 의존하는 건 "운이 좋으면 동작하는 코드"
+- 08:00에 KIS 일봉 API(`KISDailyCollector.collect_all`)를 직접 호출하면:
+  - 내장 3회 재시도 + 지수 백오프 (kis_daily_collector.py L71-86)
+  - 전 종목 OHLCV 수집 완비 (market_cap만 None)
+  - 11일간 실전 검증 완료
 
-### 2. 08:00 + 14:00 이중 수집 아키텍처
-- **판정**: ✅ 통과
-- 08:00: "기회주의적" 포털 시도 → 성공하면 최선, 실패하면 KIS 폴백
-- 14:00: "정식" 포털 수집 → T+1 13시 정책 준수, 거의 항상 성공
-- 14:00 수집 성공 시 기존 KIS 데이터와 **merge/보완** (market_cap, listed_shares 갱신)
-- 중복 방지: `market_data` 테이블의 unique(stock_code, data_date, source) 보장
-
-### 3. _premarket_retry 조건 변경
-- **판정**: ✅ 통과
-- 현재 (scheduler.py L680): `premarket_status == "success"` → 스킵
-- 문제: KIS 폴백 성공 = success → 포털 재시도 영구 차단
-- **권고 구현**:
+### 2. scheduler.py `_premarket_collect` 수정 방안
+- **판정**: ✅ 구현 명확
+- 현재 (L563-645): 포털 시도 -> 실패 시 `_run_kis_daily_fallback()` 호출
+- **변경**: 포털 시도 코드 제거, KIS 일봉을 직접 호출
+- 핵심 변경:
   ```python
-  # 포털 데이터 T-1 존재 여부 직접 확인
-  portal_fresh = await self._check_portal_data_freshness()
-  if portal_fresh:
-      logger.info("포털 재시도 스킵: 포털 T-1 데이터 이미 존재")
-      return
+  # 기존: DataGoKrCollector -> 실패 -> _run_kis_daily_fallback()
+  # 변경: KISDailyCollector.collect_all() 직접 호출
   ```
-- `_check_portal_data_freshness()`: DB에서 `source='data_go_kr'` AND `data_date >= T-1` 건수 >= 1500 확인
+- 포털 관련 import, 분기, 예외 처리 대폭 단순화
+- pipeline_status "premarket" = KIS 성공 시 "success" (기존 폴백 경로와 동일)
 
-### 4. 14:00 cron 구현 상세
-- **판정**: ✅ 구현 가능
-- 기존 `_premarket_collect()`를 거의 그대로 재사용 가능
-- 차이점: pipeline_status 초기화하지 않음 (08:00에서 이미 초기화됨)
-- 포털 성공 시: pipeline_status 보완 업데이트 + market_cap/listed_shares 갱신 알림
-- 포털 실패 시: 경고 로그만 (이미 KIS 데이터로 운영 중)
+### 3. 08:30 `_premarket_retry` 전환
+- **판정**: ✅ KIS 재시도로 전환 권고
+- 현재 (L668-726): 포털 재시도 → 성공 시 스크리닝 재실행
+- **변경**: KIS 수집 실패 시에만 KIS 재시도
+  ```python
+  # premarket_status != "success" → KIS 재시도
+  # premarket_status == "success" → 스킵 (기존 로직 유지)
+  ```
+- 재시도 성공 시 스크리닝 재실행 로직은 그대로 유지 (L709-719)
+- 포털 관련 코드만 제거, 구조는 동일
+
+### 4. 16:00 포털 수집 구현
+- **판정**: ✅ 간단하게 구현 가능
+- 기존 `DataGoKrCollector.collect_all(target_date=...)` 그대로 사용
+- target_date: 당일 or 전 거래일 (포털이 어떤 날짜를 배포하는지에 따라)
+- **주의점**: 포털 `collect_all`은 `_upsert_stock`에서 listed_shares 갱신 (L175) + `_save_market_data`에서 market_cap 포함 upsert
+- 기존 KIS 데이터(source='kis_daily')와 **별도 행**으로 저장됨 (source='data_go_kr')
+- unique 제약조건: `(stock_code, data_date, source)` → 중복 없음
+- **cron 등록**:
+  ```python
+  self._scheduler.add_job(
+      self._portal_supplement_collect,
+      CronTrigger(hour=16, minute=0, timezone=tz),
+      id="portal_supplement",
+      misfire_grace_time=MISFIRE_GRACE_TIME,
+  )
+  ```
 
 ### 5. validate_premarket_db 수정
-- **판정**: ✅ 통과
-- 현재 (validator.py L227): `source == "data_go_kr"` 전용 → KIS 데이터 무시
-- **권고**: `source.in_(["data_go_kr", "kis_daily"])` 로 변경 (validate_screening_readiness와 일관성)
-- 단, 별도 `validate_portal_freshness()` 메서드 신규 추가하여 포털 전용 최신성 체크
+- **판정**: ✅ 필수 수정
+- 현재 (validator.py L226-227): `MarketData.source == "data_go_kr"` 전용
+- KIS가 주 경로이므로: `MarketData.source.in_(["data_go_kr", "kis_daily"])` 확장 필수
+- 이 수정이 없으면 08:00 KIS 수집 후 DB 검증이 항상 실패 ("건수 부족: 0 < 1500")
+- **이미 validate_screening_readiness에서는 소스 무관하게 체크** → 일관성 확보
 
-### 6. 백필 Rate Limit
-- **판정**: ⚠️ 주의
-- 공공데이터포털 일 호출 한도: 1,000건 (우리 환경변수 확인 필요)
-- 5거래일 백필 = 5회 * ~10페이지 = ~50 API 호출 → 한도 내
-- 하지만 당일 정상 수집(~10페이지) + 백필(~50페이지) = 누적 주의
-- **권고**: 백필은 하루 최대 2거래일씩 나눠서 실행 (안전 마진)
+### 6. validate_portal_freshness 불필요
+- **판정**: ✅ 제거 가능
+- 기존 계획: portal_fresh 체크용 validate_portal_freshness 신규 추가
+- 단순화 후: 포털을 08:00에 호출하지 않으므로 "포털 최신성" 체크 자체가 불필요
+- 16:00 수집은 무조건 실행 (실패하면 경고 로그만) — 스킵 조건 불필요
+
+### 7. 백필 전략
+- **판정**: ✅ 기존 API 활용
+- `trigger_premarket_date` (scheduler.py L505-527): 포털 기반, 날짜 지정 가능
+- 4/4~4/10 백필은 수동으로 API 호출하면 됨 (Sprint 내 Task로 포함)
+- 추가 스크립트 불필요 — 기존 인프라 충분
 
 ---
 
 ## 파라미터 조정 권고
 
-| 항목 | 원래값 | 권고값 | 근거 |
-|------|--------|--------|------|
-| 14:00 cron 시각 | 미정 | 14:00 KST | 포털 정책 T+1 13시 + 1시간 마진 |
-| 08:30 retry 조건 | premarket.status == success | portal_fresh (DB 직접 확인) | KIS 폴백 성공과 독립 |
-| validate_premarket_db 소스 | data_go_kr 전용 | data_go_kr + kis_daily | screening_readiness와 일관성 |
-| 백필 일일 한도 | 없음 | 2거래일/일 | 포털 Rate Limit 안전 마진 |
-| 포털 최신성 확인 임계값 | 없음 | 1500건 + data_date >= T-1 | 수집 완전성 보장 |
+| 항목 | 기존 Phase 6.2 | 단순화 권고 | 근거 |
+|------|---------------|------------|------|
+| 14:00 cron | portal_afternoon_collect | **제거** | 16:00으로 대체 |
+| 16:00 cron | 없음 | **portal_supplement_collect 신규** | 포털 데이터 확실한 시간대 |
+| portal_fresh 플래그 | Redis 키 | **제거** | 포털 08:00 호출 없으므로 불필요 |
+| validate_portal_freshness | 신규 메서드 | **제거** | 불필요 |
+| validate_premarket_db 소스 | data_go_kr 전용 | **data_go_kr + kis_daily** | KIS 주 경로 반영 |
+| 백필 스크립트 | scripts/backfill_portal.py | **기존 trigger_premarket_date 활용** | 신규 코드 불필요 |
+| KIS 폴백 streak | Redis 키 | **제거** | 폴백 개념 소멸 |
 
 ---
 
 ## 리스크 및 대안
 
-- **리스크**: 14:00 cron과 08:00 파이프라인이 같은 날 같은 데이터를 중복 수집 → DB I/O 낭비
-- **대안**: 14:00 수집 전 포털 최신성 체크하여 이미 수집됨이면 스킵 (portal_fresh 재사용)
-- **리스크**: 포털 자체 장애(며칠간) 시 14:00 cron도 계속 실패 → 알림 피로
-- **대안**: 포털 연속 실패 카운터 + N회 초과 시 알림 빈도 감소 (일 1회 요약)
+- **리스크**: 16:00 포털 수집 시 포털이 당일 데이터를 아직 미배포한 경우 (드물지만 가능)
+- **대안**: 포털 응답의 actual_date != requested_date 검증 로직이 이미 존재 (data_go_kr.py L80-84) → 날짜 불일치 시 경고 로그
+- **리스크**: KIS REST API 자체 장기 장애
+- **대안**: 08:30 KIS 재시도 + 기존 pipeline_healthy=false 로직으로 자동매매 차단 (이미 구현됨)
+- **리스크**: 포털 Rate Limit (일 1,000건) — 16:00 정규 수집(~10건) + 백필 시 누적
+- **대안**: 백필은 하루 최대 2거래일씩 실행 (기존 권고 유지)

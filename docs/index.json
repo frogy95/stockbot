@@ -2208,7 +2208,7 @@
     },
     {
       "id": "phase6.2",
-      "title": "포털 수집 타이밍 정합성 + 재시도 정책 수정",
+      "title": "장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)",
       "status": "planned",
       "phaseDoc": "docs/phase/phase6.2/phase6.2.md",
       "sprints": []
