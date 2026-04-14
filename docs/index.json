@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-14T18:00:00+09:00",
+  "lastUpdated": "2026-04-14T20:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2218,7 +2218,7 @@
           "status": "completed",
           "branch": "phase6.2-sprint1",
           "sprintDoc": "docs/phase/phase6.2/sprint1/sprint1.md",
-          "prUrl": "",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/127",
           "progress": {
             "total": 3,
             "completed": 3
@@ -2673,6 +2673,15 @@
       "version": "v1.8.0",
       "description": "Phase 6.1 Sprint 1 프로덕션 배포 — 시간가중 거래량 보정 + 돌파 강도 연동 임계값 (momentum_breakout.py), 5분봉 거래량 집계 모듈 신규 (volume_aggregator.py), 5분봉 스케줄러 연동 + vol5m 조회 API (GET /api/v1/collector/vol5m/{code}), Phase 7/8/9 데이터 의존성 로드맵 추가",
       "prUrl": "https://github.com/frogy95/stockbot/pull/126",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-14",
+      "type": "sprint",
+      "ref": "phase6.2-sprint1",
+      "version": "v1.9.0",
+      "description": "Phase 6.2 Sprint 1 프로덕션 배포 — 장전 수집 단순화 (KIS 주경로 직접 수집, 공공데이터포털 폴백 제거), 16:00 portal_supplement cron 신설 (포털 장후 보조), validate_premarket_db 소스 조건 확장 (data_go_kr + kis_daily), 테스트 7건 신규 추가",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/128",
       "status": "in_progress"
     }
   ]
