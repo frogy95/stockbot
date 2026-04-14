@@ -50,12 +50,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~6.1 완료
-- 현재 Phase: Phase 6.2 (장전 수집 단순화: KIS 주경로 + 포털 장후 보조) 🔄 진행 중
-- 현재 Sprint: Phase 6.2 Sprint 1 — 장전 수집 단순화 + 포털 장후 보조 🔄 진행 중
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13)
+- 전체 진행률: Phase 0~6.2 완료
+- 현재 Phase: Phase 6.2 (장전 수집 단순화: KIS 주경로 + 포털 장후 보조) ✅ 완료
+- 현재 Sprint: Phase 7 Sprint 1 대기 중 (Phase 6.1 배포 + 20거래일 축적 후)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조)
+- 다음 마일스톤: Phase 7 Sprint 1 — 5분봉 가속도 지표 (최소 2026-05-12 이후, 20거래일 데이터 축적 필요)
 
 ## 기술 아키텍처 결정 사항
 
@@ -961,7 +961,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 6.2: 장전 수집 단순화 — KIS 주경로 + 포털 장후 보조 (Sprint 1) 🔄
+## Phase 6.2: 장전 수집 단순화 — KIS 주경로 + 포털 장후 보조 (Sprint 1) ✅
 
 ### 목표
 공공데이터포털 08:00 호출의 구조적 실패(정책: T+1 13시 이후)를 근본적으로 해결. 08:00 수집을 KIS 일봉 직접 호출로 전환하고, 포털은 16:00 장후 보조 수집으로 market_cap/listed_shares만 갱신. 상태 관리(portal_fresh, streak 카운터) 전면 제거로 복잡도 대폭 감소.
@@ -991,7 +991,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API 개발자), 박퀀트(퀀트) — 4명 rev.2 검토 완료 (전원 합의)
 > Phase 상세 계획: `docs/phase/phase6.2/phase6.2.md`
-> Sprint 1: `docs/phase/phase6.2/sprint1/sprint1.md` 🔄 진행 중
+> Sprint 1: `docs/phase/phase6.2/sprint1/sprint1.md` ✅ 완료 (2026-04-14)
 
 ---
 

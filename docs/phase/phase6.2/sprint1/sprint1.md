@@ -6,9 +6,10 @@
 
 **Tech Stack:** Python 3.12, FastAPI, APScheduler, SQLAlchemy 2.0 (async), Redis 7
 
-**Sprint 기간:** 2026-04-14 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-14 ~ 2026-04-14
 **이전 스프린트:** Phase 6.1 Sprint 1 (798 passed, PR #125)
 **브랜치명:** `phase6.2-sprint1`
+**상태:** ✅ 완료 (2026-04-14)
 
 ---
 
@@ -59,8 +60,8 @@ git commit -m "feat(phase6.2-sprint1): task1 -- validate_premarket_db 소스 조
 ```
 
 **완료 기준:**
-- ⬜ validate_premarket_db의 2개 쿼리에서 `source.in_(["data_go_kr", "kis_daily"])` 조건 적용
-- ⬜ 기존 테스트 회귀 없음
+- ✅ validate_premarket_db의 2개 쿼리에서 `source.in_(["data_go_kr", "kis_daily"])` 조건 적용
+- ✅ 기존 테스트 회귀 없음
 
 ---
 
@@ -161,12 +162,12 @@ git commit -m "feat(phase6.2-sprint1): task2 -- _premarket_collect KIS 직접 �
 ```
 
 **완료 기준:**
-- ⬜ `_premarket_collect`가 KIS 직접 호출 단일 경로
-- ⬜ `_premarket_retry`가 KIS 재시도
-- ⬜ `_portal_supplement_collect` 16:00 cron 동작
-- ⬜ `_run_kis_daily_fallback` -> `_run_kis_daily_collect` 이름 변경
-- ⬜ `_send_fallback_info_alert`, `_send_double_failure_alert` 제거
-- ⬜ import 오류 없음
+- ✅ `_premarket_collect`가 KIS 직접 호출 단일 경로
+- ✅ `_premarket_retry`가 KIS 재시도
+- ✅ `_portal_supplement_collect` 16:00 cron 동작
+- ✅ `_run_kis_daily_fallback` -> `_run_kis_daily_collect` 이름 변경
+- ✅ `_send_fallback_info_alert`, `_send_double_failure_alert` 제거
+- ✅ import 오류 없음
 
 ---
 
@@ -219,10 +220,10 @@ git commit -m "feat(phase6.2-sprint1): task3 -- 테스트 수정 + Phase 6.2 단
 ```
 
 **완료 기준:**
-- ⬜ test_scheduler.py job_count=6, portal_supplement 포함
-- ⬜ test_scheduler_retry.py KIS 기반으로 전환
-- ⬜ test_scheduler_phase62.py 7개 테스트 PASS
-- ⬜ 전체 pytest PASS
+- ✅ test_scheduler.py job_count=6, portal_supplement 포함
+- ✅ test_scheduler_retry.py KIS 기반으로 전환
+- ✅ test_scheduler_phase62.py 7개 테스트 PASS
+- ✅ 전체 pytest PASS (805 passed, 0 failed)
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-14T12:00:00+09:00",
+  "lastUpdated": "2026-04-14T18:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2209,18 +2209,19 @@
     {
       "id": "phase6.2",
       "title": "장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase6.2/phase6.2.md",
       "sprints": [
         {
           "id": "sprint1",
           "title": "장전 수집 단순화 + 포털 장후 보조",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase6.2-sprint1",
           "sprintDoc": "docs/phase/phase6.2/sprint1/sprint1.md",
+          "prUrl": "",
           "progress": {
             "total": 3,
-            "completed": 0
+            "completed": 3
           },
           "tasks": [
             {
@@ -2228,27 +2229,27 @@
               "title": "validate_premarket_db 소스 조건 확장 (data_go_kr + kis_daily)",
               "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-1-validate_premarket_db-소스-조건-확장",
               "testPlan": "validate_premarket_db에서 source.in_(['data_go_kr', 'kis_daily']) 적용 + 기존 테스트 회귀 없음",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": ["8c7b85f"]
             },
             {
               "id": "task2",
               "title": "scheduler.py 단순화 (KIS 직접 + 16:00 포털 cron + 데드코드 제거)",
               "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-2-schedulerpy-단순화-핵심-변경",
               "testPlan": "_premarket_collect KIS 직접, _premarket_retry KIS 재시도, portal_supplement 16:00 cron, 폴백 알림 제거",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": ["b1ea5aa"]
             },
             {
               "id": "task3",
               "title": "기존 테스트 수정 + Phase 6.2 검증 테스트 7건 추가",
               "path": "docs/phase/phase6.2/sprint1/sprint1.md#task-3-기존-테스트-수정--신규-테스트--통합-검증",
               "testPlan": "test_scheduler.py job_count=6 + test_scheduler_retry.py KIS 전환 + test_scheduler_phase62.py 7 passed + 전체 pytest PASS",
-              "testResult": "",
-              "status": "planned",
-              "commits": []
+              "testResult": "805 passed, 0 failed",
+              "status": "completed",
+              "commits": ["62b1f5a"]
             }
           ]
         }
