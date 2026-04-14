@@ -61,41 +61,44 @@ async def test_portal_fail_kis_fallback_screening():
 
 
 @pytest.mark.asyncio
-async def test_portal_success_no_fallback():
-    """포털 정상 → KIS 보조 수집 미호출."""
-    from modules.collector.sources.data_go_kr import DataGoKrCollector
+async def test_kis_success_no_alert():
+    """KIS 수집 성공 → 장애 알림 없음, premarket=success."""
     fake_redis = FakeRedis()
+    mock_bot = AsyncMock()
+    mock_bot.send_notification = AsyncMock()
     scheduler = _make_scheduler(fake_redis)
+    scheduler.set_telegram_bot(mock_bot)
 
-    portal_result = CollectionResult(
+    kis_result = CollectionResult(
         collected=2800, total_target=3000,
-        data_date=DataGoKrCollector._latest_trading_date(),
         null_counts={"close_price": 0, "volume": 0},
     )
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
-         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
-
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         await scheduler._premarket_collect()
 
-    MockKIS.return_value.collect_all.assert_not_called()
+    # 장애/긴급 알림 없음
+    assert not mock_bot.send_notification.called
+
+    status = await scheduler._get_pipeline_status()
+    assert status["premarket"]["status"] == "success"
 
 
 @pytest.mark.asyncio
-async def test_dual_failure_pipeline_unhealthy():
-    """포털 + KIS 모두 실패 → pipeline_healthy=false."""
+async def test_kis_failure_pipeline_unhealthy():
+    """KIS 수집 실패 → pipeline_healthy=false."""
     fake_redis = FakeRedis()
     scheduler = _make_scheduler(fake_redis)
 
-    portal_result = CollectionResult(collected=50, total_target=3000, data_date="20260403", null_counts={})
     kis_result = CollectionResult(collected=100, failed=2400, total_target=2500, data_date="20260403")
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal, \
-         patch("modules.collector.scheduler.KISDailyCollector") as MockKIS:
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_result)
-        MockKIS.return_value.collect_all = AsyncMock(return_value=kis_result)
-
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
+        patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
+    ):
         await scheduler._premarket_collect()
 
     healthy = await fake_redis.get(PIPELINE_HEALTHY_KEY)
@@ -141,14 +144,11 @@ async def test_kis_daily_market_cap_estimation():
 
 
 @pytest.mark.asyncio
-async def test_portal_fail_kis_success_retry_success():
-    """08:00 포털 실패 → KIS 폴백 성공([정보] 알림) + 08:30 재시도 성공([복구] 알림) → pipeline_healthy=true.
+async def test_kis_success_then_retry_skip():
+    """08:00 KIS 성공 → premarket=success → 08:30 재시도 스킵.
 
-    KIS 폴백 성공 → premarket="success" → 재시도 스킵(이미 성공).
-    이중 실패 후 재시도 복구 경로는 별도로 검증:
-    - premarket을 직접 "failed"로 설정 후 retry 성공 → [복구] 알림 확인.
+    실패 상태에서 재시도 성공 시 [복구] 알림 확인도 함께 검증.
     """
-    from modules.collector.sources.data_go_kr import DataGoKrCollector
     import json
     from modules.collector.scheduler import PIPELINE_STATUS_KEY, STATE_TTL
 
@@ -158,49 +158,34 @@ async def test_portal_fail_kis_success_retry_success():
     scheduler = _make_scheduler(fake_redis)
     scheduler.set_telegram_bot(mock_bot)
 
-    portal_fail = CollectionResult(collected=50, total_target=3000, data_date=None, null_counts={})
-    kis_ok = CollectionResult(collected=2400, failed=100, total_target=2500, data_date=None)
+    kis_ok = CollectionResult(collected=2400, failed=100, total_target=2500, null_counts={"close_price": 0, "volume": 0})
 
-    # 08:00: 포털 실패 → KIS 폴백 성공 → [정보] 알림
+    # 08:00: KIS 성공 → 장애 알림 없음
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
-        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_ok)),
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_ok)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
     ):
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_fail)
         await scheduler._premarket_collect()
 
-    messages = [c[0][0] for c in mock_bot.send_notification.call_args_list]
-    assert any("[정보]" in m for m in messages)
-    assert not any("[긴급]" in m for m in messages)
+    assert not mock_bot.send_notification.called
     mock_bot.send_notification.reset_mock()
 
-    # KIS 폴백 성공 → premarket="success" → retry 스킵 확인
-    with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockSkip,
-        patch("modules.collector.scheduler.is_trading_day", return_value=True),
-    ):
+    # KIS 성공 → premarket="success" → retry 스킵 확인
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
         await scheduler._premarket_retry()
-        MockSkip.return_value.collect_all.assert_not_called()
 
-    # 이중 실패 상태에서 재시도 성공 → [복구] 알림 확인
+    # 실패 상태에서 재시도 성공 → [복구] 알림 확인
     await fake_redis.set(
         PIPELINE_STATUS_KEY,
         json.dumps({"premarket": {"status": "failed"}}),
         ttl=STATE_TTL,
     )
-    portal_ok = CollectionResult(
-        collected=2800, total_target=3000,
-        data_date=DataGoKrCollector._latest_trading_date(),
-        null_counts={"close_price": 0, "volume": 0},
-    )
+    kis_retry_ok = CollectionResult(collected=2800, total_target=3000, null_counts={"close_price": 0, "volume": 0})
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockRetry,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_retry_ok)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
-        patch.object(scheduler._validator, "cross_check_prices", new=AsyncMock(return_value=[])),
         patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
-        MockRetry.return_value.collect_all = AsyncMock(return_value=portal_ok)
         await scheduler._premarket_retry()
 
     retry_messages = [c[0][0] for c in mock_bot.send_notification.call_args_list]
@@ -211,28 +196,25 @@ async def test_portal_fail_kis_success_retry_success():
 
 
 @pytest.mark.asyncio
-async def test_portal_fail_kis_fail_double_failure():
-    """08:00 포털 실패 → KIS 폴백 실패 → [긴급] 알림 → pipeline_healthy=false → 08:30 재시도 실패 → 상태 유지."""
+async def test_kis_fail_then_retry_fail():
+    """08:00 KIS 실패 → [장애] 알림 → pipeline_healthy=false → 08:30 재시도 실패 → 상태 유지."""
     fake_redis = FakeRedis()
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
     scheduler = _make_scheduler(fake_redis)
     scheduler.set_telegram_bot(mock_bot)
 
-    portal_fail = CollectionResult(collected=50, total_target=3000, data_date=None, null_counts={})
     kis_fail = CollectionResult(collected=0, total_target=0, data_date=None, null_counts={})
 
-    # 08:00: 이중 실패
+    # 08:00: KIS 실패
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
-        patch.object(scheduler, "_run_kis_daily_fallback", new=AsyncMock(return_value=kis_fail)),
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_fail)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
     ):
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_fail)
         await scheduler._premarket_collect()
 
     messages = [c[0][0] for c in mock_bot.send_notification.call_args_list]
-    assert any("[긴급]" in m for m in messages)
+    assert any("[장애]" in m for m in messages)
 
     healthy = await fake_redis.get("scheduler:pipeline_healthy")
     assert healthy == "false"
@@ -240,8 +222,10 @@ async def test_portal_fail_kis_fail_double_failure():
     mock_bot.send_notification.reset_mock()
 
     # 08:30: 재시도도 실패 → 상태 유지
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockRetry:
-        MockRetry.return_value.collect_all = AsyncMock(return_value=portal_fail)
+    with (
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_fail)),
+        patch("modules.collector.scheduler.is_trading_day", return_value=True),
+    ):
         await scheduler._premarket_retry()
 
     # 재시도 실패 → 복구 알림 없음, 상태 여전히 failed
@@ -251,35 +235,27 @@ async def test_portal_fail_kis_fail_double_failure():
 
 
 @pytest.mark.asyncio
-async def test_portal_success_no_retry_no_fallback():
-    """08:00 포털 정상 → 재시도 스킵 → cross-check 실행 → 알림 없음."""
-    from modules.collector.sources.data_go_kr import DataGoKrCollector
-
+async def test_kis_success_no_retry_no_alert():
+    """08:00 KIS 정상 → 재시도 스킵 → 알림 없음."""
     fake_redis = FakeRedis()
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
     scheduler = _make_scheduler(fake_redis)
     scheduler.set_telegram_bot(mock_bot)
 
-    portal_ok = CollectionResult(
+    kis_ok = CollectionResult(
         collected=2800, total_target=3000,
-        data_date=DataGoKrCollector._latest_trading_date(),
         null_counts={"close_price": 0, "volume": 0},
     )
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockPortal,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_ok)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
-        patch.object(scheduler._validator, "cross_check_prices", new=AsyncMock(return_value=[])) as mock_cc,
     ):
-        MockPortal.return_value.collect_all = AsyncMock(return_value=portal_ok)
         await scheduler._premarket_collect()
 
-    # 정보/긴급 알림 없음
+    # 장애 알림 없음
     assert not mock_bot.send_notification.called
-
-    # cross-check 호출됨
-    mock_cc.assert_called_once()
 
     # 재시도 스킵 (premarket 이미 success)
     with patch("modules.collector.scheduler.DataGoKrCollector") as MockRetry:

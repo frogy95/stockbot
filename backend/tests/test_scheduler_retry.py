@@ -1,4 +1,4 @@
-"""스케줄러 08:30 포털 재시도 job 테스트."""
+"""스케줄러 08:30 KIS 재시도 job 테스트."""
 
 import json
 import pytest
@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from modules.collector.scheduler import CollectorScheduler, PIPELINE_STATUS_KEY
 from modules.collector.models import CollectionResult
-from modules.collector.sources.data_go_kr import DataGoKrCollector
 from tests.conftest import FakeRedis
 
 
@@ -68,20 +67,16 @@ async def test_retry_skipped_when_premarket_success():
     pipeline_status = {"premarket": {"status": "success"}}
     await fake_redis.set(PIPELINE_STATUS_KEY, json.dumps(pipeline_status))
 
-    with patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector:
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=CollectionResult(collected=2800))
-        MockCollector.return_value = mock_instance
-
+    with patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock()) as mock_collect:
         await scheduler._premarket_retry()
 
-        # premarket이 이미 성공 상태이므로 collect_all이 호출되면 안 됨
-        mock_instance.collect_all.assert_not_called()
+        # premarket이 이미 성공 상태이므로 _run_kis_daily_collect가 호출되면 안 됨
+        mock_collect.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_retry_executes_when_premarket_failed():
-    """premarket.status == 'failed'일 때 포털 재수집 실행 → 성공 시 _update_step_status 호출."""
+    """premarket.status == 'failed'일 때 KIS 재수집 실행 → 성공 시 _update_step_status 호출."""
     fake_redis = FakeRedis()
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
@@ -94,24 +89,16 @@ async def test_retry_executes_when_premarket_failed():
     success_result = CollectionResult(
         collected=2800,
         total_target=2800,
-        data_date=DataGoKrCollector._latest_trading_date(),
         null_counts={"close_price": 0, "volume": 0},
     )
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=success_result)),
         patch.object(scheduler, "_update_step_status", new=AsyncMock()) as mock_update,
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
         patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=success_result)
-        MockCollector.return_value = mock_instance
-
         await scheduler._premarket_retry()
-
-        # collect_all 호출 확인
-        mock_instance.collect_all.assert_called_once()
 
         # _update_step_status("premarket", "success", ...) 호출 확인
         mock_update.assert_called_once()
@@ -121,38 +108,33 @@ async def test_retry_executes_when_premarket_failed():
 
 
 @pytest.mark.asyncio
-async def test_retry_portal_success_overrides_kis():
-    """재시도 성공 시 포털 데이터 기준으로 step status가 업데이트되어야 한다."""
+async def test_retry_kis_success_updates_status():
+    """KIS 재시도 성공 시 pipeline_status가 success로 업데이트되어야 한다."""
     fake_redis = FakeRedis()
     mock_bot = AsyncMock()
     mock_bot.send_notification = AsyncMock()
     scheduler = _make_scheduler(fake_redis=fake_redis, telegram_bot=mock_bot)
 
-    # premarket 실패 상태 + KIS 폴백으로 success였던 상황 시뮬레이션
+    # premarket 실패 상태
     pipeline_status = {
         "premarket": {
             "status": "failed",
-            "error": "포털 실패",
+            "error": "KIS 수집 실패",
         }
     }
     await fake_redis.set(PIPELINE_STATUS_KEY, json.dumps(pipeline_status))
 
-    portal_result = CollectionResult(
+    kis_result = CollectionResult(
         collected=2900,
         total_target=2900,
-        data_date=DataGoKrCollector._latest_trading_date(),
         null_counts={"close_price": 0, "volume": 0},
     )
 
     with (
-        patch("modules.collector.scheduler.DataGoKrCollector") as MockCollector,
+        patch.object(scheduler, "_run_kis_daily_collect", new=AsyncMock(return_value=kis_result)),
         patch.object(scheduler, "_run_db_validation", new=AsyncMock()),
         patch("modules.collector.scheduler.is_trading_day", return_value=True),
     ):
-        mock_instance = AsyncMock()
-        mock_instance.collect_all = AsyncMock(return_value=portal_result)
-        MockCollector.return_value = mock_instance
-
         await scheduler._premarket_retry()
 
     # Redis의 pipeline_status에서 premarket이 success로 업데이트되었는지 확인
