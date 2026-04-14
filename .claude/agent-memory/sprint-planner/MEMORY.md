@@ -50,6 +50,8 @@
 
 - Phase 6.1 Sprint 1 — 시간가중 거래량 보정 + 5분봉 수집 선행 구축, ✅ 완료 (2026-04-13) / PR: (생성 후 기입)
 
+- Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조), 🔄 진행 중 (2026-04-14)
+
 ## 다음 사용 가능한 스프린트
 
 - Phase 7 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
@@ -197,3 +199,10 @@
 - Phase 6.1 Sprint 1: CollectorScheduler.__init__에 volume_aggregator 파라미터 추가 — 기존 _make_scheduler 테스트 헬퍼에도 추가 필요
 - Phase 6.1 Sprint 1: main.py lifespan에서 VolumeAggregator(redis_client) 생성 후 scheduler에 주입 + app.state에 저장
 - Phase 6.1 Sprint 1: Phase 문서의 Redis 키 스키마 `vol5m:{stock_code}:{date}:{slot_index}` 확정 (Phase 7 연동 시 동일 키 패턴)
+- Phase 6.2 Sprint 1: _premarket_collect 현재 ~80줄 (포털 3중 분기 + 예외 경로 KIS 폴백) -> ~20줄 (KIS 단일 경로)로 단순화
+- Phase 6.2 Sprint 1: _run_kis_daily_fallback -> _run_kis_daily_collect 이름 변경 (폴백 -> 주 경로)
+- Phase 6.2 Sprint 1: _send_fallback_info_alert, _send_double_failure_alert 메서드 제거 (호출부 모두 _premarket_collect에서 제거)
+- Phase 6.2 Sprint 1: validate_premarket_db L226, L242 두 곳에서 source == "data_go_kr" -> source.in_(["data_go_kr", "kis_daily"]) 변경
+- Phase 6.2 Sprint 1: start()에 portal_supplement CronTrigger(hour=16, minute=0) 추가 -> test_scheduler.py job_count 5->6
+- Phase 6.2 Sprint 1: test_scheduler_retry.py의 3개 테스트가 DataGoKrCollector mock 사용 — KIS 기반으로 전환 필요
+- Phase 6.2 Sprint 1: DataGoKrCollector import는 유지 (_portal_supplement_collect에서 사용)
