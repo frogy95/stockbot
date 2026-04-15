@@ -5,30 +5,18 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 — v1.9.0 (2026-04-14)
+### Hotfix: 포지션 사이징 balance_amount=0 하드코딩 결함 수정 (2026-04-15)
 
-포함 스프린트: Phase 6.2 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/128
+PR: https://github.com/frogy95/stockbot/pull/129
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ✅ 자동 검증 완료 항목:
+  - 코드 리뷰: Critical/High/Medium 이슈 없음
+  - pytest (관련 테스트): 31 passed, 0 failed (test_momentum_breakout, test_phase4_6_integration, test_phase4_8_integration)
+  - /api/v1/health: healthy (database: connected, redis: connected)
 
-#### 자동 검증 완료 (sprint-review 결과)
-
-- ✅ pytest: 805 passed, 0 failed
-- ✅ /api/v1/health: healthy (database: connected, redis: connected)
-- ✅ /api/v1/collector/status: running=True, job_count=8
-- ✅ portal_supplement job 등록 확인
-- ✅ Playwright UI 검증 정상
-- ✅ 코드 리뷰: Critical/High/Medium 이슈 없음
-
-#### 수동 검증 항목 (배포 후 확인 필요)
-
-- ✅ /api/v1/health 헬스체크 확인 (프로덕션) — healthy, database: connected, redis: connected
-- ✅ 주요 페이지 접속 확인 — 307 redirect 정상, job_count=8, portal_supplement 등록 확인
-- ✅ 16:00 포털 보조 수집 cron 동작 확인 — 2026-04-14 16:00 KST, 2882종목 수집 완료 (기준일: 20260413)
-- ✅ 08:00 KIS 직접 수집 정상 동작 확인 — 2026-04-15 08:00 KST, 2113/2641 수집 (validation=PASS), 전체 파이프라인 888.8초
-- ✅ 08:30 KIS 재시도 동작 확인 — premarket 성공 상태이므로 즉시 스킵 (정상)
+- ⬜ 수동 검증 필요 항목:
+  - docker compose up --build (코드 반영)
+  - 장중 매매 신호 발생 시 주문 수량 > 0 확인 (Railway 로그: `주문가능 예수금: NNNNN원`)
 
 ---
 

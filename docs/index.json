@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-14T20:00:00+09:00",
+  "lastUpdated": "2026-04-15T10:10:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2064,7 +2064,9 @@
               "testPlan": "test_reconnect_cancels, test_reconnect_starts, test_ws_connect_open_timeout, test_ws_subscribe_none_guard",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["ab87f13"]
+              "commits": [
+                "ab87f13"
+              ]
             },
             {
               "id": "task2",
@@ -2073,7 +2075,9 @@
               "testPlan": "test_ws_manager_guard_or_condition",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["ab87f13"]
+              "commits": [
+                "ab87f13"
+              ]
             },
             {
               "id": "task3",
@@ -2082,7 +2086,9 @@
               "testPlan": "test_market_open_failure_sends_telegram, test_market_open_recovery_checks_connected, test_scheduled_pipeline_skips_non_trading_day",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["ab87f13"]
+              "commits": [
+                "ab87f13"
+              ]
             },
             {
               "id": "task4",
@@ -2091,7 +2097,9 @@
               "testPlan": "pytest 전체 통과",
               "testResult": "771 passed, 0 failed",
               "status": "completed",
-              "commits": ["ab87f13"]
+              "commits": [
+                "ab87f13"
+              ]
             }
           ]
         },
@@ -2114,7 +2122,9 @@
               "testPlan": "test_kis_daily_collector_retries_on_500, test_kis_daily_collector_retries_on_429, test_kis_daily_collector_no_retry_on_400",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["de3d066"]
+              "commits": [
+                "de3d066"
+              ]
             },
             {
               "id": "task2",
@@ -2123,7 +2133,9 @@
               "testPlan": "test_recovery_three_stage_retry, test_recovery_skips_if_connected, test_recovery_succeeds_on_second_attempt, test_recovery_final_failure_alert",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["de3d066"]
+              "commits": [
+                "de3d066"
+              ]
             },
             {
               "id": "task3",
@@ -2132,7 +2144,9 @@
               "testPlan": "test_premarket_exception_triggers_kis_fallback",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["de3d066"]
+              "commits": [
+                "de3d066"
+              ]
             },
             {
               "id": "task4",
@@ -2141,7 +2155,9 @@
               "testPlan": "test_market_close_skips_non_trading_day, test_premarket_retry_skips_non_trading_day",
               "testResult": "PASS",
               "status": "completed",
-              "commits": ["de3d066"]
+              "commits": [
+                "de3d066"
+              ]
             }
           ]
         }
@@ -2173,7 +2189,9 @@
               "testPlan": "test_market_progress.py 9개: 09:00/12:15/15:30/08:00/16:00/09:30/09:58/10:00 시각별 progress 검증",
               "testResult": "9 passed",
               "status": "completed",
-              "commits": ["8b40136"]
+              "commits": [
+                "8b40136"
+              ]
             },
             {
               "id": "task2",
@@ -2182,7 +2200,9 @@
               "testPlan": "test_momentum_breakout.py 16개: 기존 11개 수정 + 신규 5개 (062040 역산, 돌파 강도별, 절대 하한)",
               "testResult": "16 passed",
               "status": "completed",
-              "commits": ["ace4cf5"]
+              "commits": [
+                "ace4cf5"
+              ]
             },
             {
               "id": "task3",
@@ -2191,7 +2211,9 @@
               "testPlan": "test_volume_aggregator.py 10개: 슬롯 계산 경계값 + Redis 적재 + 매수/매도 분리 + 조회",
               "testResult": "10 passed",
               "status": "completed",
-              "commits": ["c0ba061"]
+              "commits": [
+                "c0ba061"
+              ]
             },
             {
               "id": "task4",
@@ -2200,7 +2222,9 @@
               "testPlan": "test_scheduler_vol5m.py 3개 + 전체 pytest + curl vol5m API",
               "testResult": "3 passed / 전체 798 passed",
               "status": "completed",
-              "commits": ["281a3ff"]
+              "commits": [
+                "281a3ff"
+              ]
             }
           ]
         }
@@ -2231,7 +2255,9 @@
               "testPlan": "validate_premarket_db에서 source.in_(['data_go_kr', 'kis_daily']) 적용 + 기존 테스트 회귀 없음",
               "testResult": "pass",
               "status": "completed",
-              "commits": ["8c7b85f"]
+              "commits": [
+                "8c7b85f"
+              ]
             },
             {
               "id": "task2",
@@ -2240,7 +2266,9 @@
               "testPlan": "_premarket_collect KIS 직접, _premarket_retry KIS 재시도, portal_supplement 16:00 cron, 폴백 알림 제거",
               "testResult": "pass",
               "status": "completed",
-              "commits": ["b1ea5aa"]
+              "commits": [
+                "b1ea5aa"
+              ]
             },
             {
               "id": "task3",
@@ -2249,7 +2277,9 @@
               "testPlan": "test_scheduler.py job_count=6 + test_scheduler_retry.py KIS 전환 + test_scheduler_phase62.py 7 passed + 전체 pytest PASS",
               "testResult": "805 passed, 0 failed",
               "status": "completed",
-              "commits": ["62b1f5a"]
+              "commits": [
+                "62b1f5a"
+              ]
             }
           ]
         }
@@ -2510,6 +2540,29 @@
           "hash": "952bb7a",
           "message": "feat: KIS 일봉 수동 수집 API 추가 (target_date 지정)",
           "date": "2026-04-07"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-balance-amount-zero",
+      "name": "포지션 사이징 balance_amount=0 하드코딩 결함 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/balance-amount-zero/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/129",
+      "deployedAt": "2026-04-15",
+      "description": "TradingEngine.process_screening_results()에서 balance_amount=0 하드코딩으로 PositionSizer.calculate()가 항상 quantity=0을 반환, 모든 매매 신호가 무시되어 매매 엔진 전체가 무력화되던 치명적 버그 수정. Balance 모델에 available_cash 필드 추가 및 실잔고 조회 로직 삽입.",
+      "commits": [
+        {
+          "hash": "c222bc3",
+          "message": "fix: 포지션 사이징 balance_amount=0 하드코딩 결함 수정",
+          "date": "2026-04-15"
+        },
+        {
+          "hash": "c0f8782",
+          "message": "docs(hotfix): balance-amount-zero 핫픽스 문서 추가",
+          "date": "2026-04-15"
         }
       ]
     }
