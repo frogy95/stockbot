@@ -6,9 +6,11 @@
 
 **Tech Stack:** FastAPI, SQLAlchemy 2.0 async, Redis, pytest, AsyncMock
 
-**Sprint 기간:** 2026-04-15 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-15 ~ 2026-04-16 (2일 완료)
+**완료 날짜:** 2026-04-16
 **이전 스프린트:** Sprint 1 (pytest 817 passed, PR #132)
 **브랜치명:** `phase7.0-sprint2`
+**PR:** (생성 후 기입)
 
 ---
 
@@ -116,12 +118,12 @@ git commit -m "feat(phase7.0-sprint2): task1 -- daily_loss 분모를 당일 시�
 ```
 
 **완료 기준:**
-- ⬜ reset_daily_counters가 잔고를 Redis `risk:daily_capital`에 캐시
-- ⬜ check_daily_loss가 캐시된 시작 잔고를 분모로 사용
-- ⬜ 캐시 미스 시 기존 포지션 원금 폴백 동작
-- ⬜ 전액 청산 후에도 시작 잔고 기준으로 daily_loss 판단
-- ⬜ record_loss 비상 정지 체크도 동일 분모 사용
-- ⬜ 기존 test_risk_manager.py 회귀 없음
+- ✅ reset_daily_counters가 잔고를 Redis `risk:daily_capital`에 캐시
+- ✅ check_daily_loss가 캐시된 시작 잔고를 분모로 사용
+- ✅ 캐시 미스 시 기존 포지션 원금 폴백 동작
+- ✅ 전액 청산 후에도 시작 잔고 기준으로 daily_loss 판단
+- ✅ record_loss 비상 정지 체크도 동일 분모 사용
+- ✅ 기존 test_risk_manager.py 회귀 없음
 
 ---
 
@@ -217,11 +219,11 @@ git commit -m "feat(phase7.0-sprint2): task2 -- record_loss 확장 + trailing_hi
 ```
 
 **완료 기준:**
-- ⬜ realized_pnl < 0이면 exit_reason 무관하게 record_loss() 호출
-- ⬜ 수익 청산 시 연속 손절 카운터 리셋
-- ⬜ trailing_highs가 Redis HSET에 동기화
-- ⬜ 서버 재시작 시 Redis에서 trailing_highs 복원
-- ⬜ 기존 test_position_manager.py 회귀 없음
+- ✅ realized_pnl < 0이면 exit_reason 무관하게 record_loss() 호출
+- ✅ 수익 청산 시 연속 손절 카운터 리셋
+- ✅ trailing_highs가 Redis HSET에 동기화
+- ✅ 서버 재시작 시 Redis에서 trailing_highs 복원
+- ✅ 기존 test_position_manager.py 회귀 없음
 
 ---
 
@@ -272,11 +274,11 @@ git commit -m "feat(phase7.0-sprint2): task3 -- eod trailing 정리 + in-flight 
 ```
 
 **완료 기준:**
-- ⬜ liquidate_all() 후 Redis `trailing_highs` 키 삭제
-- ⬜ _execute_exit 진입 시 in-flight 플래그 설정/체크
-- ⬜ 동일 종목 중복 매도 방지 확인
-- ⬜ in-flight 플래그가 성공/실패 후 삭제됨
-- ⬜ 기존 test_engine_monitor.py 회귀 없음
+- ✅ liquidate_all() 후 Redis `trailing_highs` 키 삭제
+- ✅ _execute_exit 진입 시 in-flight 플래그 설정/체크
+- ✅ 동일 종목 중복 매도 방지 확인
+- ✅ in-flight 플래그가 성공/실패 후 삭제됨
+- ✅ 기존 test_engine_monitor.py 회귀 없음
 
 ---
 
@@ -320,10 +322,10 @@ git commit -m "feat(phase7.0-sprint2): task4 -- 통합 검증 + 기존 테스트
 ```
 
 **완료 기준:**
-- ⬜ 기존 test_risk_manager.py 전체 PASS
-- ⬜ 기존 test_position_manager.py 전체 PASS
-- ⬜ pytest 전체 통과 (기존 + 신규)
-- ⬜ main.py에 rest_client 배선 완료
+- ✅ 기존 test_risk_manager.py 전체 PASS
+- ✅ 기존 test_position_manager.py 전체 PASS
+- ✅ pytest 전체 통과 (837 passed / 5 failed — 기존 무관 실패)
+- ✅ main.py에 rest_client 배선 완료
 
 ---
 
