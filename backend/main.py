@@ -161,6 +161,7 @@ async def lifespan(app: FastAPI):
         eod_liquidator=eod_liquidator,
         redis_client=redis_client,
         notifier_manager=notifier_manager,
+        rest_client=rest_client,
     )
     await trading_engine.start()
     app.state.trading_engine = trading_engine
