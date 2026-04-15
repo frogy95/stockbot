@@ -55,6 +55,26 @@ class RedisClient:
             keys.append(key)
         return keys
 
+    async def hset(self, key: str, field: str, value: str) -> None:
+        if not self._redis:
+            return
+        await self._redis.hset(key, field, value)
+
+    async def hget(self, key: str, field: str) -> str | None:
+        if not self._redis:
+            return None
+        return await self._redis.hget(key, field)
+
+    async def hdel(self, key: str, field: str) -> bool:
+        if not self._redis:
+            return False
+        return bool(await self._redis.hdel(key, field))
+
+    async def hgetall(self, key: str) -> dict[str, str]:
+        if not self._redis:
+            return {}
+        return await self._redis.hgetall(key)
+
     async def get_or_set(
         self,
         key: str,
