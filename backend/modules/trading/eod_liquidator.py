@@ -13,6 +13,7 @@ from core.clients.kis_rest import KISRestClient, OrderRequest
 from core.config import settings
 from core.models.trading import Order, PositionRecord, TradeHistory
 from core.redis import RedisClient
+from modules.trading.position_manager import REDIS_TRAILING_HIGHS_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,8 @@ class EodLiquidator:
 
             if not positions:
                 logger.info("미청산 포지션 없음 — 강제 청산 스킵")
+                # 포지션이 없어도 전일 trailing_highs가 남아있을 수 있으므로 정리
+                await self._redis.delete(REDIS_TRAILING_HIGHS_KEY)
                 return 0
 
             for pos in positions:
@@ -119,6 +122,9 @@ class EodLiquidator:
 
             await session.execute(delete(PositionRecord))
             await session.commit()
+
+        # 트레일링 고점 HSET 일괄 정리 (정합성: 포지션 전체 삭제와 동기화)
+        await self._redis.delete(REDIS_TRAILING_HIGHS_KEY)
 
         logger.info("강제 청산 완료: %d건", count)
         return count
