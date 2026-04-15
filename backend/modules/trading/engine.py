@@ -2,17 +2,19 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from core.clients.kis_rest import KISRestClient
+from core.clients.kis_rest import KISRestClient, OrderRequest
 from core.models.settings import SystemSetting
+from core.models.trading import PositionRecord
 from core.redis import RedisClient
 from modules.trading.eod_liquidator import EodLiquidator
-from modules.trading.order_manager import OrderManager
+from modules.trading.order_manager import OrderManager, _MARKET_ORDER_DIVISION
 from modules.trading.position_manager import PositionManager
 from modules.trading.position_sizer import PositionSizer
 from modules.trading.risk_manager import RiskManager
@@ -218,19 +220,135 @@ class TradingEngine:
         return exits
 
     async def _monitor_positions_loop(self, interval: float = 5.0) -> None:
-        """포지션 모니터링 루프 (백그라운드)."""
+        """포지션 모니터링 루프 (백그라운드).
+
+        장 시간(09:00~15:30) 내에만 가격 수집→갱신→청산 조건 확인→청산 실행.
+        """
         while self._running:
             try:
+                now_kst = datetime.now(KST)
+                t = now_kst.time()
+                if not (time(9, 0) <= t <= time(15, 30)):
+                    await asyncio.sleep(interval)
+                    continue
+
+                price_updates = await self._collect_price_updates()
+                if price_updates:
+                    await self._position_manager.update_prices(price_updates)
+
                 exits = await self._position_manager.check_exit_conditions()
                 for exit_info in exits:
-                    logger.info(
-                        "청산 대상: %s (%s)",
-                        exit_info["stock_code"],
-                        exit_info["exit_reason"],
-                    )
+                    await self._execute_exit(exit_info)
             except Exception:
                 logger.exception("포지션 모니터링 오류")
             await asyncio.sleep(interval)
+
+    async def _collect_price_updates(self) -> dict[str, int]:
+        """활성 포지션의 실시간 가격을 수집한다 (Redis WS 우선 + REST 폴백)."""
+        prices: dict[str, int] = {}
+
+        # 활성 포지션의 stock_code 목록 조회
+        if self._session_factory is None:
+            return prices
+
+        async with self._session_factory() as session:
+            stmt = select(PositionRecord.stock_code)
+            result = await session.execute(stmt)
+            stock_codes = list(result.scalars().all())
+
+        if not stock_codes:
+            return prices
+
+        for code in stock_codes:
+            # Redis WS 데이터 우선
+            raw = await self._redis.get(f"realtime:{code}:execution")
+            if raw:
+                try:
+                    data = json.loads(raw)
+                    price = int(data.get("current_price", 0))
+                    if price > 0:
+                        prices[code] = price
+                        continue
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    pass
+
+            # REST 폴백
+            if self._rest_client is not None:
+                try:
+                    stock_price = await self._rest_client.get_stock_price(code)
+                    if stock_price.price > 0:
+                        prices[code] = stock_price.price
+                except Exception:
+                    logger.warning("가격 조회 실패 (다음 루프 재시도): %s", code)
+
+        return prices
+
+    async def _execute_exit(self, exit_info: dict) -> None:
+        """청산 매도를 실행한다.
+
+        1. 시장가 매도 주문 발송
+        2. 체결 폴링 (최대 3회, 2초 간격)
+        3. 체결 시 close_position 호출
+        4. 알림 전송
+        """
+        stock_code = exit_info["stock_code"]
+        quantity = exit_info["quantity"]
+        exit_reason = exit_info["exit_reason"]
+        position_id = exit_info["position_id"]
+
+        if self._rest_client is None:
+            logger.error("REST 클라이언트 미설정 — 청산 실행 불가: %s", stock_code)
+            return
+
+        # 시장가 매도 주문
+        order_req = OrderRequest(
+            stock_code=stock_code,
+            order_type="sell",
+            quantity=quantity,
+            price=0,
+            order_division=_MARKET_ORDER_DIVISION,
+        )
+        try:
+            response = await self._rest_client.place_order(order_req)
+        except Exception:
+            logger.exception("청산 매도 주문 실패: %s", stock_code)
+            return
+
+        order_no = response.order_no
+
+        # 체결 폴링 (최대 3회 x 2초)
+        exit_price = 0
+        for poll in range(3):
+            await asyncio.sleep(2.0)
+            try:
+                status_data = await self._rest_client.get_order_status(order_no)
+                price = OrderManager._extract_filled_price(status_data, 0)
+                if price > 0:
+                    exit_price = price
+                    break
+            except Exception:
+                logger.warning("청산 체결 조회 실패 (poll %d): %s", poll + 1, stock_code)
+
+        if exit_price == 0:
+            logger.warning("청산 체결 미확인 (다음 루프 재시도): %s", stock_code)
+            return
+
+        # 포지션 청산 기록
+        try:
+            await self._position_manager.close_position(position_id, exit_price, exit_reason)
+            logger.info("청산 완료: %s @%d (%s)", stock_code, exit_price, exit_reason)
+        except Exception:
+            logger.exception("close_position 실패: %s", stock_code)
+            return
+
+        # 알림
+        if self._notifier:
+            try:
+                await self._notifier.send_notification(
+                    f"[청산 완료] {stock_code} @{exit_price:,}원 ({exit_reason})"
+                )
+            except Exception:
+                logger.warning("청산 알림 전송 실패: %s", stock_code)
 
     async def approve_signal(self, token: str) -> bool:
         """승인 콜백 — 토큰 검증 후 주문 실행."""
@@ -265,14 +383,14 @@ class TradingEngine:
         return True
 
     async def on_order_filled(
-        self, order_id: int, filled_price: int, signal: object, quantity: int = 0
+        self, order_id: int, filled_price: int, signal_data: object, quantity: int = 0
     ) -> None:
         """매수 주문 체결 콜백 — 포지션 생성."""
         from modules.trading.strategy import TradeSignalData
 
-        if isinstance(signal, TradeSignalData):
+        if isinstance(signal_data, TradeSignalData):
             await self._position_manager.open_position(
-                signal, quantity, filled_price
+                signal_data, quantity, filled_price
             )
 
     def get_status(self) -> dict:
