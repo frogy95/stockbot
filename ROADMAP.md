@@ -52,9 +52,9 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~6.2 완료, Phase 7.0 계획 수립
+- 전체 진행률: Phase 0~6.2 완료, Phase 7.0 Sprint 1 진행 중
 - 현재 Phase: Phase 7.0 (매매 엔진 치명적 결함 수정 + LIVE 전환 준비) 🔄 진행 중
-- 현재 Sprint: Phase 7.0 Sprint 1 대기 중
+- 현재 Sprint: Phase 7.0 Sprint 1 🔄 진행 중 — P0 치명적 결함 + P1 수정
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 7.0 Sprint 1 — 매매 엔진 P0 결함 3건 + P1 수정 (즉시 착수 가능)
@@ -1009,13 +1009,14 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 없음 (코드 결함 수정 — 데이터 축적 불필요, 즉시 착수 가능)
 
 ### 작업 목록
-#### Sprint 1: P0 치명적 결함 + P1 수정
+#### Sprint 1: P0 치명적 결함 + P1 수정 🔄 진행 중
 - engine._monitor_positions_loop: update_prices() + 청산 매도 실행 연결
 - order_manager._execute_order: on_filled_callback으로 포지션 생성 연결
 - Order 모델 signal_json 컬럼 추가 (Alembic)
 - cancel 실패 시 return (이중 주문 방지)
 - 체결가 역산 (tot_ccld_amt / tot_ccld_qty)
-- trade_strength_min 70→60, max_candidates 30→20
+- trade_strength_min 100.0 (CTTR 통일), max_candidates 30→20
+> Sprint 계획: `docs/phase/phase7.0/sprint1/sprint1.md`
 
 #### Sprint 2: P2 리스크 개선
 - daily_loss_pct 분모: 당일 시작 잔고 기반으로 변경
