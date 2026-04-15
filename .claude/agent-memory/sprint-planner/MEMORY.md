@@ -53,7 +53,7 @@
 - Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조), ✅ 완료 (2026-04-14)
 
 - Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), ✅ 완료 (2026-04-15) / PR: https://github.com/frogy95/stockbot/pull/132
-- Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis, in-flight 중복 매도 방지), 🔄 계획 수립 완료 (2026-04-15)
+- Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis, in-flight 중복 매도 방지), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/135
 
 ## 다음 사용 가능한 스프린트
 

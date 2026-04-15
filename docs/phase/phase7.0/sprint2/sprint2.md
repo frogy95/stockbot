@@ -10,7 +10,7 @@
 **완료 날짜:** 2026-04-16
 **이전 스프린트:** Sprint 1 (pytest 817 passed, PR #132)
 **브랜치명:** `phase7.0-sprint2`
-**PR:** (생성 후 기입)
+**PR:** https://github.com/frogy95/stockbot/pull/135
 
 ---
 
