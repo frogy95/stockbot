@@ -73,6 +73,7 @@ class Order(Base):
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), onupdate=func.now()
     )
+    signal_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
 
 class PositionRecord(Base):

@@ -171,14 +171,14 @@ class TestTradeStrengthFilter:
 
     @pytest.mark.asyncio
     async def test_trade_strength_fail(self):
-        """체결강도 100 → 제외 (KIS CTTR 기준 120 미달)."""
+        """체결강도 99 → 제외 (CTTR 기준 100 미달)."""
         trade_calc = TradeStrengthCalculator(window_seconds=300)
 
         redis_mock = AsyncMock()
 
         async def mock_get(key: str):
             if key == "realtime:005930:execution":
-                return _make_execution_data(trade_strength=100.0)
+                return _make_execution_data(trade_strength=99.0)
             if key == "realtime:005930:orderbook":
                 return _make_orderbook_data()
             return None

@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-13 업데이트)
+## 스프린트 현황 (2026-04-15 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -50,11 +50,15 @@
 
 - Phase 6.1 Sprint 1 — 시간가중 거래량 보정 + 5분봉 수집 선행 구축, ✅ 완료 (2026-04-13) / PR: (생성 후 기입)
 
-- Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조), 🔄 진행 중 (2026-04-14)
+- Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조), ✅ 완료 (2026-04-14)
+
+- Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), 🔄 진행 중 (2026-04-15)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 7 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
+- Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis)
+- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트
+- Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
 
 ## 핵심 주의사항
@@ -203,6 +207,13 @@
 - Phase 6.2 Sprint 1: _run_kis_daily_fallback -> _run_kis_daily_collect 이름 변경 (폴백 -> 주 경로)
 - Phase 6.2 Sprint 1: _send_fallback_info_alert, _send_double_failure_alert 메서드 제거 (호출부 모두 _premarket_collect에서 제거)
 - Phase 6.2 Sprint 1: validate_premarket_db L226, L242 두 곳에서 source == "data_go_kr" -> source.in_(["data_go_kr", "kis_daily"]) 변경
+- Phase 7.0 Sprint 1: engine._monitor_positions_loop가 check_exit_conditions 결과만 로깅 — update_prices 미호출 + 매도 미실행이 핵심 결함
+- Phase 7.0 Sprint 1: order_manager._execute_order 체결 후 engine.on_order_filled 미호출 — 콜백 패턴(set_filled_callback)으로 해결
+- Phase 7.0 Sprint 1: Order 모델에 signal_json JSONB 컬럼 추가 (Alembic 필수) — 콜백에서 TradeSignalData 복원용
+- Phase 7.0 Sprint 1: 실전 cancel 실패 시 시장가 진행 -> return으로 변경 (이중 주문 방지, 확정 파라미터 #6)
+- Phase 7.0 Sprint 1: Redis realtime:{code}:execution에 current_price 존재 — _collect_price_updates WS 우선 소스
+- Phase 7.0 Sprint 1: trade_strength_min 120.0->100.0 (CTTR 통일), momentum_breakout 70.0->100.0 (확정 파라미터 #8/#8a)
+- Phase 7.0 Sprint 1: main.py 순환 참조 — OrderManager 먼저 생성 후 TradingEngine 생성 후 set_filled_callback 주입
 - Phase 6.2 Sprint 1: start()에 portal_supplement CronTrigger(hour=16, minute=0) 추가 -> test_scheduler.py job_count 5->6
 - Phase 6.2 Sprint 1: test_scheduler_retry.py의 3개 테스트가 DataGoKrCollector mock 사용 — KIS 기반으로 전환 필요
 - Phase 6.2 Sprint 1: DataGoKrCollector import는 유지 (_portal_supplement_collect에서 사용)
