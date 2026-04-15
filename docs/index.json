@@ -2325,7 +2325,7 @@
       "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
-      "phaseDoc": "docs/phase/phase7/phase7.md",
+      "phaseDoc": "docs/phase/phase7.1/phase7.1.md",
       "dataPrerequisite": {
         "source": "phase6.1",
         "type": "5분봉 거래량 Redis (vol5m:*)",
