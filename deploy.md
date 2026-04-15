@@ -8,7 +8,7 @@
 ### 프로덕션 배포 - v2.1.0 (2026-04-16)
 
 포함 스프린트: Phase 7.0 Sprint 2
-PR: (배포 후 업데이트 예정)
+PR: https://github.com/frogy95/stockbot/pull/136
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
