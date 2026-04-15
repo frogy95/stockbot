@@ -12,7 +12,7 @@ class PrimaryFilters:
     market_cap_min: int = 50_000_000_000
     change_rate_min: float = -2.0
     change_rate_max: float = 7.0
-    max_candidates: int = 30
+    max_candidates: int = 20
 
 
 @dataclass
@@ -20,7 +20,7 @@ class SecondaryFilters:
     """장중 2차 스크리닝 필터 (실시간 데이터 기반)."""
 
     # KIS CTTR(체결강도) 기준: 100=균형, >100=매수 우세, 120=중간 매수세
-    trade_strength_min: float = 120.0
+    trade_strength_min: float = 100.0
     orderbook_ratio_min: float = 1.2
     screening_interval: int = 30
     no_signal_before: str = "09:30"

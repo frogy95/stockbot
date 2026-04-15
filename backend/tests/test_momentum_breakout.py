@@ -27,7 +27,7 @@ def _make_snapshot(**overrides) -> MarketSnapshot:
         "volume": 40000000,  # 전일 대비 400% -> 높은 volume_score
         "prev_volume": 10000000,
         "change_rate": 5.04,
-        "trade_strength": 95.0,  # 높은 체결강도
+        "trade_strength": 120.0,  # 높은 체결강도 (>= 100.0 조건 통과)
         "total_bid_volume": 800000,  # 호가 비율 2.0 -> 높은 orderbook
         "total_ask_volume": 400000,
         "recent_highs": [70500, 70000, 69800, 69500, 69000],
@@ -91,7 +91,7 @@ async def test_low_trade_strength_returns_none(mock_progress):
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
-    snapshot = _make_snapshot(trade_strength=60.0)  # < 70
+    snapshot = _make_snapshot(trade_strength=60.0)  # < 100
     result = await strategy.generate_signal(snapshot)
 
     assert result is None
@@ -156,7 +156,7 @@ async def test_confidence_weighted_average(mock_progress):
         prev_high=70500,
         volume=40000000,  # 4배
         prev_volume=10000000,
-        trade_strength=90.0,
+        trade_strength=120.0,
         total_bid_volume=800000,
         total_ask_volume=400000,
     )
@@ -168,7 +168,7 @@ async def test_confidence_weighted_average(mock_progress):
     momentum_score = min((73000 - breakout_ref) / breakout_ref * 100 / 5.0, 1.0)
     adjusted_ratio = 40000000 / (10000000 * 1.0)  # = 4.0
     volume_score = min(adjusted_ratio / 5.0, 1.0)  # = 0.8
-    strength_score = min((90.0 - 50) / 50, 1.0)
+    strength_score = min((120.0 - 50) / 50, 1.0)
     orderbook_score = min(800000 / 400000 / 2.0, 1.0)
     expected = (
         momentum_score * 0.3
@@ -192,7 +192,7 @@ async def test_low_confidence_returns_none(mock_progress):
         prev_high=70500,
         volume=20000000,  # 딱 2배
         prev_volume=10000000,
-        trade_strength=71.0,  # 겨우 통과
+        trade_strength=71.0,  # < 100 체결강도 미달
         total_bid_volume=300000,  # 호가 비율 낮음
         total_ask_volume=400000,
     )
@@ -298,7 +298,7 @@ async def test_062040_isupetasis_scenario(mock_progress):
         volume=1_080_856,
         prev_volume=968_175,
         change_rate=7.67,
-        trade_strength=90.0,
+        trade_strength=120.0,
         total_bid_volume=800000,
         total_ask_volume=400000,
         # 낮은 ATR을 위한 최근 데이터

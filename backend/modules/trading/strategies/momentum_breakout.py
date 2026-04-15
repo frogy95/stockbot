@@ -101,7 +101,7 @@ class MomentumBreakoutStrategy(Strategy):
             return None
 
         # 체결강도 조건
-        if snapshot.trade_strength < 70.0:
+        if snapshot.trade_strength < 100.0:
             return None
 
         # ATR 필터

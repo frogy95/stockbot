@@ -20,7 +20,7 @@ class TestPrimaryFilters:
         assert f.market_cap_min == 50_000_000_000
         assert f.change_rate_min == -2.0
         assert f.change_rate_max == 7.0
-        assert f.max_candidates == 30
+        assert f.max_candidates == 20
 
 
 class TestSecondaryFilters:
@@ -28,7 +28,7 @@ class TestSecondaryFilters:
 
     def test_default_values(self):
         f = SecondaryFilters()
-        assert f.trade_strength_min == 70
+        assert f.trade_strength_min == 100.0
         assert f.orderbook_ratio_min == 1.2
         assert f.screening_interval == 30
         assert f.no_signal_before == "09:30"
