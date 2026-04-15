@@ -1,6 +1,6 @@
 # Phase 7.0: 매매 엔진 치명적 결함 수정 + LIVE 전환 준비 — 실행 계획
 
-> **Status**: Sprint 1 완료 (2026-04-15)
+> **Status**: Sprint 2 완료 (2026-04-16)
 > **ROADMAP 참조**: `ROADMAP.md` Phase 7.0
 > **검토 리포트**:
 >
@@ -97,7 +97,7 @@
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
 | ✅ 1 | P0 치명적 결함 + P1 수정 | 가격 갱신 연결, 체결→포지션 콜백, 청산 매도 실행, 이중 주문 방지, 파라미터 조정 | 없음 |
-| 2 | P2 리스크 개선 | daily_loss_pct 분모 수정, record_loss 확장, 트레일링 Redis 이관 | Sprint 1 |
+| ✅ 2 | P2 리스크 개선 | daily_loss_pct 분모 수정, record_loss 확장, 트레일링 Redis 이관, in-flight 중복 매도 방지 | Sprint 1 |
 | 3 | E2E 검증 + LIVE 전환 게이트 | Paper E2E 1사이클, 5거래일 관찰, LIVE 초기 파라미터 적용 | Sprint 2 |
 
 ---
@@ -210,7 +210,7 @@
 | 4 | LIVE 전환 시 tr_id 접두사 전환 | ⚠️ | 윤에이피 | 기존 settings.TRADING_ENV 기반 자동 전환 확인 |
 | 5 | LIVE 첫 주 슬리피지 | ⚠️ | 김단타 | semi-auto 모드로 수동 관찰 |
 | 6 | trade_strength_min 100 → 110 상향 시점 | 정보 | 김단타+최리스크 | LIVE 1주 관찰 후 결정 |
-| 7 | _execute_exit 체결 폴링 6초 내 중복 매도 가능성 | ⚠️ Medium | sprint-review | Sprint 2에서 개선 권장 — 매도 주문 발송 후 in-flight 상태 플래그(Redis)로 중복 제어 |
+| 7 | _execute_exit 체결 폴링 6초 내 중복 매도 가능성 | ✅ 해결 | Sprint 2 | Sprint 2에서 Redis `exit:inflight:{stock_code}` TTL 30s 플래그로 중복 매도 방지 구현 완료 |
 
 ---
 
@@ -230,10 +230,10 @@
 | P0 결함 3건 수정 | 가격 갱신 + 포지션 생성 + 청산 실행 동작 확인 | ✅ 완료 (Sprint 1) |
 | P1 이중 주문 방지 | cancel 실패 시 return 동작 확인 | ✅ 완료 (Sprint 1) |
 | P1 파라미터 조정 | trade_strength_min=100.0, max_candidates=20 반영 | ✅ 완료 (Sprint 1) |
-| P2 daily_loss 분모 수정 | 당일 시작 잔고 기반 체크 동작 확인 | ⬜ |
-| P2 record_loss 확장 | trailing/eod 손실 시 카운터 증가 확인 | ⬜ |
-| P2 트레일링 Redis 이관 | 서버 재시작 후 trailing_highs 유지 확인 | ⬜ |
+| P2 daily_loss 분모 수정 | 당일 시작 잔고 기반 체크 동작 확인 | ✅ 완료 (Sprint 2) |
+| P2 record_loss 확장 | trailing/eod 손실 시 카운터 증가 확인 | ✅ 완료 (Sprint 2) |
+| P2 트레일링 Redis 이관 | 서버 재시작 후 trailing_highs 유지 확인 | ✅ 완료 (Sprint 2) |
 | E2E 1사이클 성공 | 주문→체결→포지션→가격갱신→청산 완전 성공 | ⬜ |
 | Paper 5거래일 안정 | 핫픽스 0건 + 신호 발생 3거래일 연속 | ⬜ |
 | LIVE 전환 게이트 통과 | 전 조건 충족 | ⬜ |
-| pytest 전체 통과 | 기존 + 신규 테스트 전체 통과 | ✅ 완료 (817 passed, 4 failed 기존 무관) |
+| pytest 전체 통과 | 기존 + 신규 테스트 전체 통과 | ✅ 완료 (837 passed, 5 failed 기존 무관) |

@@ -2258,7 +2258,7 @@
     {
       "id": "phase7.0",
       "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
-      "status": "completed",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
       "sprints": [
         {
@@ -2346,6 +2346,81 @@
                   "hash": "feat(phase7.0-sprint1): task5",
                   "message": "feat(phase7.0-sprint1): task5 -- main.py 배선 + on_filled_callback 연결 + 통합 검증",
                   "date": "2026-04-15"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "phase7.0-sprint2",
+          "title": "P2 리스크 개선",
+          "status": "completed",
+          "sprintDoc": "docs/phase/phase7.0/sprint2/sprint2.md",
+          "branch": "phase7.0-sprint2",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/135",
+          "lastUpdated": "2026-04-16T00:00:00+09:00",
+          "progress": {
+            "total": 4,
+            "completed": 4
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "daily_loss_pct 분모 수정 — 당일 시작 잔고 기반",
+              "path": "backend/modules/trading/risk_manager.py",
+              "testPlan": "docker compose exec backend pytest tests/test_risk_daily_capital.py -v",
+              "testResult": "pass (6 passed)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "5a1efee",
+                  "message": "feat(phase7.0-sprint2): task1 -- daily_loss 분모를 당일 시작 잔고(Redis 캐시)로 수정",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "record_loss 트리거 확장 + trailing_highs Redis 이관",
+              "path": "backend/modules/trading/position_manager.py",
+              "testPlan": "docker compose exec backend pytest tests/test_position_risk_trailing.py -v",
+              "testResult": "pass (10 passed)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "12c0b15",
+                  "message": "feat(phase7.0-sprint2): task2 -- record_loss 확장 + trailing_highs Redis 이관",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "eod trailing 정리 + in-flight 중복 매도 방지",
+              "path": "backend/modules/trading/engine.py",
+              "testPlan": "docker compose exec backend pytest tests/test_eod_trailing_cleanup.py tests/test_engine_inflight.py -v",
+              "testResult": "pass (5 passed)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "4b0c735",
+                  "message": "feat(phase7.0-sprint2): task3 -- eod trailing 정리 + in-flight 중복 매도 방지",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "통합 검증 + 기존 테스트 호환성 수정 + main.py 배선",
+              "path": "backend/tests/",
+              "testPlan": "docker compose exec backend pytest -v",
+              "testResult": "pass (837 passed / 5 failed 기존 무관)",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "3ac93b6",
+                  "message": "feat(phase7.0-sprint2): task4 -- main.py rest_client 배선 + 통합 검증",
+                  "date": "2026-04-16"
                 }
               ]
             }

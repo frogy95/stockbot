@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 KST = ZoneInfo("Asia/Seoul")
 
+_INFLIGHT_KEY_PREFIX = "exit:inflight:"
+_INFLIGHT_TTL_SEC = 30  # 청산 폴링 최대 6초(3회x2초)보다 넉넉, 비정상 종료 시 자동 만료
+
 
 class TradingEngine:
     """매매 엔진 — 전체 매매 파이프라인을 오케스트레이션한다."""
@@ -286,10 +289,12 @@ class TradingEngine:
     async def _execute_exit(self, exit_info: dict) -> None:
         """청산 매도를 실행한다.
 
-        1. 시장가 매도 주문 발송
-        2. 체결 폴링 (최대 3회, 2초 간격)
-        3. 체결 시 close_position 호출
-        4. 알림 전송
+        1. in-flight 플래그 체크 — 이미 진행 중이면 스킵 (중복 매도 방지)
+        2. 시장가 매도 주문 발송
+        3. 체결 폴링 (최대 3회, 2초 간격)
+        4. 체결 시 close_position 호출
+        5. 알림 전송
+        6. finally 블록에서 in-flight 플래그 삭제 (성공/실패 무관)
         """
         stock_code = exit_info["stock_code"]
         quantity = exit_info["quantity"]
@@ -300,55 +305,61 @@ class TradingEngine:
             logger.error("REST 클라이언트 미설정 — 청산 실행 불가: %s", stock_code)
             return
 
-        # 시장가 매도 주문
-        order_req = OrderRequest(
-            stock_code=stock_code,
-            order_type="sell",
-            quantity=quantity,
-            price=0,
-            order_division=_MARKET_ORDER_DIVISION,
-        )
+        inflight_key = f"{_INFLIGHT_KEY_PREFIX}{stock_code}"
+        if await self._redis.get(inflight_key):
+            logger.info("in-flight 청산 진행 중 — 스킵: %s", stock_code)
+            return
+        await self._redis.set(inflight_key, "1", ttl=_INFLIGHT_TTL_SEC)
+
         try:
-            response = await self._rest_client.place_order(order_req)
-        except Exception:
-            logger.exception("청산 매도 주문 실패: %s", stock_code)
-            return
-
-        order_no = response.order_no
-
-        # 체결 폴링 (최대 3회 x 2초)
-        exit_price = 0
-        for poll in range(3):
-            await asyncio.sleep(2.0)
+            order_req = OrderRequest(
+                stock_code=stock_code,
+                order_type="sell",
+                quantity=quantity,
+                price=0,
+                order_division=_MARKET_ORDER_DIVISION,
+            )
             try:
-                status_data = await self._rest_client.get_order_status(order_no)
-                price = OrderManager._extract_filled_price(status_data, 0)
-                if price > 0:
-                    exit_price = price
-                    break
+                response = await self._rest_client.place_order(order_req)
             except Exception:
-                logger.warning("청산 체결 조회 실패 (poll %d): %s", poll + 1, stock_code)
+                logger.exception("청산 매도 주문 실패: %s", stock_code)
+                return
 
-        if exit_price == 0:
-            logger.warning("청산 체결 미확인 (다음 루프 재시도): %s", stock_code)
-            return
+            order_no = response.order_no
 
-        # 포지션 청산 기록
-        try:
-            await self._position_manager.close_position(position_id, exit_price, exit_reason)
-            logger.info("청산 완료: %s @%d (%s)", stock_code, exit_price, exit_reason)
-        except Exception:
-            logger.exception("close_position 실패: %s", stock_code)
-            return
+            # 체결 폴링 (최대 3회 x 2초)
+            exit_price = 0
+            for poll in range(3):
+                await asyncio.sleep(2.0)
+                try:
+                    status_data = await self._rest_client.get_order_status(order_no)
+                    price = OrderManager._extract_filled_price(status_data, 0)
+                    if price > 0:
+                        exit_price = price
+                        break
+                except Exception:
+                    logger.warning("청산 체결 조회 실패 (poll %d): %s", poll + 1, stock_code)
 
-        # 알림
-        if self._notifier:
+            if exit_price == 0:
+                logger.warning("청산 체결 미확인 (다음 루프 재시도): %s", stock_code)
+                return
+
             try:
-                await self._notifier.send_notification(
-                    f"[청산 완료] {stock_code} @{exit_price:,}원 ({exit_reason})"
-                )
+                await self._position_manager.close_position(position_id, exit_price, exit_reason)
+                logger.info("청산 완료: %s @%d (%s)", stock_code, exit_price, exit_reason)
             except Exception:
-                logger.warning("청산 알림 전송 실패: %s", stock_code)
+                logger.exception("close_position 실패: %s", stock_code)
+                return
+
+            if self._notifier:
+                try:
+                    await self._notifier.send_notification(
+                        f"[청산 완료] {stock_code} @{exit_price:,}원 ({exit_reason})"
+                    )
+                except Exception:
+                    logger.warning("청산 알림 전송 실패: %s", stock_code)
+        finally:
+            await self._redis.delete(inflight_key)
 
     async def approve_signal(self, token: str) -> bool:
         """승인 콜백 — 토큰 검증 후 주문 실행."""

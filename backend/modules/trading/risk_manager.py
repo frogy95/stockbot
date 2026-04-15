@@ -1,9 +1,10 @@
 """리스크 매니저 — 매매 전 리스크 체크 및 비상 정지 관리."""
 from __future__ import annotations
 
+import logging
 from datetime import datetime, time, date, timedelta, timezone
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
@@ -15,11 +16,18 @@ from core.models.settings import SystemSetting
 from core.models.trading import PositionRecord, TradeHistory
 from core.redis import RedisClient
 
+if TYPE_CHECKING:
+    from core.clients.kis_rest import KISRestClient
+
 
 # --- Redis 키 상수 ---
 REDIS_EMERGENCY_STOP = "risk:emergency_stop"
 REDIS_COOLDOWN = "risk:cooldown"
 REDIS_CONSECUTIVE_LOSS = "risk:consecutive_loss_count"
+REDIS_DAILY_CAPITAL = "risk:daily_capital"
+
+
+logger = logging.getLogger(__name__)
 
 
 class RiskCheckResult(BaseModel):
@@ -60,9 +68,11 @@ class RiskManager:
         self,
         session_factory: async_sessionmaker[AsyncSession],
         redis_client: RedisClient,
+        rest_client: "KISRestClient | None" = None,
     ):
         self._session_factory = session_factory
         self._redis = redis_client
+        self._rest_client = rest_client
         self._settings: dict[str, str] = {}
         self._loaded = False
         self._notifier = None  # 알림 매니저 (main.py에서 후속 주입)
@@ -163,6 +173,29 @@ class RiskManager:
     # 개별 체크 메서드
     # ------------------------------------------------------------------
 
+    async def _sum_position_capital(self, session: AsyncSession) -> int:
+        """활성 포지션의 원금 합계 (avg_price * quantity)."""
+        stmt = select(
+            func.coalesce(
+                func.sum(PositionRecord.avg_price * PositionRecord.quantity), 0
+            )
+        )
+        result = await session.execute(stmt)
+        return int(result.scalar_one())
+
+    async def _get_daily_capital(self, session: AsyncSession) -> int:
+        """당일 시작 잔고를 반환.
+
+        Redis `risk:daily_capital` 캐시 우선 → 미스 시 활성 포지션 원금 합계로 폴백.
+        """
+        cached = await self._redis.get(REDIS_DAILY_CAPITAL)
+        if cached is not None:
+            try:
+                return int(cached)
+            except ValueError:
+                logger.warning("risk:daily_capital 캐시 값 파싱 실패: %r", cached)
+        return await self._sum_position_capital(session)
+
     async def check_daily_loss(self) -> bool:
         """일일 실현+미실현 합산 손실이 한도를 초과했는지 확인.
 
@@ -189,14 +222,8 @@ class RiskManager:
             realized_result = await session.execute(realized_stmt)
             realized_pnl = int(realized_result.scalar_one())
 
-            # 포지션 원금 합계 (avg_price * quantity)
-            capital_stmt = select(
-                func.coalesce(
-                    func.sum(PositionRecord.avg_price * PositionRecord.quantity), 0
-                )
-            )
-            capital_result = await session.execute(capital_stmt)
-            total_capital = int(capital_result.scalar_one())
+            # 분모: 당일 시작 잔고 (Redis 캐시 우선 + 포지션 원금 폴백)
+            total_capital = await self._get_daily_capital(session)
 
         total_pnl = unrealized_pnl + realized_pnl
         if total_capital == 0:
@@ -322,13 +349,7 @@ class RiskManager:
             realized_result = await session.execute(realized_stmt)
             realized_pnl = int(realized_result.scalar_one())
 
-            capital_stmt = select(
-                func.coalesce(
-                    func.sum(PositionRecord.avg_price * PositionRecord.quantity), 0
-                )
-            )
-            capital_result = await session.execute(capital_stmt)
-            total_capital = int(capital_result.scalar_one())
+            total_capital = await self._get_daily_capital(session)
 
         if total_capital > 0:
             total_pnl = unrealized_pnl + realized_pnl
@@ -340,10 +361,32 @@ class RiskManager:
                     await self._notifier.send_system_alert("emergency_stop", details)
 
     async def reset_daily_counters(self) -> None:
-        """일일 카운터 초기화 (장 시작 전 호출)."""
+        """일일 카운터 초기화 + 당일 시작 잔고 캐시 (장 시작 전 호출)."""
         await self._redis.delete(REDIS_CONSECUTIVE_LOSS)
         await self._redis.delete(REDIS_COOLDOWN)
         await self._redis.delete(REDIS_EMERGENCY_STOP)
+
+        # 당일 시작 잔고 캐시: KIS 가용 현금 + 활성 포지션 원금 합계
+        if self._rest_client is None:
+            return
+        try:
+            balance = await self._rest_client.get_balance()
+            available_cash = int(balance.available_cash)
+        except Exception as exc:
+            logger.warning("KIS 잔고 조회 실패 — daily_capital 캐시 스킵: %s", exc)
+            return
+
+        async with self._session_factory() as session:
+            position_capital = await self._sum_position_capital(session)
+
+        total_capital = available_cash + position_capital
+        await self._redis.set(REDIS_DAILY_CAPITAL, str(total_capital))
+        logger.info(
+            "당일 시작 잔고 캐시: 현금 %s + 포지션 %s = %s",
+            available_cash,
+            position_capital,
+            total_capital,
+        )
 
     # ------------------------------------------------------------------
     # 상태 조회
