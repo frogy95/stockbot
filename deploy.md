@@ -5,33 +5,18 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (2026-04-15)
+### 프로덕션 배포 - v2.0.0 (2026-04-15)
 
 포함 스프린트: Phase 7.0 Sprint 1
-PR: https://github.com/frogy95/stockbot/pull/132
+PR: https://github.com/frogy95/stockbot/pull/133
 
-#### 코드 리뷰 결과 (2026-04-15)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
-- ✅ 코드 리뷰 완료 — PR 코드 리뷰 코멘트 없음 (이슈 0건)
-  - 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용
-  - 성능: N+1 쿼리 없음, 폴링 간격 수용 가능 (3회×2초)
-  - 코드 품질: 에러 핸들링 적절, 구조화 로깅 사용
-  - 테스트: 신규 기능 pytest 추가 확인 (test_engine_monitor.py, test_order_signal_json.py)
-  - Medium 이슈 1건: _execute_exit 체결 폴링 6초 내 중복 매도 가능성 → Phase 문서 미해결 사항 #7로 기록, Sprint 2 개선 권장
+#### 수동 작업 필수 항목 (머지 후 즉시 실행)
 
-#### 자동 검증 결과 (2026-04-15)
-
-- ✅ pytest: 817 passed, 4 failed (기존 무관 결함: test_scheduler_vol5m 3건, test_ws_stability 1건)
-- ✅ /api/v1/health: {"status": "healthy", "database": "connected", "redis": "connected"}
-- ✅ /api/v1/kis/status: {"environment": "paper", "token_valid": true, "ws_connected": true, "ws_subscriptions": 40}
-- ✅ /api/v1/collector/status: {"running": true, "job_count": 8}
-- ✅ Alembic head: ce7aadd8d078 (로컬 Docker — signal_json 컬럼 적용 확인)
-- ✅ Phase 문서 반영: phase7.0.md Sprint 1 완료 표시, 완료 기준 업데이트
-
-#### 수동 검증 항목 (프로덕션 배포 후 확인 필요)
-
+- ⬜ Railway DB Alembic 마이그레이션: `alembic upgrade head` (signal_json JSONB 컬럼 추가 — 미적용 시 Order 저장 실패)
 - ⬜ /api/v1/health 헬스체크 확인 (프로덕션 Railway)
-- ⬜ Alembic 마이그레이션 프로덕션 적용 확인 (signal_json 컬럼)
 - ⬜ Paper 모드에서 매매 사이클 1회 완전 실행 확인 (주문→체결→포지션→가격갱신→청산)
 
 ---
