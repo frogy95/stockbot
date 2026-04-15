@@ -10,7 +10,7 @@
 **이전 스프린트:** Phase 6.2 Sprint 1 (완료, 2026-04-14)
 **브랜치명:** `phase7.0-sprint1`
 **상태:** ✅ 완료 (2026-04-15)
-**PR:** (생성 후 기입)
+**PR:** https://github.com/frogy95/stockbot/pull/132
 
 ---
 

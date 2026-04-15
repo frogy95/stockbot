@@ -45,7 +45,7 @@ Phase C: 불필요한 실행 방지 (2개 파일)
        websockets.connect()에 open_timeout=10 추가 + subscribe() _ws None 가드
 ```
 
-> **범위 제한**: ROADMAP Phase 6의 전체 범위(모바일 반응형, 센티멘트, DART 등)는 Phase 6.1+ 또는 Phase 7에서 다룬다. 이번 Phase 6는 "프로덕션 안정화"에 집중한다.
+> **범위 제한**: ROADMAP Phase 6의 전체 범위(모바일 반응형, 센티멘트, DART 등)는 Phase 6.1+ 또는 후속 Phase에서 다룬다. 이번 Phase 6는 "프로덕션 안정화"에 집중한다.
 
 ---
 
@@ -168,7 +168,7 @@ Phase C: 불필요한 실행 방지 (2개 파일)
 | 1 | WS 완전 실패 시 REST 폴백 가격 감시 (Phase 5.2 미해결 #2) | ❌ 높음 | Phase 6.1 이관. 보유 포지션 + WS 미연결 = 손절 불가. 이번 Phase에서는 긴급 알림으로 수동 개입 유도 |
 | 2 | `_reconnect()` 구독 복원 순서 개선 (수신 루프 먼저 시작) | ⚠️ 중간 | Phase 6.1 이관. 현재 구독 복원 -> 수신 루프 순서를 유지하되, 복원 실패 시에도 수신 루프 시작(Sprint 1에서 해결)으로 부분 대응 |
 | 3 | `is_trading_day()` 2027년 공휴일 데이터 | ⚠️ 낮음 | 2026년 말까지 업데이트. 이번 Phase 범위 밖 |
-| 4 | ROADMAP Phase 6 나머지 범위 (모바일, 센티멘트, DART) | 📋 정보 | Phase 6.1+ 또는 Phase 7에서 별도 계획 |
+| 4 | ROADMAP Phase 6 나머지 범위 (모바일, 센티멘트, DART) | 📋 정보 | Phase 6.1+ 또는 후속 Phase에서 별도 계획 |
 | 5 | recovery 재시도 중 기존 포지션 보호 | ⚠️ 중간 | REST 기반 가격 감시는 Phase 6.1 이관. 이번 Phase에서는 "보유 포지션 + WS 미연결" 경고 알림만 추가 |
 
 ---

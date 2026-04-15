@@ -28,7 +28,7 @@
 
 ### ⚠️ 주의
 
-1. **Phase 6 범위 재정의 필요**: ROADMAP.md의 Phase 6는 "고도화 + 안정화"로 모바일 반응형, 센티멘트, DART 등 넓은 범위. 이번 작업은 "스케줄러 + WS 복원력"에 한정. Phase 문서에서 ROADMAP Phase 6의 나머지 범위는 Phase 6.1+ 또는 Phase 7로 이관한다고 명시해야 함
+1. **Phase 6 범위 재정의 필요**: ROADMAP.md의 Phase 6는 "고도화 + 안정화"로 모바일 반응형, 센티멘트, DART 등 넓은 범위. 이번 작업은 "스케줄러 + WS 복원력"에 한정. Phase 문서에서 ROADMAP Phase 6의 나머지 범위는 Phase 6.1+ 또는 후속 Phase로 이관한다고 명시해야 함
 2. **주말/공휴일 필터(Phase C #8)의 Sprint 2 배치**: 주말 실행은 비용(Railway 사용량)만 발생시키고 실질 가치 없음. Sprint 1에 넣을 수도 있으나, 기존 핸들러들이 데이터 없으면 무해하게 종료되므로 Sprint 2로 분류해도 무방. 다만 텔레그램 알림이 주말에도 발송되면 혼란 → Sprint 1에서 `_market_open` 알림 추가 시 주의
 
 ---
