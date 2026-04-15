@@ -54,7 +54,7 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 - 전체 진행률: Phase 0~7.0 Sprint 1 완료, Phase 7.0 Sprint 2 예정
 - 현재 Phase: Phase 7.0 (매매 엔진 치명적 결함 수정 + LIVE 전환 준비) 🔄 진행 중
-- 현재 Sprint: Phase 7.0 Sprint 2 📋 예정 — P2 리스크 개선
+- 현재 Sprint: Phase 7.0 Sprint 2 🔄 진행 중 — P2 리스크 개선
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss_pct 분모, record_loss 확장, trailing Redis)
@@ -1018,10 +1018,12 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - trade_strength_min 100.0 (CTTR 통일), max_candidates 30→20
 > Sprint 계획: `docs/phase/phase7.0/sprint1/sprint1.md`
 
-#### Sprint 2: P2 리스크 개선
+#### Sprint 2: P2 리스크 개선 🔄 진행 중
 - daily_loss_pct 분모: 당일 시작 잔고 기반으로 변경
 - record_loss 트리거: realized_pnl < 0 전체로 확장
 - trailing_highs: 인메모리 → Redis HSET 이관
+- in-flight 중복 매도 방지 (미해결 #7 대응)
+> Sprint 계획: `docs/phase/phase7.0/sprint2/sprint2.md`
 
 #### Sprint 3: E2E 검증 + LIVE 전환 게이트
 - Paper 모드 E2E 1사이클 완전 성공 확인

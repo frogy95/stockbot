@@ -2258,7 +2258,7 @@
     {
       "id": "phase7.0",
       "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
-      "status": "completed",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
       "sprints": [
         {
@@ -2348,6 +2348,56 @@
                   "date": "2026-04-15"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "id": "phase7.0-sprint2",
+          "title": "P2 리스크 개선",
+          "status": "planned",
+          "sprintDoc": "docs/phase/phase7.0/sprint2/sprint2.md",
+          "branch": "phase7.0-sprint2",
+          "lastUpdated": "2026-04-15T00:00:00+09:00",
+          "progress": {
+            "total": 4,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "daily_loss_pct 분모 수정 — 당일 시작 잔고 기반",
+              "path": "backend/modules/trading/risk_manager.py",
+              "testPlan": "docker compose exec backend pytest tests/test_risk_daily_capital.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "record_loss 트리거 확장 + trailing_highs Redis 이관",
+              "path": "backend/modules/trading/position_manager.py",
+              "testPlan": "docker compose exec backend pytest tests/test_position_risk_trailing.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "eod trailing 정리 + in-flight 중복 매도 방지",
+              "path": "backend/modules/trading/engine.py",
+              "testPlan": "docker compose exec backend pytest tests/test_eod_trailing_cleanup.py tests/test_engine_inflight.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "통합 검증 + 기존 테스트 호환성 수정",
+              "path": "backend/tests/",
+              "testPlan": "docker compose exec backend pytest -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
             }
           ]
         }
