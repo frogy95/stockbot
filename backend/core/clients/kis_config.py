@@ -42,7 +42,7 @@ PAPER = KISEnvironment(
     app_secret_env="KIS_MOCK_APP_SECRET",
     account_env="KIS_MOCK_ACCOUNT_NO",
     rate_limit_interval=1.5,
-    max_ws_subscriptions=25,
+    max_ws_subscriptions=20,  # KIS WS 한 연결당 구독 상한 40건 기준 (20종목 × 2 TR_ID = 40)
     ws_reconnect_delay=0.5,
 )
 
@@ -55,7 +55,7 @@ LIVE = KISEnvironment(
     app_secret_env="KIS_APP_SECRET",
     account_env="KIS_ACCOUNT_NO",
     rate_limit_interval=0.07,
-    max_ws_subscriptions=35,
+    max_ws_subscriptions=20,  # KIS WS 한 연결당 구독 상한 40건 기준 (20종목 × 2 TR_ID = 40)
     ws_reconnect_delay=0.2,
 )
 

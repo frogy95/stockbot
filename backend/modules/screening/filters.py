@@ -19,7 +19,8 @@ class PrimaryFilters:
 class SecondaryFilters:
     """장중 2차 스크리닝 필터 (실시간 데이터 기반)."""
 
-    trade_strength_min: float = 70
+    # KIS CTTR(체결강도) 기준: 100=균형, >100=매수 우세, 120=중간 매수세
+    trade_strength_min: float = 120.0
     orderbook_ratio_min: float = 1.2
     screening_interval: int = 30
     no_signal_before: str = "09:30"

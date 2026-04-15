@@ -106,6 +106,7 @@ class CollectorScheduler:
         self._trading_engine = None  # 매매 엔진 (main.py에서 후속 주입)
         self._pipeline_status: dict = {}  # get_status API 계약 유지 — Redis 연동은 의존성 체인 구현 시 추가
         self._secondary_skip_count: int = 0
+        self._secondary_no_data_count: int = 0  # WS 연결 상태인데 실시간 데이터 없는 연속 횟수
 
     @property
     def is_running(self) -> bool:
@@ -744,6 +745,32 @@ class CollectorScheduler:
         self._trade_strength.set_warmup_all(5.0)
         logger.info("WS 재연결 성공: 체결강도 5초 웜업 설정")
 
+    async def _reconnect_ws(self) -> None:
+        """WS 연결 끊고 재연결 + 구독 복원. 구독 실패(ALREADY IN USE 등) 자동 복구용."""
+        logger.warning("WS 재연결 시작 (구독 데이터 부재 감지)")
+        try:
+            self._ws_manager._subscriptions.clear()
+            await self._ws_client.disconnect()
+            # KIS가 이전 세션을 정리할 시간 부여
+            await asyncio.sleep(3)
+            self._ws_client.set_on_data(self._on_realtime_data)
+            self._ws_client.set_on_ws_failure(self._on_ws_reconnect_failure)
+            self._ws_client.set_on_reconnect_success(self._on_ws_reconnect_success)
+            await self._ws_client.connect()
+            async with self._session_factory() as db_session:
+                codes = await self._get_latest_primary_codes(db_session)
+            if codes:
+                for code in codes:
+                    await self._ws_manager.subscribe(code)
+                logger.info("WS 재구독 완료: %d종목", len(codes))
+            if self._telegram_bot:
+                await self._telegram_bot.send_notification(
+                    "<b>[자동 복구]</b> WS 재연결 + 재구독 완료 (%d종목)" % (len(codes) if codes else 0)
+                )
+        except Exception:
+            logger.exception("WS 재연결 실패")
+            await self._send_failure_alert("ws_reconnect_auto", "WS 자동 재연결 실패")
+
     async def _market_open(self) -> None:
         """09:00 WS 연결 + 구독 시작 + 2차 스크리닝 활성화."""
         today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
@@ -755,14 +782,16 @@ class CollectorScheduler:
             self._ws_client.set_on_data(self._on_realtime_data)
             self._ws_client.set_on_ws_failure(self._on_ws_reconnect_failure)
             self._ws_client.set_on_reconnect_success(self._on_ws_reconnect_success)
+            # 기존 ws_manager 구독 목록 초기화 (재연결 시 중복 방지)
+            self._ws_manager._subscriptions.clear()
             await self._ws_client.connect()
-            # DB에서 최신 1차 스크리닝 결과 읽어 WS 구독 복구
+            # DB에서 최신 1차 스크리닝 결과 읽어 WS 구독
             async with self._session_factory() as db_session:
                 codes = await self._get_latest_primary_codes(db_session)
             if codes:
                 for code in codes:
                     await self._ws_manager.subscribe(code)
-                logger.info("WS 구독 복구: %d종목", len(codes))
+                logger.info("WS 구독: %d종목", len(codes))
             # 2차 스크리닝 30초 주기 활성화
             job = self._scheduler.get_job("secondary_screen")
             if job:
@@ -925,7 +954,35 @@ class CollectorScheduler:
             passed = [r for r in results if r.get("is_passed")]
             self._last_secondary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             self._secondary_skip_count = 0
-            logger.info("2차 스크리닝 완료: %d후보, %d통과", len(candidate_codes), len(passed))
+
+            # 구독된 종목 중 실제로 Redis에 데이터가 있는지 직접 확인 (필터 탈락과 구분)
+            subscribed_codes = self._ws_manager.get_subscribed_stocks()
+            data_count = 0
+            sample_codes = subscribed_codes[:10]  # 상위 10개만 샘플링
+            for code in sample_codes:
+                exec_raw = await self._redis.get(f"realtime:{code}:execution")
+                ob_raw = await self._redis.get(f"realtime:{code}:orderbook")
+                if exec_raw is not None and ob_raw is not None:
+                    data_count += 1
+
+            # 구독 종목이 있는데 샘플 10개 중 데이터가 0건이면 구독 실패 의심
+            if len(subscribed_codes) > 0 and data_count == 0:
+                self._secondary_no_data_count += 1
+                logger.warning(
+                    "실시간 데이터 부재: 구독 %d종목 샘플 %d개 중 데이터 0건 (연속 %d회)",
+                    len(subscribed_codes), len(sample_codes), self._secondary_no_data_count,
+                )
+                if self._secondary_no_data_count >= 5:
+                    logger.error("실시간 데이터 5회 연속 부재 — WS 재연결 시도")
+                    self._secondary_no_data_count = 0
+                    await self._reconnect_ws()
+            else:
+                self._secondary_no_data_count = 0
+
+            logger.info(
+                "2차 스크리닝 완료: %d후보, 구독 %d종목(데이터 %d/%d), %d통과",
+                len(candidate_codes), len(subscribed_codes), data_count, len(sample_codes), len(passed),
+            )
 
             # 통과 종목을 매매 엔진에 전달
             if passed and self._trading_engine:
@@ -1021,15 +1078,19 @@ class CollectorScheduler:
     # ── 내부 헬퍼 ────────────────────────────────────────
 
     async def _get_latest_primary_codes(self, db_session: AsyncSession) -> list[str]:
-        """최신 1차 스크리닝 통과 종목 코드 목록을 반환한다 (단일 쿼리)."""
+        """최신 1차 스크리닝 통과 종목 코드 목록을 rank 오름차순으로 반환한다 (단일 쿼리)."""
         latest_subq = (
             select(func.max(ScreeningResult.screened_at))
             .where(ScreeningResult.screening_type == "primary")
             .scalar_subquery()
         )
-        stmt = select(ScreeningResult.stock_code).where(
-            ScreeningResult.screening_type == "primary",
-            ScreeningResult.screened_at == latest_subq,
+        stmt = (
+            select(ScreeningResult.stock_code)
+            .where(
+                ScreeningResult.screening_type == "primary",
+                ScreeningResult.screened_at == latest_subq,
+            )
+            .order_by(ScreeningResult.rank.asc().nulls_last())
         )
         result = await db_session.execute(stmt)
         return [row[0] for row in result.all()]
@@ -1075,7 +1136,7 @@ class CollectorScheduler:
         if msg_tr_id == "H0STCNT0":
             execution = parse_execution(body)
             if execution:
-                # Redis 캐싱
+                # Redis 캐싱 — KIS가 직접 제공하는 trade_strength(CTTR) 포함
                 await self._redis.set(
                     f"realtime:{execution.stock_code}:execution",
                     json.dumps({
@@ -1085,11 +1146,12 @@ class CollectorScheduler:
                         "volume": execution.volume,
                         "acml_volume": execution.acml_volume,
                         "change_rate": execution.change_rate,
+                        "trade_strength": execution.trade_strength,
                         "sell_or_buy": execution.sell_or_buy,
                     }),
                     ttl=REALTIME_CACHE_TTL,
                 )
-                # 체결강도 업데이트
+                # TradeStrengthCalculator도 계속 업데이트 (호환성 유지, 외부 분석용)
                 import time
                 self._trade_strength.add_execution(
                     execution.stock_code,

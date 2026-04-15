@@ -18,10 +18,11 @@ def _make_execution_body(
     change_rate: float = 1.45,
     volume: int = 100,
     acml_volume: int = 5000000,
-    sell_or_buy: str = "2",
+    trade_strength: float = 100.0,
+    sell_or_buy: str = "1",
 ) -> str:
-    """체결 데이터 본문 생성 (최소 18개 필드)."""
-    fields = [""] * 20
+    """체결 데이터 본문 생성 (KIS H0STCNT0 실제 필드 구조, 22개+)."""
+    fields = [""] * 24
     fields[0] = stock_code
     fields[1] = time
     fields[2] = str(price)
@@ -30,7 +31,8 @@ def _make_execution_body(
     fields[5] = str(change_rate)
     fields[12] = str(volume)
     fields[13] = str(acml_volume)
-    fields[17] = sell_or_buy
+    fields[18] = str(trade_strength)  # CTTR (KIS 체결강도)
+    fields[21] = sell_or_buy  # CNTG_CLS_CODE ("1"=매수, "5"=매도)
     return "^".join(fields)
 
 
@@ -77,7 +79,7 @@ def test_parse_raw_message_invalid():
 # ── parse_execution ─────────────────────────────────────
 
 def test_parse_execution_data():
-    body = _make_execution_body()
+    body = _make_execution_body(trade_strength=125.5, sell_or_buy="1")
     result = parse_execution(body)
 
     assert result is not None
@@ -86,7 +88,8 @@ def test_parse_execution_data():
     assert result.time == "100530"
     assert result.price == 70000
     assert result.volume == 100
-    assert result.sell_or_buy == "2"
+    assert result.trade_strength == 125.5
+    assert result.sell_or_buy == "1"
 
 
 def test_parse_execution_fields():
@@ -98,7 +101,8 @@ def test_parse_execution_fields():
         change_rate=-0.33,
         volume=50,
         acml_volume=1000000,
-        sell_or_buy="1",
+        trade_strength=85.2,
+        sell_or_buy="5",
     )
     result = parse_execution(body)
 
@@ -110,7 +114,8 @@ def test_parse_execution_fields():
     assert result.change_rate == -0.33
     assert result.volume == 50
     assert result.acml_volume == 1000000
-    assert result.sell_or_buy == "1"
+    assert result.trade_strength == 85.2
+    assert result.sell_or_buy == "5"
 
 
 def test_parse_execution_invalid():

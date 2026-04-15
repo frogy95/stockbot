@@ -67,6 +67,7 @@ class Balance(BaseModel):
     total_eval_amount: int
     total_profit: int
     total_profit_rate: float
+    available_cash: int = 0  # 주문가능 예수금 (dnca_tot_amt)
 
 
 class Position(BaseModel):
@@ -432,6 +433,7 @@ class KISRestClient:
             total_eval_amount=int(summary.get("tot_evlu_amt", 0)),
             total_profit=int(summary.get("evlu_pfls_smtl_amt", 0)),
             total_profit_rate=float(summary.get("evlu_pfls_rt", 0)),
+            available_cash=int(summary.get("dnca_tot_amt", 0)),
         )
 
     async def get_positions(self) -> list[Position]:

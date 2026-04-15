@@ -35,6 +35,7 @@ class SignalGenerator:
     ) -> list[TradeSignalData]:
         """후보 종목에 전략을 적용하여 신호를 생성하고 DB에 저장."""
         generated: list[TradeSignalData] = []
+        skip_stats = {"dup": 0, "strategy_none": 0, "low_confidence": 0}
 
         async with self._session_factory() as session:
             for candidate in screened_candidates:
@@ -47,6 +48,7 @@ class SignalGenerator:
                 )
                 dup_result = await session.execute(dup_stmt)
                 if dup_result.scalars().first() is not None:
+                    skip_stats["dup"] += 1
                     logger.debug("중복 신호 스킵: %s", stock_code)
                     continue
 
@@ -56,10 +58,22 @@ class SignalGenerator:
                 # 전략 적용
                 signal_data = await self._strategy.generate_signal(snapshot)
                 if signal_data is None:
+                    skip_stats["strategy_none"] += 1
+                    logger.info(
+                        "전략 미충족: %s cp=%d pc=%d ph=%d vol=%d pvol=%d ts=%.1f",
+                        stock_code, snapshot.current_price, snapshot.prev_close,
+                        snapshot.prev_high, snapshot.volume, snapshot.prev_volume,
+                        snapshot.trade_strength,
+                    )
                     continue
 
                 # 최소 신뢰도 필터
                 if signal_data.confidence < MIN_CONFIDENCE:
+                    skip_stats["low_confidence"] += 1
+                    logger.info(
+                        "신뢰도 부족: %s confidence=%.3f < %.2f",
+                        stock_code, signal_data.confidence, MIN_CONFIDENCE,
+                    )
                     continue
 
                 # DB 저장
@@ -80,47 +94,51 @@ class SignalGenerator:
             if generated:
                 await session.commit()
 
+        if screened_candidates:
+            logger.info(
+                "신호 생성: 입력=%d, 통과=%d (중복=%d, 전략미충족=%d, 신뢰도부족=%d)",
+                len(screened_candidates), len(generated),
+                skip_stats["dup"], skip_stats["strategy_none"], skip_stats["low_confidence"],
+            )
+
         return generated
 
     async def _build_snapshot(
         self, candidate: dict, session: AsyncSession
     ) -> MarketSnapshot:
-        """Redis 실시간 데이터 + DB 과거 데이터로 MarketSnapshot 조립."""
+        """candidate dict(realtime_screener가 조립) 기반 MarketSnapshot 조립.
+
+        candidate에 prev_close/prev_high/prev_volume/recent_* 등이 모두 포함되어 있음.
+        Redis 체결 데이터에 intraday open/high/low가 없어 current_price로 대체한다.
+        """
         stock_code = candidate["stock_code"]
+        current_price = candidate.get("current_price", 0)
 
-        # Redis에서 실시간 시세
-        realtime_raw = await self._redis.get(f"realtime:{stock_code}")
-        if realtime_raw:
-            realtime = json.loads(realtime_raw)
-        else:
-            realtime = {}
+        # 팩터 계산용 과거 5일 데이터 (candidate에 이미 포함)
+        recent_highs = candidate.get("recent_highs", [])
+        recent_lows = candidate.get("recent_lows", [])
+        recent_closes = candidate.get("recent_closes", [])
 
-        # DB에서 최근 5일 시세
-        md_stmt = (
-            select(MarketData)
-            .where(MarketData.stock_code == stock_code)
-            .order_by(desc(MarketData.data_date))
-            .limit(5)
-        )
-        md_result = await session.execute(md_stmt)
-        md_rows = md_result.scalars().all()
+        # ASC 정렬이므로 마지막 원소가 최근 일자(전일 기준)
+        prev_close = candidate.get("prev_close") or (recent_closes[-1] if recent_closes else current_price)
+        prev_high = candidate.get("prev_high") or (recent_highs[-1] if recent_highs else current_price)
 
-        recent_highs = [int(r.high_price) for r in md_rows if r.high_price]
-        recent_lows = [int(r.low_price) for r in md_rows if r.low_price]
-        recent_closes = [int(r.close_price) for r in md_rows if r.close_price]
+        # KIS 체결 데이터에 intraday open/high/low 없음.
+        # open_price는 prev_close로 폴백 → gap_rate=0으로 처리되어 전략이 prev_high 돌파 로직 진입.
+        # (current_price로 폴백하면 gap_rate≥3% 오판정 → breakout_ref=high=current_price → 자기돌파 False)
+        open_price = candidate.get("open_price") or prev_close or current_price
+        high = candidate.get("high") or current_price
+        low = candidate.get("low") or current_price
 
-        # 전일 데이터 (첫 번째 row)
-        prev_high = recent_highs[0] if recent_highs else candidate.get("current_price", 0)
-        prev_close = recent_closes[0] if recent_closes else candidate.get("current_price", 0)
-
+        # momentum/volatility 계산이 ASC 순서를 가정하는지는 기존 로직 유지
         return MarketSnapshot(
             stock_code=stock_code,
             stock_name=candidate.get("stock_name", ""),
             stock_type=candidate.get("stock_type", "STOCK"),
-            current_price=candidate.get("current_price", 0),
-            open_price=realtime.get("open_price", candidate.get("open_price", 0)),
-            high=realtime.get("high", candidate.get("high", 0)),
-            low=realtime.get("low", candidate.get("low", 0)),
+            current_price=current_price,
+            open_price=open_price,
+            high=high,
+            low=low,
             prev_close=prev_close,
             prev_high=prev_high,
             volume=candidate.get("volume", 0),

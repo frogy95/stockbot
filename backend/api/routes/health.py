@@ -122,3 +122,49 @@ async def db_stats():
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/health/ws-diag")
+async def ws_diagnostic(request: Request):
+    """WS + 실시간 데이터 진단 — 스케줄러 WS 상태 및 Redis 캐시 확인."""
+    diag: dict = {}
+
+    # 1) 스케줄러 WS 상태
+    ws_client = getattr(request.app.state, "kis_ws", None)
+    ws_manager = getattr(request.app.state, "ws_manager", None)
+    diag["ws_connected"] = ws_client.connected if ws_client else False
+    diag["ws_subscription_count"] = ws_manager.count if ws_manager else 0
+    diag["ws_subscribed_stocks"] = ws_manager.get_subscribed_stocks()[:10] if ws_manager else []
+
+    # 2) Redis 실시간 데이터 샘플 확인
+    sample_codes = diag["ws_subscribed_stocks"][:5]
+    realtime_check = {}
+    for code in sample_codes:
+        exec_data = await redis_client.get(f"realtime:{code}:execution")
+        ob_data = await redis_client.get(f"realtime:{code}:orderbook")
+        realtime_check[code] = {
+            "execution": exec_data is not None,
+            "orderbook": ob_data is not None,
+        }
+        if exec_data:
+            import json as _json
+            try:
+                parsed = _json.loads(exec_data)
+                realtime_check[code]["exec_price"] = parsed.get("price")
+                realtime_check[code]["exec_time"] = parsed.get("time")
+            except Exception:
+                pass
+    diag["realtime_data"] = realtime_check
+
+    # 3) 2차 스크리닝 DB 결과 확인
+    try:
+        factory = get_session_factory()
+        async with factory() as session:
+            secondary_count = (await session.execute(
+                text("SELECT COUNT(*) FROM screening_results WHERE screening_type = 'secondary'")
+            )).scalar()
+            diag["secondary_screening_total"] = secondary_count
+    except Exception as e:
+        diag["secondary_screening_total"] = f"error: {e}"
+
+    return diag

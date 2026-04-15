@@ -1,7 +1,15 @@
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+# 애플리케이션 로깅 설정 — Railway에서 내부 로그 출력
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    stream=sys.stdout,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.redis import redis_client
@@ -161,6 +169,7 @@ async def lifespan(app: FastAPI):
         eod_liquidator=eod_liquidator,
         redis_client=redis_client,
         notifier_manager=notifier_manager,
+        rest_client=rest_client,
     )
     await trading_engine.start()
     app.state.trading_engine = trading_engine
