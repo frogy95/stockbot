@@ -1,7 +1,7 @@
-# Phase 7: 5분봉 거래량 가속도 지표 — 실행 계획 (초안)
+# Phase 7.1: 5분봉 거래량 가속도 지표 — 실행 계획 (초안)
 
 > **Status**: 초안 (2026-04-13) — Phase 6.1 완료 + 데이터 축적 후 확정 예정
-> **ROADMAP 참조**: `ROADMAP.md` Phase 7
+> **ROADMAP 참조**: `ROADMAP.md` Phase 7.1
 > **선행 Phase**: Phase 6.1 (5분봉 수집 파이프라인 구축)
 
 ---

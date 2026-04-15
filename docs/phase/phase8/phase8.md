@@ -1,14 +1,14 @@
 # Phase 8: 동시간대 Z-score + VWAP 포지션 — 실행 계획 (초안)
 
-> **Status**: 초안 (2026-04-13) — Phase 7 완료 + 데이터 축적 후 확정 예정
+> **Status**: 초안 (2026-04-13) — Phase 7.1 완료 + 데이터 축적 후 확정 예정
 > **ROADMAP 참조**: `ROADMAP.md` Phase 8
-> **선행 Phase**: Phase 7 (시간대별 거래량 DB + VWAP 틱데이터 수집)
+> **선행 Phase**: Phase 7.1 (시간대별 거래량 DB + VWAP 틱데이터 수집)
 
 ---
 
 ## 범위 및 목적
 
-Phase 7에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반으로, **동시간대 N일 거래량 Z-score**와 **VWAP 대비 가격 포지션**을 구현하여 매매 전략의 정밀도를 높인다.
+Phase 7.1에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반으로, **동시간대 N일 거래량 Z-score**와 **VWAP 대비 가격 포지션**을 구현하여 매매 전략의 정밀도를 높인다.
 
 ### 핵심 아이디어
 
@@ -23,12 +23,12 @@ Phase 7에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반
 
 | 데이터 | 소스 | 스키마 | 최소 축적 기간 |
 |--------|------|--------|--------------|
-| 시간대별 거래량 DB | Phase 7 `volume_5min_history` 테이블 | stock_code, date, slot_index, buy_vol, sell_vol, total_vol | **20거래일** (DB 이관 후) |
-| VWAP 틱데이터 | Phase 7 Redis 슬롯별 가격*거래량 누적 | `vwap:{code}:{date}:{slot}` → `{price_vol_sum, vol_sum}` | **20거래일** |
+| 시간대별 거래량 DB | Phase 7.1 `volume_5min_history` 테이블 | stock_code, date, slot_index, buy_vol, sell_vol, total_vol | **20거래일** (DB 이관 후) |
+| VWAP 틱데이터 | Phase 7.1 Redis 슬롯별 가격*거래량 누적 | `vwap:{code}:{date}:{slot}` → `{price_vol_sum, vol_sum}` | **20거래일** |
 
 ### 착수 조건 체크리스트
 
-- ⬜ Phase 7 완료 및 프로덕션 배포
+- ⬜ Phase 7.1 완료 및 프로덕션 배포
 - ⬜ `volume_5min_history` 테이블에 **20거래일 이상** 데이터 축적
 - ⬜ VWAP 틱데이터 Redis 키에 **20거래일 이상** 축적
 - ⬜ 축적 데이터 품질 검증: 결측 슬롯 비율 < 5%, Z-score 분포 정규성 확인
@@ -50,9 +50,9 @@ Phase 7에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반
 | 인프라 | Phase | 상태 |
 |--------|-------|------|
 | 5분봉 Redis 수집 파이프라인 | Phase 6.1 | 구축 예정 |
-| 5분봉 가속도 지표 | Phase 7 | 초안 |
-| 시간대별 거래량 DB (volume_5min_history) | Phase 7 | 초안 |
-| VWAP 틱데이터 Redis 수집 | Phase 7 | 초안 |
+| 5분봉 가속도 지표 | Phase 7.1 | 초안 |
+| 시간대별 거래량 DB (volume_5min_history) | Phase 7.1 | 초안 |
+| VWAP 틱데이터 Redis 수집 | Phase 7.1 | 초안 |
 
 ---
 

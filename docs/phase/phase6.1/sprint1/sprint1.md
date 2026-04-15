@@ -1,6 +1,6 @@
 # Sprint 1: 시간가중 거래량 보정 + 5분봉 수집 선행 구축 (Phase 6.1)
 
-**Goal:** momentum_breakout 전략의 거래량 조건을 시간가중 보정 + 돌파 강도 연동으로 개선하고, Phase 7용 5분봉 거래량 수집 파이프라인을 선행 구축하여 데이터 축적 시작
+**Goal:** momentum_breakout 전략의 거래량 조건을 시간가중 보정 + 돌파 강도 연동으로 개선하고, Phase 7.1용 5분봉 거래량 수집 파이프라인을 선행 구축하여 데이터 축적 시작
 
 **Architecture:** momentum_breakout.py에 calc_market_progress() 유틸 추가 + 거래량 조건 블록 교체 (선형 보정 + 3단계 임계값). volume_aggregator.py 신규 모듈로 WS 체결 이벤트마다 Redis 5분봉 슬롯에 INCRBY 누적. 조회 엔드포인트 추가.
 
@@ -15,7 +15,7 @@
 
 ## 제외 범위
 
-- 5분봉 데이터를 전략에서 사용하는 것 (Phase 7 범위)
+- 5분봉 데이터를 전략에서 사용하는 것 (Phase 7.1 범위)
 - 비선형(U자형) 보정 (Phase 9 범위)
 - 동시간대 Z-score (Phase 8 범위)
 - 프론트엔드 변경 (전략 내부 로직 변경이므로 API 응답 형식 불변)
@@ -273,7 +273,7 @@ git commit -m "feat(phase6.1-sprint1): task3 — 5분봉 거래량 집계 모듈
   - `self._volume_aggregator = volume_aggregator`
   - `_process_realtime_data` 메서드의 H0STCNT0 분기에서, 체결강도 업데이트 뒤에 volume_aggregator 호출 추가:
     ```python
-    # 5분봉 거래량 집계 (Phase 7용 선행 수집)
+    # 5분봉 거래량 집계 (Phase 7.1용 선행 수집)
     if self._volume_aggregator:
         try:
             await self._volume_aggregator.aggregate_execution(
@@ -299,7 +299,7 @@ git commit -m "feat(phase6.1-sprint1): task3 — 5분봉 거래량 집계 모듈
   ```python
   @router.get("/collector/vol5m/{stock_code}")
   async def get_vol5m(stock_code: str, request: Request):
-      """5분봉 거래량 슬롯 조회 (최근 12개 버킷, Phase 7 디버깅용)."""
+      """5분봉 거래량 슬롯 조회 (최근 12개 버킷, Phase 7.1 디버깅용)."""
       aggregator = getattr(request.app.state, "volume_aggregator", None)
       if aggregator is None:
           raise HTTPException(status_code=503, detail="VolumeAggregator 미초기화")
