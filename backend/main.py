@@ -122,7 +122,7 @@ async def lifespan(app: FastAPI):
     logger.info("수집 스케줄러 초기화 완료")
 
     # 매매 모듈 초기화
-    risk_manager = RiskManager(session_factory, redis_client)
+    risk_manager = RiskManager(session_factory, redis_client, rest_client=rest_client)
     await risk_manager.load_settings()
     position_sizer = PositionSizer(session_factory)
     await position_sizer.load_settings()
