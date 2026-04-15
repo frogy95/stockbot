@@ -169,8 +169,10 @@ async def lifespan(app: FastAPI):
         eod_liquidator=eod_liquidator,
         redis_client=redis_client,
         notifier_manager=notifier_manager,
+        session_factory=session_factory,
         rest_client=rest_client,
     )
+    order_manager.set_filled_callback(trading_engine.on_order_filled)
     await trading_engine.start()
     app.state.trading_engine = trading_engine
     collector_scheduler.set_trading_engine(trading_engine)

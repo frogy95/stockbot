@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-14T20:00:00+09:00",
+  "lastUpdated": "2026-04-15T12:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2256,10 +2256,108 @@
       ]
     },
     {
-      "id": "phase7",
+      "id": "phase7.0",
+      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
+      "sprints": [
+        {
+          "id": "phase7.0-sprint1",
+          "title": "P0 치명적 결함 + P1 수정",
+          "status": "completed",
+          "sprintDoc": "docs/phase/phase7.0/sprint1/sprint1.md",
+          "branch": "phase7.0-sprint1",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/132",
+          "lastUpdated": "2026-04-15T00:00:00+09:00",
+          "progress": {
+            "total": 5,
+            "completed": 5
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "Order 모델 signal_json 컬럼 추가 + Alembic 마이그레이션",
+              "path": "backend/core/models/trading.py",
+              "testPlan": "docker compose exec backend pytest tests/test_order_signal_json.py -v",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task1",
+                  "message": "feat(phase7.0-sprint1): task1 -- Order 모델 signal_json 컬럼 추가",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task2",
+              "title": "OrderManager 콜백 패턴 + 이중 주문 방지 + 체결가 역산",
+              "path": "backend/modules/trading/order_manager.py",
+              "testPlan": "docker compose exec backend pytest tests/test_order_manager.py -v",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task2",
+                  "message": "feat(phase7.0-sprint1): task2 -- OrderManager 콜백 패턴 + 이중 주문 방지 + 체결가 역산",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "engine 가격 갱신 + 청산 실행 + 모니터 루프 완성",
+              "path": "backend/modules/trading/engine.py",
+              "testPlan": "docker compose exec backend pytest tests/test_engine_monitor.py -v",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task3",
+                  "message": "feat(phase7.0-sprint1): task3 -- engine 가격 갱신 + 청산 실행 + 모니터 루프 완성",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "파라미터 조정 (trade_strength_min, max_candidates)",
+              "path": "backend/modules/screening/filters.py",
+              "testPlan": "docker compose exec backend pytest tests/test_filters.py tests/test_momentum_breakout.py -v",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task4",
+                  "message": "feat(phase7.0-sprint1): task4 -- trade_strength_min 100.0, max_candidates 20 파라미터 조정",
+                  "date": "2026-04-15"
+                }
+              ]
+            },
+            {
+              "id": "task5",
+              "title": "main.py 배선 + 통합 검증",
+              "path": "backend/main.py",
+              "testPlan": "docker compose exec backend pytest -v",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task5",
+                  "message": "feat(phase7.0-sprint1): task5 -- main.py 배선 + on_filled_callback 연결 + 통합 검증",
+                  "date": "2026-04-15"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
-      "phaseDoc": "docs/phase/phase7/phase7.md",
+      "phaseDoc": "docs/phase/phase7.1/phase7.1.md",
       "dataPrerequisite": {
         "source": "phase6.1",
         "type": "5분봉 거래량 Redis (vol5m:*)",
@@ -2274,7 +2372,7 @@
       "status": "planned",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "dataPrerequisite": {
-        "source": "phase7",
+        "source": "phase7.1",
         "type": "시간대별 거래량 DB + VWAP 틱데이터",
         "minAccumulation": "20거래일",
         "warningThreshold": "<20거래일"
@@ -2682,6 +2780,15 @@
       "version": "v1.9.0",
       "description": "Phase 6.2 Sprint 1 프로덕션 배포 — 장전 수집 단순화 (KIS 주경로 직접 수집, 공공데이터포털 폴백 제거), 16:00 portal_supplement cron 신설 (포털 장후 보조), validate_premarket_db 소스 조건 확장 (data_go_kr + kis_daily), 테스트 7건 신규 추가",
       "prUrl": "https://github.com/frogy95/stockbot/pull/128",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-15",
+      "type": "sprint",
+      "ref": "phase7.0-sprint1",
+      "version": "v2.0.0",
+      "description": "Phase 7.0 Sprint 1 프로덕션 배포 — P0 치명적 결함 3건 수정 (engine 가격 갱신 결함, OrderManager 포지션 미생성 결함, 청산 실행 결함), P1 파라미터 교정 (trade_strength_min 100.0, max_candidates 20), Order signal_json JSONB 컬럼 추가, main.py 배선 완성",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/133",
       "status": "in_progress"
     }
   ]

@@ -121,7 +121,7 @@ class TestMaxCandidates:
         self.screener = PrimaryScreener()
 
     def test_truncate_to_max_candidates(self):
-        """40종목 통과 시 스코어 상위 30종목만 반환."""
+        """40종목 통과 시 스코어 상위 20종목만 반환."""
         # _apply_filters 결과에 40종목이 있는 상황 시뮬레이션
         scored = []
         for i in range(40):
@@ -141,11 +141,11 @@ class TestMaxCandidates:
                 "change_rate": 3.0,
             })
         result = self.screener._truncate_and_rank(scored)
-        assert len(result) == 30
+        assert len(result) == 20
         # 스코어 내림차순, rank 1부터
         assert result[0]["rank"] == 1
         assert result[0]["score"] >= result[-1]["score"]
-        assert result[-1]["rank"] == 30
+        assert result[-1]["rank"] == 20
 
 
 # ---------------------------------------------------------------------------

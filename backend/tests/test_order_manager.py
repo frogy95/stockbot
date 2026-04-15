@@ -267,7 +267,7 @@ class TestPollFillStatus:
 
         result = await manager._poll_fill_status("ORD001", max_polls=15, interval=2.0)
 
-        assert result is True
+        assert result is not None
         assert client.get_order_status.call_count == 3
         # 3번의 sleep(2.0) 호출 확인
         assert mock_sleep.call_count == 3
@@ -293,7 +293,7 @@ class TestPollTimeout:
 
         result = await manager._poll_fill_status("ORD001", max_polls=15, interval=2.0)
 
-        assert result is False
+        assert result is None
         assert client.get_order_status.call_count == 15
         assert mock_sleep.call_count == 15
 
@@ -435,3 +435,151 @@ class TestPaperTradingMarketOnly:
 
         # cancel_order 호출 없음
         client.cancel_order.assert_not_called()
+
+
+class TestSubmitOrderSavesSignalJson:
+    """TC-8: submit_order에서 signal_json 저장."""
+
+    @pytest.mark.asyncio
+    async def test_submit_order_saves_signal_json(self, mock_redis):
+        """submit_order 호출 시 Order.signal_json에 signal 정보가 저장된다."""
+        factory, session = _make_session_factory()
+
+        added_orders = []
+
+        def capture_add(obj):
+            added_orders.append(obj)
+
+        session.add = capture_add
+
+        async def _refresh(obj):
+            obj.id = 1
+
+        session.refresh = AsyncMock(side_effect=_refresh)
+
+        client = _make_rest_client()
+        throttler = _make_throttler()
+
+        manager = OrderManager(factory, client, mock_redis, throttler)
+
+        signal = _make_signal()
+        pos_size = _make_position_size()
+
+        await manager.submit_order(signal, pos_size)
+
+        assert len(added_orders) == 1
+        order = added_orders[0]
+        assert order.signal_json is not None
+        assert order.signal_json["stock_code"] == "005930"
+        assert order.signal_json["strategy_name"] == "test_strategy"
+        assert order.signal_json["confidence"] == 0.8
+        assert order.signal_json["entry_price"] == 50_000
+
+
+class TestOnFilledCallbackCalled:
+    """TC-9: 체결 시 on_filled_callback 호출."""
+
+    @pytest.mark.asyncio
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_on_filled_callback_called(self, mock_sleep, mock_redis):
+        """체결 성공 시 on_filled_callback이 올바른 인수로 호출된다."""
+        order = _make_order_mock(order_id=1)
+        order.signal_json = {
+            "stock_code": "005930",
+            "signal_type": "buy",
+            "strategy_name": "test_strategy",
+            "confidence": 0.8,
+            "reason": {},
+            "entry_price": 50_000,
+            "stop_loss": 48_000,
+            "take_profit": 53_000,
+        }
+        factory, session = _make_session_factory(order)
+
+        client = _make_rest_client(order_no="ORD001", fill_qty=10)
+        # get_order_status에 tot_ccld_amt도 포함
+        client.get_order_status = AsyncMock(
+            return_value={
+                "output1": [{"tot_ccld_qty": "10", "tot_ccld_amt": "500000"}]
+            }
+        )
+        throttler = _make_throttler()
+
+        callback = AsyncMock()
+        manager = OrderManager(factory, client, mock_redis, throttler)
+        manager.set_filled_callback(callback)
+
+        with patch("modules.trading.order_manager.settings") as mock_settings:
+            mock_settings.TRADING_ENV = "paper"
+            await manager._execute_order(1)
+
+        callback.assert_called_once()
+        args = callback.call_args[1]
+        assert args["order_id"] == 1
+        assert args["filled_price"] == 50_000  # 500000 // 10
+        assert args["quantity"] == 10
+        assert args["signal_data"].stock_code == "005930"
+
+
+class TestCancelFailureReturnsNoMarketOrder:
+    """TC-10: cancel 실패 시 시장가 미발송 (이중 주문 방지)."""
+
+    @pytest.mark.asyncio
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_cancel_failure_returns_no_market_order(self, mock_sleep, mock_redis):
+        """실전: 지정가 미체결 → 취소 실패 → 시장가 발송 없이 return."""
+        order = _make_order_mock(order_id=1)
+        order.signal_json = _make_signal().model_dump()
+        factory, session = _make_session_factory(order)
+
+        client = AsyncMock()
+        client.place_order = AsyncMock(
+            return_value=OrderResponse(order_no="LIMIT001", stock_code="005930", message="OK")
+        )
+        # cancel_order 실패
+        client.cancel_order = AsyncMock(side_effect=Exception("취소 실패"))
+        # 지정가 미체결
+        client.get_order_status = AsyncMock(
+            return_value={"output1": [{"tot_ccld_qty": "0"}]}
+        )
+        throttler = _make_throttler()
+
+        manager = OrderManager(factory, client, mock_redis, throttler)
+
+        with patch("modules.trading.order_manager.settings") as mock_settings:
+            mock_settings.TRADING_ENV = "live"
+            await manager._execute_order(1)
+
+        # place_order 1회만 호출 (지정가만, 시장가 폴백 없음)
+        assert client.place_order.call_count == 1
+
+
+class TestFilledPriceCalculation:
+    """TC-11: 체결가 역산 (tot_ccld_amt / tot_ccld_qty)."""
+
+    @pytest.mark.asyncio
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_filled_price_calculation(self, mock_sleep, mock_redis):
+        """체결가 = tot_ccld_amt / tot_ccld_qty 정수 나눗셈."""
+        order = _make_order_mock(order_id=1)
+        order.signal_json = _make_signal(entry_price=50_000).model_dump()
+        factory, session = _make_session_factory(order)
+
+        client = _make_rest_client(order_no="ORD001", fill_qty=10)
+        client.get_order_status = AsyncMock(
+            return_value={
+                "output1": [{"tot_ccld_qty": "10", "tot_ccld_amt": "501230"}]
+            }
+        )
+        throttler = _make_throttler()
+
+        callback = AsyncMock()
+        manager = OrderManager(factory, client, mock_redis, throttler)
+        manager.set_filled_callback(callback)
+
+        with patch("modules.trading.order_manager.settings") as mock_settings:
+            mock_settings.TRADING_ENV = "paper"
+            await manager._execute_order(1)
+
+        callback.assert_called_once()
+        assert callback.call_args[1]["filled_price"] == 50_123  # 501230 // 10

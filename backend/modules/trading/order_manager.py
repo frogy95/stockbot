@@ -42,6 +42,7 @@ class OrderManager:
         rest_client: KISRestClient,
         redis_client,
         throttler: TokenBucketThrottler,
+        on_filled_callback=None,
     ):
         self._session_factory = session_factory
         self._rest_client = rest_client
@@ -49,6 +50,11 @@ class OrderManager:
         self._throttler = throttler
         self._queue: asyncio.Queue = asyncio.Queue()
         self._worker_task: asyncio.Task | None = None
+        self._on_filled_callback = on_filled_callback
+
+    def set_filled_callback(self, callback) -> None:
+        """체결 콜백을 설정한다 (순환 참조 방지용 setter)."""
+        self._on_filled_callback = callback
 
     def get_queue_size(self) -> int:
         """주문 큐 대기 건수를 반환한다."""
@@ -97,6 +103,7 @@ class OrderManager:
                 order_division=_MARKET_ORDER_DIVISION,
                 status="submitted",
                 submitted_at=datetime.now(tz=timezone.utc),
+                signal_json=signal.model_dump(),
             )
             session.add(order)
             await session.commit()
@@ -147,6 +154,7 @@ class OrderManager:
             order_type = order.order_type
             quantity = order.quantity
             price = order.price
+            signal_json = order.signal_json
 
         await self._throttler.acquire()
 
@@ -170,14 +178,8 @@ class OrderManager:
 
             order_no = response.order_no
             await self._update_order_no(order_id, order_no, _MARKET_ORDER_DIVISION)
-            filled = await self._poll_fill_status(order_no)
-            if not filled:
-                await self._update_order_status(order_id, "timeout")
-                await self._reconcile_timeout(order_id)
-            else:
-                await self._update_order_status(
-                    order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
-                )
+            status_data = await self._poll_fill_status(order_no)
+            await self._handle_fill_result(order_id, status_data, int(price), signal_json, quantity)
         else:
             # 실전: 최우선 지정가 시도
             limit_req = OrderRequest(
@@ -204,9 +206,7 @@ class OrderManager:
             filled = self._is_filled(status_data)
 
             if filled:
-                await self._update_order_status(
-                    order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
-                )
+                await self._handle_fill_result(order_id, status_data, int(price), signal_json, quantity)
                 return
 
             # 미체결 → 취소 후 시장가 폴백
@@ -219,7 +219,9 @@ class OrderManager:
             try:
                 await self._rest_client.cancel_order(limit_order_no, cancel_req)
             except Exception:
-                logger.warning("주문 취소 실패 (무시하고 시장가 진행): order_id=%d", order_id)
+                logger.warning("주문 취소 실패, 이중 주문 방지를 위해 시장가 미발송: order_id=%d", order_id)
+                await self._update_order_status(order_id, "cancel_failed")
+                return
 
             await self._throttler.acquire()
             market_req = OrderRequest(
@@ -238,21 +240,15 @@ class OrderManager:
 
             market_order_no = market_resp.order_no
             await self._update_order_no(order_id, market_order_no, _MARKET_ORDER_DIVISION)
-            filled = await self._poll_fill_status(market_order_no)
-            if not filled:
-                await self._update_order_status(order_id, "timeout")
-                await self._reconcile_timeout(order_id)
-            else:
-                await self._update_order_status(
-                    order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
-                )
+            status_data = await self._poll_fill_status(market_order_no)
+            await self._handle_fill_result(order_id, status_data, int(price), signal_json, quantity)
 
     async def _poll_fill_status(
         self,
         order_no: str,
         max_polls: int = 15,
         interval: float = 2.0,
-    ) -> bool:
+    ) -> dict | None:
         """체결 여부를 반복 폴링한다.
 
         Parameters
@@ -266,8 +262,8 @@ class OrderManager:
 
         Returns
         -------
-        bool
-            체결 시 True, timeout 시 False.
+        dict | None
+            체결 시 status_data dict, timeout 시 None.
         """
         for poll_no in range(max_polls):
             await asyncio.sleep(interval)
@@ -280,20 +276,63 @@ class OrderManager:
 
             if self._is_filled(data):
                 logger.info("체결 확인: order_no=%s (poll %d)", order_no, poll_no + 1)
-                return True
+                return data
 
         logger.warning("체결 폴링 timeout: order_no=%s", order_no)
-        return False
+        return None
 
     # ------------------------------------------------------------------
     # 내부 헬퍼
     # ------------------------------------------------------------------
 
     @staticmethod
+    def _extract_filled_price(status_data: dict | None, fallback_price: int) -> int:
+        """체결 응답에서 체결가를 역산한다 (tot_ccld_amt / tot_ccld_qty)."""
+        if status_data is None:
+            return fallback_price
+        output1 = status_data.get("output1", [])
+        if not output1:
+            return fallback_price
+        first = output1[0] if isinstance(output1, list) else output1
+        try:
+            tot_amt = int(first.get("tot_ccld_amt", 0))
+            tot_qty = int(first.get("tot_ccld_qty", 0))
+            if tot_qty > 0 and tot_amt > 0:
+                return tot_amt // tot_qty
+        except (ValueError, TypeError):
+            pass
+        return fallback_price
+
+    async def _handle_fill_result(
+        self, order_id: int, status_data: dict | None,
+        fallback_price: int, signal_json: dict | None, quantity: int,
+    ) -> None:
+        """체결/timeout 폴링 결과를 처리한다."""
+        if status_data is None:
+            await self._update_order_status(order_id, "timeout")
+            await self._reconcile_timeout(order_id)
+            return
+        await self._update_order_status(
+            order_id, "filled", filled_at=datetime.now(tz=timezone.utc)
+        )
+        filled_price = self._extract_filled_price(status_data, fallback_price)
+        if self._on_filled_callback is not None and signal_json is not None:
+            try:
+                signal_data = TradeSignalData(**signal_json)
+                await self._on_filled_callback(
+                    order_id=order_id,
+                    filled_price=filled_price,
+                    signal_data=signal_data,
+                    quantity=quantity,
+                )
+            except Exception:
+                logger.exception("체결 콜백 실행 실패: order_id=%d", order_id)
+
+    @staticmethod
     def _is_filled(status_data: dict) -> bool:
         """체결 응답 데이터에서 체결 여부를 판별한다.
 
-        output1 리스트의 첫 번째 항목의 tot_ccld_qty > 0이면 체결로 간주.
+        tot_ccld_qty > 0이면 체결로 간주. tot_ccld_amt 없이도 동작해야 한다.
         """
         output1 = status_data.get("output1", [])
         if not output1:
