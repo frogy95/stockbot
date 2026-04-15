@@ -24,11 +24,11 @@ PR: https://github.com/frogy95/stockbot/pull/128
 
 #### 수동 검증 항목 (배포 후 확인 필요)
 
-- ⬜ /api/v1/health 헬스체크 확인 (프로덕션)
-- ⬜ 주요 페이지 접속 확인
-- ⬜ 16:00 포털 보조 수집 cron 동작 확인 (첫 거래일 모니터링)
-- ⬜ 08:00 KIS 직접 수집 정상 동작 확인
-- ⬜ 08:30 KIS 재시도 동작 확인 (실패 시에만)
+- ✅ /api/v1/health 헬스체크 확인 (프로덕션) — healthy, database: connected, redis: connected
+- ✅ 주요 페이지 접속 확인 — 307 redirect 정상, job_count=8, portal_supplement 등록 확인
+- ✅ 16:00 포털 보조 수집 cron 동작 확인 — 2026-04-14 16:00 KST, 2882종목 수집 완료 (기준일: 20260413)
+- ✅ 08:00 KIS 직접 수집 정상 동작 확인 — 2026-04-15 08:00 KST, 2113/2641 수집 (validation=PASS), 전체 파이프라인 888.8초
+- ✅ 08:30 KIS 재시도 동작 확인 — premarket 성공 상태이므로 즉시 스킵 (정상)
 
 ---
 

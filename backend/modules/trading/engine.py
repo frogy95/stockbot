@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
+from core.clients.kis_rest import KISRestClient
 from core.models.settings import SystemSetting
 from core.redis import RedisClient
 from modules.trading.eod_liquidator import EodLiquidator
@@ -36,6 +37,7 @@ class TradingEngine:
         redis_client: RedisClient,
         notifier_manager=None,
         session_factory=None,
+        rest_client: KISRestClient | None = None,
     ):
         self._signal_generator = signal_generator
         self._order_manager = order_manager
@@ -46,6 +48,7 @@ class TradingEngine:
         self._redis = redis_client
         self._notifier = notifier_manager
         self._session_factory = session_factory
+        self._rest_client = rest_client
         self._running = False
         self._monitor_task: asyncio.Task | None = None
 
@@ -151,12 +154,22 @@ class TradingEngine:
             )
             size_ratio: float = candidate.get("position_size_ratio", 1.0)
 
-            # 포지션 사이징
+            # 포지션 사이징 — 실잔고 조회
+            balance_amount = 0
+            if self._rest_client is not None:
+                try:
+                    balance = await self._rest_client.get_balance()
+                    balance_amount = balance.available_cash
+                    logger.debug("주문가능 예수금: %d원", balance_amount)
+                except Exception:
+                    logger.exception("잔고 조회 실패 — 주문 수량 계산 불가: %s", signal.stock_code)
+                    continue
+
             position_size = await self._position_sizer.calculate(
-                signal.stock_code, signal.entry_price, 0, size_ratio=size_ratio
+                signal.stock_code, signal.entry_price, balance_amount, size_ratio=size_ratio
             )
             if position_size.quantity == 0:
-                logger.info("주문 수량 0 — 스킵: %s", signal.stock_code)
+                logger.info("주문 수량 0 — 스킵: %s (balance=%d)", signal.stock_code, balance_amount)
                 continue
 
             # 모드 분기
