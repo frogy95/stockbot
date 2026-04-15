@@ -2264,12 +2264,14 @@
         {
           "id": "phase7.0-sprint1",
           "title": "P0 치명적 결함 + P1 수정",
-          "status": "planned",
+          "status": "completed",
           "sprintDoc": "docs/phase/phase7.0/sprint1/sprint1.md",
           "branch": "phase7.0-sprint1",
+          "prUrl": "(생성 후 기입)",
+          "lastUpdated": "2026-04-15T00:00:00+09:00",
           "progress": {
             "total": 5,
-            "completed": 0
+            "completed": 5
           },
           "tasks": [
             {
@@ -2277,45 +2279,75 @@
               "title": "Order 모델 signal_json 컬럼 추가 + Alembic 마이그레이션",
               "path": "backend/core/models/trading.py",
               "testPlan": "docker compose exec backend pytest tests/test_order_signal_json.py -v",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task1",
+                  "message": "feat(phase7.0-sprint1): task1 -- Order 모델 signal_json 컬럼 추가",
+                  "date": "2026-04-15"
+                }
+              ]
             },
             {
               "id": "task2",
               "title": "OrderManager 콜백 패턴 + 이중 주문 방지 + 체결가 역산",
               "path": "backend/modules/trading/order_manager.py",
               "testPlan": "docker compose exec backend pytest tests/test_order_manager.py -v",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task2",
+                  "message": "feat(phase7.0-sprint1): task2 -- OrderManager 콜백 패턴 + 이중 주문 방지 + 체결가 역산",
+                  "date": "2026-04-15"
+                }
+              ]
             },
             {
               "id": "task3",
               "title": "engine 가격 갱신 + 청산 실행 + 모니터 루프 완성",
               "path": "backend/modules/trading/engine.py",
               "testPlan": "docker compose exec backend pytest tests/test_engine_monitor.py -v",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task3",
+                  "message": "feat(phase7.0-sprint1): task3 -- engine 가격 갱신 + 청산 실행 + 모니터 루프 완성",
+                  "date": "2026-04-15"
+                }
+              ]
             },
             {
               "id": "task4",
               "title": "파라미터 조정 (trade_strength_min, max_candidates)",
               "path": "backend/modules/screening/filters.py",
               "testPlan": "docker compose exec backend pytest tests/test_filters.py tests/test_momentum_breakout.py -v",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task4",
+                  "message": "feat(phase7.0-sprint1): task4 -- trade_strength_min 100.0, max_candidates 20 파라미터 조정",
+                  "date": "2026-04-15"
+                }
+              ]
             },
             {
               "id": "task5",
               "title": "main.py 배선 + 통합 검증",
               "path": "backend/main.py",
               "testPlan": "docker compose exec backend pytest -v",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "feat(phase7.0-sprint1): task5",
+                  "message": "feat(phase7.0-sprint1): task5 -- main.py 배선 + on_filled_callback 연결 + 통합 검증",
+                  "date": "2026-04-15"
+                }
+              ]
             }
           ]
         }

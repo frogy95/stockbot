@@ -7,7 +7,7 @@
 
 ## Phase 데이터 의존성 관리 원칙
 
-> **경고**: 이 원칙은 Phase 7 이후 모든 계획/착수 시 반드시 준수해야 합니다.
+> **경고**: 이 원칙은 Phase 7.0 이후 모든 계획/착수 시 반드시 준수해야 합니다.
 
 1. **선행 데이터 수집 의무**: 후속 Phase가 역사적/누적 데이터를 필요로 하면, **이전 Phase에서 해당 수집 파이프라인을 선행 구축**하여 착수 시점에 이미 데이터가 충분히 축적되어 있어야 한다.
 2. **명시적 축적 기간**: 각 Phase 문서에 "필요 선행 데이터"와 "최소 축적 기간"을 명시한다.
@@ -52,12 +52,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~6.2 완료, Phase 7.0 Sprint 1 진행 중
+- 전체 진행률: Phase 0~7.0 Sprint 1 완료, Phase 7.0 Sprint 2 예정
 - 현재 Phase: Phase 7.0 (매매 엔진 치명적 결함 수정 + LIVE 전환 준비) 🔄 진행 중
-- 현재 Sprint: Phase 7.0 Sprint 1 🔄 진행 중 — P0 치명적 결함 + P1 수정
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14)
+- 현재 Sprint: Phase 7.0 Sprint 2 📋 예정 — P2 리스크 개선
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7.0 Sprint 1 — 매매 엔진 P0 결함 3건 + P1 수정 (즉시 착수 가능)
+- 다음 마일스톤: Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss_pct 분모, record_loss 확장, trailing Redis)
 - 후속 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (최소 2026-05-12 이후, 20거래일 데이터 축적 필요)
 
 ## 기술 아키텍처 결정 사항
@@ -357,7 +357,7 @@ Docker Compose 기반 개발 환경 구축, 한투 API(REST + 웹소켓) 연동 
 - **핵심 변경**: 장전 스크리닝은 공공데이터포털 일괄 수집 기반 (한투 REST 개별 호출 아님)
 - 공공데이터포털 일 1,000건 한도 → 전 종목 6회로 충분 (Phase 0.5 검증)
 - 체결강도: 현재가 API에서 N/A → 웹소켓 체결 누적으로 직접 계산 (Phase 0.5 발견)
-- DART: 재무 데이터만 활용, 실시간 공시는 Phase 7으로 이동 (Phase 0.5 Conditional)
+- DART: 재무 데이터만 활용, 실시간 공시는 후속 Phase로 이동 (Phase 0.5 Conditional)
 - 네이버: 센티멘트 배치만, 속보 용도 부적합 (대형주 외 1시간+ 지연, Phase 0.5 검증)
 - ETF: 공공데이터포털 미제공 → 한투 REST 개별 조회 + 재무 팩터 제외 (괴리율만 포함)
 - 스코어링 알고리즘은 단순 팩터 모델로 시작, 과적합 방지 (박퀀트 원칙)
@@ -538,7 +538,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 한국 증시 색상 관례: 빨강=손실, 파랑=수익 (한유엑 조언)
 - 정보 과부하 방지: 핵심 -> 상세 흐름 (한유엑 원칙)
 - HTTPS 적용 (Cloudflare SSL + Vercel 자동 SSL)
-- 모바일 반응형은 Phase 7에서 고도화
+- 모바일 반응형은 후속 Phase에서 고도화
 
 > Phase 상세 계획: `docs/phase/phase4/phase4.md` ✅ 생성 완료 (2026-03-31)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 한유엑(UX), 윤에이피(API) -- 4명 검토 완료
@@ -807,7 +807,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 - 기본 후보 안전장치: 반자동만, 50% 사이징, 플래그 표시 (최리스크 확정)
 - 완전 자동 모드에서도 리스크 한도(일일 손실, 포지션 수)는 반드시 적용
 - 성과 지표: 수익률, 샤프 비율, MDD (박퀀트 조언)
-- 장세 판별 모듈: Phase 7 이관 (전원 동의)
+- 장세 판별 모듈: 후속 Phase 이관 (전원 동의)
 
 > Phase 상세 계획: `docs/phase/phase5/phase5.md` ✅ 계획 수립 완료 (2026-04-07)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
@@ -842,7 +842,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 ### 기술 고려사항
 - 검토팀 확정: change_rate_min=-2.0, 적응형 [-2.0, -3.0], 최저 하한 -5.0, change_rate_max=7.0 유지
 - 하락 종목 자동매매 금지 (최리스크+김단타+정프로 전원 합의)
-- 절대값 필터(|change_rate| >= 0.3) → Phase 7 이관 (박퀀트: 백테스팅 후 도입)
+- 절대값 필터(|change_rate| >= 0.3) → 후속 Phase 이관 (박퀀트: 백테스팅 후 도입)
 
 > Phase 상세 계획: `docs/phase/phase5.1/phase5.1.md` ✅ 계획 수립 완료 (2026-04-08)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명 검토 완료
@@ -922,7 +922,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 - 검토팀 확정: 15건 파라미터 (전문가 4명 검토 완료, 2026-04-12)
 - Phase 5.2 미해결 #6 (좀비 연결) Sprint 1에서 해결 (최리스크 강력 요구)
 - KIS REST 재시도는 kis_daily_collector.py에만 적용, 주문 API 제외 (윤에이피 권고)
-- ROADMAP 기존 Phase 6 범위(모바일, 센티멘트, DART)는 Phase 7로 이관
+- ROADMAP 기존 Phase 6 범위(모바일, 센티멘트, DART)는 후속 Phase로 이관
 
 > Phase 상세 계획: `docs/phase/phase6/phase6.md` ✅ 계획 수립 완료 (2026-04-12)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 윤에이피(API), 김단타(단타) — 4명 검토 완료
@@ -934,7 +934,7 @@ Phase 5 Sprint 1에서 volume_ratio를 완화했으나, change_rate 필터(+1%~+
 ## Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축 (Sprint 1) ✅
 
 ### 목표
-momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마감 누적"을 직접 비교하는 단위 불일치 오류를 시간가중 보정으로 해결. 돌파 강도 연동 임계값 도입. Phase 7용 5분봉 거래량 수집 파이프라인을 선행 구축하여 데이터 축적 시작.
+momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마감 누적"을 직접 비교하는 단위 불일치 오류를 시간가중 보정으로 해결. 돌파 강도 연동 임계값 도입. Phase 7.1용 5분봉 거래량 수집 파이프라인을 선행 구축하여 데이터 축적 시작.
 
 ### 작업 목록
 #### Sprint 1: 거래량 시간가중 보정 + 돌파 강도 연동 + 5분봉 수집
@@ -942,7 +942,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 시간가중 보정 공식: adjusted_ratio = volume / (prev_volume * progress)
 - **돌파 강도 연동 임계값**: 5%+→1.5, 3~5%→1.8, <3%→2.0
 - 안전장치: MIN_MARKET_PROGRESS=0.15, **MIN_VOLUME_FLOOR=0.5** (2차 검토 상향)
-- **5분봉 거래량 집계**: volume_aggregator 모듈 → Redis `vol5m:*` 키에 슬롯별 누적 (Phase 7용)
+- **5분봉 거래량 집계**: volume_aggregator 모듈 → Redis `vol5m:*` 키에 슬롯별 누적 (Phase 7.1용)
 - 기존 테스트 수정 + 시간대별/돌파 강도별/5분봉 집계 테스트 추가
 
 ### 완료 기준 (Definition of Done)
@@ -955,10 +955,10 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ### 기술 고려사항
 - 선형 보정은 장 중반에 ~10-20% 보수적 (리스크 관리에 유리, Phase 9에서 비선형 검토)
-- 5분봉 수집은 이 Phase에서 축적만, 전략에서 사용은 Phase 7부터
+- 5분봉 수집은 이 Phase에서 축적만, 전략에서 사용은 Phase 7.1부터
 - Redis 메모리: 30종목 x 78슬롯 x 30일 = ~7MB (Railway Redis 용량 내)
 - 의존성: Phase 6 (스케줄러 + WS 안정화 완료 전제)
-- **데이터 축적 시작 시점**: 이 Phase 배포 즉시 → Phase 7 착수 가능 시점 예상: 배포 + 20거래일
+- **데이터 축적 시작 시점**: 이 Phase 배포 즉시 → Phase 7.1 착수 가능 시점 예상: 배포 + 20거래일
 
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 (1차 + 2차) 완료
 > Phase 상세 계획: `docs/phase/phase6.1/phase6.1.md`
@@ -1009,7 +1009,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 없음 (코드 결함 수정 — 데이터 축적 불필요, 즉시 착수 가능)
 
 ### 작업 목록
-#### Sprint 1: P0 치명적 결함 + P1 수정 🔄 진행 중
+#### Sprint 1: P0 치명적 결함 + P1 수정 ✅ 완료 (2026-04-15)
 - engine._monitor_positions_loop: update_prices() + 청산 매도 실행 연결
 - order_manager._execute_order: on_filled_callback으로 포지션 생성 연결
 - Order 모델 signal_json 컬럼 추가 (Alembic)
@@ -1104,8 +1104,8 @@ Phase 6.1에서 축적한 5분봉 거래량 데이터를 기반으로 "5분 단�
 - 의존성: Phase 6.1 (5분봉 수집 파이프라인 + 시간가중 보정)
 - **데이터 의존성**: Phase 6.1 배포 후 20거래일 이상 축적 필수
 
-> Phase 상세 계획: `docs/phase/phase7/phase7.md` (초안 작성 완료)
-> Sprint 문서: `docs/phase/phase7/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase7.1/phase7.1.md` (초안 작성 완료)
+> Sprint 문서: `docs/phase/phase7.1/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
 
 ---
 

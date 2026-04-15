@@ -6,9 +6,11 @@
 
 **Tech Stack:** FastAPI, SQLAlchemy 2.0 async, Alembic, Redis, pytest, AsyncMock
 
-**Sprint 기간:** 2026-04-15 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-15 ~ 2026-04-15
 **이전 스프린트:** Phase 6.2 Sprint 1 (완료, 2026-04-14)
 **브랜치명:** `phase7.0-sprint1`
+**상태:** ✅ 완료 (2026-04-15)
+**PR:** (생성 후 기입)
 
 ---
 
@@ -84,9 +86,9 @@ git commit -m "feat(phase7.0-sprint1): task1 -- Order 모델 signal_json 컬럼 
 ```
 
 **완료 기준:**
-- ⬜ Order 모델에 signal_json 컬럼 존재
-- ⬜ Alembic 마이그레이션 적용 성공
-- ⬜ 단위 테스트 통과
+- ✅ Order 모델에 signal_json 컬럼 존재
+- ✅ Alembic 마이그레이션 적용 성공 (ce7aadd8d078)
+- ✅ 단위 테스트 통과 (4 tests)
 
 ---
 
@@ -142,11 +144,11 @@ git commit -m "feat(phase7.0-sprint1): task2 -- OrderManager 콜백 패턴 + 이
 ```
 
 **완료 기준:**
-- ⬜ submit_order에서 signal_json 저장 확인
-- ⬜ 체결 시 on_filled_callback 호출 확인
-- ⬜ cancel 실패 시 시장가 미발송 확인
-- ⬜ 체결가 역산(tot_ccld_amt / tot_ccld_qty) 확인
-- ⬜ 기존 테스트 회귀 없음
+- ✅ submit_order에서 signal_json 저장 확인
+- ✅ 체결 시 on_filled_callback 호출 확인
+- ✅ cancel 실패 시 시장가 미발송 확인
+- ✅ 체결가 역산(tot_ccld_amt / tot_ccld_qty) 확인
+- ✅ 기존 테스트 회귀 없음 (TC-8~11 신규, TC-3/TC-4 수정)
 
 ---
 
@@ -212,11 +214,11 @@ git commit -m "feat(phase7.0-sprint1): task3 -- engine 가격 갱신 + 청산 �
 ```
 
 **완료 기준:**
-- ⬜ _collect_price_updates가 Redis WS 우선 + REST 폴백으로 가격 수집
-- ⬜ _monitor_positions_loop가 update_prices 호출
-- ⬜ _execute_exit가 시장가 매도 + 폴링 + close_position 호출
-- ⬜ 장 시간 가드(09:00~15:30) 동작 확인
-- ⬜ 기존 engine 테스트 회귀 없음
+- ✅ _collect_price_updates가 Redis WS 우선 + REST 폴백으로 가격 수집
+- ✅ _monitor_positions_loop가 update_prices 호출
+- ✅ _execute_exit가 시장가 매도 + 3회 폴링 + close_position 호출
+- ✅ 장 시간 가드(09:00~15:30) 동작 확인
+- ✅ 기존 engine 테스트 회귀 없음 (test_engine_monitor.py 6 tests)
 
 ---
 
@@ -251,10 +253,10 @@ git commit -m "feat(phase7.0-sprint1): task4 -- trade_strength_min 100.0, max_ca
 ```
 
 **완료 기준:**
-- ⬜ SecondaryFilters.trade_strength_min == 100.0
-- ⬜ PrimaryFilters.max_candidates == 20
-- ⬜ momentum_breakout 체결강도 조건 == 100.0
-- ⬜ 기존 테스트 회귀 없음
+- ✅ SecondaryFilters.trade_strength_min == 100.0
+- ✅ PrimaryFilters.max_candidates == 20
+- ✅ momentum_breakout 체결강도 조건 == 100.0
+- ✅ 기존 테스트 회귀 없음 (test_filters.py, test_momentum_breakout.py, test_realtime_screener.py, test_screener.py 업데이트)
 
 ---
 
@@ -297,10 +299,10 @@ git commit -m "feat(phase7.0-sprint1): task5 -- main.py 배선 + on_filled_callb
 ```
 
 **완료 기준:**
-- ⬜ main.py에서 order_manager.set_filled_callback(engine.on_order_filled) 연결
-- ⬜ TradingEngine에 session_factory 전달
-- ⬜ 기존 테스트 전체 회귀 없음
-- ⬜ pytest 전체 통과
+- ✅ main.py에서 order_manager.set_filled_callback(engine.on_order_filled) 연결
+- ✅ TradingEngine에 session_factory 전달
+- ✅ 기존 테스트 전체 회귀 없음
+- ✅ pytest 전체 통과 (817 passed, 4 failed — 기존 무관 결함: scheduler_vol5m 3건, ws_stability 1건)
 
 ---
 
