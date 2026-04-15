@@ -73,6 +73,6 @@
 ## 리스크 및 대안
 
 - **리스크**: 포털 16:00 수집이 장기간 실패 시 market_cap/listed_shares 미갱신 (유상증자, 액면분할)
-- **대안**: 주 1회 수동 진단 쿼리로 listed_shares NULL 종목 확인 (자동화는 Phase 7+ 검토)
+- **대안**: 주 1회 수동 진단 쿼리로 listed_shares NULL 종목 확인 (자동화는 후속 Phase 검토)
 - **리스크**: KIS 일봉 API 자체가 장기 장애 시 대안 부재
 - **대안**: 08:30 KIS 재시도 + pipeline_healthy=false 기존 로직으로 커버

@@ -52,11 +52,12 @@
 
 - Phase 6.2 Sprint 1 — 장전 수집 단순화 (KIS 직접 + 16:00 포털 보조), ✅ 완료 (2026-04-14)
 
-- Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), 🔄 진행 중 (2026-04-15)
+- Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), ✅ 완료 (2026-04-15) / PR: https://github.com/frogy95/stockbot/pull/132
+- Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis, in-flight 중복 매도 방지), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/135
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis)
+
 - Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트
 - Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
@@ -217,3 +218,9 @@
 - Phase 6.2 Sprint 1: start()에 portal_supplement CronTrigger(hour=16, minute=0) 추가 -> test_scheduler.py job_count 5->6
 - Phase 6.2 Sprint 1: test_scheduler_retry.py의 3개 테스트가 DataGoKrCollector mock 사용 — KIS 기반으로 전환 필요
 - Phase 6.2 Sprint 1: DataGoKrCollector import는 유지 (_portal_supplement_collect에서 사용)
+- Phase 7.0 Sprint 2: RedisClient에 hset/hget/hdel/hgetall 미존재 — Task 1에서 추가 필요
+- Phase 7.0 Sprint 2: risk_manager.__init__에 rest_client 미존재 — Task 1에서 추가, main.py 배선도 수정
+- Phase 7.0 Sprint 2: position_manager.close_position에서 record_loss 조건이 exit_reason=="stop_loss"만 — realized_pnl<0 전체로 확장
+- Phase 7.0 Sprint 2: trailing_highs 인메모리 dict — Redis HSET 이관 시 load_trailing_highs() 메서드 추가 + main.py 호출
+- Phase 7.0 Sprint 2: eod_liquidator.liquidate_all에서 trailing_highs Redis 키 삭제 누락 — 추가 필요
+- Phase 7.0 Sprint 2: engine._execute_exit 5초 루프 중복 매도 가능성 (미해결 #7) — Redis in-flight 플래그 TTL=30초로 방지
