@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-15T12:00:00+09:00",
+  "lastUpdated": "2026-04-16T09:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2864,6 +2864,15 @@
       "version": "v2.0.0",
       "description": "Phase 7.0 Sprint 1 프로덕션 배포 — P0 치명적 결함 3건 수정 (engine 가격 갱신 결함, OrderManager 포지션 미생성 결함, 청산 실행 결함), P1 파라미터 교정 (trade_strength_min 100.0, max_candidates 20), Order signal_json JSONB 컬럼 추가, main.py 배선 완성",
       "prUrl": "https://github.com/frogy95/stockbot/pull/133",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-16",
+      "type": "sprint",
+      "ref": "phase7.0-sprint2",
+      "version": "v2.1.0",
+      "description": "Phase 7.0 Sprint 2 프로덕션 배포 — daily_loss 분모를 당일 시작 잔고(Redis risk:daily_capital) 기반으로 수정, record_loss 확장(realized_pnl < 0 전체), trailing_highs Redis 이관, eod_liquidator trailing_highs 전체 삭제, engine/main.py 배선 업데이트",
+      "prUrl": "",
       "status": "in_progress"
     }
   ]
