@@ -2256,7 +2256,14 @@
       ]
     },
     {
-      "id": "phase7",
+      "id": "phase7.0",
+      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
+      "sprints": []
+    },
+    {
+      "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
       "phaseDoc": "docs/phase/phase7/phase7.md",
@@ -2274,7 +2281,7 @@
       "status": "planned",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "dataPrerequisite": {
-        "source": "phase7",
+        "source": "phase7.1",
         "type": "시간대별 거래량 DB + VWAP 틱데이터",
         "minAccumulation": "20거래일",
         "warningThreshold": "<20거래일"

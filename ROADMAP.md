@@ -21,16 +21,18 @@
 ### 데이터 의존성 맵
 
 ```
-Phase 6.1 ──(5분봉 Redis 수집 시작)──> Phase 7 (min 20거래일)
-Phase 7 ──(시간대별 DB + VWAP 수집 시작)──> Phase 8 (min 20거래일)
+Phase 6.2 ──(코드)──> Phase 7.0 (데이터 축적 불필요, 즉시 착수)
+Phase 6.1 ──(5분봉 Redis 수집 시작)──> Phase 7.1 (min 20거래일)
+Phase 7.1 ──(시간대별 DB + VWAP 수집 시작)──> Phase 8 (min 20거래일)
 Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6개월)
 ```
 
 | Phase | 필요 선행 데이터 | 최소 축적 | 수집 시작 Phase | 경고 기준 |
 |-------|-----------------|----------|---------------|----------|
-| 7 | 5분봉 거래량 (Redis) | 20거래일 | 6.1 | <20거래일 |
-| 8 | 시간대별 거래량 DB + VWAP 틱 | 20거래일 | 7 | <20거래일 |
-| 9 | 실전 운영 데이터 전체 | 3~6개월 | 7 (DB), 8 (VWAP) | <3개월 |
+| 7.0 | 없음 (코드 결함 수정) | 즉시 착수 | - | - |
+| 7.1 | 5분봉 거래량 (Redis) | 20거래일 | 6.1 | <20거래일 |
+| 8 | 시간대별 거래량 DB + VWAP 틱 | 20거래일 | 7.1 | <20거래일 |
+| 9 | 실전 운영 데이터 전체 | 3~6개월 | 7.1 (DB), 8 (VWAP) | <3개월 |
 
 ---
 
@@ -50,12 +52,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~6.2 완료
-- 현재 Phase: Phase 6.2 (장전 수집 단순화: KIS 주경로 + 포털 장후 보조) ✅ 완료
-- 현재 Sprint: Phase 7 Sprint 1 대기 중 (Phase 6.1 배포 + 20거래일 축적 후)
+- 전체 진행률: Phase 0~6.2 완료, Phase 7.0 계획 수립
+- 현재 Phase: Phase 7.0 (매매 엔진 치명적 결함 수정 + LIVE 전환 준비) 🔄 진행 중
+- 현재 Sprint: Phase 7.0 Sprint 1 대기 중
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7 Sprint 1 — 5분봉 가속도 지표 (최소 2026-05-12 이후, 20거래일 데이터 축적 필요)
+- 다음 마일스톤: Phase 7.0 Sprint 1 — 매매 엔진 P0 결함 3건 + P1 수정 (즉시 착수 가능)
+- 후속 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (최소 2026-05-12 이후, 20거래일 데이터 축적 필요)
 
 ## 기술 아키텍처 결정 사항
 
@@ -93,8 +96,9 @@ Phase 0 (완료)
                                             └─> Phase 6: 스케줄러 + WS 복원력 강화
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
                                                         └─> Phase 6.2: 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)
-                                                        └─(코드)─> Phase 7: 5분봉 가속도 지표 + DB 구축
-                                                        └─(데이터: 20거래일)─> Phase 7
+                                                              └─(코드)─> Phase 7.0: 매매 엔진 결함 수정 + LIVE 전환
+                                                        └─(코드)─> Phase 7.1: 5분봉 가속도 지표 + DB 구축
+                                                        └─(데이터: 20거래일)─> Phase 7.1
                                                               └─(코드)─> Phase 8: Z-score + VWAP
                                                               └─(데이터: 20거래일)─> Phase 8
                                                                     └─(코드)─> Phase 9: 비선형 보정
@@ -119,8 +123,9 @@ Phase 0 (완료)
 - Phase 4, 5, 5.1, 5.2 -> 6: MVP 기능 완성 후 고도화 (네이버 센티멘트 본격화, DART 공시 모니터링)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
-- Phase 6.1 -> 7: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
-- Phase 7 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
+- Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
+- Phase 6.1 -> 7.1: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
+- Phase 7.1 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
 - Phase 8 -> 9: **(코드)** VWAP 엔진 + 백테스트 데이터셋, **(데이터)** 실전 운영 3~6개월 축적 필수
 
 ## MVP 범위 (Must)
@@ -995,7 +1000,75 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 7: 5분봉 거래량 가속도 지표 (Sprint 1~2) 📋
+## Phase 7.0: 매매 엔진 치명적 결함 수정 + LIVE 전환 준비 (Sprint 1~3) 🔄
+
+### 목표
+2026-04-15 평가에서 발견된 매매 엔진 치명적 결함 3건(가격 갱신 미연결, 포지션 미생성, 청산 미실행) 수정. 파라미터 오보정 교정. 리스크 관리 개선. Paper E2E 검증 후 LIVE 전환 게이트 통과.
+
+### 필요 선행 데이터
+- 없음 (코드 결함 수정 — 데이터 축적 불필요, 즉시 착수 가능)
+
+### 작업 목록
+#### Sprint 1: P0 치명적 결함 + P1 수정
+- engine._monitor_positions_loop: update_prices() + 청산 매도 실행 연결
+- order_manager._execute_order: on_filled_callback으로 포지션 생성 연결
+- Order 모델 signal_json 컬럼 추가 (Alembic)
+- cancel 실패 시 return (이중 주문 방지)
+- 체결가 역산 (tot_ccld_amt / tot_ccld_qty)
+- trade_strength_min 70→60, max_candidates 30→20
+
+#### Sprint 2: P2 리스크 개선
+- daily_loss_pct 분모: 당일 시작 잔고 기반으로 변경
+- record_loss 트리거: realized_pnl < 0 전체로 확장
+- trailing_highs: 인메모리 → Redis HSET 이관
+
+#### Sprint 3: E2E 검증 + LIVE 전환 게이트
+- Paper 모드 E2E 1사이클 완전 성공 확인
+- 5거래일 핫픽스 0건 + 신호 발생 3거래일 연속
+- LIVE 초기 운영 파라미터 적용
+
+### 전문가 확정 파라미터 (2026-04-15 — 4명 검토)
+
+| # | 항목 | 확정값 | 담당 |
+|---|------|--------|------|
+| 1 | 가격 갱신 소스 | WS Redis 우선 + REST 폴백 | 윤에이피 |
+| 2 | 가격 갱신 시간대 | 09:00~15:30만 | 김단타 |
+| 3 | 체결→포지션 연결 | 콜백 패턴 (on_filled_callback) | 윤에이피 |
+| 4 | signal 정보 전달 | Order.signal_json 컬럼 | 윤에이피 |
+| 5 | 청산 매도 방식 | 시장가 + 3회 폴링 | 김단타 |
+| 6 | cancel 실패 처리 | return (시장가 중단) | 최리스크+윤에이피 |
+| 7 | 체결가 역산 | tot_ccld_amt / tot_ccld_qty | 윤에이피 |
+| 8 | trade_strength_min (2차+전략) | 100.0 (CTTR 기준 통일) | 전원 동의 |
+| 9 | max_candidates | 20 | 전원 동의 |
+| 10 | daily_loss_pct 분모 | 당일 시작 잔고 기반 | 최리스크 |
+| 11 | record_loss 트리거 | realized_pnl < 0 전체 | 최리스크 |
+| 12 | trailing_highs | Redis HSET | 전원 동의 |
+| 13 | LIVE 초기 max_position | 2 | 최리스크+김단타 |
+| 14 | LIVE 초기 position_size | 5% | 최리스크+김단타 |
+| 15 | LIVE 초기 daily_max_loss | -2% | 최리스크 |
+| 16 | LIVE 초기 emergency_stop | -3% | 최리스크 |
+| 17 | LIVE 초기 거래 모드 | semi-auto | 전원 동의 |
+| 18 | LIVE 초기 자본금 | 50만원 이하 | 최리스크 |
+
+### 완료 기준 (Definition of Done)
+- P0 3건 + P1 2건 수정 + 테스트 통과
+- P2 3건 리스크 개선 + 테스트 통과
+- Paper E2E 1사이클 완전 성공 (주문→체결→포지션→가격갱신→청산)
+- Paper 5거래일 핫픽스 0건 + 신호 발생 3거래일 연속
+- LIVE 전환 게이트 전 조건 충족
+
+### 기술 고려사항
+- 기존 Phase 7(5분봉 가속도)은 Phase 7.1로 리넘버링. 데이터 축적은 계속 진행 중.
+- Phase 7.0은 데이터 축적과 무관하므로 즉시 착수 가능.
+- engine↔order_manager 순환 참조는 콜백 패턴으로 해결.
+- LIVE 전환 시 tr_id 접두사 자동 전환 (settings.TRADING_ENV 기반) 확인 필요.
+
+> Phase 상세 계획: `docs/phase/phase7.0/phase7.0.md` ✅ 계획 수립 완료 (2026-04-15)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 윤에이피(API) — 4명 검토 완료
+
+---
+
+## Phase 7.1: 5분봉 거래량 가속도 지표 (Sprint 1~2) 📋
 
 ### 목표
 Phase 6.1에서 축적한 5분봉 거래량 데이터를 기반으로 "5분 단위 거래량 가속도 지표"를 구현하여 momentum_breakout 전략의 confidence 가중치에 반영. Phase 8용 시간대별 거래량 DB + VWAP 수집 파이프라인 선행 구축.
@@ -1038,11 +1111,11 @@ Phase 6.1에서 축적한 5분봉 거래량 데이터를 기반으로 "5분 단�
 ## Phase 8: 동시간대 Z-score + VWAP 포지션 (Sprint 1~3) 📋
 
 ### 목표
-Phase 7에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반으로 "동시간대 N일 거래량 Z-score"와 "VWAP 대비 가격 포지션" 구현. Phase 9용 실시간 VWAP 엔진 + 실증 백테스트 데이터셋 선행 구축.
+Phase 7.1에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반으로 "동시간대 N일 거래량 Z-score"와 "VWAP 대비 가격 포지션" 구현. Phase 9용 실시간 VWAP 엔진 + 실증 백테스트 데이터셋 선행 구축.
 
 ### 필요 선행 데이터
-- **Phase 7의 `volume_5min_history` 테이블**: 최소 **20거래일** 축적 필수
-- **Phase 7의 VWAP Redis 키**: 최소 **20거래일** 축적 필수
+- **Phase 7.1의 `volume_5min_history` 테이블**: 최소 **20거래일** 축적 필수
+- **Phase 7.1의 VWAP Redis 키**: 최소 **20거래일** 축적 필수
 - 착수 경고: <20거래일 시간대별 데이터 축적 시 AI 경고 발생
 
 ### 작업 목록
@@ -1067,8 +1140,8 @@ Phase 7에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반
 ### 기술 고려사항
 - Z-score는 정규분포 가정 → 분포 검증 필수
 - VWAP는 틱 단위 정밀도 vs 5분봉 근사 트레이드오프
-- 의존성: Phase 7 (시간대별 DB + VWAP 수집)
-- **데이터 의존성**: Phase 7 배포 후 20거래일 이상 축적 필수
+- 의존성: Phase 7.1 (시간대별 DB + VWAP 수집)
+- **데이터 의존성**: Phase 7.1 배포 후 20거래일 이상 축적 필수
 
 > Phase 상세 계획: `docs/phase/phase8/phase8.md` (초안 작성 완료)
 > Sprint 문서: `docs/phase/phase8/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
