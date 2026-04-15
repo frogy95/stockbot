@@ -1,6 +1,7 @@
 """포지션 매니저 — 포지션 생명주기 관리 (진입/가격 갱신/청산 조건 판단/청산)."""
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -8,10 +9,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from core.models.trading import PositionRecord, TradeHistory
-from modules.trading.risk_manager import RiskManager
+from modules.trading.risk_manager import REDIS_CONSECUTIVE_LOSS, RiskManager
 from modules.trading.strategy import TradeSignalData
 
 KST = ZoneInfo("Asia/Seoul")
+REDIS_TRAILING_HIGHS_KEY = "trailing_highs"
+
+logger = logging.getLogger(__name__)
 
 
 class PositionManager:
@@ -30,7 +34,21 @@ class PositionManager:
         self._session_factory = session_factory
         self._redis = redis_client
         self._risk_manager = risk_manager
-        self._trailing_highs: dict[str, int] = {}  # 종목별 트레일링 고점
+        # 종목별 트레일링 고점 (Redis `trailing_highs` HSET의 write-through 로컬 캐시)
+        self._trailing_highs: dict[str, int] = {}
+
+    async def load_trailing_highs(self) -> None:
+        """서버 기동 시 Redis HSET에서 trailing_highs를 로컬 캐시로 복원한다."""
+        data = await self._redis.hgetall(REDIS_TRAILING_HIGHS_KEY)
+        restored: dict[str, int] = {}
+        for code, value in data.items():
+            try:
+                restored[code] = int(value)
+            except (TypeError, ValueError):
+                logger.warning("trailing_highs 파싱 실패: %s=%r", code, value)
+        self._trailing_highs = restored
+        if restored:
+            logger.info("trailing_highs Redis 복원: %d종목", len(restored))
 
     # ------------------------------------------------------------------
     # 포지션 진입
@@ -107,11 +125,14 @@ class PositionManager:
                 if new_price >= int(pos.avg_price) * 1.02:
                     pos.trailing_activated = True
 
-                # 트레일링 고점 업데이트
+                # 트레일링 고점 업데이트 (write-through: 로컬 캐시 + Redis 동기화)
                 if pos.trailing_activated:
                     prev_high = self._trailing_highs.get(pos.stock_code, 0)
                     if new_price > prev_high:
                         self._trailing_highs[pos.stock_code] = new_price
+                        await self._redis.hset(
+                            REDIS_TRAILING_HIGHS_KEY, pos.stock_code, str(new_price)
+                        )
 
             await session.commit()
 
@@ -248,11 +269,15 @@ class PositionManager:
             await session.commit()
             await session.refresh(history)
 
-        # 트레일링 고점 제거
+        # 트레일링 고점 제거 (로컬 캐시 + Redis 동기화)
         self._trailing_highs.pop(position.stock_code, None)
+        await self._redis.hdel(REDIS_TRAILING_HIGHS_KEY, position.stock_code)
 
-        # 손절인 경우 리스크 매니저에 기록
-        if exit_reason == "stop_loss":
+        # 손실 청산은 exit_reason 무관하게 카운터 증가.
+        # 수익 청산은 연속 손절 카운터를 리셋하여 정상 매매 재개를 보장.
+        if realized_pnl < 0:
             await self._risk_manager.record_loss()
+        else:
+            await self._redis.delete(REDIS_CONSECUTIVE_LOSS)
 
         return history

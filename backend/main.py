@@ -160,6 +160,7 @@ async def lifespan(app: FastAPI):
     signal_generator = SignalGenerator(session_factory, redis_client, strategy)
     order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
     position_manager = PositionManager(session_factory, redis_client, risk_manager)
+    await position_manager.load_trailing_highs()
     trading_engine = TradingEngine(
         signal_generator=signal_generator,
         order_manager=order_manager,
