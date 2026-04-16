@@ -33,11 +33,12 @@
   증거: TCP 연결 성공 후 HTTP 응답 없이 즉시 EOF = L4/L7 방화벽 차단 패턴
   Railway IP: 동적 → Static IP 미활성화 상태
 
-원인 B — WS URL 경로 누락 (확정)
+원인 B — WS URL 경로 누락 (유력)
   현재 코드:   ws://ops.koreainvestment.com:21000         (경로 없음)
   공식 예제:   ws://ops.koreainvestment.com:21000/tryitout (모든 예제 일치)
   KIS kis_auth.py: url = f"{my_url_ws}{api_url}"  (api_url="/tryitout")
   증거: KIS 공식 GitHub 예제 100% /tryitout 경로 사용
+  단서: PAPER(31000)는 경로 없이 동작 중 → LIVE/PAPER 서버 동작이 다를 수 있음
 ```
 
 ### 아키텍처 영향
@@ -183,6 +184,18 @@ LIVE = KISEnvironment(
 | 3 | Railway Static IP 비용 ($5/month) | ✅ 수용 | 정프로 | Sprint 1 Task 3 |
 | 4 | diagnose 결과 원인 D (전면 차단) 시 대응 미정 | ⚠️ | 윤에이피 | Sprint 1 Task 1 결과에 따라 |
 | 5 | KIS WS 서버 점검 가능성 (외부 요인) | ⚠️ | 김단타 | KIS 공지사항 확인 |
+| 6 | bash-guard 브랜치 정규식: `phase7.0.1-sprint1` 차단됨 | ❌ | - | Sprint 시작 전 훅 수정 필수 |
+| 7 | 원인 A/B 모두 "유력" — diagnose 전 확정 불가 | ⚠️ | 윤에이피 | Sprint 1 Task 1에서 확정 |
+
+### bash-guard 브랜치 정규식 수정 필요 (Sprint 시작 전 필수)
+
+`.claude/hooks/pretooluse-bash-guard.sh` 69행의 브랜치 검증 정규식:
+```regex
+# 현재: (\.[0-9]+)? → 소수점 그룹 1개만 허용 (phase7.0은 OK, phase7.0.1은 차단)
+# 수정: (\.[0-9]+)* → 소수점 그룹 복수 허용
+```
+
+sprint-planner 실행 전에 이 정규식을 수정해야 `git checkout -b phase7.0.1-sprint1`이 가능합니다.
 
 ---
 
