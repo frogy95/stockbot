@@ -10,8 +10,8 @@
 포함 스프린트: Phase 7.0.1 Sprint 1 — KIS LIVE WebSocket 연결 복구
 PR: https://github.com/frogy95/stockbot/pull/138
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ⬜ Vercel 프론트엔드 자동 배포 (PR #138 머지 후 자동 시작)
+- ⬜ Railway 백엔드 자동 배포 (PR #138 머지 후 자동 시작)
 
 #### 자동 검증 (배포 완료 후 실행 필요)
 
