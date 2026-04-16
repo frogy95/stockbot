@@ -5,16 +5,17 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Sprint 마무리 - Phase 7.0.1 Sprint 1 (2026-04-16)
+### 프로덕션 배포 - v2.1.1 (2026-04-16)
 
 포함 스프린트: Phase 7.0.1 Sprint 1 — KIS LIVE WebSocket 연결 복구
-PR: https://github.com/frogy95/stockbot/pull/137
+PR: https://github.com/frogy95/stockbot/pull/138
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
-#### 배포 후 수동 검증 (머지 후 즉시 실행)
+#### 자동 검증 (배포 완료 후 실행 필요)
 
+- ⬜ `curl -s https://api.stockbot.choiji.kr/api/v1/health` → `{"status":"healthy"}` 확인
 - ⬜ `curl -s https://api.stockbot.choiji.kr/api/v1/kis/status | jq .` → `ws_connected: true` 확인
 - ⬜ 내일 08:55 KST 수동 확인: `ws_connected: true` (장 시작 전 자동 연결)
 
