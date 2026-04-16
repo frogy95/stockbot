@@ -55,7 +55,7 @@
 - Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), ✅ 완료 (2026-04-15) / PR: https://github.com/frogy95/stockbot/pull/132
 - Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis, in-flight 중복 매도 방지), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/135
 
-- Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: (sprint-close 완료 후 기입)
+- Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
 
 ## 다음 사용 가능한 스프린트
 

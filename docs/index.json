@@ -2440,7 +2440,7 @@
           "status": "completed",
           "sprintDoc": "docs/phase/phase7.0.1/sprint1/sprint1.md",
           "branch": "phase7.0.1-sprint1",
-          "prUrl": "",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/137",
           "lastUpdated": "2026-04-16T20:00:00+09:00",
           "progress": {
             "total": 5,

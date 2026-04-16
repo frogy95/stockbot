@@ -8,7 +8,7 @@
 ### Sprint 마무리 - Phase 7.0.1 Sprint 1 (2026-04-16)
 
 포함 스프린트: Phase 7.0.1 Sprint 1 — KIS LIVE WebSocket 연결 복구
-PR: (sprint-close 완료 후 기입)
+PR: https://github.com/frogy95/stockbot/pull/137
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

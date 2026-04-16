@@ -9,6 +9,7 @@
 **Tech Stack:** Python (socket), Railway Static IP, KIS WebSocket
 
 **Sprint 기간:** 2026-04-16 ~ 2026-04-16 (완료)
+**PR:** https://github.com/frogy95/stockbot/pull/137
 **이전 스프린트:** Phase 7.0 Sprint 2 (837 passed / 5 failed 기존 무관, PR #135)
 **브랜치명:** `phase7.0.1-sprint1`
 
