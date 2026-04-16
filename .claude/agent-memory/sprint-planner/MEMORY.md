@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-15 업데이트)
+## 스프린트 현황 (2026-04-16 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -55,10 +55,11 @@
 - Phase 7.0 Sprint 1 — P0 치명적 결함 + P1 수정 (가격 갱신/포지션 생성/청산 실행/파라미터), ✅ 완료 (2026-04-15) / PR: https://github.com/frogy95/stockbot/pull/132
 - Phase 7.0 Sprint 2 — P2 리스크 개선 (daily_loss 분모, record_loss 확장, trailing Redis, in-flight 중복 매도 방지), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/135
 
+- Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
+
 ## 다음 사용 가능한 스프린트
 
-
-- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트
+- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 7.0.1 완료 후, 배포 + ws_connected=True 확인 선행)
 - Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
 - Phase 5 Sprint 3 — 성과 분석 대시보드
 

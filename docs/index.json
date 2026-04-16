@@ -2429,6 +2429,86 @@
       ]
     },
     {
+      "id": "phase7.0.1",
+      "title": "KIS LIVE WebSocket 연결 복구",
+      "status": "completed",
+      "phaseDoc": "docs/phase/phase7.0.1/phase7.0.1.md",
+      "sprints": [
+        {
+          "id": "phase7.0.1-sprint1",
+          "title": "WS 연결 진단 + 수정 + 검증",
+          "status": "completed",
+          "sprintDoc": "docs/phase/phase7.0.1/sprint1/sprint1.md",
+          "branch": "phase7.0.1-sprint1",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/137",
+          "lastUpdated": "2026-04-16T20:00:00+09:00",
+          "progress": {
+            "total": 5,
+            "completed": 3
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "diagnose_ws.py Railway 실행 (원인 확정)",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-1-diagnose_wspy-railway-실행-사용자-수동",
+              "testPlan": "railway run python3 backend/scripts/diagnose_ws.py — 원인 A/B/C/D 판별",
+              "testResult": "pass — 원인 B 확정 (LIVE 경로 누락: /tryitout)",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "diagnose_ws.py 테스트 경로 수정",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-2-diagnose_wspy-테스트-경로-수정",
+              "testPlan": "grep LIVE+path backend/scripts/diagnose_ws.py — /tryitout 확인",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "3b55db3",
+                  "message": "feat(phase7.0.1-sprint1): task2 -- diagnose_ws.py 테스트 경로 /tryitout으로 수정",
+                  "date": "2026-04-16"
+                }
+              ]
+            },
+            {
+              "id": "task3",
+              "title": "LIVE ws_url 경로 추가",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-3-live-ws_url-경로-추가",
+              "testPlan": "grep ws_url= backend/core/clients/kis_config.py — :21000/tryitout 확인",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": [
+                {
+                  "hash": "148ab3b",
+                  "message": "feat(phase7.0.1-sprint1): task3 -- LIVE ws_url에 /tryitout 경로 추가",
+                  "date": "2026-04-16"
+                }
+              ]
+            },
+            {
+              "id": "task4",
+              "title": "Railway Static IP + KIS IP 등록",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-4-railway-static-ip--kis-ip-등록-사용자-수동",
+              "testPlan": "Railway 대시보드 Static IP 확인 + KIS 포털 IP 등록 확인",
+              "testResult": "skipped — KIS WebSocket IP 등록 정책 없음 (KIS 공식 확인)",
+              "status": "skipped",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "배포 + 검증",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-5-배포--검증",
+              "testPlan": "GET /api/v1/kis/status — ws_connected=true, subscriptions > 0",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
