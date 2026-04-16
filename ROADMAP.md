@@ -52,13 +52,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~7.0 Sprint 2 완료, Phase 7.0.1 계획 수립 완료
-- 현재 Phase: Phase 7.0.1 (KIS LIVE WebSocket 연결 복구) 🔄 진행 중
-- 현재 Sprint: Phase 7.0.1 Sprint 1 🔄 — WS 진단 + 수정 + 검증
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16)
+- 전체 진행률: Phase 0~7.0.1 Sprint 1 완료
+- 현재 Phase: Phase 7.0 (KIS LIVE 전환 게이트 대기) — Phase 7.0.1 완료
+- 현재 Sprint: Phase 7.0 Sprint 3 예정 — E2E 검증 + LIVE 전환 게이트
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7.0.1 Sprint 1 — KIS LIVE WS 연결 복구 (긴급, 내일 장 전)
-- 후속 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 7.0.1 완료 후)
+- 다음 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트
+- 후속 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (20거래일 축적 후, 최소 2026-05-12)
 
 ## 기술 아키텍처 결정 사항
 
@@ -1072,7 +1072,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 7.0.1: KIS LIVE WebSocket 연결 복구 (Sprint 1) 🔄
+## Phase 7.0.1: KIS LIVE WebSocket 연결 복구 (Sprint 1) ✅
 
 ### 목표
 2026-04-16 발생한 KIS LIVE WebSocket 전면 연결 실패 진단 및 수정. WS URL 경로 누락(`/tryitout`) 수정 + Railway Static IP 활성화로 내일 장 전 ws_connected=True 달성.
@@ -1081,11 +1081,11 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 없음 (인프라/설정 수정 — 즉시 착수 가능)
 
 ### 작업 목록
-#### Sprint 1: WS 연결 진단 + 수정 + 검증
-- diagnose_ws.py Railway 실행 (원인 A/B/C/D 확정)
-- kis_config.py LIVE ws_url `/tryitout` 경로 추가
-- Railway Static Outbound IP 활성화 + KIS 개발자 포털 IP 등록
-- 검증: ws_connected=True + subscriptions > 0
+#### Sprint 1: WS 연결 진단 + 수정 + 검증 ✅ (2026-04-16 완료)
+- ✅ diagnose_ws.py Railway 실행 (원인 B 확정: LIVE 경로 누락)
+- ✅ kis_config.py LIVE ws_url `/tryitout` 경로 추가
+- N/A Railway Static Outbound IP 등록 — KIS WebSocket IP 등록 정책 없음 (KIS 공식 확인)
+- ⬜ 검증: ws_connected=True + subscriptions > 0 (배포 후 확인 필요)
 
 ### 전문가 확정 파라미터 (2026-04-16 — 4명 검토)
 

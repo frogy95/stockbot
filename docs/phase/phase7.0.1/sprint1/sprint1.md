@@ -1,12 +1,14 @@
 # Sprint 1: KIS LIVE WebSocket 연결 복구 (Phase 7.0.1)
 
+**상태:** ✅ 완료 (2026-04-16)
+
 **Goal:** LIVE WS URL 경로 누락 수정 + Railway Static IP 활성화로 내일 장 전 ws_connected=True 달성
 
 **Architecture:** kis_config.py의 LIVE ws_url에 `/tryitout` 경로 추가 (1줄), diagnose_ws.py 테스트 경로 수정 (1줄). 인프라는 Railway Static Outbound IP 활성화 + KIS 개발자 포털 IP 등록.
 
 **Tech Stack:** Python (socket), Railway Static IP, KIS WebSocket
 
-**Sprint 기간:** 2026-04-16 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-16 ~ 2026-04-16 (완료)
 **이전 스프린트:** Phase 7.0 Sprint 2 (837 passed / 5 failed 기존 무관, PR #135)
 **브랜치명:** `phase7.0.1-sprint1`
 
@@ -67,8 +69,8 @@
 - 진단 결과를 sprint-dev에 공유하여 Task 2~4 실행 여부 결정
 
 **완료 기준:**
-- ⬜ diagnose_ws.py 실행 완료
-- ⬜ 원인 A/B/C/D 중 하나 확정
+- ✅ diagnose_ws.py 실행 완료
+- ✅ 원인 B 확정 — LIVE (21000, /) EOF, LIVE (21000, /tryitout) 101 → 경로 누락이 원인
 
 ---
 
@@ -92,7 +94,7 @@ git commit -m "feat(phase7.0.1-sprint1): task2 -- diagnose_ws.py 테스트 경�
 ```
 
 **완료 기준:**
-- ⬜ TESTS[2]의 path가 `/tryitout`으로 변경됨
+- ✅ TESTS[2]의 path가 `/tryitout`으로 변경됨
 
 ---
 
@@ -120,9 +122,9 @@ git commit -m "feat(phase7.0.1-sprint1): task3 -- LIVE ws_url에 /tryitout 경�
 ```
 
 **완료 기준:**
-- ⬜ LIVE ws_url이 `ws://ops.koreainvestment.com:21000/tryitout`으로 변경됨
-- ⬜ PAPER ws_url은 기존 유지 (`ws://ops.koreainvestment.com:31000`)
-- ⬜ 기존 KIS 테스트 회귀 없음
+- ✅ LIVE ws_url이 `ws://ops.koreainvestment.com:21000/tryitout`으로 변경됨
+- ✅ PAPER ws_url은 기존 유지 (`ws://ops.koreainvestment.com:31000`)
+- ✅ 기존 KIS 테스트 회귀 없음
 
 ---
 
@@ -143,8 +145,8 @@ git commit -m "feat(phase7.0.1-sprint1): task3 -- LIVE ws_url에 /tryitout 경�
 - 비상: KIS IP 등록 반영 지연 시 KIS 고객센터(1544-5000) 긴급 반영 요청
 
 **완료 기준:**
-- ⬜ Railway Static Outbound IP 활성화 완료
-- ⬜ KIS 개발자 포털에 고정 IP 등록 완료
+- N/A Railway Static Outbound IP 활성화 — KIS WebSocket은 IP 등록 정책 없음 (KIS 공식 확인, 2026-04-16)
+- N/A KIS 개발자 포털 IP 등록 — 불필요로 확인됨
 
 ---
 
