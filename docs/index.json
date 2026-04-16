@@ -2429,6 +2429,13 @@
       ]
     },
     {
+      "id": "phase7.0.1",
+      "title": "KIS LIVE WebSocket 연결 복구",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase7.0.1/phase7.0.1.md",
+      "sprints": []
+    },
+    {
       "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
