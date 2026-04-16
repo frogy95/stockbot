@@ -2431,9 +2431,69 @@
     {
       "id": "phase7.0.1",
       "title": "KIS LIVE WebSocket 연결 복구",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase7.0.1/phase7.0.1.md",
-      "sprints": []
+      "sprints": [
+        {
+          "id": "phase7.0.1-sprint1",
+          "title": "WS 연결 진단 + 수정 + 검증",
+          "status": "planned",
+          "sprintDoc": "docs/phase/phase7.0.1/sprint1/sprint1.md",
+          "branch": "phase7.0.1-sprint1",
+          "lastUpdated": "2026-04-16T18:00:00+09:00",
+          "progress": {
+            "total": 5,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "diagnose_ws.py Railway 실행 (원인 확정)",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-1-diagnose_wspy-railway-실행-사용자-수동",
+              "testPlan": "railway run python3 backend/scripts/diagnose_ws.py — 원인 A/B/C/D 판별",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "diagnose_ws.py 테스트 경로 수정",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-2-diagnose_wspy-테스트-경로-수정",
+              "testPlan": "grep LIVE+path backend/scripts/diagnose_ws.py — /tryitout 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "LIVE ws_url 경로 추가",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-3-live-ws_url-경로-추가",
+              "testPlan": "grep ws_url= backend/core/clients/kis_config.py — :21000/tryitout 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "Railway Static IP + KIS IP 등록",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-4-railway-static-ip--kis-ip-등록-사용자-수동",
+              "testPlan": "Railway 대시보드 Static IP 확인 + KIS 포털 IP 등록 확인",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "배포 + 검증",
+              "path": "docs/phase/phase7.0.1/sprint1/sprint1.md#task-5-배포--검증",
+              "testPlan": "GET /api/v1/kis/status — ws_connected=true, subscriptions > 0",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "phase7.1",
