@@ -1111,7 +1111,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 7.2: 매매 전략 진입 조건 개선 (Sprint 1~2) 🔄
+## Phase 7.2: 매매 전략 진입 조건 개선 (Sprint 1~2) 📋
 
 ### 목표
 2026-04-17 LIVE 모니터링에서 발견된 매매 신호 0건 문제의 근본 원인 해결. (1) KIS H0STCNT0 WS 데이터의 시가/고가/저가 미파싱 수정, (2) 전일 고가 단일 진입 조건을 prev_close + prev_high 다층 구조로 개선. Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
