@@ -21,4 +21,5 @@
 - [Phase 6.2 계획](project_phase6.2.md) — 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조), 전문가 4명 rev.2 검토, 단일 Sprint, 08:00 KIS 직접 + 16:00 포털 보조 + 상태관리 전면 제거
 - [Phase 7.0 계획](project_phase7.0.md) — 매매 엔진 결함 수정 + LIVE 전환 준비, 전문가 4명 검토, 3 Sprint, P0 3건 + P1 2건 + P2 3건 + E2E 검증 + LIVE 게이트, 기존 Phase 7→7.1 리넘버링
 - [Phase 7.0.1 계획](project_phase7.0.1.md) — KIS LIVE WS 연결 복구, 전문가 4명 검토, 단일 Sprint, ws_url /tryitout 경로 추가 + Railway Static IP + PAPER 별도 수정
+- [Phase 7.2 계획](project_phase7.2.md) — 매매 전략 진입 조건 개선, 전문가 4명 검토, 2 Sprint, H0STCNT0 OHLC 파싱 추가(idx 7/8/9) + 다층 진입(prev_close+prev_high) + 갭 분기 open_price + 반포지션 50% + 일일 10건
 - [Phase 7/8/9 로드맵](project_phase_data_roadmap.md) — 데이터 의존성 체인: 6.1→7.1(20일)→8(20일)→9(3~6개월), 착수 경고 기준 명기

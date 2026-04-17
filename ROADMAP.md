@@ -53,12 +53,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~7.0.1 Sprint 1 완료
-- 현재 Phase: Phase 7.0 (KIS LIVE 전환 게이트 대기) — Phase 7.0.1 완료
-- 현재 Sprint: Phase 7.0 Sprint 3 예정 — E2E 검증 + LIVE 전환 게이트
+- 현재 Phase: Phase 7.2 (매매 전략 진입 조건 개선) — Phase 7.0 Sprint 3 선행 조건
+- 현재 Sprint: Phase 7.2 Sprint 1 예정 — 장중 OHLC 데이터 파싱 수정
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트
-- 후속 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (20거래일 축적 후, 최소 2026-05-12)
+- 다음 마일스톤: Phase 7.2 Sprint 1 — 장중 OHLC 파싱 수정 + 갭 분기 버그 수정
+- 후속 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 7.2 Sprint 1 완료 후)
+- 이후 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (20거래일 축적 후, 최소 2026-05-12)
 
 ## 기술 아키텍처 결정 사항
 
@@ -97,6 +98,8 @@ Phase 0 (완료)
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
                                                         └─> Phase 6.2: 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)
                                                               └─(코드)─> Phase 7.0: 매매 엔진 결함 수정 + LIVE 전환
+                                                                    └─(코드)─> Phase 7.2: 매매 전략 진입 조건 개선
+                                                                          └─> Phase 7.0 Sprint 3: E2E 검증 + LIVE 전환 게이트
                                                         └─(코드)─> Phase 7.1: 5분봉 가속도 지표 + DB 구축
                                                         └─(데이터: 20거래일)─> Phase 7.1
                                                               └─(코드)─> Phase 8: Z-score + VWAP
@@ -125,6 +128,8 @@ Phase 0 (완료)
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
 - Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. Phase 7.0 Sprint 3(LIVE 전환 게이트)의 선행 조건.
+- Phase 7.0 -> 7.2: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (OHLC 미파싱 + prev_high 단일 기준 과도 보수). Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
+- Phase 7.2 -> 7.0 Sprint 3: Phase 7.2 Sprint 1(OHLC 수정) 완료 후 E2E 검증 재개 가능.
 - Phase 6.1 -> 7.1: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
 - Phase 7.1 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
 - Phase 8 -> 9: **(코드)** VWAP 엔진 + 백테스트 데이터셋, **(데이터)** 실전 운영 3~6개월 축적 필수
@@ -1103,6 +1108,61 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 > Phase 상세 계획: `docs/phase/phase7.0.1/phase7.0.1.md` 계획 수립 완료 (2026-04-16)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 윤에이피(API) — 4명 검토 완료
+
+---
+
+## Phase 7.2: 매매 전략 진입 조건 개선 (Sprint 1~2) 🔄
+
+### 목표
+2026-04-17 LIVE 모니터링에서 발견된 매매 신호 0건 문제의 근본 원인 해결. (1) KIS H0STCNT0 WS 데이터의 시가/고가/저가 미파싱 수정, (2) 전일 고가 단일 진입 조건을 prev_close + prev_high 다층 구조로 개선. Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
+
+### 필요 선행 데이터
+- 없음 (코드 수정 — 데이터 축적 불필요, 즉시 착수 가능)
+
+### 작업 목록
+#### Sprint 1: 장중 OHLC 데이터 파싱 수정
+- H0STCNT0 파서에 STCK_OPRC/STCK_HGPR/STCK_LWPR 3필드 추가
+- Redis 캐싱 + snapshot 조립 수정
+- 갭 3%+ 분기 버그 수정 (breakout_ref = high → open_price)
+- 테스트
+
+#### Sprint 2: 다층 진입 조건 + 리스크 안전장치
+- prev_close 돌파(1단계) + prev_high 돌파(2단계) 다층 진입
+- prev_close 돌파 시 confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5
+- 일일 최대 거래 횟수 10건, 13:00 이후 prev_close 돌파 비활성화
+- 테스트
+
+### 전문가 확정 파라미터 (2026-04-17 — 4명 검토)
+
+| # | 항목 | 확정값 | 담당 |
+|---|------|--------|------|
+| 1 | H0STCNT0 추가 파싱 필드 | STCK_OPRC(idx 7), STCK_HGPR(idx 8), STCK_LWPR(idx 9) | 전원 동의 |
+| 2 | 갭 3%+ breakout_ref | open_price (기존 high에서 변경) | 김단타+최리스크 |
+| 3 | 진입 기준 | prev_close(1단계) + prev_high(2단계) 다층 | 전원 합의 |
+| 4 | prev_close 돌파 confidence 상한 | 0.75 | 최리스크 |
+| 5 | prev_close 돌파 momentum_score | min(pct/7.0,1.0)*0.7 | 박퀀트 |
+| 6 | prev_close 돌파 volume_threshold | 고정 2.5 | 박퀀트+김단타 |
+| 7 | prev_close 돌파 position_size | 50% (반 포지션) | 최리스크 |
+| 8 | 일일 최대 거래 횟수 | 10건/일 | 최리스크 |
+| 9 | 13:00 이후 prev_close 돌파 | 비활성화 | 김단타 |
+| 10 | Sprint 1→2 관찰 기간 | 최소 2거래일 | 정프로+김단타 |
+
+### 완료 기준 (Definition of Done)
+- H0STCNT0 OHLC 파싱 정상 동작 (Redis 저장 확인)
+- 갭 분기 버그 수정 확인
+- 매매 신호 장중 1건 이상 발생 (2거래일 연속)
+- 다층 진입 조건 동작 확인 (prev_close/prev_high 분기)
+- confidence 계층화 + 반 포지션 + 일일 거래 한도 동작 확인
+- pytest 전체 통과
+
+### 기술 고려사항
+- H0STCNT0 필드 인덱스는 KIS 공식 스펙(ccnl_krx.py 컬럼 목록) 기준. STCK_OPRC=7, STCK_HGPR=8, STCK_LWPR=9.
+- Sprint 1은 Phase 7.0 Sprint 3의 선행 조건 ("신호 생성 1건+" 충족 필수).
+- Sprint 2는 Sprint 1 배포 후 2거래일 관찰 결과에 따라 범위 조정 가능.
+- 기존 리스크 한도(일일 -3%, 비상 -4%, 연속 3회 손절 쿨다운)는 변경 없음.
+
+> Phase 상세 계획: `docs/phase/phase7.2/phase7.2.md` ✅ 계획 수립 완료 (2026-04-17)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 완료
 
 ---
 
