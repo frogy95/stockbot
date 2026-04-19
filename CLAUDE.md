@@ -11,6 +11,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **인프라**: Vercel (프론트엔드) + Railway (백엔드 + PostgreSQL + Redis) + Cloudflare (도메인/DNS)
 - **PRD**: `docs/prd.md` | **로드맵**: `ROADMAP.md`
 
+## 자산 구조
+
+프로젝트의 지식/설정 자산은 세 곳에 역할별로 분리되어 있다. 상세는 각 루트의 `README.md` 참조.
+
+- **`.claude/`** — LLM 실행 규칙 (에이전트, 훅, 경로별 규칙, 커맨드). 진입점: `.claude/README.md`
+- **`wiki/`** — 시스템 현재 상태 지식 베이스 (아키텍처, 데이터 흐름, 도메인 개념). 진입점: `@wiki/index.md`
+- **`docs/`** — 불변 아티팩트 (PRD, Phase 스펙, 배포 히스토리) + 사용자 가이드. 진입점: `docs/README.md`
+
 ## 언어 및 커뮤니케이션 규칙
 
 - 기본 응답 언어: 한국어
@@ -43,67 +51,32 @@ docker compose exec frontend npx tsc --noEmit
 /context-audit                  # 컨텍스트 자산 감사 (중복/상충/고아 파일 검출)
 ```
 
-## 시스템 아키텍처
+## 시스템 아키텍처 / 데이터 흐름 / 외부 API
 
-```
-┌── Cloudflare (DNS/CDN) ─────────────────────┐
-│                                               │
-│  stockbot.choiji.kr    api.stockbot.choiji.kr  │
-│       │                        │              │
-│       ▼                        ▼              │
-│  ┌─ Vercel ──┐    ┌─── Railway ───────────┐  │
-│  │ Next.js   │───►│ FastAPI :8000         │  │
-│  │ Dashboard │    │  ├ modules/trading/    │  │
-│  └───────────┘    │  ├ modules/collector/  │  │
-│                   │  ├ modules/screening/  │  │
-│  [Telegram Bot]◄──│  ├ modules/notifier/   │  │
-│                   │  ├ modules/analyzer/   │  │
-│                   │  ├ core/               │  │
-│                   │  └ api/                │  │
-│                   │                        │  │
-│                   │ [PostgreSQL] [Redis]    │  │
-│                   └────────────────────────┘  │
-└───────────────────────────────────────────────┘
- 외부: 한투 API, 공공데이터포털 API, DART API, 네이버 API, Telegram Bot API
-```
+상세는 `wiki/`를 참조한다 (현재 상태 지식 베이스):
 
-### 데이터 수집 흐름
-
-```
-장전(08:00) 공공데이터포털 → 전 종목 일괄 수집 → DB → 1차 스크리닝 → 후보 종목
-장중(09:00) 한투 REST/WS → 후보 종목 실시간 → 2차 스크리닝 → 매매 신호
-장후(15:30) 한투 REST → 체결/잔고 정산 → 일일 리포트 → 텔레그램
-```
-
-> 상세 데이터 흐름: `docs/data-flow.md`
-
-### 매매 실행 흐름
-
-```
-collector(수집) → screening(스크리닝) → trading.strategy(신호 분석)
-  → [반자동] notifier(승인 요청) → 사용자 응답 → trading.order(주문)
-  → [완전자동] trading.order(즉시 주문)
-  → trading.position(포지션 업데이트) → analyzer(결과 기록) → notifier(결과 알림)
-```
-
-### 모의/실전 전환
-
-`TRADING_ENV` 플래그(paper/live)로 일괄 전환. 도메인, APP_KEY/SECRET, 계좌번호, tr_id 접두사가 환경별 독립. 모의거래는 Rate Limit 초당 1건 스로틀링 내장.
+- 시스템 구성: `@wiki/system-overview.md`, `@wiki/tech-stack.md`, `@wiki/module-structure.md`
+- 데이터 수집 흐름 (Mermaid 포함): `@wiki/data-collection-flow.md`
+- 매매 실행 흐름: `@wiki/signal-generation.md`, `@wiki/order-execution.md`, `@wiki/trading-modes.md`
+- 모의/실전 전환: `@wiki/paper-vs-live.md`
+- 외부 API 의존성 (Rate Limit, 환경변수, 인증): `@wiki/external-apis.md`
 
 ## Bash 명령 실행 규칙
 
 bash-guard hook(`.claude/hooks/pretooluse-bash-guard.sh`)이 자동 차단:
 - `cd /path &&` 체이닝, main/develop 직접 push, force push, `git reset --hard`, 비정상 브랜치명
+- 허용 브랜치: `phase{P}-sprint{N}`, `hotfix/*`, `chore/*`, `docs/*`, `refactor/*`
 
 ## Git 브랜치 전략
 
-`main`/`develop` 직접 push 금지, PR만 허용. 상세: `docs/dev-process.md` §1, `docs/ci-policy.md`
+`main`/`develop` 직접 push 금지, PR만 허용. 상세: `.claude/rules/dev-process.md` §1, `.claude/rules/ci-policy.md`
 
 ## 개발 프로세스
 
-프로세스 상세는 `docs/dev-process.md` 참조. 스프린트/핫픽스 워크플로우 규칙은 `.claude/rules/sprint-workflow.md` 참조.
+프로세스 상세는 `.claude/rules/dev-process.md` 참조. 스프린트/핫픽스 워크플로우 규칙은 `.claude/rules/sprint-workflow.md` 참조.
 
 ### 프로젝트 라이프사이클
+
 ```
 PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
   → phase-planner → docs/phase/phase{N}/phase{N}.md (전문가 검토 + 확정 파라미터)
@@ -113,9 +86,9 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 
 ### 핵심 원칙
 
-- **수정사항 → Hotfix vs Sprint 의사결정 먼저**: `docs/dev-process.md` 섹션 2 기준
+- **수정사항 → Hotfix vs Sprint 의사결정 먼저**: `.claude/rules/dev-process.md` 섹션 2 기준
 - **karpathy-guidelines** 준수
-- **검증 원칙**: `docs/dev-process.md` 섹션 5 참조
+- **검증 원칙**: `.claude/rules/dev-process.md` 섹션 5 참조
 - 배포 후 수동 작업: `deploy.md` 참조 (완료 기록은 `docs/deploy-history/` 아카이브)
 - 브랜치/워크플로우 상세 규칙: `.claude/rules/sprint-workflow.md` 참조
 
@@ -134,22 +107,13 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 | 프로덕션 배포 | `deploy-prod` | Sonnet |
 | 핫픽스 마무리 | `hotfix-close` | Sonnet |
 
-## 외부 API 의존성
-
-| API | 용도 | Rate Limit | 환경변수 |
-|-----|------|-----------|---------|
-| 한국투자증권 (실전) | 시세 + 주문 | 초당 ~20건 | `KIS_APP_KEY`, `KIS_APP_SECRET` |
-| 한국투자증권 (모의) | 개발/테스트 | 초당 ~1건 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET` |
-| 네이버 검색 | 뉴스/트렌드 | 일 25,000건 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
-| Open Dart | 재무/공시 | 일 10,000건 | `DART_API_KEY` |
-| 공공데이터포털 | 시가총액/상장주식수 | 일 1,000건 | `DATA_GO_KR_API_KEY` |
-| Telegram Bot | 알림/승인 | 초당 30건 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
-
 ## 경로별 상세 규칙
 
 - 백엔드: `.claude/rules/backend.md`
 - 프론트엔드: `.claude/rules/frontend.md`
 - 스프린트 워크플로우: `.claude/rules/sprint-workflow.md`
+- 개발 프로세스: `.claude/rules/dev-process.md`
+- CI/CD 정책: `.claude/rules/ci-policy.md`
 - Notion 문서 관리: Notion 설정 시 `.claude/rules/notion.md` 생성 예정
 
 ## 하네스 피드백 수집
@@ -162,7 +126,7 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 
 - **PreToolUse (bash-guard)**: 위험 명령 차단 (force push, hard reset, 잘못된 브랜치명 등)
 - **Stop (doc-checker)**: 에이전트 완료 전 필수 파일 업데이트 검증 (`docs/index.json`, `deploy.md`, `MEMORY.md` 등)
-- 검증 규칙 상세: `.claude/hooks/lib/doc-rules.json`
+- 검증 규칙 상세: `.claude/hooks/lib/doc-rules.json`, `.claude/hooks/lib/audit-rules.json`
 
 ## 체크리스트 작성 형식
 
@@ -172,4 +136,4 @@ PRD → prd-to-roadmap → ROADMAP.md (Phase 구조)
 
 ## Notion 기술 문서 관리
 
-업데이트 트리거: `docs/dev-process.md` 섹션 8.5 참조. 상세 규칙: `.claude/rules/notion.md` (Notion 설정 후 생성 예정).
+업데이트 트리거: `.claude/rules/dev-process.md` 섹션 8.5 참조. 상세 규칙: `.claude/rules/notion.md` (Notion 설정 후 생성 예정).
