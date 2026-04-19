@@ -169,6 +169,7 @@ async def _get_latest_results(
             "factors": r.factors,
             "is_hot": r.is_hot,
             "status": r.status,
+            "screened_at": r.screened_at.isoformat(),
         }
         for r in rows
     ], latest_at.isoformat()
