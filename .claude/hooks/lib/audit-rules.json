@@ -47,7 +47,7 @@
     },
     {
       "id": "docs",
-      "paths": ["docs/dev-process.md", "docs/ci-policy.md", "docs/index.json"],
+      "paths": [".claude/rules/dev-process.md", ".claude/rules/ci-policy.md", "docs/index.json"],
       "role": "핵심 프로세스 문서"
     }
   ],

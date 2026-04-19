@@ -176,7 +176,8 @@ Phase 계획 시 도메인 전문가가 설계를 리뷰한다:
 ## 참고 문서
 
 - `docs/prd.md` — 제품 요구사항 문서
-- `docs/dev-process.md` — 개발 프로세스 가이드
-- `docs/ci-policy.md` — CI/CD 정책
-- `docs/setup-guide.md` — 환경 설정 가이드
+- `.claude/rules/dev-process.md` — 개발 프로세스 가이드
+- `.claude/rules/ci-policy.md` — CI/CD 정책
+- `wiki/setup-guide.md` — 환경 설정 가이드
 - `docs/prompt-guide.md` — 사용자 프롬프트 가이드
+- `wiki/index.md` — 시스템 지식 베이스 진입점

@@ -52,7 +52,7 @@ docker compose up -d
 
 ## 배포 프로세스
 
-`docs/dev-process.md` 및 `ROADMAP.md` 참조.
+`.claude/rules/dev-process.md` 및 `ROADMAP.md` 참조.
 
 ```
 develop 브랜치 개발
@@ -79,6 +79,6 @@ docker compose exec backend alembic upgrade head
 
 ## CI/CD
 
-`docs/ci-policy.md` 참조:
+`.claude/rules/ci-policy.md` 참조:
 - `main`, `develop` 직접 push 금지, PR만 허용
 - 브랜치 명명 규칙: `sprint/{phase}-{sprint}`, `hotfix/{issue}`

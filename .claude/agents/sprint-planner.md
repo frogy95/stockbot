@@ -20,7 +20,7 @@ skills:
 
 - 에이전트 메모리에서 현재 상태(다음 스프린트 번호, 주의사항)를 확인합니다.
 - `/ROADMAP.md`를 읽어 프로젝트 전체 맥락과 Phase 현황을 파악합니다.
-- `docs/dev-process.md`를 읽어 프로세스 정책을 확인합니다.
+- `.claude/rules/dev-process.md`를 읽어 프로세스 정책을 확인합니다.
 - **Phase 문서 확인** (`docs/phase/phase{N}/phase{N}.md`):
   - Phase 문서를 읽어 확정 파라미터, 미해결 사항, 재사용 자산을 파악합니다.
   - Phase 문서의 확정 파라미터는 PRD보다 우선합니다.
