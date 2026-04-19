@@ -67,9 +67,13 @@ if echo "$CMD" | grep -qE 'git\s+checkout\s+-b\s+'; then
   BRANCH=$(echo "$CMD" | grep -oE 'git\s+checkout\s+-b\s+(\S+)' | awk '{print $NF}')
   if [[ -n "$BRANCH" ]]; then
     if ! echo "$BRANCH" | grep -qE '^phase[0-9]+(\.[0-9]+)*-sprint[0-9]+$' && \
-       ! echo "$BRANCH" | grep -qE '^hotfix/'; then
+       ! echo "$BRANCH" | grep -qE '^hotfix/' && \
+       ! echo "$BRANCH" | grep -qE '^(chore|docs|refactor)/'; then
       echo "❌ 브랜치명 규칙 위반: \"$BRANCH\""
-      echo '허용 형식: phase{P}-sprint{N} (예: phase1-sprint3, phase2.5-sprint1) 또는 hotfix/* (예: hotfix/fix-login)'
+      echo '허용 형식:'
+      echo '  - phase{P}-sprint{N} (스프린트 작업)'
+      echo '  - hotfix/* (프로덕션 장애 수정)'
+      echo '  - chore/* | docs/* | refactor/* (하네스/문서/리팩토링 메타 작업)'
       exit 2
     fi
   fi
