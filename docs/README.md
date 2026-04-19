@@ -22,6 +22,7 @@
 | `superpowers/plans/` | 구현 계획서 (로컬 전용, gitignore) |
 | `index.json` | 문서 인덱스 (훅이 자동 갱신) |
 | `prompt-guide.md` | 프롬프트 작성 가이드 (사용자 직접 유지) |
+| `harness-wiki-guide.md` | 하네스/위키 구성·유지보수 가이드 (사용자 직접 유지) |
 
 ## 다른 자산과의 관계
 
