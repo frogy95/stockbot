@@ -152,7 +152,7 @@ PRD → prd-to-roadmap → ROADMAP
 | 인프라/배포 변경 (Vercel/Railway/Cloudflare) | `wiki/deployment.md`, `.claude/rules/ci-policy.md` | 구현 작업자 |
 | 새 환경변수 추가 | `backend/core/config.py`, `.env.example`, `wiki/setup-guide.md` | 구현 작업자 |
 | 검증 원칙 변경 | `.claude/rules/dev-process.md` §5 | 직접 수정 |
-| 브랜치 전략/허용 브랜치 변경 | `.claude/rules/dev-process.md` §1, `.claude/hooks/pretooluse-bash-guard.sh`, `CLAUDE.md` "Bash 명령 실행 규칙" | 직접 수정 + 훅 동기화 필수 |
+| 브랜치 전략/허용 브랜치 변경 | `.claude/rules/dev-process.md` §1, `.claude/hooks/pretooluse-bash-guard.sh`, `CLAUDE.md` "Bash 명령 실행 규칙", `wiki/deployment.md` CI/CD 섹션 | 직접 수정 + 훅 동기화 필수 |
 | 에이전트 워크플로우 변경 | `.claude/agents/*.md`, 관련 규칙 파일 | 직접 수정 |
 | 새 버전 배포 | `docs/deploy-history/YYYY-MM-DD.md`, Notion "릴리즈 노트" | deploy-prod 에이전트 |
 | 핫픽스 마무리 | `docs/hotfix/{name}/hotfix.md`, `deploy.md`, `docs/deploy-history/` | hotfix-close 에이전트 |
@@ -211,7 +211,7 @@ PRD → prd-to-roadmap → ROADMAP
 | [`wiki/README.md`](../wiki/README.md) | 위키 구조 선언 |
 | [`docs/README.md`](README.md) | 아티팩트 저장소 구조 선언 |
 | [`.claude/rules/dev-process.md`](../.claude/rules/dev-process.md) | 검증 매트릭스, 코드 리뷰 체크리스트, 문서 관리 규칙 (SSOT) |
-| [`.claude/rules/ci-policy.md`](../.claude/rules/ci-policy.md) | Git 브랜치 전략, CI/CD |
+| [`.claude/rules/ci-policy.md`](../.claude/rules/ci-policy.md) | CI/CD 파이프라인·환경변수·도메인 설정 (인프라 전용; 브랜치 전략은 `dev-process.md` §1) |
 | [`.claude/rules/sprint-workflow.md`](../.claude/rules/sprint-workflow.md) | 스프린트·핫픽스 브랜치 워크플로우 |
 | [`docs/prompt-guide.md`](prompt-guide.md) | 사용자 프롬프트 작성 가이드 |
 | [`wiki/index.md`](../wiki/index.md) | 위키 진입점 |

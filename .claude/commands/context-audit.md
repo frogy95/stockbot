@@ -73,9 +73,9 @@ CLAUDE.md, 규칙, 훅, 에이전트, 커맨드, 전문가, 템플릿, 메모리
 - `docs/experts/`에 있지만 어떤 에이전트도 참조하지 않는 전문가
 - `agent-memory/`에 대응하는 에이전트가 없는 메모리 디렉토리
 - `docs/templates/`에 있지만 어떤 에이전트/커맨드도 참조하지 않는 템플릿
-- **`wiki/*.md` 중 `wiki/index.md` 대분류 목록에서 링크되지 않은 페이지** (`orphan_file`) — `log.md`·`README.md`는 예외
+- **`wiki/*.md` 중 `wiki/index.md` 대분류 목록에서 링크되지 않은 페이지** (`wiki_orphan_page`) — `log.md`·`README.md`는 예외
 - **`wiki/*.md` 수정일(git log -1)이 `wiki/log.md`의 최신 날짜 엔트리보다 최근인데, 해당 수정이 로그에 없는 경우** (`wiki_log_stale`)
-- **`docs/index.json`의 `lastUpdated` 타임스탬프가 파일 자체의 git 최신 커밋 시각보다 오래된 경우** (`index_lastUpdated_stale`)
+- **`docs/index.json`의 `lastUpdated` 타임스탬프가 파일 자체의 git 최신 커밋 시각보다 오래된 경우** (`index_last_updated_stale`)
 
 ### 6단계: 보고서 출력
 
@@ -126,7 +126,8 @@ minor 항목은 이 시점에서 자동 수정을 먼저 실행한 뒤, 아래 �
 - `wiki_link_dead`: 링크 대상 오타 추정 수정 또는 링크 제거 제안, 승인 후 실행
 - `wiki_log_stale`: `wiki/log.md`에 해당 날짜 엔트리 추가 제안, 승인 후 실행
 - `wiki_rules_duplication`: wiki 복제본을 `.claude/rules/` 원본 참조 링크로 대체 제안, 승인 후 실행
-- `index_lastUpdated_stale`: 현재 시각으로 `docs/index.json` `lastUpdated` 갱신 제안, 승인 후 실행
+- `wiki_orphan_page`: `wiki/index.md` 대분류 목록에 링크 추가 또는 페이지 삭제 제안, 승인 후 실행
+- `index_last_updated_stale`: 현재 시각으로 `docs/index.json` `lastUpdated` 갱신 제안, 승인 후 실행
 
 ## 원칙
 

@@ -117,7 +117,12 @@
       "autofix": false,
       "description": "wiki/*.md가 .claude/rules/*.md 확정 사실 섹션 내용을 복제 (원본=rules, wiki=링크 원칙 위반)"
     },
-    "index_lastUpdated_stale": {
+    "wiki_orphan_page": {
+      "severity": "info",
+      "autofix": false,
+      "description": "wiki/*.md 중 wiki/index.md 대분류 목록에 링크되지 않은 페이지 (log.md·README.md 예외)"
+    },
+    "index_last_updated_stale": {
       "severity": "warning",
       "autofix": false,
       "description": "docs/index.json 내용 변경 기록에 비해 최상위 lastUpdated 필드가 갱신되지 않음"
