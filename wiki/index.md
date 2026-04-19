@@ -49,8 +49,10 @@ StockBot — 한국 주식/ETF 단타 자동 매매 시스템의 지식 베이�
 - [[telegram-integration]] — 텔레그램 봇 알림 및 승인 처리
 - [[external-apis]] — 외부 API 의존성 요약
 
-## 개발 프로세스
+## 개발 환경
 
-- [[development-workflow]] — 스프린트/핫픽스 개발 워크플로우
+- [[setup-guide]] — 초기 환경 설정 (외부 API, 개발 도구, 환경변수)
 - [[paper-vs-live]] — 모의거래/실전거래 전환
 - [[trading-calendar]] — 한국 거래소 캘린더 및 장 시간
+
+> 개발 프로세스(스프린트/핫픽스 워크플로우)는 `.claude/rules/dev-process.md` 및 `.claude/rules/sprint-workflow.md` 참조.

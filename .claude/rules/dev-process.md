@@ -2,12 +2,13 @@
 
 > **Single Source of Truth** — 검증 원칙, 개발 워크플로우, QA 기준이 이 문서 한 곳에 정의됩니다.
 > CLAUDE.md, agent 파일, ci-policy.md는 이 문서를 참조합니다.
+> **도메인 지식 우선 참조**: 시스템 현재 상태(아키텍처, 데이터 흐름, 외부 API 등)는 `@wiki/`를 먼저 확인한다.
 
 ---
 
 ## 1. Git 브랜치 전략
 
-인프라 상세 정책은 [`docs/ci-policy.md`](ci-policy.md) 참조.
+인프라 상세 정책은 [`.claude/rules/ci-policy.md`](ci-policy.md) 참조.
 
 | 브랜치 | 역할 | 배포 환경 |
 |--------|------|----------|
