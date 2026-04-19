@@ -7,11 +7,11 @@
 | 항목 | 모의 (paper) | 실전 (live) |
 |------|-------------|------------|
 | `TRADING_ENV` | `paper` | `live` |
-| API 도메인 | `openapivts.koreainvestment.com` | `openapi.koreainvestment.com` |
+| REST 도메인 | `openapivts.koreainvestment.com` | `openapi.koreainvestment.com` |
 | App Key/Secret | `KIS_MOCK_APP_KEY/SECRET` | `KIS_APP_KEY/SECRET` |
 | 계좌번호 | `KIS_MOCK_ACCOUNT_NO` | `KIS_ACCOUNT_NO` |
 | tr_id 접두사 | `V` (예: `VTTC0802U`) | `T` (예: `TTTC0802U`) |
-| WebSocket URL | `/tryitout` 경로 | `/tryitout` 경로 (동일) |
+| WebSocket URL | `ws://ops.koreainvestment.com:31000` (경로 없음) | `ws://ops.koreainvestment.com:21000/tryitout` |
 | Rate Limit | 초당 1건 (스로틀링 내장) | 초당 ~20건 |
 | 실제 자금 | 아니오 | 예 |
 
@@ -51,10 +51,15 @@ Phase 7.0 Sprint 3에서 E2E 검증 + LIVE 전환 체크리스트:
 
 ## KIS WebSocket LIVE 주의사항
 
-LIVE WebSocket 연결 시 `/tryitout` 경로가 필수 (Phase 7.0 Sprint 1에서 발견된 버그 수정):
+LIVE WebSocket 연결 시 `/tryitout` 경로가 필수 (Phase 7.0 Sprint 1에서 발견된 버그 수정). PAPER는 다른 서버(포트 31000)이므로 경로 불필요 — 자세한 확정 사실은 `.claude/rules/backend.md` 참조.
+
 ```
-ws://ops.koreainvestment.com/tryitout  ← 올바름
-ws://ops.koreainvestment.com           ← 잘못됨 (인증 실패)
+# LIVE (포트 21000)
+ws://ops.koreainvestment.com:21000/tryitout  ← 올바름
+ws://ops.koreainvestment.com:21000           ← 잘못됨 (HTTP 101 후 즉시 연결 종료)
+
+# PAPER (포트 31000, 경로 없음)
+ws://ops.koreainvestment.com:31000           ← 올바름
 ```
 
 [[websocket-management]], [[kis-api]] 참조.

@@ -81,4 +81,4 @@ docker compose exec backend alembic upgrade head
 
 `.claude/rules/ci-policy.md` 참조:
 - `main`, `develop` 직접 push 금지, PR만 허용
-- 브랜치 명명 규칙: `sprint/{phase}-{sprint}`, `hotfix/{issue}`
+- 허용 브랜치: `phase{P}-sprint{N}`, `hotfix/*`, `chore/*`, `docs/*`, `refactor/*`

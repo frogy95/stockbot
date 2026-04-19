@@ -17,12 +17,12 @@ KIS(한국투자증권) OpenAPI는 [[data-collection-flow|장중 데이터 수�
 | 항목 | 모의거래 | 실전거래 |
 |------|---------|---------|
 | 환경변수 | `KIS_MOCK_APP_KEY`, `KIS_MOCK_APP_SECRET`, `KIS_MOCK_ACCOUNT_NO` | `KIS_APP_KEY`, `KIS_APP_SECRET`, `KIS_ACCOUNT_NO` |
-| API 도메인 | `openapivts.koreainvestment.com` | `openapi.koreainvestment.com` |
+| REST 도메인 | `openapivts.koreainvestment.com` | `openapi.koreainvestment.com` |
 | tr_id 접두사 | `V` (예: `VTTC0802U`) | `T` (예: `TTTC0802U`) |
 | Rate Limit | 초당 1건 스로틀링 내장 | 초당 ~20건 |
-| WebSocket URL | `/tryitout` 경로 필수 | 기본 경로 |
+| WebSocket URL | `ws://ops.koreainvestment.com:31000` (경로 없음) | `ws://ops.koreainvestment.com:21000/tryitout` (경로 필수) |
 
-**중요**: LIVE WebSocket은 `/tryitout` 경로가 필수다. 이 경로 없이 연결 시 인증 실패로 수 시간 낭비 가능. [[websocket-management]] 참조.
+**중요**: LIVE WebSocket은 `/tryitout` 경로가 필수이고, PAPER는 다른 서버(포트 31000)이므로 경로가 불필요하다. 누락 시 연결 실패로 수 시간 낭비 가능. [[websocket-management]] 참조.
 
 ## 인증 토큰
 

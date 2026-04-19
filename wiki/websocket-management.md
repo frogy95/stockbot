@@ -10,14 +10,14 @@ KIS WebSocket을 통해 장중 실시간 체결 스트림을 수신한다. `coll
 
 ## 핵심 설정
 
-**중요**: LIVE 환경에서 WebSocket URL에 `/tryitout` 경로가 필수다.
+**중요**: LIVE와 PAPER의 WS 엔드포인트가 다르다. LIVE는 `/tryitout` 경로 필수, PAPER는 경로 없음. 상세 근거는 `.claude/rules/backend.md` §"KIS WebSocket 연결 — 확정 사실" 섹션 참조.
 
 | 환경 | WebSocket URL |
 |------|--------------|
-| 모의 | `ws://openapivts.koreainvestment.com/tryitout` |
-| 실전 | `ws://ops.koreainvestment.com/tryitout` |
+| 모의 (PAPER) | `ws://ops.koreainvestment.com:31000` |
+| 실전 (LIVE)  | `ws://ops.koreainvestment.com:21000/tryitout` |
 
-이 경로 없이 연결 시 인증 실패로 수 시간 낭비 가능. [[kis-api]] 참조.
+LIVE에서 경로 누락 시 서버가 HTTP 101 응답 후 즉시 연결을 종료한다. PAPER는 다른 서버(포트 31000)이므로 경로가 필요 없다. [[kis-api]], [[paper-vs-live]] 참조.
 
 ## 연결 생명주기
 
