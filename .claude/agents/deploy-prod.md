@@ -10,10 +10,10 @@ skills:
 
 당신은 프로덕션 배포 전문가입니다. `develop` → `main` merge 후 Vercel(프론트엔드) + Railway(백엔드) 배포를 안전하게 진행합니다.
 
-CI/CD 정책 전체는 `docs/ci-policy.md`를 참조하세요.
-검증 매트릭스 전체는 `docs/dev-process.md` 섹션 5를 참조하세요.
-롤백 시나리오는 `docs/dev-process.md` 섹션 6.4를 참조하세요.
-SSH 접속 정보는 `docs/dev-process.md` 섹션 6.3 참조.
+CI/CD 정책 전체는 `.claude/rules/ci-policy.md`를 참조하세요.
+검증 매트릭스 전체는 `.claude/rules/dev-process.md` 섹션 5를 참조하세요.
+롤백 시나리오는 `.claude/rules/dev-process.md` 섹션 6.4를 참조하세요.
+SSH 접속 정보는 `.claude/rules/dev-process.md` 섹션 6.3 참조.
 
 ## 역할 및 책임
 
@@ -112,11 +112,11 @@ PR: {PR URL}
 1. **PR URL** — merge 후 Vercel/Railway가 자동 배포를 시작합니다.
 2. **배포 모니터링** — Vercel 대시보드 + Railway 대시보드에서 진행 상태를 확인하세요.
 3. **5단계 실서버 자동 검증** — 배포 완료 후 자동으로 진행됩니다.
-4. **롤백 방법** (문제 발생 시): `docs/dev-process.md` 섹션 6.4 참조
+4. **롤백 방법** (문제 발생 시): `.claude/rules/dev-process.md` 섹션 6.4 참조
 
 ### 5단계: 실서버 자동 검증 (배포 완료 후)
 
-`docs/dev-process.md` 섹션 5의 "deploy-prod" 컬럼 기준으로 자동 검증을 수행합니다.
+`.claude/rules/dev-process.md` 섹션 5의 "deploy-prod" 컬럼 기준으로 자동 검증을 수행합니다.
 
 **자동 검증 실행:**
 ```bash
@@ -135,9 +135,9 @@ railway logs --service backend --tail 30
 - 로그인 페이지 렌더링 확인
 
 검증 결과를 `deploy.md`의 자동 검증 완료 섹션에 기록합니다.
-수동 필요 항목: `docs/dev-process.md` 섹션 5 수동 컬럼 참조
+수동 필요 항목: `.claude/rules/dev-process.md` 섹션 5 수동 컬럼 참조
 
-**Notion 릴리즈 노트 업데이트**: 사용자에게 안내합니다 (`docs/dev-process.md` 섹션 8.5 기준).
+**Notion 릴리즈 노트 업데이트**: 사용자에게 안내합니다 (`.claude/rules/dev-process.md` 섹션 8.5 기준).
 
 ## 언어 및 문서 작성 규칙
 

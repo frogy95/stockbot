@@ -310,7 +310,7 @@ develop 검증 완료됐어. 프로덕션 배포 해줘.
 
 > **모델: Sonnet** — 빠르고 비용 효율적
 >
-> Hotfix vs Sprint 판단 기준은 `docs/dev-process.md` 섹션 2에 정의되어 있습니다. 파일 3개/50줄 이하 + DB 변경 없음 + 새 의존성 없음이면 Sprint 없이 바로 수정합니다.
+> Hotfix vs Sprint 판단 기준은 `.claude/rules/dev-process.md` 섹션 2에 정의되어 있습니다. 파일 3개/50줄 이하 + DB 변경 없음 + 새 의존성 없음이면 Sprint 없이 바로 수정합니다.
 
 파일 몇 개만 수정하면 되는 작업. Sprint/Phase 문서 불필요.
 
@@ -583,9 +583,9 @@ docs/phase/phase{P}/sprint{N}/sprint{N}.md 다시 읽고 현재 진행 상황 �
 | 문서 | 용도 |
 |------|------|
 | `CLAUDE.md` | 프로젝트 규칙, 에이전트 라우팅, 구현 규칙 (매 세션 자동 로드) |
-| `docs/dev-process.md` | 검증 매트릭스, 코드 리뷰 체크리스트, 문서 관리 규칙 (SSOT) |
-| `docs/ci-policy.md` | Git 브랜치 전략, CI/CD 파이프라인 |
-| `docs/setup-guide.md` | 초기 환경 설정 (외부 서비스, Docker) |
+| `.claude/rules/dev-process.md` | 검증 매트릭스, 코드 리뷰 체크리스트, 문서 관리 규칙 (SSOT) |
+| `.claude/rules/ci-policy.md` | Git 브랜치 전략, CI/CD 파이프라인 |
+| `wiki/setup-guide.md` | 초기 환경 설정 (외부 서비스, Docker) |
 | `.claude/agents/*.md` | 7개 에이전트 정의 (model, skills, maxTurns 등) |
 | `.claude/rules/*.md` | 경로별 조건부 규칙 (백엔드, 프론트엔드, 워크플로우, Notion) |
 | `.claude/hooks/*.sh` | 자동 규칙 강제화 (bash-guard: 위험 명령 차단, doc-checker: 문서 누락 검증) |

@@ -30,11 +30,11 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
 ### 2단계: 코드 리뷰
 
 **변경 파일이 15개 이상이고 백엔드/프론트엔드에 걸쳐 있으면**, 코드 리뷰 에이전트를 병렬로 실행합니다:
-- 백엔드 리뷰: 보안, 성능, 테스트 (`docs/dev-process.md` 섹션 7)
+- 백엔드 리뷰: 보안, 성능, 테스트 (`.claude/rules/dev-process.md` 섹션 7)
 - 프론트엔드 리뷰: 타입 안전성, 컴포넌트 패턴, a11y
 
 **그 외에는** 단독으로 리뷰합니다:
-- `docs/dev-process.md` 섹션 7의 체크리스트에 따라 변경 파일 대상으로 코드 리뷰를 수행합니다.
+- `.claude/rules/dev-process.md` 섹션 7의 체크리스트에 따라 변경 파일 대상으로 코드 리뷰를 수행합니다.
 - `/review-pr` 커맨드를 사용하여 PR 리뷰를 실시합니다.
 
 **Critical/High 이슈**가 있으면:
@@ -46,7 +46,7 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
 
 ### 3단계: 자동 검증 실행
 
-`docs/dev-process.md` 섹션 5의 "Sprint" 컬럼 기준으로 자동 검증을 실행합니다.
+`.claude/rules/dev-process.md` 섹션 5의 "Sprint" 컬럼 기준으로 자동 검증을 실행합니다.
 
 **Docker 상태 확인 및 자동 기동:**
 1. `docker compose ps --format json` 으로 컨테이너 상태 확인
@@ -63,7 +63,7 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
   - 검증 실패 시 스크린샷을 `docs/phase/phase{P}/sprint{N}/` 폴더에 저장
   - task별 검증 결과는 `docs/phase/phase{P}/sprint{N}/task{N}/test-result.md`에 기록 (형식: `docs/templates/EXAMPLE-test-result.md`)
 
-**수동 필요 항목**: `docs/dev-process.md` 섹션 5 수동 컬럼 참조
+**수동 필요 항목**: `.claude/rules/dev-process.md` 섹션 5 수동 컬럼 참조
 
 ### 4단계: Phase 문서 반영 검증
 
@@ -110,7 +110,7 @@ Sprint 결과가 Phase 계획에 영향을 주는지 확인합니다.
 - 코드 리뷰 결과 요약 (Critical/High/Medium 이슈 수)
 - 자동 검증 결과 (통과/실패 항목)
 - 사용자가 직접 수행해야 하는 남은 수동 검증 항목
-- **Notion 업데이트 필요 여부** (`docs/dev-process.md` 섹션 8.5 트리거 기준, `.claude/rules/notion.md` 페이지 ID 참조)
+- **Notion 업데이트 필요 여부** (`.claude/rules/dev-process.md` 섹션 8.5 트리거 기준, `.claude/rules/notion.md` 페이지 ID 참조)
 
 **코드 리뷰 이슈 유무에 따라 두 분기로 나뉩니다.**
 

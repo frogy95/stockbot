@@ -103,3 +103,7 @@
 | 시세 tr_id | FHKST01010100 | FHKST01010100 | 동일 |
 | WS URL | ops.koreainvestment.com:31000 | ops.koreainvestment.com:21000 | 포트 변경 |
 | Rate Limit | ~초당 1건 | ~초당 20건 | 스로틀러 설정 변경 |
+
+---
+
+> *2026-04-19 자산 재편 이후 참조 경로 변경*: 본문 상단의 `docs/data-flow.md`는 `wiki/data-collection-flow.md`로 이관되었다. 본 문서는 당시 참조 원본을 보존하기 위해 본문을 수정하지 않는다.

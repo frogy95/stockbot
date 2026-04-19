@@ -7,8 +7,8 @@ paths:
 
 # 스프린트/핫픽스 워크플로우 규칙
 
-> **프로세스 상세**: `docs/dev-process.md` §3(Sprint), §4(Hotfix), §2(판단 기준) 참조
-> **검증 매트릭스**: `docs/dev-process.md` §5 참조
+> **프로세스 상세**: `.claude/rules/dev-process.md` §3(Sprint), §4(Hotfix), §2(판단 기준) 참조
+> **검증 매트릭스**: `.claude/rules/dev-process.md` §5 참조
 
 ## 핵심 규칙
 
@@ -17,7 +17,7 @@ paths:
 - 브랜치: `git checkout -b phase{P}-sprint{N}` (develop 기반)
 - **worktree 사용 금지**
 - 커밋 메시지에 **task ID 필수** (PostToolUse hook이 index.json 자동 동기화)
-- Hotfix vs Sprint 판단: `docs/dev-process.md` §2 기준
+- Hotfix vs Sprint 판단: `.claude/rules/dev-process.md` §2 기준
 - **신규 환경변수**: 프로덕션(Railway) 수동 설정이 필요한 환경변수를 추가했다면 sprint-close/hotfix-close 마무리 시 deploy.md 수동 검증 항목에 `Railway 환경변수 추가 확인: VAR_NAME` 형식으로 기록
 
 ## 에이전트 역할 분담

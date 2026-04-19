@@ -47,7 +47,7 @@ CLAUDE.md, 규칙, 훅, 에이전트, 커맨드, 전문가, 템플릿, 메모리
 
 체크 항목:
 - CLAUDE.md의 참조 링크 대상 파일이 실제 존재하는지
-- 에이전트가 참조하는 문서(docs/dev-process.md, docs/index.json 등)가 존재하는지
+- 에이전트가 참조하는 문서(.claude/rules/dev-process.md, docs/index.json 등)가 존재하는지
 - doc-rules.json의 `required` 파일이 실제 존재하는지
 - settings.json 훅 command 경로가 실제 스크립트와 일치하는지
 - 깨진 참조는 `dead_reference`(warning), 빈 참조는 `empty_reference`(minor)로 분류
@@ -112,7 +112,7 @@ minor 항목은 이 시점에서 자동 수정을 먼저 실행한 뒤, 아래 �
 
 ## 원칙
 
-- **Single Source of Truth**: 프로세스 상세는 `docs/dev-process.md`, 경로별 규칙은 `rules/*.md`, 에이전트 동작은 `agents/*.md`에만 존재해야 한다.
+- **Single Source of Truth**: 프로세스 상세는 `.claude/rules/dev-process.md`, 경로별 규칙은 `rules/*.md`, 에이전트 동작은 `agents/*.md`에만 존재해야 한다.
 - **CLAUDE.md는 인덱스**: 상세 내용이 아닌 참조 링크와 고유 규칙(언어, 체크리스트 형식 등)만 유지한다.
 - **에이전트는 자족적**: 다른 에이전트를 읽지 않으므로, 독립 실행에 필요한 최소 정보는 중복을 허용한다.
 - **훅과 커맨드는 정합성 필수**: bash-guard가 차단하는 패턴을 커맨드가 사용하면 안 된다.

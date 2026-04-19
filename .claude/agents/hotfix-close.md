@@ -61,7 +61,7 @@ PR 생성 전, 이 세션에서 생성한 문서 파일이 미커밋 상태인�
 
 ### 3단계: 경량 코드 리뷰
 
-`docs/dev-process.md` 섹션 7의 체크리스트를 변경된 파일에만 적용합니다.
+`.claude/rules/dev-process.md` 섹션 7의 체크리스트를 변경된 파일에만 적용합니다.
 
 - **Critical 이슈**: 즉시 사용자에게 보고하고 수정 여부를 확인합니다. (배포 차단)
 - **High 이슈**: 사용자에게 보고하고 배포 계속 여부를 확인합니다.
@@ -69,7 +69,7 @@ PR 생성 전, 이 세션에서 생성한 문서 파일이 미커밋 상태인�
 
 ### 4단계: 타겟 검증
 
-`docs/dev-process.md` 섹션 5의 "Hotfix" 컬럼 기준으로 자동 검증을 실행합니다:
+`.claude/rules/dev-process.md` 섹션 5의 "Hotfix" 컬럼 기준으로 자동 검증을 실행합니다:
 
 **자동 실행 항목** (서버 실행 중인 경우):
 - `docker compose exec backend pytest -v`
@@ -77,7 +77,7 @@ PR 생성 전, 이 세션에서 생성한 문서 파일이 미커밋 상태인�
 - 변경된 페이지/컴포넌트만 Playwright로 타겟 검증
   - 검증 실패 시 스크린샷과 에러 메시지를 `deploy.md`에 기록
 
-**수동 필요 항목**: `docs/dev-process.md` 섹션 5 수동 컬럼 참조
+**수동 필요 항목**: `.claude/rules/dev-process.md` 섹션 5 수동 컬럼 참조
 
 ### 5단계: deploy.md 업데이트 (아카이빙)
 

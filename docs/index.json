@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-16T11:40:00+09:00",
+  "lastUpdated": "2026-04-17T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2515,6 +2515,13 @@
       ]
     },
     {
+      "id": "phase7.2",
+      "title": "매매 전략 진입 조건 개선",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase7.2/phase7.2.md",
+      "sprints": []
+    },
+    {
       "id": "phase7.1",
       "title": "5분봉 거래량 가속도 지표",
       "status": "planned",
@@ -2558,9 +2565,16 @@
     {
       "id": "data-flow",
       "title": "데이터 수급 처리 흐름",
-      "path": "docs/data-flow.md",
-      "description": "전체 데이터 흐름 (장전 일괄 수집 → 장중 실시간 → 장후 정산), API별 상세, ETF 예외, Rate Limit 관리. Mermaid 다이어그램.",
+      "path": "wiki/data-collection-flow.md",
+      "description": "전체 데이터 흐름 (장전 일괄 수집 → 장중 실시간 → 장후 정산), API별 상세, ETF 예외, Rate Limit 관리. Mermaid 다이어그램 포함 (2026-04-19 자산 재편으로 docs/data-flow.md에서 이관).",
       "createdAt": "2026-03-29"
+    },
+    {
+      "id": "harness-wiki-guide",
+      "title": "하네스 & 위키 사용자 가이드",
+      "path": "docs/harness-wiki-guide.md",
+      "description": ".claude/(하네스)·wiki/·docs/ 세 자산의 역할, 구성, 유지보수 권고를 정리한 사용자 가이드. 변경 트리거 매트릭스·자주 생기는 함정 포함.",
+      "createdAt": "2026-04-19"
     }
   ],
   "hotfixes": [

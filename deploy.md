@@ -10,19 +10,19 @@
 포함 스프린트: Phase 7.0.1 Sprint 1 — KIS LIVE WebSocket 연결 복구
 PR: https://github.com/frogy95/stockbot/pull/138
 
-- ⬜ Vercel 프론트엔드 자동 배포 (PR #138 머지 후 자동 시작)
-- ⬜ Railway 백엔드 자동 배포 (PR #138 머지 후 자동 시작)
+- ✅ Vercel 프론트엔드 자동 배포 (PR #138 머지 후 자동 완료)
+- ✅ Railway 백엔드 자동 배포 (PR #138 머지 후 자동 완료)
 
 #### 자동 검증 (배포 완료 후 실행 필요)
 
-- ⬜ `curl -s https://api.stockbot.choiji.kr/api/v1/health` → `{"status":"healthy"}` 확인
-- ⬜ `curl -s https://api.stockbot.choiji.kr/api/v1/kis/status | jq .` → `ws_connected: true` 확인
-- ⬜ 내일 08:55 KST 수동 확인: `ws_connected: true` (장 시작 전 자동 연결)
+- ✅ `curl -s https://api.stockbot.choiji.kr/api/v1/health` → `{"status":"healthy"}` 확인 (2026-04-17 08:36 KST)
+- ✅ `curl -s https://api.stockbot.choiji.kr/api/v1/kis/status | jq .` → `ws_connected: true` 확인 (2026-04-17 09:03 KST)
+- ✅ 09:03 KST 확인: `ws_connected: true`, `ws_subscriptions: 40` (20종목 × 2채널), 2차 스크리닝 30초 주기 정상 가동
 
 ---
 
 ## 참고
 
-- 검증 원칙: `docs/dev-process.md` 섹션 5
+- 검증 원칙: `.claude/rules/dev-process.md` 섹션 5
 - 배포 이력: `docs/deploy-history/`
-- 롤백 방법: `docs/dev-process.md` 섹션 6.4
+- 롤백 방법: `.claude/rules/dev-process.md` 섹션 6.4
