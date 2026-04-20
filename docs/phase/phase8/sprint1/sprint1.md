@@ -308,17 +308,17 @@ git commit -m "docs(phase8-sprint1): task6 — 통합 회귀 결과 + 수동 검
 
 ## 최종 검증 계획
 
-| 검증 항목 | 명령 | 예상 결과 |
-|-----------|------|-----------|
-| pytest 전체 | `docker compose exec backend pytest -v` | 모두 PASS (기존 + Task 1~5 신규) |
-| kis_realtime 파서 | `docker compose exec backend pytest tests/test_kis_realtime.py -v` | OHLC 추출 테스트 PASS |
-| scheduler Redis 캐싱 | `docker compose exec backend pytest tests/test_scheduler.py -v -k realtime` | OHLC 캐싱 테스트 PASS |
-| realtime_screener | `docker compose exec backend pytest tests/test_realtime_screener.py -v` | candidate OHLC 전파 PASS |
-| signal_generator snapshot | `docker compose exec backend pytest tests/test_signal_generator.py -v` | 실시간 우선 + 폴백 PASS |
-| momentum_breakout 갭 분기 | `docker compose exec backend pytest tests/test_momentum_breakout.py -v` | 갭 open_price 기준 PASS |
-| 프론트 타입 체크 | `cd frontend && npx tsc --noEmit` | 에러 없음 (본 Sprint 변경 없음 확인용) |
-| Redis 필드 샘플링 (배포 후) | `redis-cli --tls GET realtime:005930:execution` (Railway/로컬) | JSON에 `open_price/high/low` 존재 |
-| 신호 관찰 (2거래일) | `SELECT * FROM trade_signals WHERE strategy_name='momentum_breakout' AND created_at > now() - interval '2 days';` | 1건 이상 pending 신호 존재 |
+| 검증 항목 | 명령 | 예상 결과 | status |
+|-----------|------|-----------|--------|
+| pytest 전체 | `docker compose exec backend pytest -v` | 모두 PASS (기존 + Task 1~5 신규) | ✅ 854 passed (1 pre-existing fail — test_ws_manager_env_max_subscriptions) |
+| kis_realtime 파서 | `docker compose exec backend pytest tests/test_kis_realtime.py -v` | OHLC 추출 테스트 PASS | ✅ 10 passed |
+| scheduler Redis 캐싱 | `docker compose exec backend pytest tests/test_scheduler_vol5m.py -v` | OHLC 캐싱 테스트 PASS | ✅ 4 passed |
+| realtime_screener | `docker compose exec backend pytest tests/test_realtime_screener.py -v` | candidate OHLC 전파 PASS | ✅ 15 passed |
+| signal_generator snapshot | `docker compose exec backend pytest tests/test_signal_generator.py -v` | 실시간 우선 + 폴백 PASS | ✅ 7 passed |
+| momentum_breakout 갭 분기 | `docker compose exec backend pytest tests/test_momentum_breakout.py -v` | 갭 open_price 기준 PASS | ✅ 21 passed |
+| 프론트 타입 체크 | `npx tsc --noEmit` (frontend) | 에러 없음 (본 Sprint 변경 없음 확인용) | ⬜ 수동 |
+| Redis 필드 샘플링 (배포 후) | `redis-cli --tls GET realtime:005930:execution` (Railway/로컬) | JSON에 `open_price/high/low` 존재 | ⬜ 배포 후 수동 |
+| 신호 관찰 (2거래일) | `SELECT * FROM trade_signals WHERE strategy_name='momentum_breakout' AND created_at > now() - interval '2 days';` | 1건 이상 pending 신호 존재 | ⬜ 배포 후 수동 |
 
 ---
 
