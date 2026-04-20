@@ -5,19 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Sprint 1 완료 — Phase 8 장중 OHLC 파싱 + 갭 분기 수정 (2026-04-20)
+### 프로덕션 배포 - v2.3.0 (2026-04-20)
 
-PR: https://github.com/frogy95/stockbot/pull/149 (→ develop)
+포함 스프린트: Phase 8 Sprint 1 (장중 실시간 OHLC 파싱 + 갭 분기 자기돌파 버그 수정)
+PR: https://github.com/frogy95/stockbot/pull/150 (develop → main)
 
-#### 코드 리뷰 결과
-
-- ✅ Critical/High 이슈: 0건
-- ⬜ Medium 이슈 1건: `signal_generator.py` `_build_snapshot()` 독스트링(123줄)이 구 동작("Redis 체결 데이터에 intraday open/high/low가 없어 current_price로 대체한다") 설명으로 남아 있음. 실제 코드(139~141줄)는 실시간 값 우선 사용. 기능 버그 없음, 혼란 방지용 수정 권장 (Sprint 2에서 개선 가능).
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
 #### 자동 검증 결과
 
-- ✅ pytest -v: **854 passed**, 1 failed (pre-existing: `test_ws_manager_env_max_subscriptions` — Sprint 1 범위 아님)
-- ✅ API 엔드포인트: Docker 실행 중 (backend:running, frontend:running, postgres:healthy, redis:healthy)
+- ✅ Railway 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}` 확인
+- ✅ Railway 로그: 오류 없이 정상 시작 (Uvicorn, 스케줄러, 매매 엔진, 텔레그램 웹훅 모두 정상)
+- ✅ Vercel 프론트엔드: HTTP 307 (정상 리다이렉트) 확인
 
 #### 수동 검증 필요 항목
 
