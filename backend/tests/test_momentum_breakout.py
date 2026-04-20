@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from modules.trading.strategy import MarketSnapshot, TradeSignalData
+from modules.trading.strategy import MarketSnapshot, RejectedSignal, TradeSignalData
 
 _PATCH_PROGRESS = "modules.trading.strategies.momentum_breakout.calc_market_progress"
 
@@ -60,41 +60,51 @@ async def test_breakout_buy_signal(mock_progress):
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
-async def test_no_breakout_returns_none(mock_progress):
-    """전일 고가 미돌파 -> None 반환."""
+async def test_no_breakout_returns_rejected(mock_progress):
+    """전일 고가 미돌파 -> RejectedSignal(stage='breakout')."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
     snapshot = _make_snapshot(current_price=70000)  # < prev_high=70500
     result = await strategy.generate_signal(snapshot)
 
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "breakout"
+    assert result.detail["current_price"] == 70000
+    assert result.detail["breakout_ref"] == 70500
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
-async def test_low_volume_returns_none(mock_progress):
-    """거래량 조건 미달 -> None 반환."""
+async def test_low_volume_returns_rejected(mock_progress):
+    """거래량 조건 미달 -> RejectedSignal(stage='volume_threshold')."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
     snapshot = _make_snapshot(volume=15000000, prev_volume=10000000)  # 1.5배 < 2.0배
     result = await strategy.generate_signal(snapshot)
 
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "volume_threshold"
+    assert "adjusted_ratio" in result.detail
+    # current_price=73000, prev_high=70500 → breakout_pct ≈ 3.55% → threshold=1.8
+    assert result.detail["volume_threshold"] == 1.8
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
-async def test_low_trade_strength_returns_none(mock_progress):
-    """체결강도 조건 미달 -> None 반환."""
+async def test_low_trade_strength_returns_rejected(mock_progress):
+    """체결강도 조건 미달 -> RejectedSignal(stage='trade_strength')."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
     snapshot = _make_snapshot(trade_strength=60.0)  # < 100
     result = await strategy.generate_signal(snapshot)
 
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "trade_strength"
+    assert result.detail["trade_strength"] == 60.0
+    assert result.detail["required"] == 100.0
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -123,13 +133,14 @@ async def test_gap_switches_to_daily_high(mock_progress):
         current_price=72000,
     )
     result2 = await strategy.generate_signal(snapshot2)
-    assert result2 is None
+    assert isinstance(result2, RejectedSignal)
+    assert result2.stage == "breakout"
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
 async def test_atr_filter_excludes_high_volatility(mock_progress):
-    """ATR이 현재가 대비 5% 초과 시 None 반환."""
+    """ATR이 현재가 대비 5% 초과 시 RejectedSignal(stage='atr_filter')."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
@@ -141,7 +152,9 @@ async def test_atr_filter_excludes_high_volatility(mock_progress):
         recent_closes=[69500, 69000, 68800, 68500, 68000],
     )
     result = await strategy.generate_signal(snapshot)
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "atr_filter"
+    assert result.detail["atr_ratio"] > 0.05
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -181,23 +194,24 @@ async def test_confidence_weighted_average(mock_progress):
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
-async def test_low_confidence_returns_none(mock_progress):
-    """신뢰도 0.6 미만 -> None 반환."""
+async def test_low_confidence_returns_rejected(mock_progress):
+    """신뢰도 0.6 미만 -> RejectedSignal. 현재 테스트는 trade_strength에서 먼저 걸림."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
-    # 각 팩터가 낮아서 합산 confidence < 0.6
+    # 각 팩터가 낮아서 합산 confidence < 0.6 하지만 trade_strength=71 < 100 에서 먼저 거부됨
     snapshot = _make_snapshot(
-        current_price=70510,  # 겨우 돌파 (momentum 극히 낮음)
+        current_price=70510,
         prev_high=70500,
-        volume=20000000,  # 딱 2배
+        volume=20000000,
         prev_volume=10000000,
-        trade_strength=71.0,  # < 100 체결강도 미달
-        total_bid_volume=300000,  # 호가 비율 낮음
+        trade_strength=71.0,
+        total_bid_volume=300000,
         total_ask_volume=400000,
     )
     result = await strategy.generate_signal(snapshot)
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "trade_strength"
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -259,7 +273,7 @@ async def test_reason_dict_structure(mock_progress):
 
 @patch(_PATCH_PROGRESS, return_value=90 / 390)
 @pytest.mark.asyncio
-async def test_morning_low_volume_returns_none(mock_progress):
+async def test_morning_low_volume_returns_rejected(mock_progress):
     """장 초반(10:30) 낮은 거래량 -> MIN_VOLUME_FLOOR에서 차단."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
@@ -272,7 +286,8 @@ async def test_morning_low_volume_returns_none(mock_progress):
         prev_volume=10_000_000,
     )
     result = await strategy.generate_signal(snapshot)
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "min_volume_floor"
 
 
 @patch(_PATCH_PROGRESS, return_value=257 / 390)
@@ -357,7 +372,49 @@ async def test_breakout_pct_thresholds(mock_progress):
         prev_volume=10_000_000,
     )
     result_c = await strategy.generate_signal(snapshot_c)
-    assert result_c is None
+    assert isinstance(result_c, RejectedSignal)
+    assert result_c.stage == "volume_threshold"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_volume_zero_rejected(mock_progress):
+    """prev_volume=0 -> RejectedSignal(stage='prev_volume_zero')."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    strategy = MomentumBreakoutStrategy()
+    snapshot = _make_snapshot(prev_volume=0)
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "prev_volume_zero"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_confidence_stage_rejected(mock_progress):
+    """모든 게이트 통과하지만 confidence < 0.6 -> stage='confidence'."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    strategy = MomentumBreakoutStrategy()
+    # breakout 간신히 통과(momentum~0) + volume 딱 2.0배(threshold 경계) + ts=100(경계)
+    # + orderbook 최저 -> confidence ~0.32 < 0.6
+    snapshot = _make_snapshot(
+        current_price=70501,
+        prev_high=70500,
+        volume=20_000_000,
+        prev_volume=10_000_000,
+        trade_strength=100.0,
+        total_bid_volume=0,
+        total_ask_volume=400000,
+        recent_highs=[70500, 70400, 70300, 70200, 70100],
+        recent_lows=[70000, 69900, 69800, 69700, 69600],
+        recent_closes=[70400, 70300, 70200, 70100, 70000],
+    )
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "confidence"
+    assert result.detail["confidence"] < 0.6
+    assert "momentum_score" in result.detail
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -373,7 +430,8 @@ async def test_min_volume_floor_blocks(mock_progress):
         prev_volume=10_000_000,
     )
     result = await strategy.generate_signal(snapshot)
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "min_volume_floor"
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -392,4 +450,5 @@ async def test_min_volume_floor_passes_but_fails_threshold(mock_progress):
         prev_volume=10_000_000,
     )
     result = await strategy.generate_signal(snapshot)
-    assert result is None
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "volume_threshold"
