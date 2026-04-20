@@ -23,7 +23,7 @@ else:
 
 갭 상승 시 전일 고가는 이미 돌파했으므로 당일 고가 기준으로 전환.
 
-**Phase 7.2 버그**: 갭 분기 조건 내 OHLC 파싱 오류 수정 예정.
+**Phase 8 Sprint 1 예정**: 갭 분기 조건 내 OHLC 파싱 오류 수정 예정.
 
 ### 2. 돌파 조건
 
@@ -87,5 +87,5 @@ generator = SignalGenerator(session_factory, redis, strategy)
 ## 향후 전략 확장
 
 `Strategy` 추상 클래스를 구현하면 새 전략 추가 가능:
-- Phase 7.1: 5분봉 가속도 기반 모멘텀 전략
-- Phase 8: VWAP 기반 전략
+- Phase 9 Sprint 0: 5분봉 가속도 기반 모멘텀 전략
+- Phase 9 Sprint 2: VWAP 기반 전략

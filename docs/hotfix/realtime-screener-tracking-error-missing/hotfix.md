@@ -3,7 +3,7 @@
 **브랜치:** `hotfix/realtime-screener-tracking-error-missing`
 **담당자:** ChoiJiSeon
 **리뷰어:** hotfix-close agent
-**상태:** 🔄 진행 중
+**상태:** ✅ 배포 완료
 **발생/배포일:** 2026-04-20
 
 ---
@@ -57,6 +57,6 @@ Phase 4.10 "ETF 2차 스크리닝 근본 해결"에서 NAV 실시간 수집 및 
 ---
 
 ## PR
-- **URL:** (PR 생성 후 기입)
+- **URL:** https://github.com/frogy95/stockbot/pull/146
 - **대상:** main
-- **역머지:** develop에 역머지 예정
+- **역머지:** develop 역머지 완료 예정
