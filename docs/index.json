@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-20T13:10:00+09:00",
+  "lastUpdated": "2026-04-20T16:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2546,48 +2546,69 @@
     },
     {
       "id": "phase7.2",
-      "title": "매매 전략 진입 조건 개선",
-      "status": "planned",
+      "title": "매매 전략 진입 조건 개선 (Phase 8로 흡수)",
+      "status": "merged-into-phase8",
       "phaseDoc": "docs/phase/phase7.2/phase7.2.md",
-      "sprints": []
-    },
-    {
-      "id": "phase7.1",
-      "title": "5분봉 거래량 가속도 지표",
-      "status": "planned",
-      "phaseDoc": "docs/phase/phase7.1/phase7.1.md",
-      "dataPrerequisite": {
-        "source": "phase6.1",
-        "type": "5분봉 거래량 Redis (vol5m:*)",
-        "minAccumulation": "20거래일",
-        "warningThreshold": "<20거래일"
-      },
+      "note": "2026-04-20 재편성. 확정 계획은 Phase 8 Sprint 1·2에 승계. 리뷰 리포트는 경로 유지.",
       "sprints": []
     },
     {
       "id": "phase8",
-      "title": "동시간대 Z-score + VWAP 포지션",
+      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + 관리 UI + 성과 분석)",
       "status": "planned",
       "phaseDoc": "docs/phase/phase8/phase8.md",
-      "dataPrerequisite": {
-        "source": "phase7.1",
-        "type": "시간대별 거래량 DB + VWAP 틱데이터",
-        "minAccumulation": "20거래일",
-        "warningThreshold": "<20거래일"
-      },
+      "reviews": [
+        "docs/phase/phase8/phase8-po-review.md",
+        "docs/phase/phase8/phase8-risk-review.md",
+        "docs/phase/phase8/phase8-daytrader-review.md",
+        "docs/phase/phase8/phase8-quant-review.md"
+      ],
       "sprints": []
     },
     {
       "id": "phase9",
-      "title": "U자형 비선형 보정",
+      "title": "동시간대 Z-score + VWAP + 5분봉 가속도 지표",
       "status": "planned",
       "phaseDoc": "docs/phase/phase9/phase9.md",
+      "reviews": [
+        "docs/phase/phase9/phase9-po-review.md",
+        "docs/phase/phase9/phase9-risk-review.md",
+        "docs/phase/phase9/phase9-quant-review.md",
+        "docs/phase/phase9/phase9-api-review.md"
+      ],
       "dataPrerequisite": {
         "source": "phase8",
-        "type": "실전 운영 데이터 전체",
-        "minAccumulation": "3~6개월 (60~120거래일)",
-        "warningThreshold": "<3개월"
+        "type": "매매 신호 복구 (Sprint 1·2). Z-score는 KIS 과거 분봉 백필 + 점진 활성화로 축적 대기 완화.",
+        "minAccumulation": "Phase 8 Sprint 1·2 완료 (데이터 축적 완전 대기 불필요)",
+        "warningThreshold": "Z-score 가중치 100% 활성화는 30거래일+ 축적 시점"
       },
+      "sprints": []
+    },
+    {
+      "id": "phase10",
+      "title": "U자형 비선형 보정",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase10/phase10.md",
+      "reviews": [
+        "docs/phase/phase10/phase10-po-review.md",
+        "docs/phase/phase10/phase10-risk-review.md",
+        "docs/phase/phase10/phase10-quant-review.md",
+        "docs/phase/phase10/phase10-daytrader-review.md"
+      ],
+      "dataPrerequisite": {
+        "source": "phase9",
+        "type": "Phase 9 Sprint 3 완료 + 축적 운영 데이터 (함수 피팅 목적, 완화 불가)",
+        "minAccumulation": "2개월(40거래일, 대안 C) / 3개월(60거래일, 본격 피팅) / 6개월(계절성)",
+        "warningThreshold": "<2개월 강행 금지"
+      },
+      "sprints": []
+    },
+    {
+      "id": "phase10.1",
+      "title": "누적 백로그 통합 (피라미딩, 2차 스크리닝 하이브리드)",
+      "status": "planned",
+      "phaseDoc": null,
+      "note": "Phase 10 Sprint 3 완료 + 3개월 안정 운영 후 phase-planner 재호출 예정",
       "sprints": []
     }
   ],
