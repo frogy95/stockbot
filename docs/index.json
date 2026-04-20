@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-20T16:00:00+09:00",
+  "lastUpdated": "2026-04-20T16:12:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2287,8 +2287,10 @@
     },
     {
       "id": "phase7.0",
-      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
-      "status": "in_progress",
+      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비 (Sprint 3은 Phase 8 Sprint 3으로 이관)",
+      "status": "completed",
+      "completedAt": "2026-04-20",
+      "note": "Sprint 1·2 완료 + Sprint 3(E2E+LIVE 게이트) Phase 8 Sprint 3으로 이관 (2026-04-20)",
       "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
       "sprints": [
         {
@@ -2554,7 +2556,7 @@
     },
     {
       "id": "phase8",
-      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + 관리 UI + 성과 분석)",
+      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + E2E+LIVE 게이트 + 관리 UI + 성과 분석, Sprint 1~5)",
       "status": "in_progress",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "reviews": [
@@ -2585,7 +2587,9 @@
               "testPlan": "pytest tests/test_kis_realtime.py -v (open_price/high/low 추출 + 미수신 폴백)",
               "testResult": "10 passed",
               "status": "completed",
-              "commits": ["a4e749f"]
+              "commits": [
+                "a4e749f"
+              ]
             },
             {
               "id": "task2",
@@ -2594,7 +2598,9 @@
               "testPlan": "pytest tests/test_scheduler.py -v -k realtime (realtime:{code}:execution JSON에 OHLC 3키)",
               "testResult": "4 passed",
               "status": "completed",
-              "commits": ["7e61d70"]
+              "commits": [
+                "7e61d70"
+              ]
             },
             {
               "id": "task3",
@@ -2603,7 +2609,9 @@
               "testPlan": "pytest tests/test_realtime_screener.py -v (passed_candidates/factor_candidates 2블록 모두 OHLC 전달)",
               "testResult": "15 passed",
               "status": "completed",
-              "commits": ["61a1d63"]
+              "commits": [
+                "61a1d63"
+              ]
             },
             {
               "id": "task4",
@@ -2612,7 +2620,9 @@
               "testPlan": "pytest tests/test_signal_generator.py -v (실시간 OHLC 우선 + 폴백 유지)",
               "testResult": "7 passed",
               "status": "completed",
-              "commits": ["5105cbf"]
+              "commits": [
+                "5105cbf"
+              ]
             },
             {
               "id": "task5",
@@ -2621,7 +2631,9 @@
               "testPlan": "pytest tests/test_momentum_breakout.py -v (갭 3%+ 시 open_price 기준, 비갭은 prev_high 유지)",
               "testResult": "21 passed",
               "status": "completed",
-              "commits": ["07de490"]
+              "commits": [
+                "07de490"
+              ]
             },
             {
               "id": "task6",
@@ -2630,7 +2642,9 @@
               "testPlan": "docker compose exec backend pytest -v 전체 PASS + validation-notes.md 작성",
               "testResult": "854 passed (1 pre-existing fail)",
               "status": "completed",
-              "commits": ["5515317"]
+              "commits": [
+                "5515317"
+              ]
             }
           ]
         }
@@ -3149,6 +3163,15 @@
       "version": "v2.2.0",
       "description": "전략 거부 관측성 개선 — momentum_breakout 전략 거부 경로 7개를 RejectedSignal 구조화 반환 + 구조화 로그로 전환 (DB 스키마 변경 없음, 프론트엔드 변경 없음)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/145",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-20",
+      "type": "sprint",
+      "ref": "phase8-sprint1",
+      "version": "v2.3.0",
+      "description": "Phase 8 Sprint 1 프로덕션 배포 — H0STCNT0 OHLC 파싱 + Redis OHLC 캐시 + snapshot OHLC 우선 사용 + 갭 3%+ 자기돌파 버그 수정 (breakout_ref → snapshot.open_price)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/150",
       "status": "in_progress"
     }
   ]

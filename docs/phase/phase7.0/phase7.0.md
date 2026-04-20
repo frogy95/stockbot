@@ -1,6 +1,6 @@
 # Phase 7.0: 매매 엔진 치명적 결함 수정 + LIVE 전환 준비 — 실행 계획
 
-> **Status**: Sprint 2 완료 (2026-04-16)
+> **Status**: ✅ completed (2026-04-20, Sprint 3 Phase 8로 이관)
 > **ROADMAP 참조**: `ROADMAP.md` Phase 7.0
 > **검토 리포트**:
 >
@@ -98,7 +98,7 @@
 |--------|------|----------|--------|
 | ✅ 1 | P0 치명적 결함 + P1 수정 | 가격 갱신 연결, 체결→포지션 콜백, 청산 매도 실행, 이중 주문 방지, 파라미터 조정 | 없음 |
 | ✅ 2 | P2 리스크 개선 | daily_loss_pct 분모 수정, record_loss 확장, 트레일링 Redis 이관, in-flight 중복 매도 방지 | Sprint 1 |
-| 3 | E2E 검증 + LIVE 전환 게이트 | Paper E2E 1사이클, 5거래일 관찰, LIVE 초기 파라미터 적용 | Sprint 2 |
+| 🔀 3 | **Phase 8 Sprint 3으로 이관됨** (2026-04-20) | ~~Paper E2E 1사이클, 5거래일 관찰, LIVE 초기 파라미터 적용~~ → `docs/phase/phase8/phase8.md#sprint-3-상세--e2e-검증--live-전환-게이트-phase-70-sprint-3-이관` | — |
 
 ---
 
@@ -162,7 +162,18 @@
 
 ---
 
-## Sprint 3 상세 — E2E 검증 + LIVE 전환 게이트
+## Sprint 3 상세 — ⚠️ Phase 8 Sprint 3으로 이관됨 (2026-04-20)
+
+> **이관 사유**: Phase 8 Sprint 1·2에서 다층 진입 로직이 대폭 변경되므로, 최종 전략 반영 상태에서 E2E 검증을 수행하는 것이 타당. Sprint 번호 = 실행 순서 정렬을 위해 Phase 8로 흡수.
+>
+> **새 위치**: `docs/phase/phase8/phase8.md` Sprint 3 (E2E 검증 + LIVE 전환 게이트)
+>
+> **승계 내용**: 아래 E2E 체크리스트 10건 + LIVE 게이트 기준 5건 + LIVE 초기 파라미터(#15~#22) 그대로 승계. Phase 8에서는 다층 진입 분기/일일 10건 한도 검증 2건이 추가됨.
+>
+> **Phase 7.0 상태**: Sprint 1·2 완료로 종결 (`status: completed`).
+
+<details>
+<summary>이관된 원본 Sprint 3 상세 (참조용)</summary>
 
 ### E2E 검증 체크리스트 (Paper 모드)
 
@@ -197,6 +208,8 @@
 4. settings 테이블에 LIVE 초기 파라미터 반영 (max_position_count=2, position_size_pct=5 등)
 5. 거래 모드 `semi-auto` 확인
 6. 첫 거래일 실시간 모니터링 (텔레그램 알림 수신 확인)
+
+</details>
 
 ---
 
@@ -236,7 +249,16 @@
 | P2 daily_loss 분모 수정 | 당일 시작 잔고 기반 체크 동작 확인 | ✅ 완료 (Sprint 2) |
 | P2 record_loss 확장 | trailing/eod 손실 시 카운터 증가 확인 | ✅ 완료 (Sprint 2) |
 | P2 트레일링 Redis 이관 | 서버 재시작 후 trailing_highs 유지 확인 | ✅ 완료 (Sprint 2) |
-| E2E 1사이클 성공 | 주문→체결→포지션→가격갱신→청산 완전 성공 | ⬜ |
-| Paper 5거래일 안정 | 핫픽스 0건 + 신호 발생 3거래일 연속 | ⬜ |
-| LIVE 전환 게이트 통과 | 전 조건 충족 | ⬜ |
+| E2E 1사이클 성공 | 주문→체결→포지션→가격갱신→청산 완전 성공 | 🔀 Phase 8 Sprint 3으로 이관 |
+| Paper 5거래일 안정 | 핫픽스 0건 + 신호 발생 3거래일 연속 | 🔀 Phase 8 Sprint 3으로 이관 |
+| LIVE 전환 게이트 통과 | 전 조건 충족 | 🔀 Phase 8 Sprint 3으로 이관 |
 | pytest 전체 통과 | 기존 + 신규 테스트 전체 통과 | ✅ 완료 (837 passed, 5 failed 기존 무관) |
+
+---
+
+## Phase 7.0 종결 공지 (2026-04-20)
+
+- **최종 상태**: Sprint 1·2 완료 + Sprint 3 이관 = **completed**
+- Sprint 3 (E2E 검증 + LIVE 전환 게이트)는 `Phase 8 Sprint 3`으로 이관. Phase 8 Sprint 1·2(OHLC 파싱 + 다층 진입)를 반영한 최종 전략 상태에서 E2E 검증을 수행한다.
+- Phase 7.0 확정 파라미터(#15~#22: LIVE 초기 파라미터)는 Phase 8 Sprint 3 파라미터 표(#17~#22)로 그대로 승계되었다.
+- Phase 7.0 리뷰 리포트 4건(PO/리스크/단타/API)은 Phase 8 Sprint 3에서 `검토 리포트` 섹션에 참조로 등록됨 (신규 리뷰 생략).

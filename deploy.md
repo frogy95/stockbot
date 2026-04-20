@@ -5,12 +5,19 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### Sprint 1 완료 — Phase 8 장중 OHLC 파싱 + 갭 분기 수정 (2026-04-20)
+### 프로덕션 배포 - v2.3.0 (2026-04-20)
 
-PR: https://github.com/frogy95/stockbot/pull/149 (→ develop)
+포함 스프린트: Phase 8 Sprint 1 (장중 실시간 OHLC 파싱 + 갭 분기 자기돌파 버그 수정)
+PR: https://github.com/frogy95/stockbot/pull/150 (develop → main)
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+
+#### 자동 검증 결과
+
+- ✅ Railway 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}` 확인
+- ✅ Railway 로그: 오류 없이 정상 시작 (Uvicorn, 스케줄러, 매매 엔진, 텔레그램 웹훅 모두 정상)
+- ✅ Vercel 프론트엔드: HTTP 307 (정상 리다이렉트) 확인
 
 #### 수동 검증 필요 항목
 
