@@ -53,8 +53,8 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~7.0.1 Sprint 1 완료
-- 현재 Phase: Phase 7.2 (매매 전략 진입 조건 개선) — Phase 7.0 Sprint 3 선행 조건
-- 현재 Sprint: Phase 7.2 Sprint 1 예정 — 장중 OHLC 데이터 파싱 수정
+- 현재 Phase: Phase 4.10 (ETF 2차 스크리닝 근본 해결) — 프로덕션 31% 실패율 긴급 대응, Phase 7.2와 병렬 진행 가능
+- 현재 Sprint: Phase 4.10 Sprint 1 예정 — ETF 분기 폴백 + SPOF 격리 (2026-04-21 장 개시 전 배포 목표)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: Phase 7.2 Sprint 1 — 장중 OHLC 파싱 수정 + 갭 분기 버그 수정
@@ -761,6 +761,61 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 > Phase 상세 계획: `docs/phase/phase4.9/phase4.9.md` (2026-04-06)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 윤에이피(API 개발자) — 4명 검토 완료
+
+---
+
+## Phase 4.10: ETF 2차 스크리닝 근본 해결 + NAV 파이프라인 (Sprint 1~3) 🔄 진행 중
+
+### 목표
+프로덕션 2차 스크리닝 31% 실패율(2026-04-20 Railway 로그 기준, KeyError: 'tracking_error_factor') 근본 해결. ETF가 2차 필터 통과 시 확정 크래시 + 주식 신호 동반 소실하는 SPOF 전파 구조를 제거하고, KIS inquire-price 응답의 장중 iNAV/괴리율 필드를 활용한 실시간 NAV 파이프라인 구축, 괴리율 절대 컷오프 기반 리스크 안전장치 도입.
+
+### 배경 (2026-04-20 프로덕션 장애)
+- 2차 스크리닝 45회 중 14회 KeyError 크래시 (31% 실패율)
+- 원인: NAV 파이프라인 부재 + realtime_screener ETF 분기 누락 + scorer 격리 없음
+- 커밋 ade1d9d(2026-03-30) 1차 스크리너 동일 버그 임시 처리 전례 있으나 2차에 전파되지 않음
+- ETF 크래시가 배치의 주식 신호까지 동반 소실시키는 SPOF 전파
+
+### 작업 목록
+
+#### Sprint 1: 긴급 지혈 — ETF 분기 폴백 + SPOF 격리 (2026-04-21 장 개시 전 배포 목표)
+- realtime_screener._build_candidates ETF 분기 추가 (tracking_error_factor=0.0 폴백 + FIXME 주석 + warning 로깅)
+- scorer.score_candidates 내부 stock/ETF try/except 격리 분리 (ETF 실패가 주식 배치를 파괴하지 않음)
+- scorer _calc_percentiles .get() 방어 (Phase 4.7 미해결 #7 동시 해소)
+- signal_generator 레버리지/인버스 ETF 완전 제외 (종목명 패턴 매칭, Sprint 3에서 etf_leverage_type 필드로 교체)
+- ETF 시나리오 회귀 테스트 3건 이상 추가
+
+#### Sprint 2: NAV 실시간 연동 — KIS inquire-price 응답 필드 활용
+- 모의거래 샘플 3종(069500/122630/114800) 조회로 nav 필드 타입/단위 선행 검증 + WS NAV 스트림 존재 여부 조사
+- kis_collector.get_etf_nav(code) 메서드 추가 (3회 재시도 + 500ms 백오프, LIVE inquire_client 사용)
+- Redis `realtime:{code}:etf_nav` 캐시 (TTL 30초)
+- realtime_screener가 Redis nav 조회 → calc_tracking_error_factor 실제 값 계산 (Sprint 1 폴백 경로 유지)
+- etf_pipeline_healthy 플래그 신설 (주식 경로와 독립, NAV 실패율 > 10% 시 false)
+- NAV 장애 텔레그램 알림 (Phase 4.9 _send_stale_data_alert 패턴 재사용)
+
+#### Sprint 3: 정식 운영 + 리스크 안전장치
+- SecondaryFilters 괴리율 절대 컷오프 (일반 ETF 2%, 레버리지/인버스 1.5%)
+- PrimaryFilters.etf_max_tracking_error=3.0 (1차 조기 필터링)
+- Stock.etf_leverage_type 컬럼 추가 (Alembic 마이그레이션 1회, normal/leverage_2x/inverse/inverse_2x)
+- 기존 ETF 종목명 패턴 시드 스크립트
+- signal_generator 패턴 매칭 → etf_leverage_type 기반 체크로 교체
+- ScreeningResult.factors["tracking_error_value"] 원값 저장
+- Sprint 1 폴백 제거 (일간 폴백 사용률 < 1%가 3거래일 연속 유지 시 게이트 통과)
+- wiki/data-collection-flow.md + wiki/external-apis.md 업데이트
+
+### 미확정 사항
+- KIS inquire-price ETF 응답 필드명/단위 (Sprint 2 Task 1 모의거래 샘플 검증 선행)
+- KIS WS에 ETF NAV 실시간 스트림 존재 여부 (Sprint 2 Task 1 조사 결과로 REST vs WS 최종 선정)
+
+### 기술 고려사항
+- NAV 종류: 장중 iNAV만 사용 (EOD NAV는 Phase 9 백테스트 시점에 별도 검토)
+- DB 스키마: market_data.nav 컬럼 추가하지 않음. Redis 캐시만. Stock.etf_leverage_type은 Sprint 3에서 1회 추가
+- SPOF 분리: etf_pipeline_healthy를 pipeline_healthy와 독립 관리하여 ETF 장애가 주식 매매를 막지 않음
+- 데이터 의존성: 선행 데이터 축적 불필요 (즉시 착수 가능)
+- Phase 7.0 Sprint 3 LIVE 게이트에 "Phase 4.10 Sprint 2 완료" 조건 추가
+- 레버리지 ETF는 NAV 폴백 상태에서 signal_generator 완전 제외 (변동성 2배, 괴리 검증 없이 매수 금지)
+
+> Phase 상세 계획: `docs/phase/phase4.10/phase4.10.md` (2026-04-20)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타 전문가), 윤에이피(API 개발자) — 4명 검토 완료
 
 ---
 

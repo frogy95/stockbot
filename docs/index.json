@@ -1728,6 +1728,13 @@
       ]
     },
     {
+      "id": "phase4.10",
+      "title": "ETF 2차 스크리닝 근본 해결 + NAV 파이프라인",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase4.10/phase4.10.md",
+      "sprints": []
+    },
+    {
       "id": "phase5",
       "title": "1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석",
       "status": "completed",

@@ -13,6 +13,7 @@
 - [Phase 4.7 계획](project_phase4.7.md) — 1차 스크리닝 스코어링 구조 수정, 전문가 4명 검토, 단일 Sprint, 3팩터 분리(A안 전원 합의) + 1차 임계값 60.0 + 2차 임계값 75.0
 - [Phase 4.8 계획](project_phase4.8.md) — EOD 데이터 수집 내결함성 강화, 전문가 4명 검토, 2 Sprint, KIS 일봉 보조 수집(FHKST03010100) + 스케줄러 폴백 + 08:30 재시도 + 17건 파라미터 확정
 - [Phase 4.9 계획](project_phase4.9.md) — 장전 파이프라인 복원력 강화, 전문가 4명 검토, 단일 Sprint, DB 기반 스크리닝 의존성(validate_screening_readiness) + pipeline_healthy=false 유지 + 재시도 후 재실행 + 11건 파라미터 확정
+- [Phase 4.10 계획](project_phase4.10.md) — ETF 2차 스크리닝 근본 해결 + NAV 파이프라인, 전문가 4명(PO/리스크/단타/API) 검토, 3 Sprint (긴급 지혈/NAV 연동/정식 운영), KIS inquire-price 응답 필드 재활용 + Redis 캐시 + 괴리율 절대 컷오프(2%/1.5%), 27건 파라미터 확정, 임시 폴백 3중 방어(warning/FIXME/제거 게이트)
 - [Phase 5 계획](project_phase5.md) — 1차 스크리닝 안정화 + 완전 자동 모드 + 성과 분석, 전문가 4명 검토, 3 Sprint, volume_ratio 1.5 + 적응형 [1.5,1.2] + 기본 후보 거래량 상위 15개 + Sprint 2 전 5거래일 관찰 필수
 - [Phase 5.1 계획](project_phase5.1.md) — change_rate 필터 수정, 전문가 4명 검토, 단일 Sprint, change_rate_min -2.0 + 적응형 [-2.0,-3.0] + 하락 종목 자동매매 금지 + 포지션 50%
 - [Phase 5.2 계획](project_phase5.2.md) — KIS WS 모의 환경 안정화, 전문가 4명 검토, 단일 Sprint, rev.2: 재연결 버스트가 근본 원인(구독 수 초과 아님), paper=25종목 + 재연결 딜레이 0.5초/종목(핵심) + 7회/2초 백오프 + 캐시 TTL 10초
