@@ -33,7 +33,7 @@
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | 장중 OHLC 파싱 + 갭 분기 수정 | H0STCNT0 OHLC 파싱, Redis 캐싱 확장, snapshot 조립 수정, 갭 분기 `breakout_ref = open_price` | 없음 |
+| 1 ✅ | 장중 OHLC 파싱 + 갭 분기 수정 | H0STCNT0 OHLC 파싱, Redis 캐싱 확장, snapshot 조립 수정, 갭 분기 `breakout_ref = open_price` | 없음 |
 | 2 | 다층 진입 조건 + 리스크 안전장치 | prev_close/prev_high/gap_open 3단계 분기, confidence 상한, 반 포지션, 일일 10건 한도, 13:00 시간 가드 | Sprint 1 + 2거래일 관찰 |
 | 3 | 시스템 관리 UI | 스케줄러 상태/수동 제어/파이프라인 헬스 + 보유 포지션/청산 카운트다운/장 단계 | Sprint 1 배포 후 순차 |
 | 4 | 성과 분석 보강 | 일간/주간 PnL/승률/MDD/보유시간/시간대 분포 대시보드 | Sprint 3 완료 후 |
@@ -93,7 +93,7 @@
 
 ---
 
-## Sprint 1 상세 — 장중 OHLC 데이터 파싱 수정
+## Sprint 1 상세 ✅ 완료 (PR #149, 2026-04-20) — 장중 OHLC 데이터 파싱 수정
 
 ### 백엔드
 
@@ -227,6 +227,7 @@ LIVE 전환 후 매매 결과 검증이 가능하도록 일간/주간 성과 리
 | 5 | Phase 7.0 Sprint 3 선후관계 | ⚠️ | 정프로 | Sprint 1 완료 후 Phase 7.0 Sprint 3 재개 |
 | 6 | Sprint 2 생략 시 LIVE 한도 축소 | ⚠️ | 최리스크 | 3건/일, 포지션 1건 상한 환경변수 |
 | 7 | 5분봉 가속도 지표 Phase 이관 | 정보 | 박퀀트 | Phase 9 Sprint 0으로 이관 완료 (본 문서에서 제외) |
+| 8 | `signal_generator.py` `_build_snapshot()` 독스트링 불일치 (Medium) | ⬜ | sprint-review | Sprint 2에서 개선 권장 — 실제 동작(실시간 OHLC 우선)과 맞게 수정. 기능 버그 없음 |
 
 ---
 
@@ -246,10 +247,10 @@ Phase 8 Sprint 1 (OHLC 수정) → 2거래일 관찰
 
 | 항목 | 기준 | 상태 |
 |------|------|------|
-| H0STCNT0 OHLC 파싱 | Redis 시가/고가/저가 저장 확인 | ⬜ |
-| snapshot 정합성 | open_price/high/low 실시간 값 조립 | ⬜ |
-| 갭 분기 정상 동작 | 갭 3%+ open_price 기준 판정 | ⬜ |
-| 매매 신호 생성 | 2거래일 연속 1건+ (노이즈 필터 후) | ⬜ |
+| H0STCNT0 OHLC 파싱 | Redis 시가/고가/저가 저장 확인 | ✅ 완료 (PR #149) |
+| snapshot 정합성 | open_price/high/low 실시간 값 조립 | ✅ 완료 (PR #149) |
+| 갭 분기 정상 동작 | 갭 3%+ open_price 기준 판정 | ✅ 완료 (PR #149) |
+| 매매 신호 생성 | 2거래일 연속 1건+ (노이즈 필터 후) | ⬜ 배포 후 관찰 중 |
 | 다층 진입 구현 | prev_close/prev_high 2단계 + gap | ⬜ |
 | confidence 계층화 | prev_close 돌파 ≤ 0.75 | ⬜ |
 | 반 포지션 적용 | prev_close 돌파 50% | ⬜ |
@@ -257,4 +258,4 @@ Phase 8 Sprint 1 (OHLC 수정) → 2거래일 관찰
 | 13:00 시간 가드 | prev_close 비활성화 | ⬜ |
 | 시스템 관리 UI | 스케줄러 + 2단계 가드 + 포지션/카운트다운/장 단계 | ⬜ |
 | 성과 분석 | PnL/승률/MDD/Sharpe/보유시간/시간대 분포 | ⬜ |
-| pytest 전체 통과 | 기존 + 신규 테스트 | ⬜ |
+| pytest 전체 통과 | 기존 + 신규 테스트 | ✅ 완료 (854 passed, 1 pre-existing fail) |

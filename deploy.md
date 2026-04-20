@@ -9,8 +9,15 @@
 
 PR: https://github.com/frogy95/stockbot/pull/149 (→ develop)
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+#### 코드 리뷰 결과
+
+- ✅ Critical/High 이슈: 0건
+- ⬜ Medium 이슈 1건: `signal_generator.py` `_build_snapshot()` 독스트링(123줄)이 구 동작("Redis 체결 데이터에 intraday open/high/low가 없어 current_price로 대체한다") 설명으로 남아 있음. 실제 코드(139~141줄)는 실시간 값 우선 사용. 기능 버그 없음, 혼란 방지용 수정 권장 (Sprint 2에서 개선 가능).
+
+#### 자동 검증 결과
+
+- ✅ pytest -v: **854 passed**, 1 failed (pre-existing: `test_ws_manager_env_max_subscriptions` — Sprint 1 범위 아님)
+- ✅ API 엔드포인트: Docker 실행 중 (backend:running, frontend:running, postgres:healthy, redis:healthy)
 
 #### 수동 검증 필요 항목
 
