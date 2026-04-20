@@ -57,11 +57,11 @@
 
 - Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
 
-- Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), 🔄 계획 수립 완료 (2026-04-20)
+- Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), ✅ 완료 (2026-04-20) / PR: https://github.com/frogy95/stockbot/pull/149
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후 착수)
 - Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 + 신호 1건+ 확인 선행)
 - Phase 8 Sprint 3 — 시스템 관리 UI (Sprint 1 배포 후 순차)
 - Phase 8 Sprint 4 — 성과 분석 보강 (Sprint 3 완료 후)

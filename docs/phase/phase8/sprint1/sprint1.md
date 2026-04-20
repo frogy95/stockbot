@@ -8,6 +8,7 @@
 
 **Sprint 기간:** 2026-04-20 ~ 2026-04-20
 **상태:** ✅ 완료
+**PR:** https://github.com/frogy95/stockbot/pull/149 (→ develop)
 **이전 스프린트:** Phase 7.0.1 Sprint 1 (통과, PR #138) — KIS LIVE WS 연결 복구 완료
 **브랜치명:** `phase8-sprint1`
 

@@ -2555,7 +2555,7 @@
     {
       "id": "phase8",
       "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + 관리 UI + 성과 분석)",
-      "status": "planned",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "reviews": [
         "docs/phase/phase8/phase8-po-review.md",
@@ -2567,12 +2567,15 @@
         {
           "id": "sprint1",
           "title": "장중 OHLC 파싱 + 갭 분기 수정",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase8-sprint1",
           "sprintDoc": "docs/phase/phase8/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/149",
+          "completedAt": "2026-04-20",
+          "lastUpdated": "2026-04-20T00:00:00+09:00",
           "progress": {
             "total": 6,
-            "completed": 0
+            "completed": 6
           },
           "tasks": [
             {
@@ -2580,54 +2583,54 @@
               "title": "KIS 체결 파서 OHLC 3필드 확장",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-1-kis-체결-파서-ohlc-3필드-확장",
               "testPlan": "pytest tests/test_kis_realtime.py -v (open_price/high/low 추출 + 미수신 폴백)",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "10 passed",
+              "status": "completed",
+              "commits": ["a4e749f"]
             },
             {
               "id": "task2",
               "title": "Scheduler WS 메시지 Redis 캐싱 3필드 추가",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-2-scheduler-ws-메시지-redis-캐싱-3필드-추가",
               "testPlan": "pytest tests/test_scheduler.py -v -k realtime (realtime:{code}:execution JSON에 OHLC 3키)",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "4 passed",
+              "status": "completed",
+              "commits": ["7e61d70"]
             },
             {
               "id": "task3",
               "title": "Realtime Screener candidate dict OHLC 전파",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-3-realtime-screener-candidate-dict-ohlc-전파",
               "testPlan": "pytest tests/test_realtime_screener.py -v (passed_candidates/factor_candidates 2블록 모두 OHLC 전달)",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "15 passed",
+              "status": "completed",
+              "commits": ["61a1d63"]
             },
             {
               "id": "task4",
               "title": "SignalGenerator snapshot Redis 실시간 값 우선 사용",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-4-signalgenerator-snapshot-redis-실시간-값-우선-사용",
               "testPlan": "pytest tests/test_signal_generator.py -v (실시간 OHLC 우선 + 폴백 유지)",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "7 passed",
+              "status": "completed",
+              "commits": ["5105cbf"]
             },
             {
               "id": "task5",
               "title": "Momentum Breakout 갭 분기 breakout_ref 교정",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-5-momentum-breakout-갭-분기-breakout_ref-교정",
               "testPlan": "pytest tests/test_momentum_breakout.py -v (갭 3%+ 시 open_price 기준, 비갭은 prev_high 유지)",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "21 passed",
+              "status": "completed",
+              "commits": ["07de490"]
             },
             {
               "id": "task6",
               "title": "통합 회귀 + 수동 검증 가이드",
               "path": "docs/phase/phase8/sprint1/sprint1.md#task-6-통합-회귀-수동-검증-가이드-작성",
               "testPlan": "docker compose exec backend pytest -v 전체 PASS + validation-notes.md 작성",
-              "testResult": "pending",
-              "status": "planned",
-              "commits": []
+              "testResult": "854 passed (1 pre-existing fail)",
+              "status": "completed",
+              "commits": ["5515317"]
             }
           ]
         }
