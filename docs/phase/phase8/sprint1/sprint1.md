@@ -6,7 +6,8 @@
 
 **Tech Stack:** Python 3.12 · FastAPI · SQLAlchemy 2.0 async · Redis 7 · pytest / pytest-asyncio · APScheduler
 
-**Sprint 기간:** 2026-04-20 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-20 ~ 2026-04-20
+**상태:** ✅ 완료
 **이전 스프린트:** Phase 7.0.1 Sprint 1 (통과, PR #138) — KIS LIVE WS 연결 복구 완료
 **브랜치명:** `phase8-sprint1`
 
@@ -85,9 +86,9 @@ git commit -m "feat(phase8-sprint1): task1 — H0STCNT0 파서에 open_price/hig
 ```
 
 **완료 기준:**
-- ⬜ `test_parse_execution_extracts_ohlc` PASS
-- ⬜ 기존 테스트 회귀 없음
-- ⬜ `ExecutionData`에 open_price/high/low 3필드 추가
+- ✅ `test_parse_execution_extracts_ohlc` PASS
+- ✅ 기존 테스트 회귀 없음
+- ✅ `ExecutionData`에 open_price/high/low 3필드 추가
 
 ---
 
@@ -123,9 +124,9 @@ git commit -m "feat(phase8-sprint1): task2 — realtime:{code}:execution Redis �
 ```
 
 **완료 기준:**
-- ⬜ 신규 scheduler 테스트 PASS
-- ⬜ 기존 scheduler 테스트 회귀 없음
-- ⬜ Redis JSON 구조에 open_price/high/low 3키 추가
+- ✅ 신규 scheduler 테스트 PASS
+- ✅ 기존 scheduler 테스트 회귀 없음
+- ✅ Redis JSON 구조에 open_price/high/low 3키 추가
 
 ---
 
@@ -162,9 +163,9 @@ git commit -m "feat(phase8-sprint1): task3 — realtime_screener candidate에 op
 ```
 
 **완료 기준:**
-- ⬜ candidate dict 두 블록 모두에 3필드 포함
-- ⬜ OHLC 미수신 시 0 폴백 유지 (기존 Redis 호환)
-- ⬜ 관련 테스트 PASS
+- ✅ candidate dict 두 블록 모두에 3필드 포함
+- ✅ OHLC 미수신 시 0 폴백 유지 (기존 Redis 호환)
+- ✅ 관련 테스트 PASS
 
 ---
 
@@ -206,9 +207,9 @@ git commit -m "feat(phase8-sprint1): task4 — snapshot에 Redis 실시간 OHLC 
 ```
 
 **완료 기준:**
-- ⬜ candidate에 실 OHLC 있을 때 snapshot이 실시간 값 사용
-- ⬜ candidate OHLC 부재/0 시 기존 폴백 유지
-- ⬜ 관련 테스트 PASS
+- ✅ candidate에 실 OHLC 있을 때 snapshot이 실시간 값 사용
+- ✅ candidate OHLC 부재/0 시 기존 폴백 유지
+- ✅ 관련 테스트 PASS
 
 ---
 
@@ -264,9 +265,9 @@ git commit -m "fix(phase8-sprint1): task5 — 갭 3%+ 분기 breakout_ref를 sna
 ```
 
 **완료 기준:**
-- ⬜ 갭 3%+ 시 `breakout_ref == open_price` 보장
-- ⬜ 비갭 경로 기존 prev_high 기준 유지
-- ⬜ 신규 3개 테스트 PASS
+- ✅ 갭 3%+ 시 `breakout_ref == open_price` 보장
+- ✅ 비갭 경로 기존 prev_high 기준 유지
+- ✅ 신규 3개 테스트 PASS
 
 ---
 
@@ -300,9 +301,9 @@ git commit -m "docs(phase8-sprint1): task6 — 통합 회귀 결과 + 수동 검
 ```
 
 **완료 기준:**
-- ⬜ 전체 pytest PASS
-- ⬜ validation-notes.md 배포 모니터링 가이드 작성
-- ⬜ sprint1.md 체크리스트 갱신
+- ✅ 전체 pytest PASS (854 passed, 1 pre-existing fail — test_ws_manager_env_max_subscriptions)
+- ✅ validation-notes.md 배포 모니터링 가이드 작성
+- ✅ sprint1.md 체크리스트 갱신
 
 ---
 
@@ -345,8 +346,8 @@ git commit -m "docs(phase8-sprint1): task6 — 통합 회귀 결과 + 수동 검
 
 ## 완료 기준
 
-- ⬜ Task 1~6 모두 완료 (커밋 존재)
-- ⬜ `docker compose exec backend pytest -v` 전체 통과
-- ⬜ Redis JSON에 OHLC 3필드 포함 (코드 레벨 확인)
-- ⬜ 갭 3%+ 경로에서 `breakout_ref == open_price` 단위 테스트 통과
-- ⬜ validation-notes.md 작성 완료
+- ✅ Task 1~6 모두 완료 (커밋 존재)
+- ✅ `docker compose exec backend pytest -v` 전체 통과 (854 passed, 1 pre-existing fail — test_ws_manager_env_max_subscriptions)
+- ✅ Redis JSON에 OHLC 3필드 포함 (코드 레벨 확인)
+- ✅ 갭 3%+ 경로에서 `breakout_ref == open_price` 단위 테스트 통과
+- ✅ validation-notes.md 작성 완료

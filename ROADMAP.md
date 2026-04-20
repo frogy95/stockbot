@@ -52,13 +52,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~7.0.1 Sprint 1 완료
-- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Phase 7.0 Sprint 3 선행 조건
-- 현재 Sprint: Phase 8 Sprint 1 🔄 진행 중 — 장중 OHLC 데이터 파싱 수정 + 갭 분기 버그 수정 (구 Phase 7.2 Sprint 1 흡수, 계획 수립 2026-04-20)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16)
+- 전체 진행률: Phase 0~8 Sprint 1 완료
+- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1 완료, Sprint 2 예정
+- 현재 Sprint: Phase 8 Sprint 2 예정 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 8 Sprint 1 — 장중 OHLC 파싱 수정 + 갭 분기 버그 수정
-- 후속 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 후)
+- 다음 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 후)
+- 후속 마일스톤: Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
 - 이후 마일스톤: Phase 9 Sprint 0 — 데이터 수집 인프라 + KIS 백필 + 5분봉 가속도 (Phase 8 Sprint 1·2 완료 후 착수 가능)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
 
@@ -1135,12 +1135,13 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 없음 (코드 수정 — 데이터 축적 불필요, 즉시 착수 가능)
 
 ### 작업 목록
-#### Sprint 1: 장중 OHLC 파싱 + 갭 분기 수정 (구 Phase 7.2 Sprint 1) 🔄 진행 중
+#### Sprint 1: 장중 OHLC 파싱 + 갭 분기 수정 (구 Phase 7.2 Sprint 1) ✅ 완료 (2026-04-20)
 - H0STCNT0 파서에 STCK_OPRC/STCK_HGPR/STCK_LWPR 3필드 추가
 - Redis 캐싱 + snapshot 조립 수정
 - 갭 3%+ 분기 버그 수정 (breakout_ref = high → open_price)
 - Sprint 1 배포 당일 Redis idx 매핑 검증 (김단타 권고)
-- 계획 문서: `docs/phase/phase8/sprint1/sprint1.md` ✅ 계획 수립 완료 (2026-04-20)
+- 계획 문서: `docs/phase/phase8/sprint1/sprint1.md` ✅ 완료 (2026-04-20)
+- pytest: 854 passed (1 pre-existing fail — test_ws_manager_env_max_subscriptions)
 
 #### Sprint 2: 다층 진입 조건 + 리스크 안전장치 (구 Phase 7.2 Sprint 2)
 - prev_close(1단계) + prev_high(2단계) 다층 진입
