@@ -111,6 +111,9 @@ class RealtimeScreener:
                 "change_rate": execution.get("change_rate", 0.0),
                 "total_bid_volume": total_bid_volume,
                 "total_ask_volume": total_ask_volume,
+                "open_price": execution.get("open_price", 0),
+                "high": execution.get("high", 0),
+                "low": execution.get("low", 0),
             })
 
         if not passed_candidates:
@@ -177,6 +180,9 @@ class RealtimeScreener:
                 "prev_high": prev_high,
                 "total_bid_volume": candidate["total_bid_volume"],
                 "total_ask_volume": candidate["total_ask_volume"],
+                "open_price": candidate["open_price"],
+                "high": candidate["high"],
+                "low": candidate["low"],
                 "recent_highs": highs,
                 "recent_lows": lows,
                 "recent_closes": closes,
