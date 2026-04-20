@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-20T09:00:00+09:00",
+  "lastUpdated": "2026-04-20T13:10:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2830,6 +2830,24 @@
         {
           "hash": "77b00bf",
           "message": "fix(screening): 스크리닝 시각 API 응답에 screened_at 필드 누락 수정",
+          "date": "2026-04-20"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-realtime-screener-tracking-error-missing",
+      "name": "2차 스크리닝 ETF tracking_error_factor KeyError 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/realtime-screener-tracking-error-missing/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/146",
+      "deployedAt": "2026-04-20",
+      "description": "realtime_screener.py의 factor_candidates 조립 시 ETF용 tracking_error_factor 필드 누락으로 FactorScorer가 ETF 후보 처리 중 KeyError를 발생시켜 2차 스크리닝 전면 중단. 중립값 0.0 스텁 1줄 추가로 파이프라인 복구. Phase 4.10에서 NAV 실시간 수집 기반 정식 계산으로 근본 해결 예정.",
+      "commits": [
+        {
+          "hash": "3215d0f",
+          "message": "fix(screener): 2차 스크리닝 ETF 후보 tracking_error_factor 누락 KeyError 수정",
           "date": "2026-04-20"
         }
       ]
