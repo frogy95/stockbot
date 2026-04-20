@@ -3,7 +3,12 @@
 import pytest
 import pytest_asyncio
 
-from modules.trading.strategy import MarketSnapshot, Strategy, TradeSignalData
+from modules.trading.strategy import (
+    MarketSnapshot,
+    RejectedSignal,
+    Strategy,
+    TradeSignalData,
+)
 
 
 # === 헬퍼: 올바른 Strategy 구현 ===
@@ -18,7 +23,7 @@ class DummyStrategy(Strategy):
 
     async def generate_signal(
         self, snapshot: MarketSnapshot
-    ) -> TradeSignalData | None:
+    ) -> TradeSignalData | RejectedSignal:
         return TradeSignalData(
             stock_code=snapshot.stock_code,
             signal_type="buy",
@@ -83,7 +88,7 @@ def test_abc_can_instantiate_with_proper_implementation():
 
 @pytest.mark.asyncio
 async def test_generate_signal_returns_trade_signal_data(sample_snapshot):
-    """generate_signal()의 반환 타입이 TradeSignalData | None."""
+    """generate_signal()의 반환 타입이 TradeSignalData | RejectedSignal."""
     strategy = DummyStrategy()
     result = await strategy.generate_signal(sample_snapshot)
     assert isinstance(result, TradeSignalData)

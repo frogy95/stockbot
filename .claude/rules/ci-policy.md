@@ -1,5 +1,5 @@
-> **Git 브랜치 전략/배포 흐름/롤백 시나리오**: [`docs/dev-process.md`](dev-process.md) §1, §6 참조
-> **검증 매트릭스/코드 리뷰 체크리스트**: [`docs/dev-process.md`](dev-process.md) §5, §7 참조
+> **Git 브랜치 전략/배포 흐름/롤백 시나리오**: [`dev-process.md`](dev-process.md) §1, §6 참조
+> **검증 매트릭스/코드 리뷰 체크리스트**: [`dev-process.md`](dev-process.md) §5, §7 참조
 
 이 문서는 **인프라/CI 설정** 전용입니다. 개발 프로세스/워크플로우는 위 참조를 따릅니다.
 

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TradeSignalData(BaseModel):
@@ -16,6 +16,19 @@ class TradeSignalData(BaseModel):
     entry_price: int
     stop_loss: int
     take_profit: int
+
+
+class RejectedSignal(BaseModel):
+    """전략이 후보를 거부할 때 반환하는 구조화 사유.
+
+    stage: 거부가 일어난 게이트 이름 (예: "volume_threshold", "atr_filter")
+    detail: 게이트별 지표 값 (관측성/재현성 확보용)
+    """
+
+    stock_code: str
+    strategy_name: str
+    stage: str
+    detail: dict = Field(default_factory=dict)
 
 
 class MarketSnapshot(BaseModel):
@@ -52,5 +65,8 @@ class Strategy(ABC):
     @abstractmethod
     async def generate_signal(
         self, snapshot: MarketSnapshot
-    ) -> TradeSignalData | None:
-        """시장 데이터로부터 매매 신호 생성. 조건 미달 시 None 반환."""
+    ) -> TradeSignalData | RejectedSignal:
+        """시장 데이터로부터 매매 신호 생성.
+
+        조건 충족 시 TradeSignalData, 미달 시 RejectedSignal(stage, detail) 반환.
+        """

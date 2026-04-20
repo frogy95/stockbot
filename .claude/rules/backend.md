@@ -89,3 +89,34 @@ docker compose exec backend alembic downgrade -1               # 롤백
 
 - **로컬**: Docker Compose (`docker compose up backend -d`)
 - **프로덕션**: Railway (main merge 시 자동 배포, Dockerfile 기반)
+
+## KIS WebSocket 연결 — 확정 사실 (2026-04-16 검증)
+
+> 이 섹션을 무시하면 WS 연결 디버깅에 수 시간을 낭비한다.
+
+### 올바른 WebSocket URL
+
+```python
+# LIVE
+ws_url = "ws://ops.koreainvestment.com:21000/tryitout"   # ✅ 필수 경로
+ws_url = "ws://ops.koreainvestment.com:21000"             # ❌ 경로 없으면 즉시 EOF
+
+# PAPER (경로 불필요 — 다른 서버 동작)
+ws_url = "ws://ops.koreainvestment.com:31000"             # ✅
+```
+
+- **LIVE는 `/tryitout` 경로가 필수.** 경로 없이 연결하면 서버가 HTTP 101 응답 후 즉시 연결을 종료한다.
+- PAPER(31000)는 경로 없이 동작한다 — LIVE/PAPER 서버 동작이 다르다.
+- KIS 공식 GitHub 예제 100%가 `/tryitout` 사용 (`kis_auth.py`: `url = f"{my_url_ws}{api_url}"`, `api_url="/tryitout"`).
+
+### IP 등록 정책 없음
+
+- **KIS WebSocket에 IP 화이트리스트 등록은 불필요하다.**
+- Railway Static Outbound IP를 KIS에 등록할 필요 없음.
+- (KIS 개발자 포털 공식 확인 — 2026-04-16)
+
+### diagnose_ws.py의 한계
+
+- `diagnose_ws.py`의 HTTP 101 응답 체크는 **핸드셰이크 시작 여부만 확인**한다.
+- 서버가 101 응답 후 즉시 연결을 닫아도 "101 성공"으로 보인다.
+- 실제 WebSocket 라이브러리는 연결 유지가 필요하므로 진단 결과와 실제 동작이 다를 수 있다.

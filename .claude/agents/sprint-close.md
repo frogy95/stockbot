@@ -80,7 +80,7 @@ PR에 문서 업데이트가 포함되도록 **반드시 커밋**합니다. 이 
 
 ### 6-1단계: sprint-planner MEMORY.md 업데이트
 
-`docs/dev-process.md` 섹션 8.6 기준에 따라 다음을 업데이트합니다:
+`.claude/rules/dev-process.md` 섹션 8.6 기준에 따라 다음을 업데이트합니다:
 - `.claude/agent-memory/sprint-planner/MEMORY.md`의 스프린트 현황에 완료된 스프린트를 추가합니다.
 - 다음 사용 가능한 스프린트 번호를 갱신합니다.
 - 스프린트에서 발견된 핵심 주의사항이 있으면 MEMORY.md에 추가합니다.

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from modules.trading.strategy import MarketSnapshot, Strategy, TradeSignalData
+from modules.trading.strategy import MarketSnapshot, RejectedSignal, Strategy, TradeSignalData
 
 
 # === 픽스처 ===
@@ -104,14 +104,22 @@ async def test_generate_signals_saves_to_db(
 
 
 @pytest.mark.asyncio
-async def test_strategy_returns_none_no_save(
-    mock_session_factory, mock_redis, mock_strategy
+async def test_strategy_rejected_no_save(
+    mock_session_factory, mock_redis, mock_strategy, caplog
 ):
-    """전략이 None 반환 -> trade_signals 미저장."""
+    """전략이 RejectedSignal 반환 -> trade_signals 미저장 + stage별 구조화 로그."""
+    import logging
     from modules.trading.signal_generator import SignalGenerator
 
     factory, session = mock_session_factory
-    mock_strategy.generate_signal = AsyncMock(return_value=None)
+    mock_strategy.generate_signal = AsyncMock(
+        return_value=RejectedSignal(
+            stock_code="005930",
+            strategy_name="momentum_breakout",
+            stage="volume_threshold",
+            detail={"adjusted_ratio": 1.72, "volume_threshold": 2.0},
+        )
+    )
 
     # 중복 없음 + market_data 빈 결과
     mock_no_dup = MagicMock()
@@ -121,10 +129,17 @@ async def test_strategy_returns_none_no_save(
     session.execute = AsyncMock(side_effect=[mock_no_dup, mock_md])
 
     gen = SignalGenerator(factory, mock_redis, mock_strategy)
-    results = await gen.generate_signals([_make_candidate()])
+    with caplog.at_level(logging.INFO, logger="modules.trading.signal_generator"):
+        results = await gen.generate_signals([_make_candidate()])
 
     assert len(results) == 0
     session.add.assert_not_called()
+    # stage와 detail이 로그에 기록되었는지
+    reject_logs = [r for r in caplog.records if "전략 거부" in r.getMessage()]
+    assert len(reject_logs) == 1
+    msg = reject_logs[0].getMessage()
+    assert "[volume_threshold]" in msg
+    assert "adjusted_ratio" in msg
 
 
 @pytest.mark.asyncio

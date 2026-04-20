@@ -47,8 +47,23 @@
     },
     {
       "id": "docs",
-      "paths": ["docs/dev-process.md", "docs/ci-policy.md", "docs/index.json"],
+      "paths": [".claude/rules/dev-process.md", ".claude/rules/ci-policy.md", "docs/index.json"],
       "role": "핵심 프로세스 문서"
+    },
+    {
+      "id": "wiki",
+      "paths": ["wiki/*.md"],
+      "role": "시스템 현재 상태 지식 베이스 — @wiki/ 로 LLM이 참조"
+    },
+    {
+      "id": "readmes",
+      "paths": [".claude/README.md", "wiki/README.md", "docs/README.md"],
+      "role": "세 자산 역할 선언 문서"
+    },
+    {
+      "id": "docs-guides",
+      "paths": ["docs/prompt-guide.md", "docs/harness-wiki-guide.md"],
+      "role": "사람이 직접 유지하는 사용자 가이드"
     }
   ],
   "checks": {
@@ -86,6 +101,31 @@
       "severity": "warning",
       "autofix": false,
       "description": "settings.json 훅 설정과 실제 훅 파일 불일치"
+    },
+    "wiki_link_dead": {
+      "severity": "warning",
+      "autofix": false,
+      "description": "wiki의 [[페이지명]] 링크 대상 파일이 wiki/에 존재하지 않음"
+    },
+    "wiki_log_stale": {
+      "severity": "info",
+      "autofix": false,
+      "description": "wiki/*.md 최근 수정에 대응하는 날짜 엔트리가 wiki/log.md에 없음"
+    },
+    "wiki_rules_duplication": {
+      "severity": "warning",
+      "autofix": false,
+      "description": "wiki/*.md가 .claude/rules/*.md 확정 사실 섹션 내용을 복제 (원본=rules, wiki=링크 원칙 위반)"
+    },
+    "wiki_orphan_page": {
+      "severity": "info",
+      "autofix": false,
+      "description": "wiki/*.md 중 wiki/index.md 대분류 목록에 링크되지 않은 페이지 (log.md·README.md 예외)"
+    },
+    "index_last_updated_stale": {
+      "severity": "warning",
+      "autofix": false,
+      "description": "docs/index.json 내용 변경 기록에 비해 최상위 lastUpdated 필드가 갱신되지 않음"
     }
   },
   "autofix_policy": {

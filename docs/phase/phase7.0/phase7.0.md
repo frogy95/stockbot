@@ -211,6 +211,9 @@
 | 5 | LIVE 첫 주 슬리피지 | ⚠️ | 김단타 | semi-auto 모드로 수동 관찰 |
 | 6 | trade_strength_min 100 → 110 상향 시점 | 정보 | 김단타+최리스크 | LIVE 1주 관찰 후 결정 |
 | 7 | _execute_exit 체결 폴링 6초 내 중복 매도 가능성 | ✅ 해결 | Sprint 2 | Sprint 2에서 Redis `exit:inflight:{stock_code}` TTL 30s 플래그로 중복 매도 방지 구현 완료 |
+| 8 | `/screening/secondary` API 날짜 필터 누락 | 정보 | — | 오늘 통과 종목 없으면 어제 마지막 레코드 반환. 거래 로직 무관, 운영 가시성 혼란 유발. Sprint 3 이후 수정 (발견: 2026-04-17 LIVE 모니터링) |
+| 9 | `secondary_last_run` Redis 미저장 | 정보 | — | 2차 스크리닝 실행 시각을 Redis에 저장하지 않아 collector/status API에서 null 표시. 거래 로직 무관. Sprint 3 이후 수정 (발견: 2026-04-17 LIVE 모니터링) |
+| 10 | 2차 스크리닝 상대 백분위 스코어 — N=1 시 무의미 | 정보 | — | 필터 통과 종목이 1개이면 비교 대상 없어 모든 팩터 100점 자동 부여 → is_passed 항상 True, 스코어가 절대 품질 미반영. 거래 신호 발생 자체는 정상이나 신호 품질 구분 불가. Sprint 3 이후 절대값 기반 스코어링 혼합 검토 (발견: 2026-04-17 LIVE 모니터링) |
 
 ---
 

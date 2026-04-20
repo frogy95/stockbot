@@ -2,12 +2,13 @@
 
 > **Single Source of Truth** — 검증 원칙, 개발 워크플로우, QA 기준이 이 문서 한 곳에 정의됩니다.
 > CLAUDE.md, agent 파일, ci-policy.md는 이 문서를 참조합니다.
+> **도메인 지식 우선 참조**: 시스템 현재 상태(아키텍처, 데이터 흐름, 외부 API 등)는 `@wiki/`를 먼저 확인한다.
 
 ---
 
 ## 1. Git 브랜치 전략
 
-인프라 상세 정책은 [`docs/ci-policy.md`](ci-policy.md) 참조.
+인프라 상세 정책은 [`.claude/rules/ci-policy.md`](ci-policy.md) 참조.
 
 | 브랜치 | 역할 | 배포 환경 |
 |--------|------|----------|
@@ -258,7 +259,7 @@ sprint-review agent의 2단계 및 hotfix-close agent의 3단계에서 이 체�
 - 날짜별 배포/검증 기록 아카이브
 - 파일명: `YYYY-MM-DD.md` (해당 날짜의 모든 기록)
 
-### 8.3 docs/setup-guide.md
+### 8.3 wiki/setup-guide.md
 
 - 초기 환경 설정 가이드 (외부 서비스 API, 개발 도구, 환경변수)
 - 프로젝트 시작 시 1회 수행 항목
@@ -289,8 +290,8 @@ sprint-review agent의 2단계 및 hotfix-close agent의 3단계에서 이 체�
 | deploy.md 아카이빙 | `docs/deploy-history/YYYY-MM-DD.md` 이동 | sprint-close agent |
 | deploy.md 검증 결과 기록 | `deploy.md` 플레이스홀더 → 실제 결과 | sprint-review agent |
 | DB/API/기능 변경 시 Notion | 섹션 8.5 트리거 참조 | sprint-review agent |
-| 검증 원칙 변경 | `docs/dev-process.md` 섹션 5 | 직접 수정 |
-| 환경변수/의존성 추가 | `docs/setup-guide.md` | 해당 스프린트 작업자 |
+| 검증 원칙 변경 | `.claude/rules/dev-process.md` 섹션 5 | 직접 수정 |
+| 환경변수/의존성 추가 | `wiki/setup-guide.md` | 해당 스프린트 작업자 |
 | 에이전트 워크플로우 변경 | `.claude/agents/*.md` 해당 파일 | 직접 수정 |
 | 새 버전 배포 | Notion 릴리즈 노트 (섹션 8.5 참조) | deploy-prod agent |
 | Phase/Sprint/Hotfix 상태 변경 | `docs/index.json` | 해당 에이전트 (phase-planner, sprint-planner, sprint-close, hotfix-close, deploy-prod) |
