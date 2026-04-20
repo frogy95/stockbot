@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-20T08:50:00+09:00",
+  "lastUpdated": "2026-04-20T09:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3030,6 +3030,15 @@
       "version": "v2.1.1",
       "description": "Phase 7.0.1 Sprint 1 프로덕션 배포 — KIS LIVE WebSocket 연결 복구 (ws_url에 /tryitout 경로 추가 1줄 수정, diagnose_ws.py 진단 스크립트 경로 동기화)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/138",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-20",
+      "type": "chore",
+      "ref": "chore/strategy-reject-logging",
+      "version": "v2.2.0",
+      "description": "전략 거부 관측성 개선 — momentum_breakout 전략 거부 경로 7개를 RejectedSignal 구조화 반환 + 구조화 로그로 전환 (DB 스키마 변경 없음, 프론트엔드 변경 없음)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/145",
       "status": "in_progress"
     }
   ]
