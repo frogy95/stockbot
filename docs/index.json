@@ -2287,8 +2287,10 @@
     },
     {
       "id": "phase7.0",
-      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비",
-      "status": "in_progress",
+      "title": "매매 엔진 치명적 결함 수정 + LIVE 전환 준비 (Sprint 3은 Phase 8 Sprint 3으로 이관)",
+      "status": "completed",
+      "completedAt": "2026-04-20",
+      "note": "Sprint 1·2 완료 + Sprint 3(E2E+LIVE 게이트) Phase 8 Sprint 3으로 이관 (2026-04-20)",
       "phaseDoc": "docs/phase/phase7.0/phase7.0.md",
       "sprints": [
         {
@@ -2554,7 +2556,7 @@
     },
     {
       "id": "phase8",
-      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + 관리 UI + 성과 분석)",
+      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + E2E+LIVE 게이트 + 관리 UI + 성과 분석, Sprint 1~5)",
       "status": "in_progress",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "reviews": [

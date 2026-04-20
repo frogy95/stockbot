@@ -53,13 +53,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~8 Sprint 1 완료
-- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1 완료, Sprint 2 예정
+- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1 완료, Sprint 2~5 예정 (Sprint 3은 구 Phase 7.0 Sprint 3 이관분)
 - 현재 Sprint: Phase 8 Sprint 2 예정 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 후)
-- 후속 마일스톤: Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
-- 이후 마일스톤: Phase 9 Sprint 0 — 데이터 수집 인프라 + KIS 백필 + 5분봉 가속도 (Phase 8 Sprint 1·2 완료 후 착수 가능)
+- 다음 마일스톤: Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- 후속 마일스톤: Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, Sprint 2 완료 후)
+- 이후 마일스톤: Phase 8 Sprint 4 (시스템 관리 UI) → Sprint 5 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
 
 ### 2026-04-20 Phase 재편성
@@ -106,8 +106,8 @@ Phase 0 (완료)
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
                                                         └─> Phase 6.2: 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)
                                                               └─(코드)─> Phase 7.0: 매매 엔진 결함 수정 + LIVE 전환
-                                                                    └─(코드)─> Phase 8: 즉시 착수 개선 통합 (구 7.2 S1·S2 + 4.5 S2 + 5 S3)
-                                                                          └─> Phase 7.0 Sprint 3: E2E 검증 + LIVE 전환 게이트
+                                                                    └─(코드)─> Phase 8: 즉시 착수 개선 통합 (구 7.2 S1·S2 + 4.5 S2 + 5 S3 + 7.0 S3)
+                                                                          └─> Phase 8 Sprint 3: E2E 검증 + LIVE 전환 게이트 (구 7.0 S3 이관)
                                                                                 └─(코드)─> Phase 9: Z-score + VWAP + 5분봉 가속도 통합
                                                                                 └─(데이터 부분 완화, KIS 백필 + 점진 활성화)─> Phase 9
                                                                                       └─(코드)─> Phase 10: U자형 비선형 보정
@@ -134,9 +134,9 @@ Phase 0 (완료)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
-- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. Phase 7.0 Sprint 3(LIVE 전환 게이트)의 선행 조건.
-- Phase 7.0 -> 8: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (구 7.2 흡수) + 관리 UI + 성과 분석 통합. Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
-- Phase 8 -> 7.0 Sprint 3: Phase 8 Sprint 1(OHLC 수정) 완료 후 E2E 검증 재개 가능.
+- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. LIVE 전환 게이트(현 Phase 8 Sprint 3)의 선행 조건.
+- Phase 7.0 -> 8: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (구 7.2 흡수) + 관리 UI + 성과 분석 + E2E 게이트(구 7.0 S3) 통합. Phase 7.0 Sprint 3은 2026-04-20 Phase 8 Sprint 3으로 이관, Phase 7.0은 종결.
+- Phase 8 Sprint 순서: Sprint 1(OHLC) → 2(다층 진입) → 3(E2E+LIVE 게이트) → 4(관리 UI) → 5(성과 분석). Sprint 번호 = 실행 순서.
 - Phase 6.1 + Phase 8 -> 9: **(코드)** 5분봉 수집 인프라 + 매매 신호 복구 완료 후 Z-score/VWAP/5분봉 가속도 통합 설계. **(데이터 완화)** 사용자 지시 재검토 결과 KIS 과거 분봉 백필 + 점진 활성화로 20거래일 대기 우회 가능.
 - Phase 9 -> 10: **(코드)** 실시간 VWAP + 백테스트 데이터셋, **(데이터)** U자형 함수 피팅은 완화 불가 — 최소 2개월(대안 C), 3~6개월(본격 피팅) 필수.
 - Phase 10 -> 10.1: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리.
@@ -1013,7 +1013,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 7.0: 매매 엔진 치명적 결함 수정 + LIVE 전환 준비 (Sprint 1~3) 🔄
+## Phase 7.0: 매매 엔진 치명적 결함 수정 + LIVE 전환 준비 (Sprint 1~2) ✅
 
 ### 목표
 2026-04-15 평가에서 발견된 매매 엔진 치명적 결함 3건(가격 갱신 미연결, 포지션 미생성, 청산 미실행) 수정. 파라미터 오보정 교정. 리스크 관리 개선. Paper E2E 검증 후 LIVE 전환 게이트 통과.
@@ -1038,10 +1038,10 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - in-flight 중복 매도 방지 (미해결 #7 대응)
 > Sprint 계획: `docs/phase/phase7.0/sprint2/sprint2.md` (2026-04-16)
 
-#### Sprint 3: E2E 검증 + LIVE 전환 게이트
-- Paper 모드 E2E 1사이클 완전 성공 확인
-- 5거래일 핫픽스 0건 + 신호 발생 3거래일 연속
-- LIVE 초기 운영 파라미터 적용
+#### Sprint 3: 🔀 **Phase 8 Sprint 3으로 이관됨** (2026-04-20)
+- E2E 검증 + LIVE 전환 게이트는 Phase 8 Sprint 1·2(OHLC 파싱 + 다층 진입) 반영 후 수행하는 것이 타당 → Phase 8 Sprint 3으로 이관
+- 원본 체크리스트/게이트 기준/LIVE 초기 파라미터 모두 승계
+- 이관 결과: `docs/phase/phase8/phase8.md` Sprint 3 상세
 
 ### 전문가 확정 파라미터 (2026-04-15 — 4명 검토)
 
@@ -1067,11 +1067,9 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 | 18 | LIVE 초기 자본금 | 50만원 이하 | 최리스크 |
 
 ### 완료 기준 (Definition of Done)
-- P0 3건 + P1 2건 수정 + 테스트 통과
-- P2 3건 리스크 개선 + 테스트 통과
-- Paper E2E 1사이클 완전 성공 (주문→체결→포지션→가격갱신→청산)
-- Paper 5거래일 핫픽스 0건 + 신호 발생 3거래일 연속
-- LIVE 전환 게이트 전 조건 충족
+- P0 3건 + P1 2건 수정 + 테스트 통과 ✅
+- P2 3건 리스크 개선 + 테스트 통과 ✅
+- Paper E2E 1사이클 + 5거래일 관찰 + LIVE 전환 게이트 → 🔀 Phase 8 Sprint 3으로 이관 (Phase 7.0 종결)
 
 ### 기술 고려사항
 - 기존 Phase 7(5분봉 가속도)은 Phase 7.1로 리넘버링. 데이터 축적은 계속 진행 중.
@@ -1126,10 +1124,10 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 8: 즉시 착수 개선 사항 통합 (Sprint 1~4) 📋
+## Phase 8: 즉시 착수 개선 사항 통합 (Sprint 1~5) 🔄
 
 ### 목표
-데이터 축적 대기 없이 즉시 착수 가능한 개선 사항을 단일 Phase로 통합. (1) 매매 신호 0건 근본 원인 해결 (구 Phase 7.2 Sprint 1·2 흡수), (2) 시스템 관리 UI (구 Phase 4.5 Sprint 2), (3) 성과 분석 보강 (구 Phase 5 Sprint 3). Phase 7.0 Sprint 3 LIVE 게이트의 선행 조건.
+데이터 축적 대기 없이 즉시 착수 가능한 개선 사항을 단일 Phase로 통합. (1) 매매 신호 0건 근본 원인 해결 (구 Phase 7.2 Sprint 1·2 흡수), (2) E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관 2026-04-20), (3) 시스템 관리 UI (구 Phase 4.5 Sprint 2), (4) 성과 분석 보강 (구 Phase 5 Sprint 3). **Sprint 번호 = 실행 순서**.
 
 ### 필요 선행 데이터
 - 없음 (코드 수정 — 데이터 축적 불필요, 즉시 착수 가능)
@@ -1146,35 +1144,42 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 #### Sprint 2: 다층 진입 조건 + 리스크 안전장치 (구 Phase 7.2 Sprint 2)
 - prev_close(1단계) + prev_high(2단계) 다층 진입
 - prev_close: confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5
-- 일일 최대 거래 10건 (Sprint 2 전 LIVE 초기엔 3건/일, 포지션 1건 상한 — 최리스크 R2)
+- 일일 최대 거래 10건 (Sprint 3 LIVE 전환 전 임시 3건/일, 포지션 1건 상한 — 최리스크 R2)
 - 13:00 이후 prev_close 돌파 비활성화
 
-#### Sprint 3: 시스템 관리 UI
+#### Sprint 3: E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, 2026-04-20)
+- Paper 모드 E2E 1사이클 완전 성공 (주문→체결→포지션→가격갱신→청산)
+- Paper 5거래일 핫픽스 0건 + 신호 발생 3거래일 연속 + 다층 진입 분기 각 1회+
+- LIVE 초기 파라미터 적용 (max_position=2, position_size=5%, daily_max_loss=-2%, emergency_stop=-3%, semi-auto, 자본금 50만원 이하)
+- 확정 파라미터 #17~#22 승계 (Phase 7.0 2026-04-15 확정)
+
+#### Sprint 4: 시스템 관리 UI (LIVE 전환 이후 운영 가시성)
 - 스케줄러 상태 + pipeline_healthy + 수동 트리거(2단계 확인 + LIVE/PAPER 명시 + 이력 로깅 — 최리스크 R1)
 - 보유 포지션 실시간 카드 + 청산 카운트다운 + 장 단계 배지 (김단타 D1)
 - 장중 수동 트리거 비활성화 가드
 
-#### Sprint 4: 성과 분석 보강
+#### Sprint 5: 성과 분석 보강
 - 일간/주간 PnL, 승률, MDD(peak-to-trough 박퀀트 Q2), Sharpe(KOFR 3.5% 박퀀트 Q3)
 - 평균 보유 시간 + 시간대별 진입 분포 (김단타 D2)
 - 표본 < 30거래일 시 "참고용" 표시 (박퀀트 Q4)
 
-### 전문가 확정 파라미터 (2026-04-20 — 4명 검토, 기존 Phase 7.2 확정 승계 + 추가)
+### 전문가 확정 파라미터 (2026-04-20 — 4명 검토, 기존 Phase 7.2·7.0 확정 승계 + 추가)
 
-Sprint 1·2는 기존 Phase 7.2 확정(2026-04-17) 10개 파라미터 그대로 승계 + Sprint 3·4 추가 파라미터는 `docs/phase/phase8/phase8.md` 참조.
+Sprint 1·2는 기존 Phase 7.2 확정(2026-04-17) 승계 + Sprint 3은 Phase 7.0 확정(2026-04-15) LIVE 초기 파라미터 승계 + Sprint 4·5 추가 파라미터는 `docs/phase/phase8/phase8.md` 참조.
 
 ### 완료 기준 (Definition of Done)
-- H0STCNT0 OHLC 파싱 정상 동작 (Redis 저장 확인)
+- H0STCNT0 OHLC 파싱 정상 동작 (Redis 저장 확인) ✅
 - 매매 신호 장중 1건 이상 발생 (2거래일 연속, 노이즈 필터 후)
 - 다층 진입 + 반 포지션 + confidence 상한 + 일일 거래 한도 동작
+- Paper E2E 1사이클 + 5거래일 관찰 + LIVE 전환 게이트 통과
 - 시스템 관리 UI (수동 트리거 2단계 가드 + 포지션/카운트다운/장 단계)
 - 성과 분석 대시보드 (PnL/승률/MDD/Sharpe/보유시간/시간대 분포)
 - pytest 전체 통과
 
 ### 기술 고려사항
-- Sprint 1은 Phase 7.0 Sprint 3의 선행 조건.
-- Sprint 2 전 LIVE 전환 시 거래 한도 축소(3건/일, 포지션 1건) 환경변수 가드.
-- Sprint 3·4는 Sprint 1 배포 후 순차 (정프로 P1 — 1명 개발자 컨텍스트 분산 방지).
+- Sprint 번호 = 실행 순서. Sprint 1→2→3→4→5 순차 진행.
+- Sprint 3 LIVE 전환 전 거래 한도 축소(3건/일, 포지션 1건) 환경변수 가드.
+- Sprint 4·5는 LIVE 안정 운영 이후 순차 (정프로 P1 — 1명 개발자 컨텍스트 분산 방지).
 - 5분봉 가속도 지표는 Phase 9 Sprint 0으로 이관 (박퀀트 Q1 — 지표 상관관계 관리).
 
 > Phase 상세 계획: `docs/phase/phase8/phase8.md` ✅ 계획 수립 완료 (2026-04-20)
