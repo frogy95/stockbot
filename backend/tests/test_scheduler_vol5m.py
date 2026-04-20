@@ -1,5 +1,6 @@
 """Phase 6.1 Sprint 1 — scheduler 5분봉 집계 연동 테스트."""
 
+import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -51,6 +52,7 @@ def _execution_sample() -> ExecutionData:
         change_rate=7.6,
         volume=1080,
         acml_volume=1080856,
+        trade_strength=100.0,
         sell_or_buy="2",
     )
 
@@ -132,3 +134,42 @@ async def test_aggregator_none_skips():
     # 기존 동작 (Redis set, 체결강도 업데이트)는 그대로 수행
     scheduler._redis.set.assert_awaited()
     scheduler._trade_strength.add_execution.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_process_realtime_data_caches_ohlc():
+    """H0STCNT0 수신 시 Redis execution JSON에 open_price/high/low가 포함된다."""
+    scheduler = _make_scheduler()
+    execution = ExecutionData(
+        stock_code="005930",
+        time="100000",
+        price=70000,
+        change_sign="2",
+        change=500,
+        change_rate=0.72,
+        volume=100,
+        acml_volume=1000000,
+        trade_strength=110.0,
+        sell_or_buy="1",
+        open_price=69500,
+        high=70200,
+        low=69000,
+    )
+
+    with (
+        patch(
+            "modules.collector.scheduler.parse_raw_message",
+            return_value=("H0STCNT0", "0", "body"),
+        ),
+        patch(
+            "modules.collector.scheduler.parse_execution",
+            return_value=execution,
+        ),
+    ):
+        await scheduler._process_realtime_data("H0STCNT0", "raw")
+
+    call_args = scheduler._redis.set.call_args
+    cached_json = json.loads(call_args.args[1])
+    assert cached_json["open_price"] == 69500
+    assert cached_json["high"] == 70200
+    assert cached_json["low"] == 69000
