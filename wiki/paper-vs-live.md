@@ -47,6 +47,8 @@ Phase 7.0 Sprint 3에서 E2E 검증 + LIVE 전환 체크리스트:
 3. 최소 투자금으로 첫 실전 시작
 4. 비상 정지 동작 테스트
 
+> **선행 의존성**: Phase 7.0 Sprint 3 실행 전 **Phase 8 Sprint 1 (OHLC 파싱 버그 수정)** 이 완료되어야 유효한 신호 기반 검증이 가능하다.
+
 [[risk-management]] 참조.
 
 ## KIS WebSocket LIVE 주의사항

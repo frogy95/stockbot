@@ -52,14 +52,22 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~7.0.1 Sprint 1 완료
-- 현재 Phase: Phase 7.2 (매매 전략 진입 조건 개선) — Phase 7.0 Sprint 3 선행 조건
-- 현재 Sprint: Phase 7.2 Sprint 1 예정 — 장중 OHLC 데이터 파싱 수정
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16)
+- 전체 진행률: Phase 0~8 Sprint 1 완료
+- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1 완료, Sprint 2 예정
+- 현재 Sprint: Phase 8 Sprint 2 예정 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 7.2 Sprint 1 — 장중 OHLC 파싱 수정 + 갭 분기 버그 수정
-- 후속 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 7.2 Sprint 1 완료 후)
-- 이후 마일스톤: Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (20거래일 축적 후, 최소 2026-05-12)
+- 다음 마일스톤: Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 후)
+- 후속 마일스톤: Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- 이후 마일스톤: Phase 9 Sprint 0 — 데이터 수집 인프라 + KIS 백필 + 5분봉 가속도 (Phase 8 Sprint 1·2 완료 후 착수 가능)
+- 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
+
+### 2026-04-20 Phase 재편성
+- 사용자 지시(A안 + 3개 Phase 분할)로 기존 Phase 7.1/7.2/8/9를 Phase 8/9/10으로 재편성
+- Phase 7.2 확정 계획 → **Phase 8 Sprint 1·2로 흡수** (파라미터 그대로 승계)
+- 기존 Phase 7.1(5분봉 가속도), 8(Z-score/VWAP) 초안 → **Phase 9로 통합** (박퀀트 권고: 지표 상관관계 관리)
+- 기존 Phase 9(U자형 비선형) 초안 → **Phase 10**으로 재편 + 백로그는 Phase 10.1로 분리
+- 기존 초안 파일은 `docs/phase/archive/`로 이동하여 이력 보존
 
 ## 기술 아키텍처 결정 사항
 
@@ -98,14 +106,13 @@ Phase 0 (완료)
                                                   └─> Phase 6.1: 거래량 시간가중 보정 + 5분봉 수집 구축
                                                         └─> Phase 6.2: 장전 수집 단순화 (KIS 주경로 + 포털 장후 보조)
                                                               └─(코드)─> Phase 7.0: 매매 엔진 결함 수정 + LIVE 전환
-                                                                    └─(코드)─> Phase 7.2: 매매 전략 진입 조건 개선
+                                                                    └─(코드)─> Phase 8: 즉시 착수 개선 통합 (구 7.2 S1·S2 + 4.5 S2 + 5 S3)
                                                                           └─> Phase 7.0 Sprint 3: E2E 검증 + LIVE 전환 게이트
-                                                        └─(코드)─> Phase 7.1: 5분봉 가속도 지표 + DB 구축
-                                                        └─(데이터: 20거래일)─> Phase 7.1
-                                                              └─(코드)─> Phase 8: Z-score + VWAP
-                                                              └─(데이터: 20거래일)─> Phase 8
-                                                                    └─(코드)─> Phase 9: 비선형 보정
-                                                                    └─(데이터: 3~6개월)─> Phase 9
+                                                                                └─(코드)─> Phase 9: Z-score + VWAP + 5분봉 가속도 통합
+                                                                                └─(데이터 부분 완화, KIS 백필 + 점진 활성화)─> Phase 9
+                                                                                      └─(코드)─> Phase 10: U자형 비선형 보정
+                                                                                      └─(데이터: 2~6개월)─> Phase 10
+                                                                                            └─> Phase 10.1: 누적 백로그 통합 (피라미딩, 2차 스크리닝 N=1 등)
 ```
 
 > **범례**: `(코드)` = 코드 의존성 (이전 모듈/인프라 필요), `(데이터: N)` = 데이터 의존성 (최소 N 축적 필요)
@@ -128,11 +135,11 @@ Phase 0 (완료)
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
 - Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. Phase 7.0 Sprint 3(LIVE 전환 게이트)의 선행 조건.
-- Phase 7.0 -> 7.2: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (OHLC 미파싱 + prev_high 단일 기준 과도 보수). Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
-- Phase 7.2 -> 7.0 Sprint 3: Phase 7.2 Sprint 1(OHLC 수정) 완료 후 E2E 검증 재개 가능.
-- Phase 6.1 -> 7.1: **(코드)** 5분봉 수집 인프라 기반 가속도 지표, **(데이터)** 5분봉 거래량 20거래일 축적 필수
-- Phase 7.1 -> 8: **(코드)** 시간대별 DB + VWAP 수집 인프라, **(데이터)** 시간대별 거래량 DB 20거래일 축적 필수
-- Phase 8 -> 9: **(코드)** VWAP 엔진 + 백테스트 데이터셋, **(데이터)** 실전 운영 3~6개월 축적 필수
+- Phase 7.0 -> 8: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (구 7.2 흡수) + 관리 UI + 성과 분석 통합. Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
+- Phase 8 -> 7.0 Sprint 3: Phase 8 Sprint 1(OHLC 수정) 완료 후 E2E 검증 재개 가능.
+- Phase 6.1 + Phase 8 -> 9: **(코드)** 5분봉 수집 인프라 + 매매 신호 복구 완료 후 Z-score/VWAP/5분봉 가속도 통합 설계. **(데이터 완화)** 사용자 지시 재검토 결과 KIS 과거 분봉 백필 + 점진 활성화로 20거래일 대기 우회 가능.
+- Phase 9 -> 10: **(코드)** 실시간 VWAP + 백테스트 데이터셋, **(데이터)** U자형 함수 피팅은 완화 불가 — 최소 2개월(대안 C), 3~6개월(본격 피팅) 필수.
+- Phase 10 -> 10.1: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리.
 
 ## MVP 범위 (Must)
 
@@ -1111,179 +1118,196 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 7.2: 매매 전략 진입 조건 개선 (Sprint 1~2) 📋
+## Phase 7.2: 매매 전략 진입 조건 개선 (구 계획, Phase 8로 흡수) 🔀
+
+2026-04-20 재편성 — 기존 Phase 7.2 확정 계획(2026-04-17)은 파라미터 그대로 **Phase 8 Sprint 1·2로 흡수**. 검토 리포트는 `docs/phase/phase7.2/` 경로에 그대로 유지.
+
+> 흡수 결과: `docs/phase/phase8/phase8.md` 참조
+
+---
+
+## Phase 8: 즉시 착수 개선 사항 통합 (Sprint 1~4) 📋
 
 ### 목표
-2026-04-17 LIVE 모니터링에서 발견된 매매 신호 0건 문제의 근본 원인 해결. (1) KIS H0STCNT0 WS 데이터의 시가/고가/저가 미파싱 수정, (2) 전일 고가 단일 진입 조건을 prev_close + prev_high 다층 구조로 개선. Phase 7.0 Sprint 3 "신호 생성 1건+" 조건의 전제.
+데이터 축적 대기 없이 즉시 착수 가능한 개선 사항을 단일 Phase로 통합. (1) 매매 신호 0건 근본 원인 해결 (구 Phase 7.2 Sprint 1·2 흡수), (2) 시스템 관리 UI (구 Phase 4.5 Sprint 2), (3) 성과 분석 보강 (구 Phase 5 Sprint 3). Phase 7.0 Sprint 3 LIVE 게이트의 선행 조건.
 
 ### 필요 선행 데이터
 - 없음 (코드 수정 — 데이터 축적 불필요, 즉시 착수 가능)
 
 ### 작업 목록
-#### Sprint 1: 장중 OHLC 데이터 파싱 수정
+#### Sprint 1: 장중 OHLC 파싱 + 갭 분기 수정 (구 Phase 7.2 Sprint 1) ✅ 완료 (2026-04-20)
 - H0STCNT0 파서에 STCK_OPRC/STCK_HGPR/STCK_LWPR 3필드 추가
 - Redis 캐싱 + snapshot 조립 수정
 - 갭 3%+ 분기 버그 수정 (breakout_ref = high → open_price)
-- 테스트
+- Sprint 1 배포 당일 Redis idx 매핑 검증 (김단타 권고)
+- 계획 문서: `docs/phase/phase8/sprint1/sprint1.md` ✅ 완료 (2026-04-20)
+- pytest: 854 passed (1 pre-existing fail — test_ws_manager_env_max_subscriptions)
 
-#### Sprint 2: 다층 진입 조건 + 리스크 안전장치
-- prev_close 돌파(1단계) + prev_high 돌파(2단계) 다층 진입
-- prev_close 돌파 시 confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5
-- 일일 최대 거래 횟수 10건, 13:00 이후 prev_close 돌파 비활성화
-- 테스트
+#### Sprint 2: 다층 진입 조건 + 리스크 안전장치 (구 Phase 7.2 Sprint 2)
+- prev_close(1단계) + prev_high(2단계) 다층 진입
+- prev_close: confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5
+- 일일 최대 거래 10건 (Sprint 2 전 LIVE 초기엔 3건/일, 포지션 1건 상한 — 최리스크 R2)
+- 13:00 이후 prev_close 돌파 비활성화
 
-### 전문가 확정 파라미터 (2026-04-17 — 4명 검토)
+#### Sprint 3: 시스템 관리 UI
+- 스케줄러 상태 + pipeline_healthy + 수동 트리거(2단계 확인 + LIVE/PAPER 명시 + 이력 로깅 — 최리스크 R1)
+- 보유 포지션 실시간 카드 + 청산 카운트다운 + 장 단계 배지 (김단타 D1)
+- 장중 수동 트리거 비활성화 가드
 
-| # | 항목 | 확정값 | 담당 |
-|---|------|--------|------|
-| 1 | H0STCNT0 추가 파싱 필드 | STCK_OPRC(idx 7), STCK_HGPR(idx 8), STCK_LWPR(idx 9) | 전원 동의 |
-| 2 | 갭 3%+ breakout_ref | open_price (기존 high에서 변경) | 김단타+최리스크 |
-| 3 | 진입 기준 | prev_close(1단계) + prev_high(2단계) 다층 | 전원 합의 |
-| 4 | prev_close 돌파 confidence 상한 | 0.75 | 최리스크 |
-| 5 | prev_close 돌파 momentum_score | min(pct/7.0,1.0)*0.7 | 박퀀트 |
-| 6 | prev_close 돌파 volume_threshold | 고정 2.5 | 박퀀트+김단타 |
-| 7 | prev_close 돌파 position_size | 50% (반 포지션) | 최리스크 |
-| 8 | 일일 최대 거래 횟수 | 10건/일 | 최리스크 |
-| 9 | 13:00 이후 prev_close 돌파 | 비활성화 | 김단타 |
-| 10 | Sprint 1→2 관찰 기간 | 최소 2거래일 | 정프로+김단타 |
+#### Sprint 4: 성과 분석 보강
+- 일간/주간 PnL, 승률, MDD(peak-to-trough 박퀀트 Q2), Sharpe(KOFR 3.5% 박퀀트 Q3)
+- 평균 보유 시간 + 시간대별 진입 분포 (김단타 D2)
+- 표본 < 30거래일 시 "참고용" 표시 (박퀀트 Q4)
+
+### 전문가 확정 파라미터 (2026-04-20 — 4명 검토, 기존 Phase 7.2 확정 승계 + 추가)
+
+Sprint 1·2는 기존 Phase 7.2 확정(2026-04-17) 10개 파라미터 그대로 승계 + Sprint 3·4 추가 파라미터는 `docs/phase/phase8/phase8.md` 참조.
 
 ### 완료 기준 (Definition of Done)
 - H0STCNT0 OHLC 파싱 정상 동작 (Redis 저장 확인)
-- 갭 분기 버그 수정 확인
-- 매매 신호 장중 1건 이상 발생 (2거래일 연속)
-- 다층 진입 조건 동작 확인 (prev_close/prev_high 분기)
-- confidence 계층화 + 반 포지션 + 일일 거래 한도 동작 확인
+- 매매 신호 장중 1건 이상 발생 (2거래일 연속, 노이즈 필터 후)
+- 다층 진입 + 반 포지션 + confidence 상한 + 일일 거래 한도 동작
+- 시스템 관리 UI (수동 트리거 2단계 가드 + 포지션/카운트다운/장 단계)
+- 성과 분석 대시보드 (PnL/승률/MDD/Sharpe/보유시간/시간대 분포)
 - pytest 전체 통과
 
 ### 기술 고려사항
-- H0STCNT0 필드 인덱스는 KIS 공식 스펙(ccnl_krx.py 컬럼 목록) 기준. STCK_OPRC=7, STCK_HGPR=8, STCK_LWPR=9.
-- Sprint 1은 Phase 7.0 Sprint 3의 선행 조건 ("신호 생성 1건+" 충족 필수).
-- Sprint 2는 Sprint 1 배포 후 2거래일 관찰 결과에 따라 범위 조정 가능.
-- 기존 리스크 한도(일일 -3%, 비상 -4%, 연속 3회 손절 쿨다운)는 변경 없음.
+- Sprint 1은 Phase 7.0 Sprint 3의 선행 조건.
+- Sprint 2 전 LIVE 전환 시 거래 한도 축소(3건/일, 포지션 1건) 환경변수 가드.
+- Sprint 3·4는 Sprint 1 배포 후 순차 (정프로 P1 — 1명 개발자 컨텍스트 분산 방지).
+- 5분봉 가속도 지표는 Phase 9 Sprint 0으로 이관 (박퀀트 Q1 — 지표 상관관계 관리).
 
-> Phase 상세 계획: `docs/phase/phase7.2/phase7.2.md` ✅ 계획 수립 완료 (2026-04-17)
-> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 검토 완료
+> Phase 상세 계획: `docs/phase/phase8/phase8.md` ✅ 계획 수립 완료 (2026-04-20)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명
 
 ---
 
-## Phase 7.1: 5분봉 거래량 가속도 지표 (Sprint 1~2) 📋
+## Phase 9: 동시간대 Z-score + VWAP + 5분봉 가속도 지표 (Sprint 0~3) 📋
 
 ### 목표
-Phase 6.1에서 축적한 5분봉 거래량 데이터를 기반으로 "5분 단위 거래량 가속도 지표"를 구현하여 momentum_breakout 전략의 confidence 가중치에 반영. Phase 8용 시간대별 거래량 DB + VWAP 수집 파이프라인 선행 구축.
+"동시간대 N일 거래량 Z-score" + "VWAP 대비 가격 포지션" + "5분봉 거래량 가속도 지표"를 매매 전략의 confidence 프레임워크에 통합 편입. 박퀀트 권고로 Phase 8(구) Sprint 5(5분봉 가속도)를 Phase 9 Sprint 0으로 이관하여 지표 상관관계 관리 + 통합 설계 이익.
 
-### 필요 선행 데이터
-- **Phase 6.1의 `vol5m:*` Redis 키**: 최소 **20거래일** 축적 필수
-- 착수 경고: <20거래일 축적 시 AI 경고 발생
+### 🔑 사용자 지시 데이터 의존성 재검토 결과 (2026-04-20)
+사용자 지시 "진짜 데이터가 쌓인 상태에서 하는 게 맞는지 재검토해"에 따라:
+- **VWAP**: 당일 장중 누적만 필요 → 과거 축적 **불필요, 즉시 착수 가능**
+- **Z-score (total_vol)**: 대안 A(KIS 과거 분봉 백필) + 대안 C(점진 활성화 10/15/20/30 거래일 단계) 병행
+- **Z-score (buy/sell 분리)**: 실시간 축적만 가능 (자연 축적)
+
+### 필요 선행 데이터 (완화 후)
+- **Phase 8 Sprint 1·2 완료** (매매 신호 복구)
+- Z-score 가중치 100% 활성화는 30거래일+ 축적 시점 (착수 조건과 분리)
+- KIS 과거 분봉 API 스펙 재확인 (Sprint 0 초반 MCP 조사)
 
 ### 작업 목록
-#### Sprint 1: 가속도 지표 구현
-- 5분봉 데이터 Redis 조회 유틸
-- 거래량 가속도 계산 (최근 5분봉 vs 직전 5분봉 변화율)
-- confidence 가중치 반영 (가속→상향, 감속→하향)
-- 단위 테스트
+#### Sprint 0: 데이터 수집 인프라 + KIS 백필 + 5분봉 가속도 (구 Phase 8 Sprint 5 통합)
+- `volume_5min_history` 테이블 마이그레이션 + EOD 이관 배치
+- VWAP Redis 슬롯별 누적 (`vwap:{code}:{date}:pv`, `:v`, TTL 2일)
+- KIS 과거 분봉 백필 (18:00~23:00 한정, 16req/s, 최대 30거래일, 분할/증자 제외)
+- 5분봉 가속도 지표 (시간대 스케일링 + 유동성 50만 주 미만 제외 — 김단타 D3·D4)
 
-#### Sprint 2: 시간대별 DB + VWAP 기반 구축 (Phase 8용 선행)
-- `volume_5min_history` DB 테이블 + Alembic 마이그레이션
-- EOD 배치: 장 마감 후 Redis 5분봉 → DB 이관
-- VWAP 틱데이터 슬롯별 Redis 누적 시작
-- 통합 테스트
+#### Sprint 1: Z-score 엔진 (점진 활성화)
+- 점진 가중치: <10일 0%, 10-15일 10%, 15-20일 30%, 20-30일 60%, 30일+ 100% (최리스크 R1)
+- 백필 데이터 정합성 사전 검증 (실시간 수집 대비 차이 10%+ 시 백필 제외)
+- 비모수(분위수) 대체 경로
+
+#### Sprint 2: VWAP 엔진 + 가격 포지션 (Sprint 0 완료 후 병행 가능)
+- 실시간 VWAP O(1) Redis 조회
+- 가격 포지션: `price > VWAP * 1.005` 매수 우위 (+0.05), `< VWAP * 0.995` 매도 우위 (-0.05)
+- 09:30 이전 VWAP 지표 비활성화 (최리스크 R3)
+
+#### Sprint 3: 백테스트 데이터셋 + REST API
+- TimeSeriesSplit 기반 분할 (look-ahead bias 제거 — 박퀀트 Q2)
+- `/api/v1/indicators/vwap/{code}`, `/api/v1/indicators/zscore/{code}`
+- **지표 상관관계 의무 점검** (가속도/Z-score/VWAP 상관계수 > 0.7 시 가중치 축소/통합)
 
 ### 완료 기준 (Definition of Done)
-- 가속도 지표가 confidence에 반영되어 가속 중 종목 우대
-- volume_5min_history 테이블에 일일 데이터 이관 동작 확인
-- VWAP Redis 수집 시작 확인
-- 단위/통합 테스트 통과
-- 프로덕션 배포 후 5거래일 모니터링
+- volume_5min_history 테이블 + EOD 이관 + VWAP 누적 동작
+- KIS 백필 20종목 × 5거래일+ 성공, 정합성 검증 통과
+- 5분봉 가속도 + Z-score 점진 활성화 + VWAP 전략 반영
+- 지표 상관관계 점검 + REST API 동작
+- pytest 전체 통과
 
 ### 기술 고려사항
-- 5분봉 가속도는 "속도의 변화" → 미분 개념. 노이즈 주의 (이동평균 필요)
-- 시간대별 DB 이관은 장 마감(15:40) 이후 배치 실행
-- 의존성: Phase 6.1 (5분봉 수집 파이프라인 + 시간가중 보정)
-- **데이터 의존성**: Phase 6.1 배포 후 20거래일 이상 축적 필수
+- KIS 과거 분봉: 최대 30거래일, 18:00+ 실행, 수정주가 주의 (윤에이피 A1~A6)
+- 점진 활성화 로깅 전용 구간을 10거래일로 연장 (최리스크 R1)
+- VWAP 실시간 계산은 O(1) Redis `INCRBYFLOAT` 2회로 처리
 
-> Phase 상세 계획: `docs/phase/phase7.1/phase7.1.md` (초안 작성 완료)
-> Sprint 문서: `docs/phase/phase7.1/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
-
----
-
-## Phase 8: 동시간대 Z-score + VWAP 포지션 (Sprint 1~3) 📋
-
-### 목표
-Phase 7.1에서 구축한 시간대별 거래량 DB와 VWAP 틱데이터를 기반으로 "동시간대 N일 거래량 Z-score"와 "VWAP 대비 가격 포지션" 구현. Phase 9용 실시간 VWAP 엔진 + 실증 백테스트 데이터셋 선행 구축.
-
-### 필요 선행 데이터
-- **Phase 7.1의 `volume_5min_history` 테이블**: 최소 **20거래일** 축적 필수
-- **Phase 7.1의 VWAP Redis 키**: 최소 **20거래일** 축적 필수
-- 착수 경고: <20거래일 시간대별 데이터 축적 시 AI 경고 발생
-
-### 작업 목록
-#### Sprint 1: Z-score 지표 구현
-- 동시간대 20일 이동 평균/표준편차 계산
-- Z-score → confidence 반영 (Z>2: 비정상 급증 → 강화, Z<-1: 이상 감소 → 약화)
-
-#### Sprint 2: VWAP 엔진 + 가격 포지션
-- 실시간 VWAP 계산 엔진
-- 현재가 vs VWAP 포지션 → 전략 반영
-
-#### Sprint 3: 백테스트 데이터셋 + VWAP API (Phase 9용 선행)
-- 실증 백테스트 데이터셋 구축 (과거 신호 재현)
-- VWAP 실시간 조회 REST API
-
-### 완료 기준 (Definition of Done)
-- Z-score 기반 비정상 거래량 감지 동작
-- VWAP 대비 가격 포지션 전략 반영
-- 백테스트 데이터셋으로 과거 신호 재현 가능
-- 프로덕션 배포 후 모니터링
-
-### 기술 고려사항
-- Z-score는 정규분포 가정 → 분포 검증 필수
-- VWAP는 틱 단위 정밀도 vs 5분봉 근사 트레이드오프
-- 의존성: Phase 7.1 (시간대별 DB + VWAP 수집)
-- **데이터 의존성**: Phase 7.1 배포 후 20거래일 이상 축적 필수
-
-> Phase 상세 계획: `docs/phase/phase8/phase8.md` (초안 작성 완료)
-> Sprint 문서: `docs/phase/phase8/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase9/phase9.md` ✅ 계획 수립 완료 (2026-04-20)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 윤에이피(API) — 4명
 
 ---
 
-## Phase 9: U자형 비선형 보정 (Sprint 1~3) 📋
+## Phase 10: U자형 비선형 보정 (Sprint 1~3) 📋
 
 ### 목표
-Phase 6.1의 선형 시간가중 보정을 시간대별 실제 누적 비율 함수(U자형)로 교체. 장 중반부의 보수적 편향(~10~20%)을 해소하여 전략 정밀도 향상.
+Phase 6.1의 선형 시간가중 보정을 **실제 관측 기반 U자형 비선형 함수 f(t)**로 교체. 장 중반부 보수적 편향(~10-20%) 해소. 사용자 지시 재검토에서 **"완화 불가"**로 확인 — 함수 피팅은 단일 통계량이 아니므로 장기 축적 필수.
 
 ### 필요 선행 데이터
-- **운영 데이터 전체**: 최소 **3~6개월** (60~120거래일) 축적 필수
-- Phase 8의 실증 백테스트 데이터셋
-- 실전 매매 결과 로그 3개월 이상
-- 착수 경고: <3개월 운영 데이터 축적 시 AI 경고 발생
+- Phase 9 Sprint 3 완료 (백테스트 데이터셋)
+- **Phase 9 Sprint 3 완료 + 2개월(40거래일) 축적 시 의무 착수** (대안 C만 가능)
+- 본격 Cubic Spline 피팅은 3개월+ 축적 필요
+- 이상적 운영 6개월+ (계절성 검증)
+- 착수 경고: 2개월 미만 시 강행 금지
 
 ### 작업 목록
-#### Sprint 1: U자형 함수 피팅
-- 축적 데이터로 시간대별 누적 비율 함수 추정
-- 교차 검증으로 과적합 방지
+#### Sprint 1: U자형 함수 피팅 (초기)
+- 축적 데이터 EDA
+- **Cubic Spline** (knot 5개: 09:00/10:00/11:30/13:30/14:30 — 박퀀트 Q1)
+- **TimeSeriesSplit, n=5** (look-ahead bias 제거 — 박퀀트 Q2)
+- R² 기준: 대안 C(N/A) / Cubic Spline 0.85(3개월)·0.90(6개월)
+- R² 미달 시 Cubic Spline 강행 금지, 대안 C(슬롯별 상수 보정)만 유지
 
-#### Sprint 2: 비선형 보정 적용
-- momentum_breakout 전략에 f(t) 교체
-- 선형 vs 비선형 A/B 비교 프레임워크
+#### Sprint 2: 비선형 보정 적용 + A/B (점진 전환)
+- A/B 분할: **10:90 (1주) → 30:70 (2주) → 50:50 (1개월)** — 최리스크 R1
+- 다층 롤백: **-5%(경고) / -10%(1차) / -15%(2차) / -20%(전면)** — 최리스크 R2
+- A/B 기간 VIX/코스피 변동성 로깅 (김단타 D4)
+- 통계 유의성 검정: t-test/Mann-Whitney p<0.05 (박퀀트 Q4)
+- 진입/청산 f(t) 분리 적용 (14:30 급증 구간 특성 — 김단타 D1)
+- Phase 9 Sprint 3 데이터셋으로 사전 백테스트 (박퀀트 Q5)
 
-#### Sprint 3: 실증 검증
-- 백테스트 + 모의거래 비교
-- 파라미터 안정성 확인 (계절별)
+#### Sprint 3: 실증 검증 + 안정성
+- 재피팅 시 계수 변화 < 20% 확인
+- 분기별 자동 재피팅 스케줄러 (계절성 대응 — 최리스크·박퀀트 Q6)
+- 주간 R² + 계수 변화율 + MDD 트렌드 모니터링
 
 ### 완료 기준 (Definition of Done)
-- U자형 함수 R-squared > 0.95
+- 축적 데이터 EDA + Cubic Spline 또는 대안 C 피팅, R² 기준 달성
+- TimeSeriesSplit 교차 검증 validation R² 하락 < 10%
+- A/B 점진 전환 동작 + 다층 롤백 트리거 동작
+- 통계 유의성 p<0.05 검증
 - 선형 대비 장 중반부 편향 50% 이상 감소
-- 교차 검증 표본 외 성능 열화 < 10%
-- 점진 전환 (50:50 비율) 후 1개월 관찰
+- pytest 전체 통과
 
 ### 기술 고려사항
-- 과적합 최대 리스크: 3개월 미만 데이터로 피팅하면 특정 시장 국면에 과적합
-- 계절성: 분기별 거래 패턴 변화 미포착 가능
-- 의존성: Phase 8 (VWAP 엔진 + 백테스트 데이터셋)
-- **데이터 의존성**: 실전 운영 3~6개월 축적 필수 (가장 긴 대기 기간)
+- 데이터 부족 상태의 강행 금지 (대안 C만 적용)
+- 분기별 재피팅으로 계절성 대응
+- 피라미딩(당일 고가 갱신 진입) + 2차 스크리닝 하이브리드는 **Phase 10.1**로 분리 (정프로 P1)
 
-> Phase 상세 계획: `docs/phase/phase9/phase9.md` (초안 작성 완료)
-> Sprint 문서: `docs/phase/phase9/sprint{N}/sprint{N}.md` (sprint-planner가 생성)
+> Phase 상세 계획: `docs/phase/phase10/phase10.md` ✅ 계획 수립 완료 (2026-04-20)
+> 전문가 검토: 정프로(PO), 최리스크(리스크관리), 박퀀트(퀀트), 김단타(단타) — 4명
+
+---
+
+## Phase 10.1: 누적 백로그 통합 (Sprint 1~2, 예정) 📋
+
+### 목표
+Phase 10 완료 + 3개월 안정 운영 후 착수. Phase 4~10 리뷰에서 의도적으로 보류했던 장기 고도화 항목 일괄 처리.
+
+### 범위
+- **당일 고가 갱신 진입 (피라미딩)** — position_size 30%, +3% 이상 이익 조건, 14:00 비활성, 호가 매수/매도 잔량 비율 0.5+ (김단타+최리스크 강력 권고)
+- **2차 스크리닝 하이브리드** — 상대 백분위 70% + 절대 점수 30%, 절대 70점 하한, 전일 대비 -5% 이하 제외 (Phase 7.0 미해결 #10 근본 해결)
+- **기타 ⚠️ 백로그** — Phase 4~10 리뷰 리포트 ⚠️ 항목 점검
+
+### 필요 선행 데이터
+- Phase 10 Sprint 3 완료 + 3개월 이상 안정 운영
+
+### 완료 기준 (Definition of Done)
+- 피라미딩 로직 + 1주 모의 검증 + LIVE 배포
+- 하이브리드 스크리닝 동작
+- 누적 백로그 전원 처리 또는 Won't 결정
+
+> Phase 상세: Phase 10 완료 후 계획 수립
+> 향후 phase-planner 재호출 예정
 
 ---
 

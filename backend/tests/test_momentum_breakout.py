@@ -109,23 +109,23 @@ async def test_low_trade_strength_returns_rejected(mock_progress):
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
-async def test_gap_switches_to_daily_high(mock_progress):
-    """갭 3%+ 시 당일 고가 기준으로 전환."""
+async def test_gap_switches_to_open_price(mock_progress):
+    """갭 3%+ 시 돌파 기준이 open_price(당일 시가)로 전환된다."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
-    # 갭: (72000 - 69500) / 69500 = 3.6% -> 돌파 기준이 당일 high로 전환
-    # current_price=74000 > high=73000 -> 돌파
+    # 갭: (72000 - 69500) / 69500 = 3.6% -> breakout_ref = open_price = 72000
+    # current_price=74000 > open_price=72000 -> 돌파
     snapshot = _make_snapshot(
         open_price=72000,
         prev_close=69500,
-        high=73000,
+        high=74000,
         current_price=74000,
     )
     result = await strategy.generate_signal(snapshot)
     assert result is not None
 
-    # current_price=72000 < high=73000 -> 미돌파
+    # current_price=72000 <= open_price=72000 -> 미돌파
     snapshot2 = _make_snapshot(
         open_price=72000,
         prev_close=69500,
@@ -452,3 +452,64 @@ async def test_min_volume_floor_passes_but_fails_threshold(mock_progress):
     result = await strategy.generate_signal(snapshot)
     assert isinstance(result, RejectedSignal)
     assert result.stage == "volume_threshold"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_gap_breakout_uses_open_price_as_ref(mock_progress):
+    """갭 3%+ 시 breakout_ref가 open_price(시가)로 설정되어 시가 돌파 시 신호 생성."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    strategy = MomentumBreakoutStrategy()
+    # gap_rate = (72000 - 69500) / 69500 ≈ 3.6% -> 갭 경로
+    # current_price == high (자기돌파 시나리오) -> open_price 기준이면 돌파, high 기준이면 거부
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=72000,
+        high=72600,
+        current_price=72600,
+        prev_high=70500,
+    )
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_non_gap_uses_prev_high_as_ref(mock_progress):
+    """갭 3% 미만 시 breakout_ref가 prev_high(전일 고가)로 유지된다."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    strategy = MomentumBreakoutStrategy()
+    # gap_rate = (70000 - 69500) / 69500 ≈ 0.7% -> 비갭 경로
+    # current_price=70800 > prev_high=70500 -> 돌파 -> 신호 생성
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=70000,
+        high=70800,
+        current_price=70800,
+        prev_high=70500,
+    )
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_gap_breakout_rejects_when_price_below_open(mock_progress):
+    """갭 3%+ 이지만 current_price < open_price인 경우 breakout 단계에서 거부."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    strategy = MomentumBreakoutStrategy()
+    # gap_rate = (72000 - 69500) / 69500 ≈ 3.6% -> 갭 경로
+    # current_price=71500 < open_price=72000 -> 시가 미돌파 -> 거부
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=72000,
+        high=72000,
+        current_price=71500,
+        prev_high=70500,
+    )
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "breakout"

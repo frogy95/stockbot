@@ -20,6 +20,9 @@ def _make_execution_body(
     acml_volume: int = 5000000,
     trade_strength: float = 100.0,
     sell_or_buy: str = "1",
+    open_price: int = 69500,
+    high: int = 70100,
+    low: int = 69000,
 ) -> str:
     """체결 데이터 본문 생성 (KIS H0STCNT0 실제 필드 구조, 22개+)."""
     fields = [""] * 24
@@ -29,6 +32,9 @@ def _make_execution_body(
     fields[3] = change_sign
     fields[4] = str(change)
     fields[5] = str(change_rate)
+    fields[7] = str(open_price)
+    fields[8] = str(high)
+    fields[9] = str(low)
     fields[12] = str(volume)
     fields[13] = str(acml_volume)
     fields[18] = str(trade_strength)  # CTTR (KIS 체결강도)
@@ -122,6 +128,22 @@ def test_parse_execution_invalid():
     assert parse_execution("") is None
     assert parse_execution(None) is None
     assert parse_execution("too^few^fields") is None
+
+
+def test_parse_execution_extracts_ohlc():
+    body = _make_execution_body(open_price=69500, high=70100, low=69000)
+    result = parse_execution(body)
+
+    assert result is not None
+    assert result.open_price == 69500
+    assert result.high == 70100
+    assert result.low == 69000
+
+
+def test_parse_execution_handles_missing_ohlc_fields():
+    # 필드가 10개 미만이면 None 반환 (기존 동작 유지)
+    short_body = "^".join(["val"] * 9)
+    assert parse_execution(short_body) is None
 
 
 # ── parse_orderbook ─────────────────────────────────────

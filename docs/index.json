@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-20T09:00:00+09:00",
+  "lastUpdated": "2026-04-20T16:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2546,48 +2546,140 @@
     },
     {
       "id": "phase7.2",
-      "title": "매매 전략 진입 조건 개선",
-      "status": "planned",
+      "title": "매매 전략 진입 조건 개선 (Phase 8로 흡수)",
+      "status": "merged-into-phase8",
       "phaseDoc": "docs/phase/phase7.2/phase7.2.md",
-      "sprints": []
-    },
-    {
-      "id": "phase7.1",
-      "title": "5분봉 거래량 가속도 지표",
-      "status": "planned",
-      "phaseDoc": "docs/phase/phase7.1/phase7.1.md",
-      "dataPrerequisite": {
-        "source": "phase6.1",
-        "type": "5분봉 거래량 Redis (vol5m:*)",
-        "minAccumulation": "20거래일",
-        "warningThreshold": "<20거래일"
-      },
+      "note": "2026-04-20 재편성. 확정 계획은 Phase 8 Sprint 1·2에 승계. 리뷰 리포트는 경로 유지.",
       "sprints": []
     },
     {
       "id": "phase8",
-      "title": "동시간대 Z-score + VWAP 포지션",
-      "status": "planned",
+      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + 관리 UI + 성과 분석)",
+      "status": "in_progress",
       "phaseDoc": "docs/phase/phase8/phase8.md",
+      "reviews": [
+        "docs/phase/phase8/phase8-po-review.md",
+        "docs/phase/phase8/phase8-risk-review.md",
+        "docs/phase/phase8/phase8-daytrader-review.md",
+        "docs/phase/phase8/phase8-quant-review.md"
+      ],
+      "sprints": [
+        {
+          "id": "sprint1",
+          "title": "장중 OHLC 파싱 + 갭 분기 수정",
+          "status": "completed",
+          "branch": "phase8-sprint1",
+          "sprintDoc": "docs/phase/phase8/sprint1/sprint1.md",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/149",
+          "completedAt": "2026-04-20",
+          "lastUpdated": "2026-04-20T00:00:00+09:00",
+          "progress": {
+            "total": 6,
+            "completed": 6
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "KIS 체결 파서 OHLC 3필드 확장",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-1-kis-체결-파서-ohlc-3필드-확장",
+              "testPlan": "pytest tests/test_kis_realtime.py -v (open_price/high/low 추출 + 미수신 폴백)",
+              "testResult": "10 passed",
+              "status": "completed",
+              "commits": ["a4e749f"]
+            },
+            {
+              "id": "task2",
+              "title": "Scheduler WS 메시지 Redis 캐싱 3필드 추가",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-2-scheduler-ws-메시지-redis-캐싱-3필드-추가",
+              "testPlan": "pytest tests/test_scheduler.py -v -k realtime (realtime:{code}:execution JSON에 OHLC 3키)",
+              "testResult": "4 passed",
+              "status": "completed",
+              "commits": ["7e61d70"]
+            },
+            {
+              "id": "task3",
+              "title": "Realtime Screener candidate dict OHLC 전파",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-3-realtime-screener-candidate-dict-ohlc-전파",
+              "testPlan": "pytest tests/test_realtime_screener.py -v (passed_candidates/factor_candidates 2블록 모두 OHLC 전달)",
+              "testResult": "15 passed",
+              "status": "completed",
+              "commits": ["61a1d63"]
+            },
+            {
+              "id": "task4",
+              "title": "SignalGenerator snapshot Redis 실시간 값 우선 사용",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-4-signalgenerator-snapshot-redis-실시간-값-우선-사용",
+              "testPlan": "pytest tests/test_signal_generator.py -v (실시간 OHLC 우선 + 폴백 유지)",
+              "testResult": "7 passed",
+              "status": "completed",
+              "commits": ["5105cbf"]
+            },
+            {
+              "id": "task5",
+              "title": "Momentum Breakout 갭 분기 breakout_ref 교정",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-5-momentum-breakout-갭-분기-breakout_ref-교정",
+              "testPlan": "pytest tests/test_momentum_breakout.py -v (갭 3%+ 시 open_price 기준, 비갭은 prev_high 유지)",
+              "testResult": "21 passed",
+              "status": "completed",
+              "commits": ["07de490"]
+            },
+            {
+              "id": "task6",
+              "title": "통합 회귀 + 수동 검증 가이드",
+              "path": "docs/phase/phase8/sprint1/sprint1.md#task-6-통합-회귀-수동-검증-가이드-작성",
+              "testPlan": "docker compose exec backend pytest -v 전체 PASS + validation-notes.md 작성",
+              "testResult": "854 passed (1 pre-existing fail)",
+              "status": "completed",
+              "commits": ["5515317"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase9",
+      "title": "동시간대 Z-score + VWAP + 5분봉 가속도 지표",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase9/phase9.md",
+      "reviews": [
+        "docs/phase/phase9/phase9-po-review.md",
+        "docs/phase/phase9/phase9-risk-review.md",
+        "docs/phase/phase9/phase9-quant-review.md",
+        "docs/phase/phase9/phase9-api-review.md"
+      ],
       "dataPrerequisite": {
-        "source": "phase7.1",
-        "type": "시간대별 거래량 DB + VWAP 틱데이터",
-        "minAccumulation": "20거래일",
-        "warningThreshold": "<20거래일"
+        "source": "phase8",
+        "type": "매매 신호 복구 (Sprint 1·2). Z-score는 KIS 과거 분봉 백필 + 점진 활성화로 축적 대기 완화.",
+        "minAccumulation": "Phase 8 Sprint 1·2 완료 (데이터 축적 완전 대기 불필요)",
+        "warningThreshold": "Z-score 가중치 100% 활성화는 30거래일+ 축적 시점"
       },
       "sprints": []
     },
     {
-      "id": "phase9",
+      "id": "phase10",
       "title": "U자형 비선형 보정",
       "status": "planned",
-      "phaseDoc": "docs/phase/phase9/phase9.md",
+      "phaseDoc": "docs/phase/phase10/phase10.md",
+      "reviews": [
+        "docs/phase/phase10/phase10-po-review.md",
+        "docs/phase/phase10/phase10-risk-review.md",
+        "docs/phase/phase10/phase10-quant-review.md",
+        "docs/phase/phase10/phase10-daytrader-review.md"
+      ],
       "dataPrerequisite": {
-        "source": "phase8",
-        "type": "실전 운영 데이터 전체",
-        "minAccumulation": "3~6개월 (60~120거래일)",
-        "warningThreshold": "<3개월"
+        "source": "phase9",
+        "type": "Phase 9 Sprint 3 완료 + 축적 운영 데이터 (함수 피팅 목적, 완화 불가)",
+        "minAccumulation": "2개월(40거래일, 대안 C) / 3개월(60거래일, 본격 피팅) / 6개월(계절성)",
+        "warningThreshold": "<2개월 강행 금지"
       },
+      "sprints": []
+    },
+    {
+      "id": "phase10.1",
+      "title": "누적 백로그 통합 (피라미딩, 2차 스크리닝 하이브리드)",
+      "status": "planned",
+      "phaseDoc": null,
+      "note": "Phase 10 Sprint 3 완료 + 3개월 안정 운영 후 phase-planner 재호출 예정",
       "sprints": []
     }
   ],
@@ -2830,6 +2922,24 @@
         {
           "hash": "77b00bf",
           "message": "fix(screening): 스크리닝 시각 API 응답에 screened_at 필드 누락 수정",
+          "date": "2026-04-20"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-realtime-screener-tracking-error-missing",
+      "name": "2차 스크리닝 ETF tracking_error_factor KeyError 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/realtime-screener-tracking-error-missing/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/146",
+      "deployedAt": "2026-04-20",
+      "description": "realtime_screener.py의 factor_candidates 조립 시 ETF용 tracking_error_factor 필드 누락으로 FactorScorer가 ETF 후보 처리 중 KeyError를 발생시켜 2차 스크리닝 전면 중단. 중립값 0.0 스텁 1줄 추가로 파이프라인 복구. Phase 4.10에서 NAV 실시간 수집 기반 정식 계산으로 근본 해결 예정.",
+      "commits": [
+        {
+          "hash": "3215d0f",
+          "message": "fix(screener): 2차 스크리닝 ETF 후보 tracking_error_factor 누락 KeyError 수정",
           "date": "2026-04-20"
         }
       ]

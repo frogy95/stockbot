@@ -226,3 +226,58 @@ async def test_build_snapshot_assembly(
     assert snapshot.prev_close == 69500
     assert snapshot.prev_high == 70500
     assert len(snapshot.recent_highs) == 5
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_prefers_realtime_ohlc(
+    mock_session_factory, mock_redis, mock_strategy
+):
+    """candidate에 실시간 OHLC가 있으면 snapshot이 해당 값을 사용한다 (prev_close 폴백 아님)."""
+    from modules.trading.signal_generator import SignalGenerator
+
+    factory, session = mock_session_factory
+    mock_no_dup = MagicMock()
+    mock_no_dup.scalars.return_value.first.return_value = None
+    session.execute = AsyncMock(return_value=mock_no_dup)
+
+    candidate = _make_candidate(
+        prev_close=69500,
+        open_price=72000,
+        high=73500,
+        low=71500,
+    )
+
+    gen = SignalGenerator(factory, mock_redis, mock_strategy)
+    await gen.generate_signals([candidate])
+
+    snapshot = mock_strategy.generate_signal.call_args[0][0]
+    assert snapshot.open_price == 72000
+    assert snapshot.high == 73500
+    assert snapshot.low == 71500
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_falls_back_when_ohlc_missing(
+    mock_session_factory, mock_redis, mock_strategy
+):
+    """candidate에 OHLC 키가 없거나 0이면 prev_close/current_price 폴백이 유지된다."""
+    from modules.trading.signal_generator import SignalGenerator
+
+    factory, session = mock_session_factory
+    mock_no_dup = MagicMock()
+    mock_no_dup.scalars.return_value.first.return_value = None
+    session.execute = AsyncMock(return_value=mock_no_dup)
+
+    candidate = _make_candidate(
+        current_price=70000,
+        prev_close=69500,
+        # open_price/high/low 키 없음 — 폴백 경로
+    )
+
+    gen = SignalGenerator(factory, mock_redis, mock_strategy)
+    await gen.generate_signals([candidate])
+
+    snapshot = mock_strategy.generate_signal.call_args[0][0]
+    assert snapshot.open_price == 69500
+    assert snapshot.high == 70000
+    assert snapshot.low == 70000

@@ -5,24 +5,20 @@
 > - **sprint-review** 에이전트가 코드 리뷰와 자동 검증 결과를 이 파일에 기록합니다.
 > - 완료된 항목은 `✅`, 미완료 항목은 `⬜`로 표시합니다.
 
-### 프로덕션 배포 - v2.2.0 (2026-04-20)
+### Sprint 1 완료 — Phase 8 장중 OHLC 파싱 + 갭 분기 수정 (2026-04-20)
 
-포함 변경: PR #144 (전략 거부 관측성 개선), PR #143 (역머지), PR #139/#140 (docs/.claude 재편)
-PR: https://github.com/frogy95/stockbot/pull/145
+PR: https://github.com/frogy95/stockbot/pull/149 (→ develop)
 
-- ⬜ Vercel 프론트엔드 자동 배포 (PR #145 머지 후 자동)
-- ⬜ Railway 백엔드 자동 배포 (PR #145 머지 후 자동)
-
-#### 자동 검증 (배포 완료 후 실행 예정)
-
-- ⬜ `curl -s https://api.stockbot.choiji.kr/api/v1/health` → `{"status":"healthy"}` 확인
-- ⬜ Railway 로그 오류 없음 확인 (`railway logs --lines 30 --since 5m`)
-- ⬜ 프론트엔드 메인 페이지 접속 확인 (`curl -s -o /dev/null -w "%{http_code}" https://stockbot.choiji.kr`)
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
 
 #### 수동 검증 필요 항목
 
-- DB 스키마 변경 없음 — Alembic 마이그레이션 불필요
-- 신규 환경변수 없음 — Railway 환경변수 변경 불필요
+- ⬜ `docker compose up --build` 로컬 스테이징 검증
+- ⬜ 배포 직후 Redis `realtime:{code}:execution` JSON OHLC 3필드 존재 확인
+- ⬜ 1~2시간 장중 모니터링 — 파싱 경고 비율 < 1%
+- ⬜ 샘플 5종목 실시간 OHLC를 KIS 공식 시세와 대조 (김단타 권고)
+- ⬜ 2거래일 연속 `momentum_breakout` 신호 1건 이상 생성 확인
 
 ---
 
