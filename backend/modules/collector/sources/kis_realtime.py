@@ -13,6 +13,10 @@ EXECUTION_FIELD_MAP = {
     "change_sign": 3,
     "change": 4,
     "change_rate": 5,
+    # 장중 OHLC — STCK_OPRC / STCK_HGPR / STCK_LWPR
+    "open_price": 7,
+    "high": 8,
+    "low": 9,
     "volume": 12,
     "acml_volume": 13,
     # 필드 15: SELN_CNTG_CSNU (매도체결건수)
@@ -54,6 +58,9 @@ class ExecutionData:
     acml_volume: int
     trade_strength: float  # KIS CTTR (매수/매도 × 100, 100=균형, >100=매수 우세)
     sell_or_buy: str  # "1"=매수체결, "5"=매도체결 (KIS CNTG_CLS_CODE)
+    open_price: int = 0  # 장중 시가 (STCK_OPRC)
+    high: int = 0        # 장중 고가 (STCK_HGPR)
+    low: int = 0         # 장중 저가 (STCK_LWPR)
 
 
 @dataclass
@@ -110,6 +117,9 @@ def parse_execution(body: str) -> ExecutionData | None:
             acml_volume=int(fields[fm["acml_volume"]]),
             trade_strength=float(fields[fm["trade_strength"]]),
             sell_or_buy=fields[fm["sell_or_buy"]].strip(),
+            open_price=int(op) if (op := fields[fm["open_price"]].strip()) else 0,
+            high=int(hi) if (hi := fields[fm["high"]].strip()) else 0,
+            low=int(lo) if (lo := fields[fm["low"]].strip()) else 0,
         )
     except (ValueError, IndexError) as e:
         logger.warning("체결 데이터 파싱 실패: %s", e)
