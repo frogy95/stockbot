@@ -24,6 +24,9 @@ def _make_execution_data(
     prev_volume: int = 50_000,
     change_rate: float = 3.0,
     trade_strength: float = 150.0,
+    open_price: int = 49000,
+    high: int = 50500,
+    low: int = 48500,
 ) -> str:
     """Redis realtime:{code}:execution 저장 형식 (KIS CTTR 포함)."""
     return json.dumps({
@@ -32,6 +35,9 @@ def _make_execution_data(
         "prev_volume": prev_volume,
         "change_rate": change_rate,
         "trade_strength": trade_strength,
+        "open_price": open_price,
+        "high": high,
+        "low": low,
     })
 
 
@@ -568,3 +574,88 @@ class TestSaveResults:
         assert count == 1
         assert session.add.call_count == 1
         session.commit.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# OHLC 전파 테스트
+# ---------------------------------------------------------------------------
+
+class TestOHLCPropagation:
+    """candidate dict에 open_price/high/low가 올바르게 전파되는지 확인."""
+
+    def _run_screen(self, execution_json: str):
+        """공통 screen() 실행 헬퍼."""
+        trade_calc = TradeStrengthCalculator(window_seconds=300)
+        redis_mock = AsyncMock()
+
+        async def mock_get(key: str):
+            if ":execution" in key:
+                return execution_json
+            if ":orderbook" in key:
+                return _make_orderbook_data()
+            return None
+
+        redis_mock.get = AsyncMock(side_effect=mock_get)
+        screener = _make_screener(redis_client=redis_mock, trade_calc=trade_calc)
+        return screener, redis_mock
+
+    @pytest.mark.asyncio
+    async def test_screen_propagates_ohlc_to_candidate(self):
+        """Redis execution JSON에 OHLC가 있으면 candidate에 동일 값이 전달된다."""
+        execution_json = _make_execution_data(open_price=69500, high=70200, low=69000)
+        screener, _ = self._run_screen(execution_json)
+        session = AsyncMock()
+
+        mock_now = datetime(2026, 3, 29, 10, 0, 0)
+        with patch("modules.screening.realtime_screener.datetime") as mock_dt, \
+             patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mock_market, \
+             patch.object(screener, "save_results", new_callable=AsyncMock) as mock_save:
+            mock_dt.now.return_value = mock_now
+            mock_dt.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            mock_stock.return_value = {"005930": {"stock_name": "삼성전자", "stock_type": "STOCK"}}
+            mock_market.return_value = {
+                "005930": [
+                    {"close_price": 69000, "high_price": 70000, "low_price": 68000},
+                ] * 5
+            }
+            mock_save.return_value = 1
+            result = await screener.screen(["005930"], session)
+
+        assert len(result) == 1
+        assert result[0]["open_price"] == 69500
+        assert result[0]["high"] == 70200
+        assert result[0]["low"] == 69000
+
+    @pytest.mark.asyncio
+    async def test_screen_handles_missing_ohlc_fallback_to_zero(self):
+        """execution JSON에 OHLC 키가 없을 때 candidate에 0 기본값이 설정된다 (과거 Redis 호환)."""
+        execution_json = json.dumps({
+            "trade_strength": 150.0,
+            "change_rate": 2.0,
+            "price": 50000,
+            "acml_volume": 100000,
+        })
+        screener, _ = self._run_screen(execution_json)
+        session = AsyncMock()
+
+        mock_now = datetime(2026, 3, 29, 10, 0, 0)
+        with patch("modules.screening.realtime_screener.datetime") as mock_dt, \
+             patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mock_market, \
+             patch.object(screener, "save_results", new_callable=AsyncMock) as mock_save:
+            mock_dt.now.return_value = mock_now
+            mock_dt.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            mock_stock.return_value = {"005930": {"stock_name": "삼성전자", "stock_type": "STOCK"}}
+            mock_market.return_value = {
+                "005930": [
+                    {"close_price": 49000, "high_price": 50000, "low_price": 48000},
+                ] * 5
+            }
+            mock_save.return_value = 1
+            result = await screener.screen(["005930"], session)
+
+        assert len(result) == 1
+        assert result[0]["open_price"] == 0
+        assert result[0]["high"] == 0
+        assert result[0]["low"] == 0

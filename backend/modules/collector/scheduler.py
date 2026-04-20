@@ -1148,6 +1148,9 @@ class CollectorScheduler:
                         "change_rate": execution.change_rate,
                         "trade_strength": execution.trade_strength,
                         "sell_or_buy": execution.sell_or_buy,
+                        "open_price": execution.open_price,
+                        "high": execution.high,
+                        "low": execution.low,
                     }),
                     ttl=REALTIME_CACHE_TTL,
                 )
