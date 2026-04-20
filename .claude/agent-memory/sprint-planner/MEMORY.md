@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-16 업데이트)
+## 스프린트 현황 (2026-04-20 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -57,11 +57,14 @@
 
 - Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
 
+- Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), 🔄 계획 수립 완료 (2026-04-20)
+
 ## 다음 사용 가능한 스프린트
 
-- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 7.0.1 완료 후, 배포 + ws_connected=True 확인 선행)
-- Phase 7.1 Sprint 1 — 5분봉 가속도 지표 (Phase 6.1 배포 + 20거래일 축적 후, 최소 2026-05-12 이후)
-- Phase 5 Sprint 3 — 성과 분석 대시보드
+- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
+- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 + 신호 1건+ 확인 선행)
+- Phase 8 Sprint 3 — 시스템 관리 UI (Sprint 1 배포 후 순차)
+- Phase 8 Sprint 4 — 성과 분석 보강 (Sprint 3 완료 후)
 
 ## 핵심 주의사항
 
@@ -198,6 +201,13 @@
 - Phase 6 Sprint 1: is_trading_day() 가드 대상 2개: _run_scheduled_pipeline, _market_open (Sprint 2에서 나머지)
 - Phase 6 Sprint 1: test_connect_websocket_url 기존 테스트가 open_timeout=10 추가로 assert 수정 필요
 - Phase 6 Sprint 1: test_scheduler_phase6.py 신규 생성 — _make_scheduler 패턴 재사용 (tests/test_scheduler.py의 conftest.FakeRedis)
+- Phase 8 Sprint 1: EXECUTION_FIELD_MAP idx 7/8/9 = STCK_OPRC/STCK_HGPR/STCK_LWPR (KIS H0STCNT0) — 확정 (Phase 7.2 승계). 배포 후 1~2시간 샘플 5종목 KIS 공식 시세 대조 필수 (김단타 권고)
+- Phase 8 Sprint 1: scheduler.py ~1141줄 `realtime:{code}:execution` JSON 구조에 open_price/high/low 3키 추가. set_json 호출 위치 1곳만
+- Phase 8 Sprint 1: realtime_screener.py candidate dict 확장 지점 2곳 — passed_candidates.append(~102줄) + factor_candidates.append(~165줄). 누락 시 signal_generator에서 항상 폴백 진입
+- Phase 8 Sprint 1: signal_generator._build_snapshot() 137~142줄은 이미 `candidate.get("open_price") or prev_close or current_price` 우선 정책. 코드 변경 없이 주석만 업데이트하면 되고, candidate에 값이 흐르면 자동으로 실시간 우선
+- Phase 8 Sprint 1: momentum_breakout.py 86~90줄 1줄 교체 (`snapshot.high` → `snapshot.open_price`). `reason` dict의 breakout_ref 키는 유지 — 값만 바뀌므로 로깅 형식 변경 없음
+- Phase 8 Sprint 1: `.get("open_price", 0)` 폴백 + `or prev_close` 체인으로 과거 Redis 캐시 혼재 자동 처리 (0 falsy)
+- Phase 8 Sprint 1: 리스크 게이트(daily_trade_count / 반 포지션 / 다층 진입)는 Sprint 1 범위 아님 — Sprint 2로 이월
 - Phase 6.1 Sprint 1: momentum_breakout.py에 calc_market_progress() 함수 추가 — now_kst 파라미터로 테스트 주입 가능하게 설계
 - Phase 6.1 Sprint 1: RedisClient에 INCRBY/HINCRBY 미노출 — volume_aggregator는 GET-수정-SET 패턴 사용 (단일 프로세스 race condition 없음)
 - Phase 6.1 Sprint 1: scheduler._process_realtime_data의 H0STCNT0 분기에 volume_aggregator 호출 추가 — try/except로 감싸서 집계 실패가 실시간 처리 방해 금지
