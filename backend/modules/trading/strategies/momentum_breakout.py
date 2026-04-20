@@ -4,7 +4,12 @@ from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from modules.screening.factors import calc_volatility_factor
-from modules.trading.strategy import MarketSnapshot, Strategy, TradeSignalData
+from modules.trading.strategy import (
+    MarketSnapshot,
+    RejectedSignal,
+    Strategy,
+    TradeSignalData,
+)
 
 # ATR 필터: 현재가 대비 ATR 비율이 이 값을 초과하면 제외
 ATR_FILTER_PCT = 0.05
@@ -17,6 +22,9 @@ MARKET_MINUTES = 390  # 09:00 ~ 15:30 = 6h30m
 # 시간가중 거래량 보정 상수
 MIN_MARKET_PROGRESS = 0.15  # 장 초반 거래량 하한 보정 계수
 MIN_VOLUME_FLOOR = 0.5  # 전일 대비 절대 거래량 하한
+
+# 최소 신뢰도 (signal_generator의 MIN_CONFIDENCE와 동일)
+MIN_CONFIDENCE = 0.6
 
 _KST = ZoneInfo("Asia/Seoul")
 
@@ -55,9 +63,19 @@ class MomentumBreakoutStrategy(Strategy):
     def name(self) -> str:
         return "momentum_breakout"
 
+    def _reject(
+        self, snapshot: MarketSnapshot, stage: str, detail: dict
+    ) -> RejectedSignal:
+        return RejectedSignal(
+            stock_code=snapshot.stock_code,
+            strategy_name=self.name,
+            stage=stage,
+            detail=detail,
+        )
+
     async def generate_signal(
         self, snapshot: MarketSnapshot
-    ) -> TradeSignalData | None:
+    ) -> TradeSignalData | RejectedSignal:
         # 갭 비율 결정
         gap_rate = (
             (snapshot.open_price - snapshot.prev_close) / snapshot.prev_close
@@ -73,15 +91,36 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 돌파 조건
         if snapshot.current_price <= breakout_ref:
-            return None
+            return self._reject(
+                snapshot,
+                "breakout",
+                {
+                    "current_price": snapshot.current_price,
+                    "breakout_ref": breakout_ref,
+                    "gap_rate": round(gap_rate, 4),
+                },
+            )
 
         # 거래량 조건: 전일 대비 시간가중 보정 + 돌파 강도 연동
         if snapshot.prev_volume == 0:
-            return None
+            return self._reject(
+                snapshot,
+                "prev_volume_zero",
+                {"prev_volume": 0},
+            )
 
         # 절대 거래량 하한 (너무 거래 없으면 제외)
         if snapshot.volume < snapshot.prev_volume * MIN_VOLUME_FLOOR:
-            return None
+            return self._reject(
+                snapshot,
+                "min_volume_floor",
+                {
+                    "volume": snapshot.volume,
+                    "prev_volume": snapshot.prev_volume,
+                    "floor_ratio": MIN_VOLUME_FLOOR,
+                    "required": int(snapshot.prev_volume * MIN_VOLUME_FLOOR),
+                },
+            )
 
         # 시간가중 보정
         progress = calc_market_progress()
@@ -98,18 +137,44 @@ class MomentumBreakoutStrategy(Strategy):
             volume_threshold = 2.0
 
         if adjusted_ratio < volume_threshold:
-            return None
+            return self._reject(
+                snapshot,
+                "volume_threshold",
+                {
+                    "adjusted_ratio": round(adjusted_ratio, 4),
+                    "volume_threshold": volume_threshold,
+                    "breakout_pct": round(breakout_pct, 4),
+                    "market_progress": round(progress, 4),
+                    "volume_ratio": round(snapshot.volume / snapshot.prev_volume, 4),
+                },
+            )
 
         # 체결강도 조건
         if snapshot.trade_strength < 100.0:
-            return None
+            return self._reject(
+                snapshot,
+                "trade_strength",
+                {
+                    "trade_strength": round(snapshot.trade_strength, 2),
+                    "required": 100.0,
+                },
+            )
 
         # ATR 필터
         atr = calc_volatility_factor(
             snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
         )
         if snapshot.current_price > 0 and atr / snapshot.current_price > ATR_FILTER_PCT:
-            return None
+            return self._reject(
+                snapshot,
+                "atr_filter",
+                {
+                    "atr": round(atr, 2),
+                    "current_price": snapshot.current_price,
+                    "atr_ratio": round(atr / snapshot.current_price, 4),
+                    "limit_ratio": ATR_FILTER_PCT,
+                },
+            )
 
         # 신뢰도 계산
         momentum_score = min(
@@ -129,8 +194,19 @@ class MomentumBreakoutStrategy(Strategy):
         )
 
         # 최소 임계값
-        if confidence < 0.6:
-            return None
+        if confidence < MIN_CONFIDENCE:
+            return self._reject(
+                snapshot,
+                "confidence",
+                {
+                    "confidence": round(confidence, 4),
+                    "required": MIN_CONFIDENCE,
+                    "momentum_score": round(momentum_score, 4),
+                    "volume_score": round(volume_score, 4),
+                    "strength_score": round(strength_score, 4),
+                    "orderbook_score": round(orderbook_score, 4),
+                },
+            )
 
         # 레버리지 여부 판별
         is_leverage = "레버리지" in snapshot.stock_name or "2X" in snapshot.stock_name

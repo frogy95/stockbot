@@ -10,7 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from core.models.market_data import MarketData
 from core.models.trading import TradeSignal
 from core.redis import RedisClient
-from modules.trading.strategy import MarketSnapshot, Strategy, TradeSignalData
+from modules.trading.strategy import (
+    MarketSnapshot,
+    RejectedSignal,
+    Strategy,
+    TradeSignalData,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,17 +62,16 @@ class SignalGenerator:
 
                 # 전략 적용
                 signal_data = await self._strategy.generate_signal(snapshot)
-                if signal_data is None:
+                if isinstance(signal_data, RejectedSignal):
                     skip_stats["strategy_none"] += 1
                     logger.info(
-                        "전략 미충족: %s cp=%d pc=%d ph=%d vol=%d pvol=%d ts=%.1f",
-                        stock_code, snapshot.current_price, snapshot.prev_close,
-                        snapshot.prev_high, snapshot.volume, snapshot.prev_volume,
-                        snapshot.trade_strength,
+                        "전략 거부 [%s]: %s detail=%s",
+                        signal_data.stage, stock_code,
+                        json.dumps(signal_data.detail, ensure_ascii=False),
                     )
                     continue
 
-                # 최소 신뢰도 필터
+                # 최소 신뢰도 필터 (전략 내부에서 이미 걸렀지만 이중 방어)
                 if signal_data.confidence < MIN_CONFIDENCE:
                     skip_stats["low_confidence"] += 1
                     logger.info(
@@ -75,6 +79,13 @@ class SignalGenerator:
                         stock_code, signal_data.confidence, MIN_CONFIDENCE,
                     )
                     continue
+
+                logger.info(
+                    "전략 통과 [%s]: %s confidence=%.3f entry=%d reason=%s",
+                    signal_data.strategy_name, stock_code,
+                    signal_data.confidence, signal_data.entry_price,
+                    json.dumps(signal_data.reason, ensure_ascii=False),
+                )
 
                 # DB 저장
                 record = TradeSignal(
