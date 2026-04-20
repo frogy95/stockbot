@@ -83,9 +83,10 @@ class MomentumBreakoutStrategy(Strategy):
             else 0.0
         )
 
-        # 돌파 기준: 갭 3%+ 시 당일 고가, 그 외 전일 고가
+        # 돌파 기준: 갭 3%+ 시 당일 시가(open_price), 그 외 전일 고가
+        # high 기준이면 current_price <= high가 항상 성립 → breakout 게이트가 전체 갭 종목을 거부
         if gap_rate >= 0.03:
-            breakout_ref = snapshot.high
+            breakout_ref = snapshot.open_price
         else:
             breakout_ref = snapshot.prev_high
 
