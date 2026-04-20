@@ -186,6 +186,8 @@ class RealtimeScreener:
                 "volatility_factor": volatility_factor,
                 "trade_strength_factor": trade_strength_factor,
                 "orderbook_ratio_factor": orderbook_ratio_factor,
+                # 2차 스크리닝은 실시간 NAV 미수집 — 중립값 0.0 (Phase 4.10에서 근본 해결 예정)
+                "tracking_error_factor": 0.0,
             })
 
         scored = self.scorer.score_candidates(factor_candidates)

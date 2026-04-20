@@ -488,6 +488,56 @@ class TestScoringIntegration:
         assert len(result) == 1
         assert result[0]["stock_code"] == "005930"
 
+    @pytest.mark.asyncio
+    async def test_etf_candidate_has_tracking_error_factor(self):
+        """ETF 후보가 섞여도 scorer KeyError 없이 통과해야 한다 (hotfix 회귀 방지).
+
+        과거 scorer.ETF_FACTORS에 tracking_error_factor가 필요한데
+        realtime_screener가 해당 키를 factor_candidates에 넣지 않아 KeyError 발생.
+        NAV 미수집 상태에서는 중립값 0.0 스텁 (Phase 4.10에서 근본 해결 예정).
+        """
+        trade_calc = TradeStrengthCalculator(window_seconds=300)
+        redis_mock = AsyncMock()
+
+        async def mock_get(key: str):
+            if ":execution" in key:
+                return _make_execution_data()
+            if ":orderbook" in key:
+                return _make_orderbook_data()
+            return None
+
+        redis_mock.get = AsyncMock(side_effect=mock_get)
+        screener = _make_screener(redis_client=redis_mock, trade_calc=trade_calc)
+        session = AsyncMock()
+
+        mock_now = datetime(2026, 3, 29, 10, 0, 0)
+        with patch("modules.screening.realtime_screener.datetime") as mock_dt, \
+             patch.object(screener, "_get_stock_info", new_callable=AsyncMock) as mock_stock, \
+             patch.object(screener, "_get_recent_market_data", new_callable=AsyncMock) as mock_market, \
+             patch.object(trade_calc, "get_strength", return_value=85.0):
+            mock_dt.now.return_value = mock_now
+            mock_dt.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            mock_stock.return_value = {
+                "069500": {"stock_name": "KODEX 200", "stock_type": "ETF"},
+            }
+            mock_market.return_value = {
+                "069500": [
+                    {"close_price": 30000, "high_price": 30500, "low_price": 29500},
+                    {"close_price": 30100, "high_price": 30600, "low_price": 29600},
+                    {"close_price": 30200, "high_price": 30700, "low_price": 29700},
+                    {"close_price": 30300, "high_price": 30800, "low_price": 29800},
+                    {"close_price": 30400, "high_price": 30900, "low_price": 29900},
+                ],
+            }
+
+            with patch.object(screener, "save_results", new_callable=AsyncMock) as mock_save:
+                mock_save.return_value = 1
+                result = await screener.screen(["069500"], session)
+
+        assert len(result) == 1
+        assert result[0]["stock_type"] == "ETF"
+        assert "tracking_error_factor" in result[0]["factors"]
+
 
 # ---------------------------------------------------------------------------
 # save_results 테스트
