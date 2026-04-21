@@ -25,6 +25,14 @@ async def get_risk_status(request: Request):
     return await risk_manager.get_risk_status()
 
 
+@router.post("/risk/reset")
+async def reset_risk_counters(request: Request):
+    """관리자 수동 리셋 — 연속 손절/쿨다운/비상정지 플래그 + 당일 시작 잔고 캐시 재설정."""
+    risk_manager = request.app.state.risk_manager
+    await risk_manager.reset_daily_counters()
+    return await risk_manager.get_risk_status()
+
+
 @router.get("/positions")
 async def get_positions(session: AsyncSession = Depends(get_db)):
     """활성 포지션 목록."""
