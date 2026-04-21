@@ -61,7 +61,14 @@
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후 착수)
+- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + **Sprint 1/Hotfix 이관 백로그** (Sprint 1 배포 + 2거래일 관찰 후 착수)
+  - Task1 (신규, A안 이관): OHLC 파싱 회귀 테스트 픽스처 — H0STCNT0 idx 7/8/9, 갭 3%+ 분기 `breakout_ref=open_price` 단위 테스트화
+  - Task2 (hotfix 후속, PR #153): 프론트 리스크 상태 페이지에 `POST /api/v1/trading/risk/reset` 리셋 버튼 연동
+  - Task3 (hotfix 후속): 엔진 차단 사유 텔레그램 알림 — engine.py 6개 차단 지점(manual/risk/balance/quantity/pipeline/entry_blocked)에 구조화 로그 + 선택적 텔레그램 발송으로 "왜 승인 요청 안 왔는지" 관측성 개선
+  - Task4 (원래 계획): 3단계 진입(prev_close/prev_high/gap_open) + breakout_tier, prev_close confidence 상한 0.75, 13:00 이후 prev_close 비활성, prev_close tier position_size 50%
+  - Task5 (원래 계획): 일일 거래 한도 10건/일, 13:00 이후 돌파 비활성 규칙 적용
+  - 참고: Sprint 2 착수 조건은 A안 확정 — `memory/project_next_tasks.md` 참조 (①②③만 필수, ④⑤ 이관)
+  - 참고: hotfix/risk-counter-reset (PR #153, 2026-04-21) 자동 리셋 wiring 검증 → 2026-04-22 09:00 로그 확인 후 Sprint 2 착수
 - Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 + 신호 1건+ 확인 선행)
 - Phase 8 Sprint 3 — 시스템 관리 UI (Sprint 1 배포 후 순차)
 - Phase 8 Sprint 4 — 성과 분석 보강 (Sprint 3 완료 후)
