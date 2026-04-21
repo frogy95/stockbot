@@ -778,6 +778,16 @@ class CollectorScheduler:
             logger.info("비거래일 스킵: step=market_open date=%s", today)
             return
         logger.info("장중 시작: WS 연결")
+
+        # 일일 리스크 카운터 초기화 — 연속 손절/쿨다운/비상정지 해제 + 당일 시작 잔고 캐시
+        # reset_daily_counters()가 기존에 어디서도 호출되지 않아 카운터가 영구 누적되는 버그 수정
+        if self._trading_engine is not None:
+            try:
+                await self._trading_engine._risk_manager.reset_daily_counters()
+                logger.info("일일 리스크 카운터 초기화 완료")
+            except Exception:
+                logger.exception("일일 리스크 카운터 초기화 실패")
+
         try:
             self._ws_client.set_on_data(self._on_realtime_data)
             self._ws_client.set_on_ws_failure(self._on_ws_reconnect_failure)
