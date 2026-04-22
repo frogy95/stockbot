@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-22T00:00:00+09:00",
+  "lastUpdated": "2026-04-22T11:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3069,6 +3069,24 @@
           "hash": "3215d0f",
           "message": "fix(screener): 2차 스크리닝 ETF 후보 tracking_error_factor 누락 KeyError 수정",
           "date": "2026-04-20"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-no-data-guard-log-level",
+      "name": "동시호가 no_data 가드 로그 DEBUG → INFO 승격",
+      "status": "deployed",
+      "path": "docs/hotfix/no-data-guard-log-level/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/159",
+      "deployedAt": "2026-04-22",
+      "description": "Railway 기본 로그 레벨(INFO)에서 scheduler.py의 동시호가 구간(15:10~15:30) no_data 가드 스킵 로그가 출력되지 않던 문제 수정. logger.debug → logger.info 1줄 변경으로 운영 모니터링 시 WS 재연결 억제 여부를 직접 확인 가능.",
+      "commits": [
+        {
+          "hash": "b58baa2",
+          "message": "fix(scheduler): 동시호가 no_data 가드 로그 DEBUG → INFO 승격",
+          "date": "2026-04-22"
         }
       ]
     }
