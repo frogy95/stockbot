@@ -49,11 +49,7 @@ export function ResetRiskButton({ tradingEnv, onResetSuccess }: ResetButtonProps
     setLoading(true);
     setError(null);
     try {
-      const result = await resetRiskCounters();
-      if (!result.ok) {
-        setError(result.message ?? "리셋 실패");
-        return;
-      }
+      await resetRiskCounters();
       setDone(true);
       onResetSuccess?.();
       setTimeout(onClose, 1200);

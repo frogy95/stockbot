@@ -127,14 +127,11 @@ export const metricsPaths = {
 };
 
 /**
- * Phase 8 Sprint 2: 리스크 일일 카운터 리셋 (Hotfix #153 API 소비)
- * 연속 손절 / 비상 정지 / 일일 거래 카운터를 초기화한다.
+ * 리스크 일일 카운터 리셋. 백엔드는 리셋 후 최신 risk_status dict를 반환한다.
+ * 실패 시 apiPost가 throw하므로, 이 함수가 resolve되면 성공으로 간주한다.
  */
-export async function resetRiskCounters(): Promise<{
-  ok: boolean;
-  message?: string;
-}> {
-  return apiPost<{ ok: boolean; message?: string }>(
+export async function resetRiskCounters(): Promise<Record<string, unknown>> {
+  return apiPost<Record<string, unknown>>(
     "/api/v1/trading/risk/reset",
     {}
   );
