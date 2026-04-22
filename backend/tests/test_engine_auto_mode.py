@@ -216,6 +216,223 @@ async def test_position_size_ratio_applied():
     assert result_half.invest_amount == int(result_full.invest_amount * 0.5)
 
 
+# ---------------------------------------------------------------------------
+# Phase 8 Sprint 2 Task 6: 차단 사유 구조화 로그 + 선택적 텔레그램 알림
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_structured_block_log_on_risk_blocked(caplog):
+    """risk_blocked 차단 시 구조화 필드 로그 기록."""
+    import logging as _logging
+
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    with caplog.at_level(_logging.INFO, logger="modules.trading.engine"):
+        await engine.process_screening_results([{"stock_code": "005930"}])
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert any(
+        "engine_block" in m and "risk_blocked" in m and "005930" in m for m in messages
+    )
+
+
+@pytest.mark.asyncio
+async def test_risk_blocked_triggers_telegram_alert():
+    """risk_blocked 차단 시 텔레그램 send_system_alert 호출."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_awaited_once()
+    call_args = notifier.send_system_alert.call_args
+    assert call_args[0][0] == "risk_warning"
+
+
+@pytest.mark.asyncio
+async def test_quantity_zero_does_not_trigger_telegram_alert():
+    """quantity_zero 차단은 로그만 남기고 텔레그램 알림 미발송."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(return_value=MagicMock(allowed=True))
+    engine._position_sizer.calculate = AsyncMock(
+        return_value=_make_position_size(quantity=0)
+    )
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_pipeline_unhealthy_triggers_telegram_alert():
+    """pipeline_unhealthy 차단은 send_system_alert 호출."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+
+    # redis.get override: pipeline_healthy=false
+    async def _get(key):
+        if key == "scheduler:pipeline_healthy":
+            return "false"
+        if key == "trading:mode":
+            return "auto"
+        return None
+
+    engine._redis.get = AsyncMock(side_effect=_get)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_block_alert_deduped_within_5min():
+    """동일 (stock_code, reason) 조합은 5분 내 재알림 방지."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    # 두 번째 호출에서 dedup 키가 존재한다고 가정
+    dedup_state = {"hit": False}
+
+    async def _get(key):
+        if key == "scheduler:pipeline_healthy":
+            return "true"
+        if key == "trading:mode":
+            return "auto"
+        if key.startswith("engine:block:dedup:"):
+            if dedup_state["hit"]:
+                return "1"
+            dedup_state["hit"] = True
+            return None
+        return None
+
+    engine._redis.get = AsyncMock(side_effect=_get)
+
+    # 첫 호출 → 알림 1회
+    await engine.process_screening_results([{"stock_code": "005930"}])
+    # 두 번째 호출 → dedup으로 스킵
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    assert notifier.send_system_alert.await_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 Sprint 2: breakout_tier 기반 size_ratio
+# ---------------------------------------------------------------------------
+
+
+def _make_signal_with_tier(tier: str, stock_code: str = "005930") -> TradeSignalData:
+    """breakout_tier를 포함한 TradeSignalData."""
+    return TradeSignalData(
+        stock_code=stock_code,
+        signal_type="buy",
+        strategy_name="momentum_breakout",
+        confidence=0.72,
+        reason={"breakout_tier": tier, "momentum_score": 0.5},
+        entry_price=73000,
+        stop_loss=71540,
+        take_profit=75190,
+    )
+
+
+@pytest.mark.asyncio
+async def test_prev_close_tier_applies_half_size_ratio():
+    """breakout_tier='prev_close' → position_sizer.calculate에 size_ratio=0.5 전달."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_close")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    engine._position_sizer.calculate.assert_called_once()
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 0.5
+
+
+@pytest.mark.asyncio
+async def test_prev_high_tier_keeps_size_ratio_1_0():
+    """breakout_tier='prev_high' → size_ratio=1.0 유지."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_high")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_gap_open_tier_keeps_size_ratio_1_0():
+    """breakout_tier='gap_open' → size_ratio=1.0 유지."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("gap_open")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_candidate_position_size_ratio_overrides_when_smaller():
+    """candidate.position_size_ratio=0.3 + prev_close tier → min(0.3, 0.5) = 0.3."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_close")
+    _setup_engine_basics(engine, signal)
+
+    candidate = {"stock_code": "005930", "position_size_ratio": 0.3}
+    await engine.process_screening_results([candidate])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 0.3
+
+
+@pytest.mark.asyncio
+async def test_missing_breakout_tier_defaults_to_prev_high_sizing():
+    """reason에 breakout_tier 없으면 prev_high 기본값으로 size_ratio=1.0."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal()  # reason에 breakout_tier 없음
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
 @pytest.mark.asyncio
 async def test_auto_mode_sends_notification():
     """auto 모드 주문 시 notifier.send_notification("자동 주문 알림" 포함) 발송."""

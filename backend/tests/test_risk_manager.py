@@ -60,6 +60,7 @@ def risk_manager(mock_session_factory, mock_redis):
         "no_entry_end": "09:30",
         "no_new_entry_time": "14:30",
         "risk_lock_during_trading": "true",
+        "daily_max_trade_count": "10",
     }
     rm._loaded = True
     return rm
@@ -302,3 +303,113 @@ def test_settings_locked_during_trading(risk_manager):
 
         with pytest.raises(RiskSettingsLocked):
             risk_manager.assert_settings_unlocked()
+
+
+# === Phase 8 Sprint 2: 일일 거래 횟수 한도 ===
+
+
+@pytest.mark.asyncio
+async def test_check_daily_trade_limit_returns_true_when_below_limit(
+    risk_manager, mock_redis
+):
+    """카운터=3, 한도=10 → 매매 가능."""
+    mock_redis.get = AsyncMock(return_value="3")
+    assert await risk_manager.check_daily_trade_limit() is True
+
+
+@pytest.mark.asyncio
+async def test_check_daily_trade_limit_returns_false_at_limit(
+    risk_manager, mock_redis
+):
+    """카운터=10, 한도=10 → 차단."""
+    mock_redis.get = AsyncMock(return_value="10")
+    assert await risk_manager.check_daily_trade_limit() is False
+
+
+@pytest.mark.asyncio
+async def test_check_daily_trade_limit_returns_true_when_no_counter(
+    risk_manager, mock_redis
+):
+    """Redis 카운터 없음 → 0으로 간주 → 매매 가능."""
+    mock_redis.get = AsyncMock(return_value=None)
+    assert await risk_manager.check_daily_trade_limit() is True
+
+
+@pytest.mark.asyncio
+async def test_incr_daily_trade_count_first_call_sets_ttl(
+    risk_manager, mock_redis
+):
+    """최초 호출 시 값=1 + TTL 86400초로 세팅."""
+    mock_redis.get = AsyncMock(return_value=None)
+    result = await risk_manager.incr_daily_trade_count()
+    assert result == 1
+    mock_redis.set.assert_awaited_once_with(
+        "risk:daily_trade_count", "1", ttl=86400
+    )
+
+
+@pytest.mark.asyncio
+async def test_incr_daily_trade_count_increments_existing(
+    risk_manager, mock_redis
+):
+    """기존 값=5에서 incr → 6."""
+    mock_redis.get = AsyncMock(return_value="5")
+    result = await risk_manager.incr_daily_trade_count()
+    assert result == 6
+    # 기존 값이 있을 때는 TTL 없이 값만 업데이트 (TTL은 최초 set에서만 설정)
+    mock_redis.set.assert_awaited_once_with(
+        "risk:daily_trade_count", "6"
+    )
+
+
+@pytest.mark.asyncio
+async def test_can_trade_blocks_when_daily_trade_limit_reached(
+    risk_manager, mock_redis, mock_session_factory
+):
+    """can_trade가 일일 거래 한도 초과 시 차단 + 사유에 '일일 거래 횟수' 포함."""
+    factory, session = mock_session_factory
+
+    # Redis: emergency=0, cooldown=없음, consec=0, daily_trade_count=10
+    async def _get(key: str) -> str | None:
+        if key == "risk:daily_trade_count":
+            return "10"
+        return None
+
+    mock_redis.get = AsyncMock(side_effect=_get)
+    mock_redis.ttl = AsyncMock(return_value=-2)
+
+    with patch("modules.trading.risk_manager.datetime") as mock_dt:
+        mock_dt.now.return_value = datetime(2026, 3, 30, 10, 0)
+        mock_dt.combine = datetime.combine
+        mock_dt.side_effect = lambda *a, **k: datetime(*a, **k)
+        result = await risk_manager.can_trade()
+
+    assert result.allowed is False
+    assert "일일 거래 횟수" in (result.reason or "")
+
+
+@pytest.mark.asyncio
+async def test_reset_daily_counters_clears_trade_count(risk_manager, mock_redis):
+    """reset_daily_counters 호출 시 daily_trade_count 키도 삭제."""
+    await risk_manager.reset_daily_counters()
+    mock_redis.delete.assert_any_await("risk:daily_trade_count")
+
+
+@pytest.mark.asyncio
+async def test_env_override_applies_lower_limit(
+    risk_manager, mock_redis, monkeypatch
+):
+    """DAILY_MAX_TRADE_COUNT_OVERRIDE=3 → 카운터=3에서 차단."""
+    monkeypatch.setattr("modules.trading.risk_manager.settings", type("S", (), {"DAILY_MAX_TRADE_COUNT_OVERRIDE": 3})())
+    mock_redis.get = AsyncMock(return_value="3")
+    assert await risk_manager.check_daily_trade_limit() is False
+
+
+@pytest.mark.asyncio
+async def test_env_override_none_falls_back_to_setting(
+    risk_manager, mock_redis, monkeypatch
+):
+    """DAILY_MAX_TRADE_COUNT_OVERRIDE=None이면 settings 테이블 값(10)으로 폴백."""
+    monkeypatch.setattr("modules.trading.risk_manager.settings", type("S", (), {"DAILY_MAX_TRADE_COUNT_OVERRIDE": None})())
+    mock_redis.get = AsyncMock(return_value="5")
+    assert await risk_manager.check_daily_trade_limit() is True

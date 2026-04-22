@@ -1,12 +1,25 @@
 """모멘텀 브레이크아웃 전략 테스트."""
 
+from datetime import datetime
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from modules.trading.strategy import MarketSnapshot, RejectedSignal, TradeSignalData
 
 _PATCH_PROGRESS = "modules.trading.strategies.momentum_breakout.calc_market_progress"
+_PATCH_NOW_KST = "modules.trading.strategies.momentum_breakout._now_kst"
+_KST = ZoneInfo("Asia/Seoul")
+_MORNING = datetime(2026, 4, 22, 10, 0, tzinfo=_KST)
+_AFTER_1300 = datetime(2026, 4, 22, 13, 30, tzinfo=_KST)
+
+
+@pytest.fixture(autouse=True)
+def _freeze_morning_kst():
+    """prev_close tier 13:00 가드가 전 테스트에 랜덤하게 영향주지 않도록 오전(10:00)으로 고정."""
+    with patch(_PATCH_NOW_KST, return_value=_MORNING):
+        yield
 
 
 # === 픽스처 ===
@@ -61,17 +74,21 @@ async def test_breakout_buy_signal(mock_progress):
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
 async def test_no_breakout_returns_rejected(mock_progress):
-    """전일 고가 미돌파 -> RejectedSignal(stage='breakout')."""
+    """어느 tier에서도 돌파 기준 미돌파 -> RejectedSignal(stage='breakout').
+
+    current_price=69000 < prev_close=69500 이므로 prev_close tier에서도 미돌파.
+    """
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
-    snapshot = _make_snapshot(current_price=70000)  # < prev_high=70500
+    snapshot = _make_snapshot(current_price=69000)
     result = await strategy.generate_signal(snapshot)
 
     assert isinstance(result, RejectedSignal)
     assert result.stage == "breakout"
-    assert result.detail["current_price"] == 70000
-    assert result.detail["breakout_ref"] == 70500
+    assert result.detail["current_price"] == 69000
+    assert result.detail["breakout_ref"] == 69500
+    assert result.detail["breakout_tier"] == "prev_close"
 
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
@@ -513,3 +530,233 @@ async def test_gap_breakout_rejects_when_price_below_open(mock_progress):
     result = await strategy.generate_signal(snapshot)
     assert isinstance(result, RejectedSignal)
     assert result.stage == "breakout"
+
+
+# === Phase 8 Sprint 2: 3단계 tier (gap_open / prev_close / prev_high) ===
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_gap_open_tier_sets_breakout_tier_and_uses_open_price(mock_progress):
+    """갭 3.5% + current_price = open+1% -> breakout_tier='gap_open', breakout_ref=open_price."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # gap_rate = (71925 - 69500) / 69500 = 3.49% -> gap_open
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=71925,
+        prev_high=70500,
+        current_price=72644,  # open_price + 1%
+        high=72644,
+        volume=40_000_000,
+        prev_volume=10_000_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "gap_open"
+    assert result.reason["breakout_ref"] == 71925
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_close_tier_requires_intraday_prev_close_breakout(mock_progress):
+    """gap < 3%, current_price > prev_close but <= prev_high -> prev_close tier."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # gap_rate ≈ 0.5%, current_price=70000 > prev_close=69500, <= prev_high=70500
+    # breakout_pct = (70000-69500)/69500*100 ≈ 0.72%
+    # prev_close tier threshold=2.5 -> volume_ratio 3.0배 필요
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=69850,
+        prev_high=70500,
+        current_price=70000,
+        high=70000,
+        volume=30_000_000,  # adjusted = 3.0 >= 2.5
+        prev_volume=10_000_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    # confidence 계산 결과에 따라 pass/reject 가능 — 중요한 건 tier가 prev_close로 설정되는 것
+    if isinstance(result, TradeSignalData):
+        assert result.reason["breakout_tier"] == "prev_close"
+        assert result.reason["breakout_ref"] == 69500
+    else:
+        # reject도 가능하지만 detail에 tier 있는 stage면 검증
+        assert result.stage != "breakout"  # breakout은 통과해야 함
+        if "breakout_tier" in result.detail:
+            assert result.detail["breakout_tier"] == "prev_close"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_high_tier_when_breaks_prev_high(mock_progress):
+    """gap < 3%, current_price > prev_high -> prev_high tier."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # gap_rate ≈ 0.7%, current_price=71000 > prev_high=70500
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=70000,
+        prev_high=70500,
+        current_price=71000,
+        high=71000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "prev_high"
+    assert result.reason["breakout_ref"] == 70500
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_close_tier_confidence_cap_0_75(mock_progress):
+    """prev_close tier는 만점 팩터여도 confidence <= 0.75."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # prev_close tier, 모든 팩터 만점에 가깝게
+    # current_price=74365 > prev_close=69500 -> breakout_pct=7.0% (momentum_score max * 0.7 = 0.7)
+    # 하지만 current_price > prev_high=74500이면 prev_high tier로 빠짐 — prev_high를 더 높게 설정
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=69700,  # gap_rate < 3%
+        prev_high=80000,  # current_price < prev_high 이어야 prev_close tier
+        current_price=74365,
+        high=74365,
+        volume=100_000_000,
+        prev_volume=10_000_000,
+        trade_strength=200.0,
+        total_bid_volume=10_000_000,
+        total_ask_volume=100_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "prev_close"
+    assert result.confidence <= 0.75
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_close_tier_momentum_score_scales_pct_7_times_0_7(mock_progress):
+    """prev_close tier momentum_score == min(pct/7.0, 1.0) * 0.7 — pct=7%에서 0.7."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # breakout_pct = (74365-69500)/69500*100 = 7.0%
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=69700,
+        prev_high=80000,
+        current_price=74365,
+        high=74365,
+        volume=30_000_000,
+        prev_volume=10_000_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "prev_close"
+    # momentum_score ≈ min(7.0/7.0, 1.0) * 0.7 = 0.7
+    assert abs(result.reason["momentum_score"] - 0.7) < 0.01
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_close_tier_volume_threshold_fixed_2_5(mock_progress):
+    """prev_close tier volume_threshold는 breakout_pct 무관하게 2.5 고정."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # breakout_pct = 7% (강 돌파) — gap_open/prev_high라면 threshold=1.5지만 prev_close는 2.5
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=69700,
+        prev_high=80000,
+        current_price=74365,
+        high=74365,
+        volume=24_000_000,  # adjusted=2.4 < 2.5 -> 차단
+        prev_volume=10_000_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "volume_threshold"
+    assert result.detail["volume_threshold"] == 2.5
+    assert result.detail["breakout_tier"] == "prev_close"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_prev_close_tier_disabled_after_1300_kst(mock_progress):
+    """13:00 이후 prev_close tier -> RejectedSignal(stage='prev_close_time_guard')."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    snapshot = _make_snapshot(
+        prev_close=69500,
+        open_price=69700,
+        prev_high=80000,
+        current_price=74365,
+        high=74365,
+    )
+    strategy = MomentumBreakoutStrategy()
+    with patch(_PATCH_NOW_KST, return_value=_AFTER_1300):
+        result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, RejectedSignal)
+    assert result.stage == "prev_close_time_guard"
+    assert result.detail["breakout_tier"] == "prev_close"
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_gap_breakout_uses_redis_realtime_ohlc(mock_progress):
+    """Phase 8 Sprint 2 Task 5 — snapshot.open_price는 Redis 실시간 OHLC 값.
+
+    gap_rate = (Redis open_price - prev_close) / prev_close 으로 계산되며,
+    WS H0STCNT0 idx 7 필드가 snapshot.open_price로 전달되어야 한다.
+    정확한 값 매핑은 test_kis_realtime의 field_offset_sanity와 병행 검증.
+    """
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # Redis 실시간으로부터 전달된 OHLC 값이라는 전제
+    realtime_open = 72000  # WS idx 7에서 읽힌 시가
+    prev_close = 69500
+    expected_gap_rate = (realtime_open - prev_close) / prev_close
+    assert expected_gap_rate >= 0.03  # gap_open tier 판정 전제
+
+    snapshot = _make_snapshot(
+        prev_close=prev_close,
+        open_price=realtime_open,
+        current_price=72720,  # open + 1%
+        high=72720,
+        prev_high=70500,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "gap_open"
+    assert result.reason["breakout_ref"] == realtime_open
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
+async def test_gap_open_tier_uses_existing_volume_threshold_logic(mock_progress):
+    """gap_open tier는 기존 breakout_pct 기반 volume_threshold 로직을 유지."""
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # gap_rate = 5% -> gap_open
+    # breakout_pct = (75600-72000)/72000*100 = 5.0% -> threshold=1.5
+    snapshot = _make_snapshot(
+        prev_close=68571,
+        open_price=72000,
+        prev_high=70500,
+        current_price=75600,
+        high=75600,
+        volume=16_000_000,  # adjusted=1.6 >= 1.5
+        prev_volume=10_000_000,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "gap_open"
+    assert result.reason["volume_threshold"] == 1.5

@@ -52,13 +52,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 Sprint 1 완료
-- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1 완료, Sprint 2~5 예정 (Sprint 3은 구 Phase 7.0 Sprint 3 이관분)
-- 현재 Sprint: Phase 8 Sprint 2 예정 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20)
+- 전체 진행률: Phase 0~8 Sprint 2 완료
+- 현재 Phase: Phase 8 (즉시 착수 개선 통합) — Sprint 1·2 완료, Sprint 3~5 예정 (Sprint 3은 구 Phase 7.0 Sprint 3 이관분)
+- 현재 Sprint: Phase 8 Sprint 3 예정 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후)
-- 후속 마일스톤: Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, Sprint 2 완료 후)
+- 다음 마일스톤: Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관)
+- 후속 마일스톤: Phase 8 Sprint 4 — 시스템 관리 UI (LIVE 전환 이후 운영 가시성)
 - 이후 마일스톤: Phase 8 Sprint 4 (시스템 관리 UI) → Sprint 5 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
 
@@ -1141,11 +1141,15 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - 계획 문서: `docs/phase/phase8/sprint1/sprint1.md` ✅ 완료 (2026-04-20)
 - pytest: 854 passed (1 pre-existing fail — test_ws_manager_env_max_subscriptions)
 
-#### Sprint 2: 다층 진입 조건 + 리스크 안전장치 (구 Phase 7.2 Sprint 2)
-- prev_close(1단계) + prev_high(2단계) 다층 진입
-- prev_close: confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5
-- 일일 최대 거래 10건 (Sprint 3 LIVE 전환 전 임시 3건/일, 포지션 1건 상한 — 최리스크 R2)
+#### Sprint 2: 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 ✅ (2026-04-22 완료)
+> Sprint 계획: `docs/phase/phase8/sprint2/sprint2.md` (2026-04-22)
+- prev_close(1단계) + prev_high(2단계) + gap_open 3단계 진입 (breakout_tier 메타데이터)
+- prev_close: confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5 고정
+- 일일 최대 거래 10건 (Sprint 3 LIVE 전환 전 env override 3건/일)
 - 13:00 이후 prev_close 돌파 비활성화
+- Sprint 1 OHLC 회귀 테스트 픽스처 강화 + engine 차단 사유 관측성
+- Hotfix PR #153 프론트 리스크 리셋 버튼 연동 (2단계 확인 + LIVE 배지)
+- 2026-04-21 신규 버그 3종: WS false-positive 재연결 가드(동시호가 스킵), 재연결 알림 dedup, 일일 리포트 중복 차단
 
 #### Sprint 3: E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, 2026-04-20)
 - Paper 모드 E2E 1사이클 완전 성공 (주문→체결→포지션→가격갱신→청산)
