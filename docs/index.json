@@ -2647,6 +2647,118 @@
               ]
             }
           ]
+        },
+        {
+          "id": "sprint2",
+          "title": "다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정",
+          "status": "planned",
+          "branch": "phase8-sprint2",
+          "sprintDoc": "docs/phase/phase8/sprint2/sprint2.md",
+          "progress": {
+            "total": 11,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "momentum_breakout 3단계 tier + confidence 상한 + 13:00 가드",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-1-momentum_breakout-3단계-진입-분기--breakout_tier",
+              "testPlan": "pytest tests/test_momentum_breakout.py -v (8개 신규 + 기존 21개)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "PositionSizer 반 포지션 (prev_close tier size_ratio=0.5)",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-2-positionsizer-반-포지션-prev_close-tier",
+              "testPlan": "pytest tests/test_engine.py -v -k size_ratio",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "RiskManager 일일 거래 한도 10건/일 + env override",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-3-riskmanager-일일-거래-한도-10건일",
+              "testPlan": "pytest tests/test_risk_manager.py -v (daily_trade_count 6개)",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "engine 체결 콜백 카운터 증가 + pytest 통합",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-4-engine-배선-체결-콜백-카운터-증가--pytest-통합",
+              "testPlan": "pytest tests/test_engine.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "OHLC 파싱 회귀 테스트 픽스처 강화 (Sprint 1 A안 이관)",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-5-ohlc-파싱-회귀-테스트-픽스처-강화-sprint-1-a안-이관",
+              "testPlan": "pytest tests/test_kis_realtime.py tests/test_momentum_breakout.py -v",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "engine 차단 사유 6지점 구조화 로그 + 선택적 텔레그램 알림",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-6-engine-차단-사유-관측성-개선-hotfix-153-후속",
+              "testPlan": "pytest tests/test_engine.py -v -k block",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "프론트 리스크 카운터 리셋 버튼 + 2단계 확인",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-7-프론트-리스크-리셋-버튼-연동-hotfix-153-ui",
+              "testPlan": "tsc --noEmit + 수동 클릭 검증",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "동시호가(15:10~15:30) WS no-data 가드 스킵",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-8-ws-false-positive-재연결-가드-동시호가-구간-스킵",
+              "testPlan": "pytest tests/test_scheduler.py -v -k no_data",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task9",
+              "title": "WS 재연결 알림 60초 dedup (이중 발송 제거)",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-9-재연결-시-텔레그램-알림-이중-발송-제거",
+              "testPlan": "pytest tests/test_scheduler.py -v -k reconnect",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task10",
+              "title": "일일 리포트 당일 1회 발송 잠금 (Redis 86400초)",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-10-일일-리포트-중복-발송-차단",
+              "testPlan": "pytest tests/test_scheduler.py -v -k daily_report",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task11",
+              "title": "통합 회귀 + 수동 검증 가이드",
+              "path": "docs/phase/phase8/sprint2/sprint2.md#task-11-통합-회귀--수동-검증-가이드",
+              "testPlan": "pytest -v 전체 PASS + validation-notes.md 작성",
+              "testResult": "",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     },
