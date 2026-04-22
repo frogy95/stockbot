@@ -13,20 +13,25 @@
 
 PR: https://github.com/frogy95/stockbot/pull/157
 
-#### sprint-review 대기 항목
+#### 코드 리뷰 결과 (sprint-review, 2026-04-22)
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (curl/httpx/Playwright — sprint-review 에이전트로 실행 필요)
+- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음, Medium 이슈 2건 수정 완료
+  - 이슈 1 (Medium, 수정 완료): `incr_daily_trade_count` TTL 재설정 버그 — 기존 값 있을 때 `set(..., ttl=86400)` 재호출로 마지막 거래 후 24시간으로 한도가 연장되는 버그 → 첫 증가 시에만 TTL 설정으로 수정 (커밋 0256d26)
+  - 이슈 2 (Medium, 수정 완료): `DAILY_MAX_TRADE_COUNT_OVERRIDE`를 `os.getenv()` 직접 호출에서 `core/config.py` Settings로 이동 — 12인자 검증 자동화, `int` 파싱 오류 제거 (커밋 0256d26)
 
-#### 자동 검증 결과 (sprint-dev 내부 실증)
+#### 자동 검증 결과 (sprint-review, 2026-04-22)
 
-- ✅ pytest 전체: **895 passed**, 1 pre-existing fail (`test_ws_manager_env_max_subscriptions`, Sprint 1 이월)
-- ✅ momentum_breakout: 29 passed (기존 21 + 신규 tier 8)
-- ✅ risk_manager: 19 passed (기존 10 + 신규 daily_trade_limit 9)
-- ✅ scheduler: 24 passed (기존 16 + 신규 동시호가/재연결/일일 리포트 8)
-- ✅ engine (auto_mode + trading_engine): 27 passed
-- ✅ kis_realtime (OHLC 파싱): 44 passed
-- ✅ 프론트 `tsc --noEmit` 에러 없음
+- ✅ pytest 전체: **895 passed**, 2 pre-existing fail
+  - `test_kis_api.py::test_kis_status` — Sprint 1 이월 (await 없이 사용)
+  - `test_ws_stability.py::test_ws_manager_env_max_subscriptions` — Sprint 1 이월
+- ✅ risk_manager 테스트: **19 passed** (이슈 1/2 수정 후 전체 통과)
+- ✅ API 스모크: `/api/v1/health` 200, `/api/v1/health/readiness` 503(pipeline unhealthy — 장 외 시간 정상), `/api/v1/screening/status` 200
+- ✅ Playwright UI 검증:
+  - 대시보드: PAPER 배지 표시, 리스크 상태 카드 + "일일 리스크 카운터 리셋" 버튼 노출 정상
+  - 리셋 다이얼로그: 클릭 시 2단계 확인 다이얼로그 표시, 체크박스 체크 전 "리셋 실행" 비활성화, 체크 후 활성화 정상
+  - 스크리닝: 1차 스크리닝 목록 30건 정상 표시
+  - 매매 신호: 페이지 정상 접속
+- ✅ Phase 8 Sprint 2 완료 마킹 (phase8.md Sprint 2 ✅, 미해결 이슈 #5 해결 표시)
 
 #### 배포 후 필수 수동 조치
 
