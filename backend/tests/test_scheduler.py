@@ -385,3 +385,169 @@ async def test_check_and_recover_market_open_after_market():
 
     assert result is False
     scheduler._ws_client.connect.assert_not_called()
+
+
+# === Phase 8 Sprint 2 Task 8: 동시호가 no_data 가드 ===
+
+
+def _build_scheduler_for_secondary(
+    subscribed_codes: list[str], data_count: int, now_kst: datetime
+):
+    """_secondary_screen no_data 가드 테스트용 스케줄러 + realtime_screener mock."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+
+    # realtime_screener는 빈 결과 반환 (실제 screening 로직 우회)
+    screener = MagicMock()
+    screener.screen = AsyncMock(return_value=[])
+    scheduler._realtime_screener = screener
+
+    # primary codes 조회 mock — 비어있지 않아야 함수가 진입
+    async def _get_codes(_db_session):
+        return ["005930"] if subscribed_codes else []
+
+    scheduler._get_latest_primary_codes = _get_codes
+
+    scheduler._ws_manager.get_subscribed_stocks = MagicMock(
+        return_value=subscribed_codes
+    )
+
+    # Redis에서 execution/orderbook 데이터: data_count만큼 채운다
+    for i in range(data_count):
+        if i >= len(subscribed_codes):
+            break
+        code = subscribed_codes[i]
+        fake_redis._store[f"realtime:{code}:execution"] = "{}"
+        fake_redis._store[f"realtime:{code}:orderbook"] = "{}"
+
+    return scheduler
+
+
+@pytest.mark.asyncio
+async def test_secondary_screen_skips_no_data_guard_during_closing_auction():
+    """동시호가(15:15 KST) 구간 — data_count=0이어도 no_data 카운터 증가 없음."""
+    closing_auction_time = datetime(
+        2026, 4, 22, 15, 15, 0, tzinfo=ZoneInfo("Asia/Seoul")
+    )
+    scheduler = _build_scheduler_for_secondary(
+        subscribed_codes=["005930", "000660"], data_count=0, now_kst=closing_auction_time
+    )
+    scheduler._reconnect_ws = AsyncMock()
+    # 초기 1회 no_data 이후 다시 호출해도 증가 안 해야 함
+    scheduler._secondary_no_data_count = 1
+
+    with patch("modules.collector.scheduler.datetime") as mock_dt:
+        mock_dt.now.return_value = closing_auction_time
+        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        await scheduler._secondary_screen()
+
+    # 동시호가 구간 — 카운터 0으로 초기화됨
+    assert scheduler._secondary_no_data_count == 0
+    scheduler._reconnect_ws.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_secondary_screen_no_data_guard_active_during_regular_hours():
+    """일반 장중(10:00 KST) — data_count=0이면 no_data 카운터 증가."""
+    regular_hours = datetime(2026, 4, 22, 10, 0, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+    scheduler = _build_scheduler_for_secondary(
+        subscribed_codes=["005930"], data_count=0, now_kst=regular_hours
+    )
+    scheduler._reconnect_ws = AsyncMock()
+
+    with patch("modules.collector.scheduler.datetime") as mock_dt:
+        mock_dt.now.return_value = regular_hours
+        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        await scheduler._secondary_screen()
+
+    assert scheduler._secondary_no_data_count == 1
+    scheduler._reconnect_ws.assert_not_called()  # 5회 누적 전까지는 재연결 없음
+
+
+# === Phase 8 Sprint 2 Task 9: 재연결 알림 60초 dedup ===
+
+
+@pytest.mark.asyncio
+async def test_reconnect_alert_deduped_within_60s():
+    """60초 내 2회 호출 → telegram.send_notification 1회만."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+    scheduler._telegram_bot = AsyncMock()
+    scheduler._telegram_bot.send_notification = AsyncMock()
+
+    sent_1 = await scheduler._send_reconnect_alert("test", 10)
+    sent_2 = await scheduler._send_reconnect_alert("test", 10)
+
+    assert sent_1 is True
+    assert sent_2 is False
+    assert scheduler._telegram_bot.send_notification.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_reconnect_alert_sent_after_dedup_key_expires():
+    """dedup 키 삭제 후 재발송 허용 (TTL 만료 시뮬레이션)."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+    scheduler._telegram_bot = AsyncMock()
+    scheduler._telegram_bot.send_notification = AsyncMock()
+
+    await scheduler._send_reconnect_alert("a", 5)
+    # TTL 만료 시뮬레이션 — 키 제거
+    fake_redis._store.pop("ws:reconnect:notified", None)
+    await scheduler._send_reconnect_alert("b", 5)
+
+    assert scheduler._telegram_bot.send_notification.await_count == 2
+
+
+# === Phase 8 Sprint 2 Task 10: 일일 리포트 당일 1회 잠금 ===
+
+
+@pytest.mark.asyncio
+async def test_market_close_sends_daily_report_once_per_day():
+    """_market_close 2회 연속 호출 → send_daily_report 1회만."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+    scheduler._notifier_manager = AsyncMock()
+    scheduler._notifier_manager.send_daily_report = AsyncMock()
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_close()
+        await scheduler._market_close()
+
+    assert scheduler._notifier_manager.send_daily_report.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_market_close_resends_daily_report_on_next_day():
+    """다른 날짜 키는 발송 허용 (lock은 날짜별)."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+    scheduler._notifier_manager = AsyncMock()
+    scheduler._notifier_manager.send_daily_report = AsyncMock()
+
+    # 어제 날짜로 lock 선점
+    fake_redis._store["scheduler:daily_report:sent:20260421"] = "1"
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_close()  # 오늘은 2026-04-22 기준
+
+    # 오늘 발송은 허용
+    assert scheduler._notifier_manager.send_daily_report.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_market_close_does_not_set_lock_on_failure():
+    """send_daily_report 예외 시 lock 미설정 → 재시도 가능."""
+    fake_redis = FakeRedis()
+    scheduler = _make_scheduler(redis=fake_redis)
+    scheduler._notifier_manager = AsyncMock()
+    scheduler._notifier_manager.send_daily_report = AsyncMock(
+        side_effect=Exception("boom")
+    )
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._market_close()
+
+    # lock이 설정되지 않았으므로 다음 시도 가능
+    today_str = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
+    assert fake_redis._store.get(f"scheduler:daily_report:sent:{today_str}") is None

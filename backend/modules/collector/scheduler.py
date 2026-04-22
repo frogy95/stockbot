@@ -4,8 +4,8 @@ import asyncio
 import html
 import json
 import logging
-import time
-from datetime import datetime
+import time as time_module
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -261,12 +261,12 @@ class CollectorScheduler:
             logger.warning("파이프라인 이미 실행 중 -- 자동 스케줄 스킵")
             return
         await self._redis.set(PIPELINE_RUNNING_KEY, "auto", ttl=STATE_TTL)
-        t0 = time.monotonic()
+        t0 = time_module.monotonic()
         logger.info("장전 파이프라인 시작 (자동 스케줄)")
         try:
             await self.run_premarket_pipeline()
         finally:
-            logger.info("장전 파이프라인 종료 (자동 스케줄, 소요: %.1f초)", time.monotonic() - t0)
+            logger.info("장전 파이프라인 종료 (자동 스케줄, 소요: %.1f초)", time_module.monotonic() - t0)
 
     async def run_premarket_pipeline(self) -> dict:
         """장전 파이프라인 오케스트레이터.
@@ -745,6 +745,26 @@ class CollectorScheduler:
         self._trade_strength.set_warmup_all(5.0)
         logger.info("WS 재연결 성공: 체결강도 5초 웜업 설정")
 
+    async def _send_reconnect_alert(
+        self, reason: str, sub_count: int
+    ) -> bool:
+        """Phase 8 Sprint 2 Task 9: WS 재연결 알림 — 60초 dedup으로 이중 발송 방지.
+
+        Returns:
+            알림이 실제로 발송된 경우 True, dedup으로 스킵된 경우 False.
+        """
+        if self._telegram_bot is None:
+            return False
+        dedup_key = "ws:reconnect:notified"
+        if await self._redis.get(dedup_key):
+            logger.debug("재연결 알림 dedup 스킵 (reason=%s)", reason)
+            return False
+        await self._redis.set(dedup_key, "1", ttl=60)
+        await self._telegram_bot.send_notification(
+            f"<b>[자동 복구]</b> WS 재연결 완료 (구독 {sub_count}종목, reason={reason})"
+        )
+        return True
+
     async def _reconnect_ws(self) -> None:
         """WS 연결 끊고 재연결 + 구독 복원. 구독 실패(ALREADY IN USE 등) 자동 복구용."""
         logger.warning("WS 재연결 시작 (구독 데이터 부재 감지)")
@@ -763,10 +783,9 @@ class CollectorScheduler:
                 for code in codes:
                     await self._ws_manager.subscribe(code)
                 logger.info("WS 재구독 완료: %d종목", len(codes))
-            if self._telegram_bot:
-                await self._telegram_bot.send_notification(
-                    "<b>[자동 복구]</b> WS 재연결 + 재구독 완료 (%d종목)" % (len(codes) if codes else 0)
-                )
+            await self._send_reconnect_alert(
+                "secondary_no_data", len(codes) if codes else 0
+            )
         except Exception:
             logger.exception("WS 재연결 실패")
             await self._send_failure_alert("ws_reconnect_auto", "WS 자동 재연결 실패")
@@ -835,10 +854,10 @@ class CollectorScheduler:
 
             if self._ws_client.connected:
                 subs = self._ws_manager.count
-                if self._telegram_bot:
-                    await self._telegram_bot.send_notification(
-                        f"<b>[장애 복구]</b> 복구 성공 ({attempt}/{max_attempts})\nws_connected=True, subscriptions={subs}"
-                    )
+                # Phase 8 Sprint 2 Task 9: 재연결 성공 알림도 동일 dedup 게이트 사용
+                await self._send_reconnect_alert(
+                    f"market_open_recovery:{attempt}/{max_attempts}", subs
+                )
                 return
 
             if attempt < max_attempts:
@@ -873,13 +892,22 @@ class CollectorScheduler:
         except Exception:
             logger.exception("WS 종료 실패")
 
-        # 일일 마감 리포트 발송
+        # 일일 마감 리포트 발송 (Phase 8 Sprint 2 Task 10: 당일 1회 잠금)
         if self._notifier_manager is not None:
-            try:
-                await self._notifier_manager.send_daily_report(self._session_factory)
-                logger.info("일일 마감 리포트 발송 완료")
-            except Exception:
-                logger.exception("일일 마감 리포트 발송 실패")
+            today_str = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).strftime(
+                "%Y%m%d"
+            )
+            lock_key = f"scheduler:daily_report:sent:{today_str}"
+            if await self._redis.get(lock_key):
+                logger.info("일일 리포트 중복 발송 방지 — 오늘 이미 발송됨")
+            else:
+                try:
+                    await self._notifier_manager.send_daily_report(self._session_factory)
+                    # 발송 성공 시에만 lock 설정 → 실패 시 재시도 가능
+                    await self._redis.set(lock_key, "1", ttl=86400)
+                    logger.info("일일 마감 리포트 발송 완료")
+                except Exception:
+                    logger.exception("일일 마감 리포트 발송 실패")
 
     # ── 스크리닝 job ─────────────────────────────────────
 
@@ -975,8 +1003,12 @@ class CollectorScheduler:
                 if exec_raw is not None and ob_raw is not None:
                     data_count += 1
 
+            # Phase 8 Sprint 2 Task 8: 동시호가(15:10~15:30) 구간은 체결 틱이 없어 false-positive
+            now_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            in_closing_auction = time(15, 10) <= now_kst.time() < time(15, 30)
+
             # 구독 종목이 있는데 샘플 10개 중 데이터가 0건이면 구독 실패 의심
-            if len(subscribed_codes) > 0 and data_count == 0:
+            if len(subscribed_codes) > 0 and data_count == 0 and not in_closing_auction:
                 self._secondary_no_data_count += 1
                 logger.warning(
                     "실시간 데이터 부재: 구독 %d종목 샘플 %d개 중 데이터 0건 (연속 %d회)",
@@ -986,6 +1018,10 @@ class CollectorScheduler:
                     logger.error("실시간 데이터 5회 연속 부재 — WS 재연결 시도")
                     self._secondary_no_data_count = 0
                     await self._reconnect_ws()
+            elif in_closing_auction and data_count == 0:
+                # 동시호가 중 틱 부재는 정상 — 카운터 초기화 + 로그는 debug 수준
+                self._secondary_no_data_count = 0
+                logger.debug("동시호가 구간 — no_data 가드 스킵")
             else:
                 self._secondary_no_data_count = 0
 
