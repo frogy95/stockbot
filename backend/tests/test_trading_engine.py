@@ -196,3 +196,60 @@ async def test_eod_entry_blocked(engine, mock_eod_liquidator, mock_signal_genera
 
     mock_signal_generator.generate_signals.assert_not_called()
     mock_order_manager.submit_order.assert_not_called()
+
+
+# === Phase 8 Sprint 2: 일일 거래 카운터 ===
+
+
+@pytest.mark.asyncio
+async def test_on_order_filled_increments_daily_trade_count(
+    engine, mock_position_manager, mock_risk_manager
+):
+    """on_order_filled 시 incr_daily_trade_count 호출."""
+    mock_risk_manager.incr_daily_trade_count = AsyncMock(return_value=1)
+    signal = _make_signal()
+
+    await engine.on_order_filled(
+        order_id=1, filled_price=73000, signal_data=signal, quantity=10
+    )
+
+    mock_position_manager.open_position.assert_awaited_once()
+    mock_risk_manager.incr_daily_trade_count.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_on_order_filled_counter_failure_does_not_block_position(
+    engine, mock_position_manager, mock_risk_manager
+):
+    """카운터 증가 실패가 포지션 생성을 막지 않음 (에러 격리)."""
+    mock_risk_manager.incr_daily_trade_count = AsyncMock(
+        side_effect=Exception("Redis 일시 장애")
+    )
+    signal = _make_signal()
+
+    # 예외가 밖으로 전파되지 않아야 함
+    await engine.on_order_filled(
+        order_id=1, filled_price=73000, signal_data=signal, quantity=10
+    )
+
+    mock_position_manager.open_position.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_process_screening_results_blocked_when_daily_limit_reached(
+    engine, mock_risk_manager, mock_order_manager
+):
+    """can_trade가 일일 한도로 차단 시 submit_order 미호출."""
+    from modules.trading.risk_manager import RiskCheckResult
+
+    mock_risk_manager.can_trade = AsyncMock(
+        return_value=RiskCheckResult(
+            allowed=False,
+            reason="일일 거래 횟수 한도(10건)에 도달했습니다",
+            risk_level="blocked",
+        )
+    )
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    mock_order_manager.submit_order.assert_not_called()

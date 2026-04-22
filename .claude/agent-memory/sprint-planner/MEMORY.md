@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-20 업데이트)
+## 스프린트 현황 (2026-04-22 업데이트)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -58,13 +58,13 @@
 - Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
 
 - Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), ✅ 완료 (2026-04-20) / PR: https://github.com/frogy95/stockbot/pull/149
+- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 (Sprint 1 배포 + 2거래일 관찰 후 착수)
-- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 + 신호 1건+ 확인 선행)
-- Phase 8 Sprint 3 — 시스템 관리 UI (Sprint 1 배포 후 순차)
-- Phase 8 Sprint 4 — 성과 분석 보강 (Sprint 3 완료 후)
+- Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, Phase 8 Sprint 2 완료 후 순차)
+- Phase 8 Sprint 4 — 시스템 관리 UI (Sprint 3 완료 후)
+- Phase 8 Sprint 5 — 성과 분석 보강 (Sprint 4 완료 후)
 
 ## 핵심 주의사항
 
@@ -235,3 +235,12 @@
 - Phase 7.0 Sprint 2: trailing_highs 인메모리 dict — Redis HSET 이관 시 load_trailing_highs() 메서드 추가 + main.py 호출
 - Phase 7.0 Sprint 2: eod_liquidator.liquidate_all에서 trailing_highs Redis 키 삭제 누락 — 추가 필요
 - Phase 7.0 Sprint 2: engine._execute_exit 5초 루프 중복 매도 가능성 (미해결 #7) — Redis in-flight 플래그 TTL=30초로 방지
+- Phase 8 Sprint 2: momentum_breakout.py 갭 분기 3단계 확장 — gap_open(>=3%) → prev_high(current>prev_high) → prev_close(fallback). reason dict에 `breakout_tier` 키 추가 필수
+- Phase 8 Sprint 2: PositionSizer는 수정 불필요 — size_ratio 파라미터 이미 존재. engine.process_screening_results에서 tier 기반 size_ratio 결정 (`tier_ratio=0.5 if prev_close else 1.0`, candidate_ratio와 min)
+- Phase 8 Sprint 2: daily_trade_count 증가 지점은 engine.on_order_filled (매수 체결 후) — 주문 제출 시점 아님. 매도/청산은 카운트 안 함 (진입 1회 = 1건)
+- Phase 8 Sprint 2: DAILY_MAX_TRADE_COUNT_OVERRIDE 환경변수 — LIVE 초기 3건/일 임시 제한용, Sprint 3 게이트 통과 후 제거
+- Phase 8 Sprint 2: seed_settings에 `daily_max_trade_count=10` (category=risk, int) 신규. Alembic 마이그레이션 불필요 (row 추가만)
+- Phase 8 Sprint 2: Task 9 재연결 이중 알림, Task 10 일일 리포트 중복 — 근본 원인 미특정 상태로 dedup(Redis TTL) 차단. Sprint 2 배포 후 로그 재수집 필요
+- Phase 8 Sprint 2: Task 8 동시호가 구간 스킵 — 15:10~15:30 사이에 `_secondary_no_data_count` 0으로 리셋 + return. `_market_close`는 15:30 실행이므로 영향 없음
+- Phase 8 Sprint 2: 브랜치 base는 develop (Hotfix #153이 main→develop 역머지되어 develop에 포함됨, phase8-sprint1 브랜치에는 미포함)
+- Phase 8 Sprint 2: Hotfix #153 엔드포인트는 `POST /api/v1/trading/risk/reset` — Task 7 착수 전 `backend/api/routes/trading.py` 실제 경로 재확인 필수

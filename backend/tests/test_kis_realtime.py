@@ -146,6 +146,72 @@ def test_parse_execution_handles_missing_ohlc_fields():
     assert parse_execution(short_body) is None
 
 
+# Phase 8 Sprint 2 Task 5 — OHLC idx 7/8/9 경계값 회귀 픽스처
+
+
+def test_parse_execution_handles_ohlc_zero_values():
+    """OHLC 3필드가 '0' 문자열일 때 int(0) 정상 반환 (장 시작 전 케이스)."""
+    body = _make_execution_body(open_price=0, high=0, low=0)
+    result = parse_execution(body)
+    assert result is not None
+    assert result.open_price == 0
+    assert result.high == 0
+    assert result.low == 0
+
+
+def test_parse_execution_handles_large_ohlc_values():
+    """100만원대 고가 종목 시뮬레이션 (예: LG생활건강, 삼성바이오로직스)."""
+    body = _make_execution_body(
+        stock_code="051900",
+        open_price=1_050_000,
+        high=1_055_000,
+        low=1_045_000,
+        price=1_048_000,
+    )
+    result = parse_execution(body)
+    assert result is not None
+    assert result.open_price == 1_050_000
+    assert result.high == 1_055_000
+    assert result.low == 1_045_000
+
+
+def test_parse_execution_field_offset_sanity():
+    """EXECUTION_FIELD_MAP의 idx 7/8/9가 실제 open/high/low에 매핑되는지 검증."""
+    from modules.collector.sources.kis_realtime import EXECUTION_FIELD_MAP
+
+    assert EXECUTION_FIELD_MAP["open_price"] == 7
+    assert EXECUTION_FIELD_MAP["high"] == 8
+    assert EXECUTION_FIELD_MAP["low"] == 9
+
+    # 실제 raw body의 해당 position 값이 파서 결과에 실려오는지 역매핑 확인
+    raw_body = _make_execution_body(open_price=71234, high=71567, low=70890)
+    fields = raw_body.split("^")
+    assert fields[EXECUTION_FIELD_MAP["open_price"]] == "71234"
+    assert fields[EXECUTION_FIELD_MAP["high"]] == "71567"
+    assert fields[EXECUTION_FIELD_MAP["low"]] == "70890"
+
+    result = parse_execution(raw_body)
+    assert result is not None
+    assert result.open_price == 71234
+    assert result.high == 71567
+    assert result.low == 70890
+
+
+def test_parse_execution_handles_ohlc_whitespace():
+    """OHLC 필드에 공백만 있을 때 0으로 처리 (빈 문자열 회귀)."""
+    body = _make_execution_body()
+    fields = body.split("^")
+    fields[7] = "   "  # open_price whitespace
+    fields[8] = ""  # high empty
+    fields[9] = "  "  # low whitespace
+    body = "^".join(fields)
+    result = parse_execution(body)
+    assert result is not None
+    assert result.open_price == 0
+    assert result.high == 0
+    assert result.low == 0
+
+
 # ── parse_orderbook ─────────────────────────────────────
 
 def test_parse_orderbook_data():

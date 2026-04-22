@@ -4,6 +4,7 @@ import { usePolling } from "@/lib/hooks/use-polling";
 import { getPnlColor } from "@/lib/colors";
 import { formatKRW, formatRate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { ResetRiskButton } from "@/components/risk/reset-button";
 
 interface DashboardSummary {
   today_pnl: number;
@@ -80,7 +81,7 @@ function EngineStatus({ running }: { running: boolean }) {
 }
 
 export default function DashboardPage() {
-  const { data, isLoading, error } = usePolling<DashboardSummary>(
+  const { data, isLoading, error, mutate } = usePolling<DashboardSummary>(
     "/api/v1/dashboard/summary"
   );
 
@@ -141,9 +142,15 @@ export default function DashboardPage() {
       {/* 리스크 상태 */}
       {data && Object.keys(data.risk_status).length > 0 && (
         <div className="rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] font-mono tracking-[0.18em] text-muted-foreground uppercase mb-3">
-            리스크 상태
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-mono tracking-[0.18em] text-muted-foreground uppercase">
+              리스크 상태
+            </p>
+            <ResetRiskButton
+              tradingEnv={data.trading_env}
+              onResetSuccess={() => mutate()}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
             {Object.entries(data.risk_status).map(([k, v]) => (
               <div key={k} className="flex justify-between items-center">

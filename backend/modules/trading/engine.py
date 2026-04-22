@@ -27,6 +27,12 @@ KST = ZoneInfo("Asia/Seoul")
 _INFLIGHT_KEY_PREFIX = "exit:inflight:"
 _INFLIGHT_TTL_SEC = 30  # 청산 폴링 최대 6초(3회x2초)보다 넉넉, 비정상 종료 시 자동 만료
 
+# Phase 8 Sprint 2: 차단 관측성
+# 텔레그램 알림이 나가는 차단 사유 (나머지는 로그만)
+_ALERT_BLOCK_REASONS = {"pipeline_unhealthy", "risk_blocked"}
+# 동일 (stock_code, reason) 알림 스팸 방지 TTL (초)
+_BLOCK_ALERT_DEDUP_TTL = 300
+
 
 class TradingEngine:
     """매매 엔진 — 전체 매매 파이프라인을 오케스트레이션한다."""
@@ -105,6 +111,48 @@ class TradingEngine:
             logger.exception("trading_mode 조회 실패 — 기본값 semi-auto 사용")
             return "semi-auto"
 
+    async def _log_block(
+        self,
+        stock_code: str,
+        reason: str,
+        *,
+        mode: str | None = None,
+        breakout_tier: str | None = None,
+        extra: dict | None = None,
+    ) -> None:
+        """차단 사유 구조화 로깅 + 선택적 텔레그램 알림 (5분 dedup).
+
+        Args:
+            stock_code: 종목 코드 (파이프라인 차단은 "-")
+            reason: 차단 사유 키 (pipeline_unhealthy/eod_blocked/risk_blocked 등)
+            mode: 매매 모드 (있으면 로그에 포함)
+            breakout_tier: 진입 tier (있으면 로그에 포함)
+            extra: 추가 구조화 필드 (detail dict)
+        """
+        details: dict = {
+            "stock_code": stock_code,
+            "block_reason": reason,
+        }
+        if mode is not None:
+            details["mode"] = mode
+        if breakout_tier is not None:
+            details["breakout_tier"] = breakout_tier
+        if extra:
+            details.update(extra)
+        logger.info("engine_block stock=%s reason=%s %s", stock_code, reason, details)
+
+        # 선택적 텔레그램 알림 (risk_blocked / pipeline_unhealthy만, 5분 dedup)
+        if reason not in _ALERT_BLOCK_REASONS or self._notifier is None:
+            return
+        dedup_key = f"engine:block:dedup:{stock_code}:{reason}"
+        if await self._redis.get(dedup_key):
+            return
+        await self._redis.set(dedup_key, "1", ttl=_BLOCK_ALERT_DEDUP_TTL)
+        try:
+            await self._notifier.send_system_alert("risk_warning", str(details))
+        except Exception:
+            logger.exception("차단 사유 알림 전송 실패: %s/%s", stock_code, reason)
+
     async def process_screening_results(
         self, screened_candidates: list[dict]
     ) -> None:
@@ -112,12 +160,16 @@ class TradingEngine:
         # 스케줄러 파이프라인 미완료 시 불완전 데이터 기반 매매 차단
         pipeline_healthy = await self._redis.get("scheduler:pipeline_healthy")
         if pipeline_healthy != "true":
-            logger.warning("pipeline_healthy=%r (not 'true') — 신호 처리 차단", pipeline_healthy)
+            await self._log_block(
+                "-",
+                "pipeline_unhealthy",
+                extra={"pipeline_healthy": pipeline_healthy},
+            )
             return
 
         # 14:30 이후 신규 진입 차단
         if self._eod_liquidator.is_entry_blocked():
-            logger.info("신규 진입 차단 시간대 — 신호 생성 스킵")
+            await self._log_block("-", "eod_blocked")
             return
 
         # 매매 모드 조회
@@ -136,7 +188,7 @@ class TradingEngine:
         for signal in signals:
             # manual 모드: 신호 생성(DB 저장)만, 주문/승인 모두 스킵
             if mode == "manual":
-                logger.info("manual 모드 — 신호 저장만: %s", signal.stock_code)
+                await self._log_block(signal.stock_code, "manual_mode_skip", mode=mode)
                 continue
 
             # 레버리지 여부 판별
@@ -147,8 +199,15 @@ class TradingEngine:
             # 리스크 체크
             risk_result = await self._risk_manager.can_trade(is_leverage=is_leverage)
             if not risk_result.allowed:
-                logger.info(
-                    "리스크 차단 [%s]: %s", signal.stock_code, risk_result.reason
+                await self._log_block(
+                    signal.stock_code,
+                    "risk_blocked",
+                    mode=mode,
+                    breakout_tier=signal.reason.get("breakout_tier"),
+                    extra={
+                        "reason": risk_result.reason,
+                        "risk_level": risk_result.risk_level,
+                    },
                 )
                 continue
 
@@ -157,7 +216,20 @@ class TradingEngine:
             auto_trade_blocked = (
                 candidate.get("is_fallback", False) or candidate.get("is_relaxed", False)
             )
-            size_ratio: float = candidate.get("position_size_ratio", 1.0)
+            candidate_ratio: float = candidate.get("position_size_ratio", 1.0)
+
+            # Phase 8 Sprint 2: prev_close tier는 반 포지션 (추격매수 리스크 억제)
+            breakout_tier = signal.reason.get("breakout_tier", "prev_high")
+            tier_ratio = 0.5 if breakout_tier == "prev_close" else 1.0
+            size_ratio: float = min(candidate_ratio, tier_ratio)
+            logger.info(
+                "진입 사이징: %s tier=%s candidate_ratio=%.2f tier_ratio=%.2f final=%.2f",
+                signal.stock_code,
+                breakout_tier,
+                candidate_ratio,
+                tier_ratio,
+                size_ratio,
+            )
 
             # 포지션 사이징 — 실잔고 조회
             balance_amount = 0
@@ -168,13 +240,25 @@ class TradingEngine:
                     logger.debug("주문가능 예수금: %d원", balance_amount)
                 except Exception:
                     logger.exception("잔고 조회 실패 — 주문 수량 계산 불가: %s", signal.stock_code)
+                    await self._log_block(
+                        signal.stock_code,
+                        "balance_fetch_failed",
+                        mode=mode,
+                        breakout_tier=breakout_tier,
+                    )
                     continue
 
             position_size = await self._position_sizer.calculate(
                 signal.stock_code, signal.entry_price, balance_amount, size_ratio=size_ratio
             )
             if position_size.quantity == 0:
-                logger.info("주문 수량 0 — 스킵: %s (balance=%d)", signal.stock_code, balance_amount)
+                await self._log_block(
+                    signal.stock_code,
+                    "quantity_zero",
+                    mode=mode,
+                    breakout_tier=breakout_tier,
+                    extra={"balance": balance_amount, "size_ratio": size_ratio},
+                )
                 continue
 
             # 모드 분기
@@ -396,13 +480,22 @@ class TradingEngine:
     async def on_order_filled(
         self, order_id: int, filled_price: int, signal_data: object, quantity: int = 0
     ) -> None:
-        """매수 주문 체결 콜백 — 포지션 생성."""
+        """매수 주문 체결 콜백 — 포지션 생성 + 일일 거래 카운터 증가."""
         from modules.trading.strategy import TradeSignalData
 
         if isinstance(signal_data, TradeSignalData):
             await self._position_manager.open_position(
                 signal_data, quantity, filled_price
             )
+            # Phase 8 Sprint 2: 진입 체결 1회 = 일일 거래 1건
+            # 카운터 실패가 포지션 생성을 막지 않도록 에러 격리
+            try:
+                await self._risk_manager.incr_daily_trade_count()
+            except Exception:
+                logger.exception(
+                    "일일 거래 카운터 증가 실패 — 포지션 생성은 이미 완료됨: %s",
+                    signal_data.stock_code,
+                )
 
     def get_status(self) -> dict:
         """엔진 상태 조회용 공개 메서드."""
