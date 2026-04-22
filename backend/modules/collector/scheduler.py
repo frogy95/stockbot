@@ -1019,9 +1019,9 @@ class CollectorScheduler:
                     self._secondary_no_data_count = 0
                     await self._reconnect_ws()
             elif in_closing_auction and data_count == 0:
-                # 동시호가 중 틱 부재는 정상 — 카운터 초기화 + 로그는 debug 수준
+                # 동시호가 중 틱 부재는 정상 — 카운터 초기화 + 운영 관측용 INFO 로그
                 self._secondary_no_data_count = 0
-                logger.debug("동시호가 구간 — no_data 가드 스킵")
+                logger.info("동시호가 구간 — no_data 가드 스킵")
             else:
                 self._secondary_no_data_count = 0
 
