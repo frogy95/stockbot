@@ -409,13 +409,22 @@ class TradingEngine:
     async def on_order_filled(
         self, order_id: int, filled_price: int, signal_data: object, quantity: int = 0
     ) -> None:
-        """매수 주문 체결 콜백 — 포지션 생성."""
+        """매수 주문 체결 콜백 — 포지션 생성 + 일일 거래 카운터 증가."""
         from modules.trading.strategy import TradeSignalData
 
         if isinstance(signal_data, TradeSignalData):
             await self._position_manager.open_position(
                 signal_data, quantity, filled_price
             )
+            # Phase 8 Sprint 2: 진입 체결 1회 = 일일 거래 1건
+            # 카운터 실패가 포지션 생성을 막지 않도록 에러 격리
+            try:
+                await self._risk_manager.incr_daily_trade_count()
+            except Exception:
+                logger.exception(
+                    "일일 거래 카운터 증가 실패 — 포지션 생성은 이미 완료됨: %s",
+                    signal_data.stock_code,
+                )
 
     def get_status(self) -> dict:
         """엔진 상태 조회용 공개 메서드."""
