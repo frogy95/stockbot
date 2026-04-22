@@ -24,3 +24,4 @@
 - [Phase 7.2 계획](project_phase7.2.md) — 매매 전략 진입 조건 개선, 전문가 4명 검토, 2 Sprint, H0STCNT0 OHLC 파싱 추가(idx 7/8/9) + 다층 진입(prev_close+prev_high) + 갭 분기 open_price + 반포지션 50% + 일일 10건
 - [Phase 7/8/9 로드맵](project_phase_data_roadmap.md) — 데이터 의존성 체인: 6.1→7.1(20일)→8(20일)→9(3~6개월), 착수 경고 기준 명기
 - [Phase 8/9/10 재편성 계획](project_phase8_9_10.md) — 2026-04-20 사용자 A안 지시 반영, 전문가 4명 리뷰, Phase 7.1/7.2/8/9 초안을 8/9/10으로 재편성, Phase 9 데이터 의존성 재검토(KIS 백필+점진 활성화), Phase 10은 완화 불가 명시, Phase 10.1 분리
+- [Phase 8.5 계획 제안](project_phase8.5.md) — 2026-04-22 신호 0건 교차 단절 브리지, 전문가 4명 페르소나 기반 리뷰, 2 Sprint (관측성+풀 폴백/동적 floor), 시간 슬라이딩·prev_close 연장 거부, Phase 9/10/10.1 순서 유지, ROADMAP 미반영(사용자 승인 대기)
