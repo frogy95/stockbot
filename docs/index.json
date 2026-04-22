@@ -2654,7 +2654,7 @@
           "status": "completed",
           "branch": "phase8-sprint2",
           "sprintDoc": "docs/phase/phase8/sprint2/sprint2.md",
-          "prUrl": "",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/157",
           "completedAt": "2026-04-22",
           "progress": {
             "total": 11,

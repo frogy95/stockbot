@@ -11,7 +11,7 @@
 
 포함: momentum_breakout 3단계 tier (gap_open/prev_close/prev_high) · 13:00 가드 · confidence 상한 · prev_close 반 포지션 · 일일 거래 한도 10건/일 (+env override) · engine 차단 6지점 구조화 로그 · 프론트 리스크 리셋 버튼 · WS 동시호가 가드 · 재연결/일일 리포트 dedup + OHLC 파싱 회귀 픽스처
 
-PR: (sprint-close에서 생성)
+PR: https://github.com/frogy95/stockbot/pull/157
 
 #### sprint-review 대기 항목
 

@@ -12,7 +12,7 @@
 
 **Sprint 기간:** 2026-04-22 ~ 2026-04-22 (완료)
 **상태:** ✅ 완료 (2026-04-22)
-**PR:** (sprint-close에서 생성)
+**PR:** https://github.com/frogy95/stockbot/pull/157
 **이전 스프린트:** Phase 8 Sprint 1 (854 passed, PR #149 / v2.3.0 배포) + Hotfix PR #153 (risk-counter-reset)
 **브랜치명:** `phase8-sprint2`
 

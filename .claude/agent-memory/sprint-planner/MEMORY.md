@@ -58,21 +58,13 @@
 - Phase 7.0.1 Sprint 1 — LIVE WS 연결 복구 (ws_url /tryitout 경로 추가, Task4 KIS IP등록 불필요 확인), ✅ 완료 (2026-04-16) / PR: https://github.com/frogy95/stockbot/pull/137
 
 - Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), ✅ 완료 (2026-04-20) / PR: https://github.com/frogy95/stockbot/pull/149
-- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), 🔄 계획 수립 완료 (2026-04-22)
+- Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8 Sprint 2 — 다층 진입 + 리스크 + 이관 버그 (계획 완료, 구현 대기)
-  - Task1 (신규, A안 이관): OHLC 파싱 회귀 테스트 픽스처 — H0STCNT0 idx 7/8/9, 갭 3%+ 분기 `breakout_ref=open_price` 단위 테스트화
-  - Task2 (hotfix 후속, PR #153): 프론트 리스크 상태 페이지에 `POST /api/v1/trading/risk/reset` 리셋 버튼 연동
-  - Task3 (hotfix 후속): 엔진 차단 사유 텔레그램 알림 — engine.py 6개 차단 지점(manual/risk/balance/quantity/pipeline/entry_blocked)에 구조화 로그 + 선택적 텔레그램 발송으로 "왜 승인 요청 안 왔는지" 관측성 개선
-  - Task4 (원래 계획): 3단계 진입(prev_close/prev_high/gap_open) + breakout_tier, prev_close confidence 상한 0.75, 13:00 이후 prev_close 비활성, prev_close tier position_size 50%
-  - Task5 (원래 계획): 일일 거래 한도 10건/일, 13:00 이후 돌파 비활성 규칙 적용
-  - 참고: Sprint 2 착수 조건은 A안 확정 — `memory/project_next_tasks.md` 참조 (①②③만 필수, ④⑤ 이관)
-  - 참고: hotfix/risk-counter-reset (PR #153, 2026-04-21) 자동 리셋 wiring 검증 → 2026-04-22 09:00 로그 확인 후 Sprint 2 착수
-- Phase 7.0 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (Phase 8 Sprint 1 완료 + 신호 1건+ 확인 선행)
-- Phase 8 Sprint 3 — 시스템 관리 UI (Sprint 1 배포 후 순차)
-- Phase 8 Sprint 4 — 성과 분석 보강 (Sprint 3 완료 후)
+- Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, Phase 8 Sprint 2 완료 후 순차)
+- Phase 8 Sprint 4 — 시스템 관리 UI (Sprint 3 완료 후)
+- Phase 8 Sprint 5 — 성과 분석 보강 (Sprint 4 완료 후)
 
 ## 핵심 주의사항
 
