@@ -43,6 +43,7 @@ from modules.trading.engine import TradingEngine
 from api.routes.trading import router as trading_router
 from api.routes.telegram import router as telegram_router
 from api.routes.audit import router as audit_router
+from api.routes.metrics import router as metrics_router
 from modules.notifier.approval import ApprovalManager
 from modules.notifier.telegram_bot import TelegramBot
 from modules.notifier.manager import NotifierManager
@@ -156,7 +157,10 @@ async def lifespan(app: FastAPI):
         risk_manager.set_notifier(notifier_manager)
 
     # 매매 엔진 초기화
-    strategy = MomentumBreakoutStrategy()
+    strategy = MomentumBreakoutStrategy(
+        redis_client=redis_client,
+        session_factory=session_factory,
+    )
     signal_generator = SignalGenerator(session_factory, redis_client, strategy)
     order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
     position_manager = PositionManager(session_factory, redis_client, risk_manager)
@@ -225,6 +229,7 @@ def create_app() -> FastAPI:
     app.include_router(trading_router, prefix="/api/v1")
     app.include_router(telegram_router, prefix="/api/v1")
     app.include_router(audit_router, prefix="/api/v1")
+    app.include_router(metrics_router, prefix="/api/v1")
 
     return app
 

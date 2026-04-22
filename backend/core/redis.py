@@ -46,6 +46,35 @@ class RedisClient:
             return -2
         return await self._redis.ttl(key)
 
+    async def incr(self, key: str, amount: int = 1, ttl: int | None = None) -> int:
+        """카운터 증분. ttl 제공 시 최초 생성(값==amount)에만 만료 적용."""
+        if not self._redis:
+            return 0
+        new_value = await self._redis.incrby(key, amount)
+        if ttl is not None and new_value == amount:
+            await self._redis.expire(key, ttl)
+        return int(new_value)
+
+    async def mget(self, keys: list[str]) -> list[str | None]:
+        if not self._redis or not keys:
+            return []
+        return await self._redis.mget(keys)
+
+    async def lpush(self, key: str, value: str) -> int:
+        if not self._redis:
+            return 0
+        return int(await self._redis.lpush(key, value))
+
+    async def ltrim(self, key: str, start: int, stop: int) -> None:
+        if not self._redis:
+            return
+        await self._redis.ltrim(key, start, stop)
+
+    async def lrange(self, key: str, start: int, stop: int) -> list[str]:
+        if not self._redis:
+            return []
+        return list(await self._redis.lrange(key, start, stop))
+
     async def scan_keys(self, pattern: str) -> list[str]:
         """패턴에 매칭되는 키 목록을 반환한다 (SCAN 사용)."""
         if not self._redis:

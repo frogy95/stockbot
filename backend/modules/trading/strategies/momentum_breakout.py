@@ -1,9 +1,14 @@
 """모멘텀 브레이크아웃 전략 — 전일 고가 돌파 + 다팩터 신뢰도."""
 
 from datetime import datetime, time
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from modules.screening.factors import calc_volatility_factor
+from modules.trading.strategies._metrics import (
+    record_stage,
+    record_virtual_signal,
+)
 from modules.trading.strategy import (
     MarketSnapshot,
     RejectedSignal,
@@ -77,13 +82,57 @@ def calc_market_progress(now_kst: datetime | None = None) -> float:
 class MomentumBreakoutStrategy(Strategy):
     """5분봉 전일 고가 돌파 + 거래량/체결강도/호가 다팩터 신뢰도 전략."""
 
+    # Phase 8.5 Sprint 1: 가상 신호 기록 시간창 (prev_close_time_guard 한정).
+    VIRTUAL_SIGNAL_WINDOW_START = time(13, 0)
+    VIRTUAL_SIGNAL_WINDOW_END = time(14, 0)
+
+    def __init__(
+        self,
+        redis_client: Any = None,
+        session_factory: Any = None,
+    ) -> None:
+        # 의존성은 관측용이며 선택적. 기본 None 유지 (기존 테스트 회귀 방지).
+        self.redis_client = redis_client
+        self.session_factory = session_factory
+
     @property
     def name(self) -> str:
         return "momentum_breakout"
 
-    def _reject(
+    async def _reject(
         self, snapshot: MarketSnapshot, stage: str, detail: dict
     ) -> RejectedSignal:
+        now_kst = _now_kst()
+        await record_stage(
+            self.redis_client,
+            stage,
+            now_kst=now_kst,
+            snapshot_info={
+                "stock_code": snapshot.stock_code,
+                "breakout_ref": detail.get("breakout_ref"),
+                "current_price": detail.get("current_price", snapshot.current_price),
+                "detail": detail,
+            },
+        )
+
+        if (
+            stage == "prev_close_time_guard"
+            and self.VIRTUAL_SIGNAL_WINDOW_START
+            <= now_kst.time()
+            < self.VIRTUAL_SIGNAL_WINDOW_END
+        ):
+            gap_rate = None
+            if snapshot.prev_close:
+                gap_rate = (snapshot.open_price - snapshot.prev_close) / snapshot.prev_close
+            await record_virtual_signal(
+                self.session_factory,
+                snapshot,
+                virtual_stage="prev_close_time_guard_bypass",
+                detail=detail,
+                breakout_ref=detail.get("breakout_ref"),
+                gap_rate=gap_rate,
+            )
+
         return RejectedSignal(
             stock_code=snapshot.stock_code,
             strategy_name=self.name,
@@ -124,7 +173,7 @@ class MomentumBreakoutStrategy(Strategy):
             breakout_tier == "prev_close"
             and _now_kst().time() >= PREV_CLOSE_TIER_BLOCK_TIME
         ):
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "prev_close_time_guard",
                 {
@@ -137,7 +186,7 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 돌파 조건
         if snapshot.current_price <= breakout_ref:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "breakout",
                 {
@@ -150,7 +199,7 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 거래량 조건: 전일 대비 시간가중 보정 + 돌파 강도 연동
         if snapshot.prev_volume == 0:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "prev_volume_zero",
                 {"prev_volume": 0},
@@ -158,7 +207,7 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 절대 거래량 하한 (너무 거래 없으면 제외)
         if snapshot.volume < snapshot.prev_volume * MIN_VOLUME_FLOOR:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "min_volume_floor",
                 {
@@ -186,7 +235,7 @@ class MomentumBreakoutStrategy(Strategy):
             volume_threshold = 2.0
 
         if adjusted_ratio < volume_threshold:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "volume_threshold",
                 {
@@ -201,7 +250,7 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 체결강도 조건
         if snapshot.trade_strength < 100.0:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "trade_strength",
                 {
@@ -215,7 +264,7 @@ class MomentumBreakoutStrategy(Strategy):
             snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
         )
         if snapshot.current_price > 0 and atr / snapshot.current_price > ATR_FILTER_PCT:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "atr_filter",
                 {
@@ -256,7 +305,7 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 최소 임계값
         if confidence < MIN_CONFIDENCE:
-            return self._reject(
+            return await self._reject(
                 snapshot,
                 "confidence",
                 {
@@ -280,6 +329,8 @@ class MomentumBreakoutStrategy(Strategy):
         else:
             stop_loss = int(entry_price * 0.98)
         take_profit = int(entry_price * 1.03)
+
+        await record_stage(self.redis_client, "pass", now_kst=_now_kst())
 
         return TradeSignalData(
             stock_code=snapshot.stock_code,

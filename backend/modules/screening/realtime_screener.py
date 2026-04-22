@@ -200,7 +200,31 @@ class RealtimeScreener:
 
         await self.save_results(session, scored)
 
+        await self._record_score_histogram(scored)
+
         return scored
+
+    async def _record_score_histogram(self, scored: list[dict]) -> None:
+        """Phase 8.5 Sprint 1: total_score 분포를 Redis 카운터에 기록 (측면 기록).
+
+        본 스크리닝 경로의 반환·분기 동작을 절대 바꾸지 않는다.
+        실패 시 경고 로그만 남기고 조용히 무시한다.
+        """
+        if self.redis_client is None or not scored:
+            return
+        try:
+            from core.config import settings
+            from core.metrics_keys import score_bucket_for, score_histogram_key
+
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date().isoformat()
+            ttl = 86400 * 7
+            for item in scored:
+                score = item.get("score", item.get("total_score", 0.0))
+                for bucket in score_bucket_for(score):
+                    key = score_histogram_key(today, bucket)
+                    await self.redis_client.incr(key, ttl=ttl)
+        except Exception:  # noqa: BLE001
+            logger.warning("score histogram recording failed", exc_info=True)
 
     def _is_no_signal_period(self) -> bool:
         """시초가 구간(09:00~09:30) 판단."""

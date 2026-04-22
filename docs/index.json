@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-22T11:30:00+09:00",
+  "lastUpdated": "2026-04-22T15:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2556,8 +2556,8 @@
     },
     {
       "id": "phase8",
-      "title": "즉시 착수 개선 사항 통합 (OHLC/다층 진입 + E2E+LIVE 게이트 + 관리 UI + 성과 분석, Sprint 1~5)",
-      "status": "in_progress",
+      "title": "즉시 착수 개선 사항 통합 (Sprint 1·2만, 잔여는 Phase 8.6 이관)",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase8/phase8.md",
       "reviews": [
         "docs/phase/phase8/phase8-po-review.md",
@@ -2762,7 +2762,123 @@
             }
           ]
         }
+      ],
+      "completedAt": "2026-04-22"
+    },
+    {
+      "id": "phase8.5",
+      "title": "신호 발생 데드락 해제 (Sprint 1~2)",
+      "status": "in_progress",
+      "phaseDoc": "docs/phase/phase8.5/phase8.5.md",
+      "reviews": [
+        "docs/phase/phase8.5/phase8.5-po-review.md",
+        "docs/phase/phase8.5/phase8.5-risk-review.md",
+        "docs/phase/phase8.5/phase8.5-quant-review.md",
+        "docs/phase/phase8.5/phase8.5-daytrader-review.md"
+      ],
+      "sprints": [
+        {
+          "id": "phase8.5-sprint1",
+          "number": 1,
+          "title": "관측성 강화",
+          "path": "docs/phase/phase8.5/sprint1/sprint1.md",
+          "status": "completed",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/162",
+          "lastUpdated": "2026-04-22",
+          "progress": {
+            "total": 8,
+            "completed": 8
+          },
+          "tasks": [
+            {
+              "id": "phase8.5-sprint1-task1",
+              "title": "Alembic 마이그레이션 3종 (screening_metrics_daily / strategy_metrics_daily / virtual_signals)",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-1-alembic-마이그레이션-3종",
+              "testPlan": "alembic upgrade head + UniqueConstraint 검증",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task2",
+              "title": "Redis 메트릭 유틸 + 키 규약 (metrics_keys.py, redis.incr)",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-2-redis-메트릭-유틸--키-규약",
+              "testPlan": "pytest tests/core/test_metrics_keys.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task3",
+              "title": "2차 스크리닝 total_score 히스토그램 Redis 기록",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-3-2차-스크리닝-score-히스토그램-기록",
+              "testPlan": "pytest tests/modules/screening/test_realtime_screener_metrics.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task4",
+              "title": "전략 stage 카운터 + 가상 신호 로깅 (실제 주문 미발생)",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-4-전략-stage-카운터--가상-신호-로깅",
+              "testPlan": "pytest tests/modules/trading/strategies/test_momentum_breakout_metrics.py (signals count 불변 assert)",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task5",
+              "title": "16:05 메트릭 일별 집계 APScheduler job",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-5-1600-일별-집계-배치",
+              "testPlan": "pytest tests/modules/collector/test_scheduler_metrics_rollup.py",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task6",
+              "title": "metrics API 4종 + top_reject 리스트 보강",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-6-metrics-api-라우터",
+              "testPlan": "pytest tests/api/test_metrics_routes.py + curl 4 endpoints",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task7",
+              "title": "프론트엔드 신호 진단 섹션 카드 4개 (/diagnostics)",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-7-프론트엔드-신호-진단-phase-85-섹션",
+              "testPlan": "npx tsc --noEmit + Playwright /diagnostics 스크린샷",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1-task8",
+              "title": "E2E 통합 검증 + 가상 신호 격리 확증",
+              "path": "docs/phase/phase8.5/sprint1/sprint1.md#task-8-e2e-통합-검증",
+              "testPlan": "pytest 전체 + API curl + Playwright + signals count 불변 assert",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            }
+          ]
+        }
       ]
+    },
+    {
+      "id": "phase8.6",
+      "title": "E2E 검증 + LIVE 전환 게이트 + 시스템 관리 UI + 성과 분석 (Sprint 1~3, 구 Phase 8 Sprint 3·4·5 이관)",
+      "status": "planned",
+      "phaseDoc": "docs/phase/phase8/phase8.md",
+      "note": "Phase 8.5 완료 후 착수. 구 Phase 8 Sprint 3·4·5를 Phase 8.6 Sprint 1·2·3으로 이관 (2026-04-22 사용자 지시). 별도 phase8.6/phase8.6.md는 Sprint 착수 시점에 작성.",
+      "reviews": [
+        "docs/phase/phase8/phase8-po-review.md",
+        "docs/phase/phase8/phase8-risk-review.md",
+        "docs/phase/phase8/phase8-daytrader-review.md",
+        "docs/phase/phase8/phase8-quant-review.md"
+      ],
+      "sprints": []
     },
     {
       "id": "phase9",
@@ -3304,6 +3420,15 @@
       "version": "v2.3.0",
       "description": "Phase 8 Sprint 1 프로덕션 배포 — H0STCNT0 OHLC 파싱 + Redis OHLC 캐시 + snapshot OHLC 우선 사용 + 갭 3%+ 자기돌파 버그 수정 (breakout_ref → snapshot.open_price)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/150",
+      "status": "in_progress"
+    },
+    {
+      "date": "2026-04-22",
+      "type": "sprint",
+      "ref": "phase8.5-sprint1",
+      "version": "v2.5.0",
+      "description": "Phase 8.5 Sprint 1 프로덕션 배포 — 관측성 테이블 3종 Alembic 마이그레이션 + Redis 메트릭 유틸 + score 히스토그램 + stage 카운터 + 가상 신호 로깅 + 16:05 집계 배치 + metrics API 4종 + 신호 진단 대시보드 4카드",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/163",
       "status": "in_progress"
     }
   ]

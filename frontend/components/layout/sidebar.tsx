@@ -16,6 +16,7 @@ import {
   History,
   BarChart3,
   Settings,
+  Activity,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/screening", icon: ScanSearch, label: "스크리닝" },
   { href: "/history", icon: History, label: "매매 이력" },
   { href: "/analytics", icon: BarChart3, label: "성과 분석" },
+  { href: "/diagnostics", icon: Activity, label: "신호 진단" },
   { href: "/settings", icon: Settings, label: "설정" },
 ] as const;
 

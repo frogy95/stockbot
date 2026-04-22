@@ -356,6 +356,14 @@ class CollectorScheduler:
             id="portal_supplement",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
+        # 16:05 Phase 8.5 Sprint 1 메트릭 일별 집계 (포털 보조 수집 5분 후)
+        self._scheduler.add_job(
+            self._rollup_daily_metrics,
+            CronTrigger(hour=16, minute=5, timezone=tz),
+            id="metrics_rollup",
+            replace_existing=True,
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 2차 스크리닝: 09:30~15:30 30초 주기
         if self._realtime_screener:
             self._scheduler.add_job(
@@ -872,6 +880,90 @@ class CollectorScheduler:
                 f"{max_attempts}회 시도 모두 실패 — 장중 실시간 파이프라인 마비 상태\n"
                 "수동 확인 필요"
             )
+
+    async def _rollup_daily_metrics(self) -> None:
+        """Phase 8.5 Sprint 1 — 16:05 Redis 카운터 → DB 일별 집계 UPSERT.
+
+        실패해도 스케줄러 중단되지 않도록 예외를 잡아 로깅만 한다.
+        원본 Redis 키는 삭제하지 않고 TTL(7일)에 맡긴다.
+        """
+        try:
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+            from core.models.metrics import ScreeningMetricsDaily, StrategyMetricsDaily
+
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+            date_str = today.isoformat()
+            score_prefix = f"metrics:secondary:score:{date_str}:"
+            stage_prefix = f"metrics:strategy:stage:{date_str}:"
+
+            score_keys = await self._redis.scan_keys(f"{score_prefix}*")
+            stage_keys = await self._redis.scan_keys(f"{stage_prefix}*")
+
+            score_rows: list[dict] = []
+            for k in score_keys:
+                raw = await self._redis.get(k)
+                if raw is None:
+                    continue
+                try:
+                    count = int(raw)
+                except (TypeError, ValueError):
+                    continue
+                bucket = k[len(score_prefix):]
+                score_rows.append({
+                    "metric_date": today,
+                    "bucket": bucket,
+                    "count": count,
+                })
+
+            stage_rows: list[dict] = []
+            for k in stage_keys:
+                raw = await self._redis.get(k)
+                if raw is None:
+                    continue
+                try:
+                    count = int(raw)
+                except (TypeError, ValueError):
+                    continue
+                suffix = k[len(stage_prefix):]
+                # 형식: {stage}:{hour_min}. stage는 콜론 없음, hour_min은 HH:MM (콜론 1개).
+                parts = suffix.rsplit(":", 2)
+                if len(parts) < 3:
+                    continue
+                stage = parts[0]
+                hour_min = f"{parts[1]}:{parts[2]}"
+                stage_rows.append({
+                    "metric_date": today,
+                    "stage": stage,
+                    "hour_min_bucket": hour_min,
+                    "count": count,
+                })
+
+            async with self._session_factory() as session:
+                if score_rows:
+                    stmt = pg_insert(ScreeningMetricsDaily).values(score_rows)
+                    stmt = stmt.on_conflict_do_update(
+                        constraint="uq_screening_metrics_date_bucket",
+                        set_={"count": stmt.excluded.count},
+                    )
+                    await session.execute(stmt)
+                if stage_rows:
+                    stmt = pg_insert(StrategyMetricsDaily).values(stage_rows)
+                    stmt = stmt.on_conflict_do_update(
+                        constraint="uq_strategy_metrics_date_stage_bucket",
+                        set_={"count": stmt.excluded.count},
+                    )
+                    await session.execute(stmt)
+                await session.commit()
+
+            logger.info(
+                "metrics_rollup 완료: score_rows=%d stage_rows=%d date=%s",
+                len(score_rows),
+                len(stage_rows),
+                date_str,
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("metrics_rollup 실패 (스케줄러 계속 동작)")
 
     async def _market_close(self) -> None:
         """15:30 WS 구독 해제 + 연결 종료 + 2차 스크리닝 중지."""

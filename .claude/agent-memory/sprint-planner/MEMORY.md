@@ -59,12 +59,14 @@
 
 - Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), ✅ 완료 (2026-04-20) / PR: https://github.com/frogy95/stockbot/pull/149
 - Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
+- [Phase 8.5 Sprint 1](phase8.5-sprint1-status.md) — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/162
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8 Sprint 3 — E2E 검증 + LIVE 전환 게이트 (구 Phase 7.0 Sprint 3 이관, Phase 8 Sprint 2 완료 후 순차)
-- Phase 8 Sprint 4 — 시스템 관리 UI (Sprint 3 완료 후)
-- Phase 8 Sprint 5 — 성과 분석 보강 (Sprint 4 완료 후)
+- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor (Phase 8.5 Sprint 1 관측 1.5거래일 후 착수)
+- Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 완료 후 착수)
+- Phase 8.6 Sprint 2 — 시스템 관리 UI (구 Phase 8 Sprint 4, Sprint 1 완료 후)
+- Phase 8.6 Sprint 3 — 성과 분석 보강 (구 Phase 8 Sprint 5, Sprint 2 완료 후)
 
 ## 핵심 주의사항
 
