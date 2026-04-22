@@ -709,6 +709,37 @@ async def test_prev_close_tier_disabled_after_1300_kst(mock_progress):
 
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
+async def test_gap_breakout_uses_redis_realtime_ohlc(mock_progress):
+    """Phase 8 Sprint 2 Task 5 — snapshot.open_price는 Redis 실시간 OHLC 값.
+
+    gap_rate = (Redis open_price - prev_close) / prev_close 으로 계산되며,
+    WS H0STCNT0 idx 7 필드가 snapshot.open_price로 전달되어야 한다.
+    정확한 값 매핑은 test_kis_realtime의 field_offset_sanity와 병행 검증.
+    """
+    from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
+
+    # Redis 실시간으로부터 전달된 OHLC 값이라는 전제
+    realtime_open = 72000  # WS idx 7에서 읽힌 시가
+    prev_close = 69500
+    expected_gap_rate = (realtime_open - prev_close) / prev_close
+    assert expected_gap_rate >= 0.03  # gap_open tier 판정 전제
+
+    snapshot = _make_snapshot(
+        prev_close=prev_close,
+        open_price=realtime_open,
+        current_price=72720,  # open + 1%
+        high=72720,
+        prev_high=70500,
+    )
+    strategy = MomentumBreakoutStrategy()
+    result = await strategy.generate_signal(snapshot)
+    assert isinstance(result, TradeSignalData)
+    assert result.reason["breakout_tier"] == "gap_open"
+    assert result.reason["breakout_ref"] == realtime_open
+
+
+@patch(_PATCH_PROGRESS, return_value=1.0)
+@pytest.mark.asyncio
 async def test_gap_open_tier_uses_existing_volume_threshold_logic(mock_progress):
     """gap_open tier는 기존 breakout_pct 기반 volume_threshold 로직을 유지."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
