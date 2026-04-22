@@ -38,7 +38,7 @@
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
 | 1 ✅ | 장중 OHLC 파싱 + 갭 분기 수정 | H0STCNT0 OHLC 파싱, Redis 캐싱 확장, snapshot 조립 수정, 갭 분기 `breakout_ref = open_price` | 없음 |
-| 2 | 다층 진입 조건 + 리스크 안전장치 | prev_close/prev_high/gap_open 3단계 분기, confidence 상한, 반 포지션, 일일 10건 한도, 13:00 시간 가드 | Sprint 1 + 2거래일 관찰 |
+| 2 ✅ | 다층 진입 조건 + 리스크 안전장치 | prev_close/prev_high/gap_open 3단계 분기, confidence 상한, 반 포지션, 일일 10건 한도, 13:00 시간 가드 | Sprint 1 + 2거래일 관찰 |
 | 3 | **E2E 검증 + LIVE 전환 게이트** (Phase 7.0 Sprint 3 이관) | Paper E2E 1사이클, 5거래일 관찰, LIVE 초기 파라미터 적용 | Sprint 2 |
 | 4 | 시스템 관리 UI | 스케줄러 상태/수동 제어/파이프라인 헬스 + 보유 포지션/청산 카운트다운/장 단계 | Sprint 3 (LIVE 전환 후 운영 가시성 확보) |
 | 5 | 성과 분석 보강 | 일간/주간 PnL/승률/MDD/보유시간/시간대 분포 대시보드 | Sprint 4 완료 후 |
@@ -134,7 +134,7 @@
 
 ---
 
-## Sprint 2 상세 — 다층 진입 조건 + 리스크 안전장치
+## Sprint 2 상세 — 다층 진입 조건 + 리스크 안전장치 ✅ 완료 (PR #157, 2026-04-22)
 
 ### 백엔드
 
@@ -294,7 +294,7 @@ LIVE 전환 후 매매 결과 검증이 가능하도록 일간/주간 성과 리
 | 2 | prev_close 돌파 후 prev_high 저항 반락 | ⚠️ | 최리스크 | 반 포지션(50%) + confidence 상한(0.75) |
 | 3 | 10:30~13:00 횡보 구간 false positive | ⚠️ | 김단타 | volume_threshold 2.5 고정, 관찰 후 조정 |
 | 4 | 2차 스크리닝 N=1 상대 백분위 | 정보 | 박퀀트 | Phase 10.1에서 하이브리드로 근본 해결 |
-| 5 | Sprint 2 생략 시 LIVE 한도 축소 | ⚠️ | 최리스크 | 3건/일, 포지션 1건 상한 환경변수 |
+| 5 | ~~Sprint 2 생략 시 LIVE 한도 축소~~ | ~~⚠️~~ | ~~최리스크~~ | ✅ 해결 — Sprint 2에서 3건/일 환경변수 오버라이드 구현 완료 (2026-04-22) |
 | 6 | 5분봉 가속도 지표 Phase 이관 | 정보 | 박퀀트 | Phase 9 Sprint 0으로 이관 완료 (본 문서에서 제외) |
 | 7 | `signal_generator.py` `_build_snapshot()` 독스트링 불일치 (Medium) | ⬜ | sprint-review | Sprint 2에서 개선 권장 — 실제 동작(실시간 OHLC 우선)과 맞게 수정. 기능 버그 없음 |
 | 8 | 모의/실전 체결가 차이 | ⚠️ | 윤에이피 | Phase 7.0 Sprint 1에서 역산 구현, Sprint 3 LIVE 전환 시 검증 |

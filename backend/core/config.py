@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = ""
     JWT_EXPIRY_HOURS: int = 24
 
+    # 리스크 관리
+    # Sprint 3 이전 LIVE 초기에 일일 거래 한도를 임시 제한할 때 사용 (예: 3)
+    # 미설정 시 settings 테이블의 daily_max_trade_count 값을 따름
+    DAILY_MAX_TRADE_COUNT_OVERRIDE: int | None = None
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 

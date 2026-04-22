@@ -356,8 +356,9 @@ async def test_incr_daily_trade_count_increments_existing(
     mock_redis.get = AsyncMock(return_value="5")
     result = await risk_manager.incr_daily_trade_count()
     assert result == 6
+    # 기존 값이 있을 때는 TTL 없이 값만 업데이트 (TTL은 최초 set에서만 설정)
     mock_redis.set.assert_awaited_once_with(
-        "risk:daily_trade_count", "6", ttl=86400
+        "risk:daily_trade_count", "6"
     )
 
 
@@ -399,16 +400,16 @@ async def test_env_override_applies_lower_limit(
     risk_manager, mock_redis, monkeypatch
 ):
     """DAILY_MAX_TRADE_COUNT_OVERRIDE=3 → 카운터=3에서 차단."""
-    monkeypatch.setenv("DAILY_MAX_TRADE_COUNT_OVERRIDE", "3")
+    monkeypatch.setattr("modules.trading.risk_manager.settings", type("S", (), {"DAILY_MAX_TRADE_COUNT_OVERRIDE": 3})())
     mock_redis.get = AsyncMock(return_value="3")
     assert await risk_manager.check_daily_trade_limit() is False
 
 
 @pytest.mark.asyncio
-async def test_env_override_invalid_falls_back_to_setting(
+async def test_env_override_none_falls_back_to_setting(
     risk_manager, mock_redis, monkeypatch
 ):
-    """DAILY_MAX_TRADE_COUNT_OVERRIDE 값이 숫자가 아니면 설정값(10)으로 폴백."""
-    monkeypatch.setenv("DAILY_MAX_TRADE_COUNT_OVERRIDE", "invalid")
+    """DAILY_MAX_TRADE_COUNT_OVERRIDE=None이면 settings 테이블 값(10)으로 폴백."""
+    monkeypatch.setattr("modules.trading.risk_manager.settings", type("S", (), {"DAILY_MAX_TRADE_COUNT_OVERRIDE": None})())
     mock_redis.get = AsyncMock(return_value="5")
     assert await risk_manager.check_daily_trade_limit() is True

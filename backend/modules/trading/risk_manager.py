@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime, time, date, timedelta, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -27,9 +26,6 @@ REDIS_COOLDOWN = "risk:cooldown"
 REDIS_CONSECUTIVE_LOSS = "risk:consecutive_loss_count"
 REDIS_DAILY_CAPITAL = "risk:daily_capital"
 REDIS_DAILY_TRADE_COUNT = "risk:daily_trade_count"  # Phase 8 Sprint 2: 일일 거래 횟수
-
-# 일일 거래 한도 환경변수 오버라이드 (Sprint 3 전 LIVE 초기 3건/일 대응)
-ENV_DAILY_TRADE_LIMIT_OVERRIDE = "DAILY_MAX_TRADE_COUNT_OVERRIDE"
 
 
 logger = logging.getLogger(__name__)
@@ -308,16 +304,9 @@ class RiskManager:
         우선순위: 환경변수 오버라이드 > settings 테이블 > DEFAULTS(10).
         Sprint 3 이전 LIVE 초기에 `DAILY_MAX_TRADE_COUNT_OVERRIDE=3`으로 제한.
         """
-        override = os.getenv(ENV_DAILY_TRADE_LIMIT_OVERRIDE)
-        if override:
-            try:
-                return int(override)
-            except ValueError:
-                logger.warning(
-                    "%s 값이 정수가 아님: %r — 설정값으로 폴백",
-                    ENV_DAILY_TRADE_LIMIT_OVERRIDE,
-                    override,
-                )
+        override = settings.DAILY_MAX_TRADE_COUNT_OVERRIDE
+        if override is not None:
+            return override
         return self._get_int("daily_max_trade_count")
 
     async def check_daily_trade_limit(self) -> bool:
@@ -331,14 +320,16 @@ class RiskManager:
         return count < self._get_daily_trade_limit()
 
     async def incr_daily_trade_count(self) -> int:
-        """일일 거래 카운터 증가 (첫 증가 시 TTL 86400초 설정)."""
-        # 키가 없으면 먼저 0으로 set + TTL 적용 → incr
+        """일일 거래 카운터 증가 (첫 증가 시에만 TTL 86400초 설정)."""
+        # 키가 없으면 TTL 포함 set → 이후 증가는 TTL 건드리지 않음
+        # set(..., ttl=86400)을 매번 호출하면 거래마다 만료 시각이 연장되어
+        # "당일 N건" 한도가 아니라 "마지막 거래 후 24시간" 한도로 동작하게 됨
         existing = await self._redis.get(REDIS_DAILY_TRADE_COUNT)
         if existing is None:
             await self._redis.set(REDIS_DAILY_TRADE_COUNT, "1", ttl=86400)
             return 1
         new_value = int(existing) + 1
-        await self._redis.set(REDIS_DAILY_TRADE_COUNT, str(new_value), ttl=86400)
+        await self._redis.set(REDIS_DAILY_TRADE_COUNT, str(new_value))
         return new_value
 
     def check_time_restriction(self) -> bool:
