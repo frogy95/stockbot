@@ -217,6 +217,137 @@ async def test_position_size_ratio_applied():
 
 
 # ---------------------------------------------------------------------------
+# Phase 8 Sprint 2 Task 6: 차단 사유 구조화 로그 + 선택적 텔레그램 알림
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_structured_block_log_on_risk_blocked(caplog):
+    """risk_blocked 차단 시 구조화 필드 로그 기록."""
+    import logging as _logging
+
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    with caplog.at_level(_logging.INFO, logger="modules.trading.engine"):
+        await engine.process_screening_results([{"stock_code": "005930"}])
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert any(
+        "engine_block" in m and "risk_blocked" in m and "005930" in m for m in messages
+    )
+
+
+@pytest.mark.asyncio
+async def test_risk_blocked_triggers_telegram_alert():
+    """risk_blocked 차단 시 텔레그램 send_system_alert 호출."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_awaited_once()
+    call_args = notifier.send_system_alert.call_args
+    assert call_args[0][0] == "risk_warning"
+
+
+@pytest.mark.asyncio
+async def test_quantity_zero_does_not_trigger_telegram_alert():
+    """quantity_zero 차단은 로그만 남기고 텔레그램 알림 미발송."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(return_value=MagicMock(allowed=True))
+    engine._position_sizer.calculate = AsyncMock(
+        return_value=_make_position_size(quantity=0)
+    )
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_pipeline_unhealthy_triggers_telegram_alert():
+    """pipeline_unhealthy 차단은 send_system_alert 호출."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+
+    # redis.get override: pipeline_healthy=false
+    async def _get(key):
+        if key == "scheduler:pipeline_healthy":
+            return "false"
+        if key == "trading:mode":
+            return "auto"
+        return None
+
+    engine._redis.get = AsyncMock(side_effect=_get)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    notifier.send_system_alert.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_block_alert_deduped_within_5min():
+    """동일 (stock_code, reason) 조합은 5분 내 재알림 방지."""
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    engine = _make_engine(notifier_manager=notifier, trading_mode="auto")
+    signal = _make_signal()
+    engine._signal_generator.generate_signals = AsyncMock(return_value=[signal])
+    engine._risk_manager.can_trade = AsyncMock(
+        return_value=MagicMock(allowed=False, reason="손실 한도", risk_level="blocked")
+    )
+    engine._position_sizer.calculate = AsyncMock(return_value=_make_position_size())
+    engine._eod_liquidator.is_entry_blocked.return_value = False
+
+    # 두 번째 호출에서 dedup 키가 존재한다고 가정
+    dedup_state = {"hit": False}
+
+    async def _get(key):
+        if key == "scheduler:pipeline_healthy":
+            return "true"
+        if key == "trading:mode":
+            return "auto"
+        if key.startswith("engine:block:dedup:"):
+            if dedup_state["hit"]:
+                return "1"
+            dedup_state["hit"] = True
+            return None
+        return None
+
+    engine._redis.get = AsyncMock(side_effect=_get)
+
+    # 첫 호출 → 알림 1회
+    await engine.process_screening_results([{"stock_code": "005930"}])
+    # 두 번째 호출 → dedup으로 스킵
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    assert notifier.send_system_alert.await_count == 1
+
+
+# ---------------------------------------------------------------------------
 # Phase 8 Sprint 2: breakout_tier 기반 size_ratio
 # ---------------------------------------------------------------------------
 
