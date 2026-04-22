@@ -608,12 +608,12 @@ git commit -m "docs(phase8-sprint2): task11 — 통합 회귀 결과 + 수동 �
 
 | 검증 항목 | 명령 | 예상 결과 | status |
 |-----------|------|-----------|--------|
-| pytest 전체 | `docker compose exec backend pytest -v` | 전원 PASS | ⬜ |
-| momentum_breakout (tier) | `docker compose exec backend pytest tests/test_momentum_breakout.py -v` | 신규 8개 + 기존 21개 PASS | ⬜ |
-| risk_manager | `docker compose exec backend pytest tests/test_risk_manager.py -v` | daily_trade_count 관련 6개 PASS | ⬜ |
-| scheduler (no_data / reconnect / daily_report) | `docker compose exec backend pytest tests/test_scheduler.py -v -k "no_data or reconnect or daily_report"` | 신규 6개 PASS | ⬜ |
-| engine | `docker compose exec backend pytest tests/test_engine.py -v` | 신규 block/size_ratio/on_order_filled 테스트 PASS | ⬜ |
-| 프론트 타입 체크 | `docker compose exec frontend npx tsc --noEmit` | 에러 없음 | ⬜ |
+| pytest 전체 | `docker compose exec backend pytest -v` | 895 passed, 1 pre-existing fail (test_ws_manager_env_max_subscriptions) | ✅ |
+| momentum_breakout (tier) | `docker compose exec backend pytest tests/test_momentum_breakout.py -v` | 29 passed (기존 21 + 신규 8) | ✅ |
+| risk_manager | `docker compose exec backend pytest tests/test_risk_manager.py -v` | 19 passed (기존 10 + 신규 9) | ✅ |
+| scheduler (no_data / reconnect / daily_report) | `docker compose exec backend pytest tests/test_scheduler.py -v` | 24 passed (기존 16 + 신규 8) | ✅ |
+| engine (block/size_ratio/on_order_filled) | `docker compose exec backend pytest tests/test_engine_auto_mode.py tests/test_trading_engine.py -v` | 27 passed | ✅ |
+| 프론트 타입 체크 | `docker compose exec frontend npx tsc --noEmit` | 에러 없음 | ✅ |
 | 프론트 리셋 버튼 (수동) | 로그인 → 대시보드 → 리셋 버튼 클릭 → Redis `risk:consecutive_loss_count` 삭제 | 삭제 확인 | ⬜ |
 | seed_settings 신규 키 | `docker compose exec backend python -m scripts.seed_settings` 재적용 후 `daily_max_trade_count=10` 존재 | DB에 row 존재 | ⬜ |
 | 배포 후 tier 관찰 (2거래일) | `SELECT reason->>'breakout_tier', COUNT(*) FROM trade_signals GROUP BY 1;` | 3 tier 모두 출현 | ⬜ |

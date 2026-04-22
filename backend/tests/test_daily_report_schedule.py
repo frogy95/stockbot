@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from modules.collector.scheduler import CollectorScheduler
+from tests.conftest import FakeRedis
 
 pytestmark = pytest.mark.asyncio
 
@@ -34,7 +35,7 @@ def _make_scheduler() -> CollectorScheduler:
         ws_manager=ws_manager,
         trade_strength=MagicMock(),
         ws_client=ws_client,
-        redis=AsyncMock(),
+        redis=FakeRedis(),  # Phase 8 Sprint 2 Task 10: 일일 리포트 당일 1회 잠금 동작 전제
     )
 
 

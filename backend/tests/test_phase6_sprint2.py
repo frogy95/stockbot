@@ -178,8 +178,11 @@ async def test_recovery_skips_if_connected():
 
 @pytest.mark.asyncio
 async def test_recovery_succeeds_on_second_attempt():
-    """2회차에서 복구 성공."""
-    scheduler = _make_scheduler()
+    """2회차에서 복구 성공 — Phase 8 Sprint 2 Task 9: 알림 메시지가 'WS 재연결 완료'."""
+    from tests.conftest import FakeRedis
+
+    # FakeRedis 사용 — _send_reconnect_alert의 60초 dedup이 정상 동작하도록
+    scheduler = _make_scheduler(redis=FakeRedis())
     telegram = AsyncMock()
     scheduler._telegram_bot = telegram
 
@@ -195,8 +198,9 @@ async def test_recovery_succeeds_on_second_attempt():
 
     # 2회 시도 후 성공
     assert scheduler._ws_client.connect.await_count == 2
-    last_call = telegram.send_notification.call_args_list[-1]
-    assert "복구 성공" in last_call[0][0]
+    # 성공 알림은 _send_reconnect_alert 경유 (60초 dedup 통합)
+    messages = [c[0][0] for c in telegram.send_notification.call_args_list]
+    assert any("WS 재연결 완료" in m for m in messages)
 
 
 @pytest.mark.asyncio
