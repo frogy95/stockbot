@@ -52,7 +52,7 @@
 
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
-| 1 | **관측성 강화** | stage 분포 메트릭, 2차 score 분포 히스토그램, 탈락 상위 종목 로깅, 가상 신호 로깅 (13:00+ prev_close) | 없음 |
+| 1 ✅ | **관측성 강화** | stage 분포 메트릭, 2차 score 분포 히스토그램, 탈락 상위 종목 로깅, 가상 신호 로깅 (13:00+ prev_close) | 없음 |
 | 2 | **풀 하한 폴백 + 동적 min_volume_floor** | `passed<3` 시 상위 score 보강, `MIN_VOLUME_FLOOR` 조건부 분기(0.4/0.5/0.6), env 변수화, HARD 상한 0.3 | Sprint 1 배포 후 1.5거래일 관찰 |
 
 > **실행 원칙**:
@@ -142,7 +142,9 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 
 ---
 
-## Sprint 1 상세 — 관측성 강화
+## Sprint 1 상세 — 관측성 강화 ✅ 완료
+
+> **완료**: PR #162 머지, 2026-04-22. 929 passed / 1 failed (기존 버그, 이 PR 비관련). /diagnostics 페이지 정상 동작 확인.
 
 ### 백엔드
 - `backend/modules/screening/realtime_screener.py`: 2차 스크리닝 `total_score` 히스토그램 Redis counter (key: `metrics:secondary:score:{date}:{bucket}`)
@@ -277,6 +279,13 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 1. **Sprint 1→2 관찰 기간 1.5거래일 채택 여부** (최리스크 조건부 승인). 엄격히 가려면 2거래일.
 2. **Phase 8.5 → Phase 8.6 Sprint 1 이행 시 관찰 기간 5거래일 유지 vs 단축**. 권고는 5거래일 유지.
 3. **자동 롤백 트리거 발동 시 관리자 확인 vs 완전 자동 원복**. 권고는 관리자 확인.
+
+### Sprint 1 코드 리뷰에서 발견된 미해결 이슈 (Medium, Sprint 2에서 개선 권장)
+
+| # | 이슈 | Severity | 파일 | Sprint 2 개선 방향 |
+|---|------|----------|------|-------------------|
+| M1 | `top-rejects` API `limit` 파라미터 최대 50 허용이나 Redis `TOP_REJECT_SIZE=5` 고정 — 5 초과 요청은 항상 5건만 반환 | Medium | `backend/api/routes/metrics.py`, `backend/modules/trading/strategies/_metrics.py` | `TOP_REJECT_SIZE`를 env 변수로 승격하거나 API limit 상한을 5로 제한 |
+| M2 | stage heatmap 프론트엔드 `HOUR_MINS`가 09:30부터 시작 — 09:00~09:20 구간 데이터 수집은 되나 UI에 미표시 | Medium | `frontend/components/diagnostics/stage-heatmap-card.tsx` | `if (h === 9 && m < 30) continue;` 조건 제거 또는 09:00~09:20 컬럼 추가 |
 
 ---
 

@@ -11,8 +11,22 @@
 
 PR: https://github.com/frogy95/stockbot/pull/162
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+#### 코드 리뷰 결과 (2026-04-22)
+
+- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 정상
+- ✅ 인증: `/api/v1/metrics/*` 4종 모두 `get_current_user` 의존성 적용
+- ✅ 전략 순수성: `_metrics.py` 분리, 예외 전파 없음 (TradeSignalData import 금지 준수)
+- ✅ 타임존: `datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()` 패턴 일관 적용
+- ✅ 프로덕션 와이어링: `main.py`에서 `MomentumBreakoutStrategy(redis_client=..., session_factory=...)` 정상 주입
+- Medium: `top-rejects` API limit 파라미터 최대 50 허용이나 실제 Redis `TOP_REJECT_SIZE=5` 고정이므로 5 초과 요청은 항상 5건만 반환 (기능 영향 없음, Sprint 2에서 개선 권장)
+- Medium: stage heatmap 프론트엔드 HOUR_MINS가 09:30부터 시작 — 09:00~09:20 구간 데이터 수집은 되나 UI에 표시 안 됨 (장 시작 직후 30분 사각지대, Sprint 2에서 개선 권장)
+
+#### 자동 검증 결과 (2026-04-22)
+
+- ✅ `pytest -v`: 929 passed / 1 failed (실패 `test_ws_manager_env_max_subscriptions`는 이 PR 변경 無관한 기존 버그, `PAPER.max_ws_subscriptions` 값 불일치)
+- ✅ API curl 검증 (4종): score-histogram / stage-heatmap / top-rejects / virtual-signals 모두 200 응답
+- ✅ 데모 모드 API: 인증 없이 401, 인증 후 정상 응답 확인
+- ✅ Playwright UI: `/diagnostics` 페이지 정상 렌더링, 4카드 표시 확인, score 분포 데이터 실시간 반영
 
 #### 배포 후 필수 수동 조치
 
