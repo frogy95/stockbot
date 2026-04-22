@@ -156,7 +156,10 @@ async def lifespan(app: FastAPI):
         risk_manager.set_notifier(notifier_manager)
 
     # 매매 엔진 초기화
-    strategy = MomentumBreakoutStrategy()
+    strategy = MomentumBreakoutStrategy(
+        redis_client=redis_client,
+        session_factory=session_factory,
+    )
     signal_generator = SignalGenerator(session_factory, redis_client, strategy)
     order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
     position_manager = PositionManager(session_factory, redis_client, risk_manager)
