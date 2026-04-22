@@ -52,12 +52,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관)
-- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 착수 예정** (2026-04-22 프로덕션 관측 결과 기존 Sprint 3 DoD 달성 불가 판정 → 선제 해소)
-- 현재 Sprint: **Phase 8.5 Sprint 1 — 관측성 강화** (stage 분포 메트릭 + 2차 score 히스토그램 + 탈락 상위 리스트 + prev_close 가상 신호 로깅)
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22)
+- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1 완료
+- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 진행 중** (Sprint 1 완료, Sprint 2 대기 중)
+- 현재 Sprint: **Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor** (Sprint 1 관측 데이터 수집 후 착수)
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.5 Sprint 1~2 (신호 발생 데드락 해제, ~1.5주)** → Phase 8.6 착수
+- 다음 마일스톤: **Phase 8.5 Sprint 2 (풀 하한 폴백 + 동적 min_volume_floor, 1.5거래일 관측 후 착수)** → Phase 8.6 착수
 - 후속 마일스톤: **Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (구 Phase 8 Sprint 3, DoD 재정의, Phase 8.5 완료 후)
 - 이후 마일스톤: Phase 8.6 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
@@ -135,7 +135,7 @@ Phase 0 (완료)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
-- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. LIVE 전환 게이트(현 Phase 8 Sprint 3)의 선행 조건.
+- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. LIVE 전환 게이트(현 Phase 8.6 Sprint 1, 구 Phase 8 Sprint 3)의 선행 조건.
 - Phase 7.0 -> 8: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (구 7.2 흡수) + 관리 UI + 성과 분석 + E2E 게이트(구 7.0 S3) 통합. Phase 7.0 Sprint 3은 2026-04-20 Phase 8 Sprint 3으로 이관, Phase 7.0은 종결.
 - Phase 8 Sprint 2 -> 8.5 (2026-04-22 추가): Sprint 2 배포 후 프로덕션 관측에서 신호 0건 교차 단절 구조 확인 → Phase 10.1 하이브리드의 MVP(풀 하한 폴백)와 전략 게이트 동적 분기를 선제 적용.
 - Phase 8 -> 8.6 범위 이관 (2026-04-22 사용자 지시): Phase 8을 Sprint 1·2로 종결. 구 Sprint 3(E2E+LIVE), Sprint 4(관리 UI), Sprint 5(성과 분석)는 Phase 8.6 Sprint 1·2·3으로 이관.
@@ -1181,19 +1181,19 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구조**가 확인됨:
 - 2차 스크리닝이 하루 종일 1종목만 통과 (모집단 ≈ 1, 기댓값 ≈ 0)
 - 오전: `min_volume_floor=0.5` 컷 (거래량 31% 정체) / 13:00+: `prev_close_time_guard` 컷
-- Phase 8 Sprint 3 DoD("신호 발생 3거래일 연속")는 현 구조에서 **논리적 달성 불가**
+- Phase 8.6 Sprint 1(구 Phase 8 Sprint 3) DoD("신호 발생 3거래일 연속")는 현 구조에서 **논리적 달성 불가**
 - Phase 10.1 하이브리드가 근본 해결책이나 최소 6개월+ 뒤 → 중간 브리지 필수
 
 ### 목표
-데이터 축적 대기 없이 코드·파라미터 수정만으로 **2차 스크리닝 풀과 전략 게이트의 교차 가능 집합을 양수**로 만들어 Phase 8 Sprint 3 착수 전제를 확보한다. Phase 9·10·10.1의 순서·전제·DoD는 **건드리지 않는다**.
+데이터 축적 대기 없이 코드·파라미터 수정만으로 **2차 스크리닝 풀과 전략 게이트의 교차 가능 집합을 양수**로 만들어 Phase 8.6 Sprint 1(구 Phase 8 Sprint 3) 착수 전제를 확보한다. Phase 9·10·10.1의 순서·전제·DoD는 **건드리지 않는다**.
 
 ### 필요 선행 데이터
 - 없음 (코드·파라미터 수정만)
 
 ### 작업 목록
 
-#### Sprint 1: 관측성 강화 (P0, 즉시 배포) 🔄
-> 실행 명세: `docs/phase/phase8.5/sprint1/sprint1.md` ✅ 계획 수립 완료 (2026-04-22)
+#### Sprint 1: 관측성 강화 (P0, 즉시 배포) ✅ (2026-04-22 완료)
+> 실행 명세: `docs/phase/phase8.5/sprint1/sprint1.md` ✅ 완료 (2026-04-22)
 - stage별 reject/pass 카운터 (1분 bucket × stage Counter + DB 일별 집계)
 - 2차 스크리닝 `total_score` 히스토그램 (10점 bucket × 10 + `>=75` 별도)
 - stage × 시간대 heatmap + 탈락 상위 5종목 실시간 리스트
@@ -1220,13 +1220,13 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - Sprint 2 풀 하한 폴백 + 동적 `MIN_VOLUME_FLOOR` + `is_fallback` 메타 + HARD 0.3 배포
 - env 변수화 6개 + `.env.example` 동기화
 - 자동 롤백 트리거 스케줄러 동작 확인
-- Phase 8.5 관찰 5거래일에서 **일평균 신호 ≥ 1** (Phase 8 Sprint 3 착수 전제)
+- Phase 8.5 관찰 5거래일에서 **일평균 신호 ≥ 1** (Phase 8.6 Sprint 1 착수 전제)
 - pytest 전체 통과
 
 ### 기술 고려사항
 - Sprint 1 → Sprint 2 순차 (관측성 선행, 모든 튜닝은 데이터 기반)
 - Sprint 1 → Sprint 2 관찰 기간: **1.5거래일** (배포 당일 2시간 + 다음 거래일 종일)
-- Sprint 2 → Phase 8 Sprint 3 관찰 기간: **5거래일 유지**
+- Sprint 2 → Phase 8.6 Sprint 1 관찰 기간: **5거래일 유지**
 - 전 파라미터 env 변수화로 즉시 롤백 가능
 - 2차 `pass_threshold=75.0`은 Phase 8.5에서 유지 (Sprint 1 데이터 수집 후 재평가)
 

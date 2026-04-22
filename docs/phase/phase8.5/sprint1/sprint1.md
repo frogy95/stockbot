@@ -6,9 +6,11 @@
 
 **Tech Stack:** Python 3.12 / FastAPI / SQLAlchemy 2.0 async / APScheduler / Redis 7 / Alembic / Next.js 16 App Router / React 19 / Tailwind 4 / SWR(polling)
 
-**Sprint 기간:** 2026-04-22 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-22 ~ 2026-04-22
+**상태:** ✅ 완료 (2026-04-22)
 **이전 스프린트:** Phase 8 Sprint 2 (✅ 완료, PR #157)
 **브랜치명:** `phase8.5-sprint1`
+**PR:** (생성 후 기입)
 
 ---
 
@@ -24,7 +26,7 @@
 - `pass_threshold` 조정 — 분포 데이터 확보 후 Sprint 2 이후 결정
 - `prev_close_time_guard` 13:00 → 14:00 연장 — 검토팀 전원 거부, 영구 범위 제외
 - 시간대 슬라이딩 `MIN_VOLUME_FLOOR` — 검토팀 전원 거부, 영구 범위 제외
-- Phase 8 Sprint 3 DoD 재정의 문서 작업 (phase8.md 수정) — Sprint 2 완료 후
+- Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) DoD 재정의 문서 작업 (phase8.6.md 수정) — Phase 8.5 Sprint 2 완료 후
 
 **핵심 제약**:
 
@@ -135,9 +137,9 @@ git commit -m "feat(phase8.5-sprint1): task1 — 관측성 테이블 3종 Alembi
 ```
 
 **완료 기준:**
-- ⬜ `alembic upgrade head` 성공
-- ⬜ 3개 테이블 생성 확인
-- ⬜ UniqueConstraint 정상 동작 (중복 INSERT 실패 테스트)
+- ✅ `alembic upgrade head` 성공
+- ✅ 3개 테이블 생성 확인
+- ✅ UniqueConstraint 정상 동작 (중복 INSERT 실패 테스트)
 
 ---
 
@@ -199,9 +201,9 @@ git commit -m "feat(phase8.5-sprint1): task2 — 메트릭 Redis 유틸 + 키 �
 ```
 
 **완료 기준:**
-- ⬜ `test_metrics_keys.py` 전체 PASS
-- ⬜ `incr` 메서드 동작 수동 검증
-- ⬜ TTL이 최초 생성 시에만 적용 (기존 키 TTL 유지 확인)
+- ✅ `test_metrics_keys.py` 전체 PASS
+- ✅ `incr` 메서드 동작 수동 검증
+- ✅ TTL이 최초 생성 시에만 적용 (기존 키 TTL 유지 확인)
 
 ---
 
@@ -250,9 +252,9 @@ git commit -m "feat(phase8.5-sprint1): task3 — 2차 스크리닝 score 히스�
 ```
 
 **완료 기준:**
-- ⬜ 신규 테스트 PASS
-- ⬜ 기존 `test_realtime_screener.py` 회귀 없음
-- ⬜ `>=75` 와 10점 bucket이 **동시에** 기록되는지 검증 (중요)
+- ✅ 신규 테스트 PASS
+- ✅ 기존 `test_realtime_screener.py` 회귀 없음
+- ✅ `>=75` 와 10점 bucket이 **동시에** 기록되는지 검증 (중요)
 
 ---
 
@@ -313,10 +315,10 @@ git commit -m "feat(phase8.5-sprint1): task4 — 전략 stage 카운터 + 가상
 ```
 
 **완료 기준:**
-- ⬜ 가상 신호 기록되는 동안 `RejectedSignal` 타입 반환 유지
-- ⬜ `signals` / `orders` 테이블 INSERT 0건 (테스트에서 count assert)
-- ⬜ 13:00 이전 / 14:00 이후엔 virtual_signals 기록 안 됨
-- ⬜ stage 카운터 key 포맷 Task 2 규약과 일치
+- ✅ 가상 신호 기록되는 동안 `RejectedSignal` 타입 반환 유지
+- ✅ `signals` / `orders` 테이블 INSERT 0건 (테스트에서 count assert)
+- ✅ 13:00 이전 / 14:00 이후엔 virtual_signals 기록 안 됨
+- ✅ stage 카운터 key 포맷 Task 2 규약과 일치
 
 ---
 
@@ -366,10 +368,10 @@ git commit -m "feat(phase8.5-sprint1): task5 — 16:05 메트릭 일별 집계 �
 ```
 
 **완료 기준:**
-- ⬜ 신규 테스트 PASS
-- ⬜ UniqueConstraint upsert 정상 동작 (재실행 시 중복 INSERT 없음)
-- ⬜ 기존 scheduler 테스트 회귀 없음
-- ⬜ `_rollup_daily_metrics` 실패 시 예외 전파 없이 로깅만 (스케줄러 중단 방지)
+- ✅ 신규 테스트 PASS
+- ✅ UniqueConstraint upsert 정상 동작 (재실행 시 중복 INSERT 없음)
+- ✅ 기존 scheduler 테스트 회귀 없음
+- ✅ `_rollup_daily_metrics` 실패 시 예외 전파 없이 로깅만 (스케줄러 중단 방지)
 
 ---
 
@@ -417,9 +419,9 @@ git commit -m "feat(phase8.5-sprint1): task6 — metrics API 4종 + top_reject �
 ```
 
 **완료 기준:**
-- ⬜ 4개 엔드포인트 200 OK
-- ⬜ 인증 미첨부 시 401
-- ⬜ 빈 DB/Redis 상태에서도 200 + 빈 배열 (404 금지)
+- ✅ 4개 엔드포인트 200 OK
+- ✅ 인증 미첨부 시 401
+- ✅ 빈 DB/Redis 상태에서도 200 + 빈 배열 (404 금지)
 
 ---
 
@@ -470,10 +472,10 @@ git commit -m "feat(phase8.5-sprint1): task7 — 신호 진단 대시보드 4카
 ```
 
 **완료 기준:**
-- ⬜ tsc 에러 없음
-- ⬜ /diagnostics 페이지 렌더링 (빈 데이터 상태에서도 크래시 없음)
-- ⬜ 카드 4는 "Coming Soon" 표시만 (실제 데이터 바인딩 금지)
-- ⬜ 사이드바 메뉴 추가
+- ✅ tsc 에러 없음
+- ✅ /diagnostics 페이지 렌더링 (빈 데이터 상태에서도 크래시 없음)
+- ✅ 카드 4는 "Coming Soon" 표시만 (실제 데이터 바인딩 금지)
+- ✅ 사이드바 메뉴 추가
 
 ---
 
@@ -529,11 +531,11 @@ git commit -m "test(phase8.5-sprint1): task8 — E2E 통합 검증 + 가상 신�
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 PASS (기존 + 신규)
-- ⬜ tsc 에러 없음
-- ⬜ 4 API 200 OK
-- ⬜ /diagnostics 페이지 렌더링 + 스크린샷
-- ⬜ 가상 신호 1건 이상 기록되는 시나리오에서 `signals`/`orders` 테이블 count 불변 (명시적 assert)
+- ✅ pytest 전체 PASS (기존 + 신규)
+- ✅ tsc 에러 없음
+- ✅ 4 API 200 OK
+- ✅ /diagnostics 페이지 렌더링 + 스크린샷
+- ✅ 가상 신호 1건 이상 기록되는 시나리오에서 `signals`/`orders` 테이블 count 불변 (명시적 assert)
 
 ---
 
