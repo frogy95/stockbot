@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, time, date, timedelta, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -25,6 +26,10 @@ REDIS_EMERGENCY_STOP = "risk:emergency_stop"
 REDIS_COOLDOWN = "risk:cooldown"
 REDIS_CONSECUTIVE_LOSS = "risk:consecutive_loss_count"
 REDIS_DAILY_CAPITAL = "risk:daily_capital"
+REDIS_DAILY_TRADE_COUNT = "risk:daily_trade_count"  # Phase 8 Sprint 2: 일일 거래 횟수
+
+# 일일 거래 한도 환경변수 오버라이드 (Sprint 3 전 LIVE 초기 3건/일 대응)
+ENV_DAILY_TRADE_LIMIT_OVERRIDE = "DAILY_MAX_TRADE_COUNT_OVERRIDE"
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +67,7 @@ class RiskManager:
         "no_entry_end": "09:30",
         "no_new_entry_time": "14:30",
         "risk_lock_during_trading": "true",
+        "daily_max_trade_count": "10",  # Phase 8 Sprint 2: 일일 최대 거래 횟수
     }
 
     def __init__(
@@ -126,6 +132,14 @@ class RiskManager:
             return RiskCheckResult(
                 allowed=False,
                 reason="현재 시간대는 신규 진입이 제한됩니다",
+                risk_level="blocked",
+            )
+
+        # 일일 거래 횟수 한도 (Phase 8 Sprint 2)
+        if not await self.check_daily_trade_limit():
+            return RiskCheckResult(
+                allowed=False,
+                reason=f"일일 거래 횟수 한도({self._get_daily_trade_limit()}건)에 도달했습니다",
                 risk_level="blocked",
             )
 
@@ -288,6 +302,45 @@ class RiskManager:
         ttl = await self._redis.ttl(REDIS_COOLDOWN)
         return ttl > 0
 
+    def _get_daily_trade_limit(self) -> int:
+        """일일 거래 한도 반환.
+
+        우선순위: 환경변수 오버라이드 > settings 테이블 > DEFAULTS(10).
+        Sprint 3 이전 LIVE 초기에 `DAILY_MAX_TRADE_COUNT_OVERRIDE=3`으로 제한.
+        """
+        override = os.getenv(ENV_DAILY_TRADE_LIMIT_OVERRIDE)
+        if override:
+            try:
+                return int(override)
+            except ValueError:
+                logger.warning(
+                    "%s 값이 정수가 아님: %r — 설정값으로 폴백",
+                    ENV_DAILY_TRADE_LIMIT_OVERRIDE,
+                    override,
+                )
+        return self._get_int("daily_max_trade_count")
+
+    async def check_daily_trade_limit(self) -> bool:
+        """일일 거래 횟수가 한도 이내인지 확인.
+
+        Returns:
+            True이면 한도 이내 (매매 가능), False이면 초과
+        """
+        count_str = await self._redis.get(REDIS_DAILY_TRADE_COUNT)
+        count = int(count_str) if count_str else 0
+        return count < self._get_daily_trade_limit()
+
+    async def incr_daily_trade_count(self) -> int:
+        """일일 거래 카운터 증가 (첫 증가 시 TTL 86400초 설정)."""
+        # 키가 없으면 먼저 0으로 set + TTL 적용 → incr
+        existing = await self._redis.get(REDIS_DAILY_TRADE_COUNT)
+        if existing is None:
+            await self._redis.set(REDIS_DAILY_TRADE_COUNT, "1", ttl=86400)
+            return 1
+        new_value = int(existing) + 1
+        await self._redis.set(REDIS_DAILY_TRADE_COUNT, str(new_value), ttl=86400)
+        return new_value
+
     def check_time_restriction(self) -> bool:
         """현재 시각이 매매 허용 시간대인지 확인.
 
@@ -365,6 +418,7 @@ class RiskManager:
         await self._redis.delete(REDIS_CONSECUTIVE_LOSS)
         await self._redis.delete(REDIS_COOLDOWN)
         await self._redis.delete(REDIS_EMERGENCY_STOP)
+        await self._redis.delete(REDIS_DAILY_TRADE_COUNT)
 
         # 당일 시작 잔고 캐시: KIS 가용 현금 + 활성 포지션 원금 합계
         if self._rest_client is None:
