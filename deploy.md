@@ -7,6 +7,18 @@
 
 ---
 
+### 프로덕션 배포 - v2.5.0 (2026-04-22)
+
+포함 스프린트: Phase 8.5 Sprint 1
+PR: https://github.com/frogy95/stockbot/pull/163 (develop → main)
+
+- ⬜ Vercel 프론트엔드 자동 배포
+- ⬜ Railway 백엔드 자동 배포
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+---
+
 ### Phase 8.5 Sprint 1 — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅)
 
 PR: https://github.com/frogy95/stockbot/pull/162
@@ -23,7 +35,7 @@ PR: https://github.com/frogy95/stockbot/pull/162
 
 #### 자동 검증 결과 (2026-04-22)
 
-- ✅ `pytest -v`: 929 passed / 1 failed (실패 `test_ws_manager_env_max_subscriptions`는 이 PR 변경 無관한 기존 버그, `PAPER.max_ws_subscriptions` 값 불일치)
+- ✅ `pytest -v`: 929 passed / 1 failed (실패 `test_ws_manager_env_max_subscriptions`는 이 PR 변경 무관한 기존 버그, `PAPER.max_ws_subscriptions` 값 불일치)
 - ✅ API curl 검증 (4종): score-histogram / stage-heatmap / top-rejects / virtual-signals 모두 200 응답
 - ✅ 데모 모드 API: 인증 없이 401, 인증 후 정상 응답 확인
 - ✅ Playwright UI: `/diagnostics` 페이지 정상 렌더링, 4카드 표시 확인, score 분포 데이터 실시간 반영
@@ -31,7 +43,7 @@ PR: https://github.com/frogy95/stockbot/pull/162
 #### 배포 후 필수 수동 조치
 
 - ⬜ `docker compose up --build` (코드 반영)
-- ⬜ `docker compose exec backend alembic upgrade head` (3개 신규 테이블 생성: screening_metrics_daily, strategy_metrics_daily, virtual_signals)
+- ⬜ `docker compose exec backend alembic upgrade head` (3개 신규 테이블 생성: screening_metrics_daily, strategy_metrics_daily, virtual_signals) — Railway는 Start Command에 포함되어 자동 적용
 - ⬜ 1.5거래일 관찰: `/diagnostics` 페이지 카드 1~3 메트릭 정상 수집 확인
 - ⬜ 1.5거래일 관찰: 16:05 스케줄러 집계 job 실행 확인 (`metrics_rollup` job_id 로그 출력)
 - ⬜ DB 조회로 집계 확인: `SELECT * FROM screening_metrics_daily ORDER BY metric_date DESC LIMIT 20;`

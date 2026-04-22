@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-22T14:34:36+09:00",
+  "lastUpdated": "2026-04-22T15:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3420,6 +3420,15 @@
       "version": "v2.3.0",
       "description": "Phase 8 Sprint 1 프로덕션 배포 — H0STCNT0 OHLC 파싱 + Redis OHLC 캐시 + snapshot OHLC 우선 사용 + 갭 3%+ 자기돌파 버그 수정 (breakout_ref → snapshot.open_price)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/150",
+      "status": "in_progress"
+    },
+    {
+      "date": "2026-04-22",
+      "type": "sprint",
+      "ref": "phase8.5-sprint1",
+      "version": "v2.5.0",
+      "description": "Phase 8.5 Sprint 1 프로덕션 배포 — 관측성 테이블 3종 Alembic 마이그레이션 + Redis 메트릭 유틸 + score 히스토그램 + stage 카운터 + 가상 신호 로깅 + 16:05 집계 배치 + metrics API 4종 + 신호 진단 대시보드 4카드",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/163",
       "status": "in_progress"
     }
   ]
