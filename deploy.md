@@ -7,59 +7,36 @@
 
 ---
 
-### Hotfix: no-data-guard-log-level — 동시호가 가드 로그 DEBUG → INFO 승격 (2026-04-22)
+### Phase 8.5 Sprint 1 — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅)
 
-PR: https://github.com/frogy95/stockbot/pull/159
+PR: https://github.com/frogy95/stockbot/pull/162
 
-- ✅ 자동 검증 완료 항목:
-  - pytest `tests/test_scheduler.py`: **24 passed** (경고 5건은 AsyncMock Sprint 1 이월, 무관)
-  - 타겟 API 검증: `/api/v1/health` 200 + `{"status":"healthy","database":"connected","redis":"connected"}`, `/api/v1/screening/status` 200
-  - Playwright 타겟 검증: 로그 레벨 변경으로 UI 변경 없음 — 생략
-  - 코드 리뷰: Critical/High 이슈 없음 (로그 레벨 1줄 변경)
+#### 코드 리뷰 결과 (2026-04-22)
 
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영)
-  - Railway 로그에서 15:10~15:30 구간 `동시호가 구간 — no_data 가드 스킵` INFO 로그 출력 확인 (2거래일 관찰)
+- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 정상
+- ✅ 인증: `/api/v1/metrics/*` 4종 모두 `get_current_user` 의존성 적용
+- ✅ 전략 순수성: `_metrics.py` 분리, 예외 전파 없음 (TradeSignalData import 금지 준수)
+- ✅ 타임존: `datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()` 패턴 일관 적용
+- ✅ 프로덕션 와이어링: `main.py`에서 `MomentumBreakoutStrategy(redis_client=..., session_factory=...)` 정상 주입
+- Medium: `top-rejects` API limit 파라미터 최대 50 허용이나 실제 Redis `TOP_REJECT_SIZE=5` 고정이므로 5 초과 요청은 항상 5건만 반환 (기능 영향 없음, Sprint 2에서 개선 권장)
+- Medium: stage heatmap 프론트엔드 HOUR_MINS가 09:30부터 시작 — 09:00~09:20 구간 데이터 수집은 되나 UI에 표시 안 됨 (장 시작 직후 30분 사각지대, Sprint 2에서 개선 권장)
 
----
+#### 자동 검증 결과 (2026-04-22)
 
-### Phase 8 Sprint 2 — 다층 진입 + 리스크 안전장치 + 2026-04-21 버그 수정
-
-포함: momentum_breakout 3단계 tier (gap_open/prev_close/prev_high) · 13:00 가드 · confidence 상한 · prev_close 반 포지션 · 일일 거래 한도 10건/일 (+env override) · engine 차단 6지점 구조화 로그 · 프론트 리스크 리셋 버튼 · WS 동시호가 가드 · 재연결/일일 리포트 dedup + OHLC 파싱 회귀 픽스처
-
-PR: https://github.com/frogy95/stockbot/pull/157
-
-#### 코드 리뷰 결과 (sprint-review, 2026-04-22)
-
-- ✅ 코드 리뷰 완료 — Critical/High 이슈 없음, Medium 이슈 2건 수정 완료
-  - 이슈 1 (Medium, 수정 완료): `incr_daily_trade_count` TTL 재설정 버그 — 기존 값 있을 때 `set(..., ttl=86400)` 재호출로 마지막 거래 후 24시간으로 한도가 연장되는 버그 → 첫 증가 시에만 TTL 설정으로 수정 (커밋 0256d26)
-  - 이슈 2 (Medium, 수정 완료): `DAILY_MAX_TRADE_COUNT_OVERRIDE`를 `os.getenv()` 직접 호출에서 `core/config.py` Settings로 이동 — 12인자 검증 자동화, `int` 파싱 오류 제거 (커밋 0256d26)
-
-#### 자동 검증 결과 (sprint-review, 2026-04-22)
-
-- ✅ pytest 전체: **895 passed**, 2 pre-existing fail
-  - `test_kis_api.py::test_kis_status` — Sprint 1 이월 (await 없이 사용)
-  - `test_ws_stability.py::test_ws_manager_env_max_subscriptions` — Sprint 1 이월
-- ✅ risk_manager 테스트: **19 passed** (이슈 1/2 수정 후 전체 통과)
-- ✅ API 스모크: `/api/v1/health` 200, `/api/v1/health/readiness` 503(pipeline unhealthy — 장 외 시간 정상), `/api/v1/screening/status` 200
-- ✅ Playwright UI 검증:
-  - 대시보드: PAPER 배지 표시, 리스크 상태 카드 + "일일 리스크 카운터 리셋" 버튼 노출 정상
-  - 리셋 다이얼로그: 클릭 시 2단계 확인 다이얼로그 표시, 체크박스 체크 전 "리셋 실행" 비활성화, 체크 후 활성화 정상
-  - 스크리닝: 1차 스크리닝 목록 30건 정상 표시
-  - 매매 신호: 페이지 정상 접속
-- ✅ Phase 8 Sprint 2 완료 마킹 (phase8.md Sprint 2 ✅, 미해결 이슈 #5 해결 표시)
+- ✅ `pytest -v`: 929 passed / 1 failed (실패 `test_ws_manager_env_max_subscriptions`는 이 PR 변경 無관한 기존 버그, `PAPER.max_ws_subscriptions` 값 불일치)
+- ✅ API curl 검증 (4종): score-histogram / stage-heatmap / top-rejects / virtual-signals 모두 200 응답
+- ✅ 데모 모드 API: 인증 없이 401, 인증 후 정상 응답 확인
+- ✅ Playwright UI: `/diagnostics` 페이지 정상 렌더링, 4카드 표시 확인, score 분포 데이터 실시간 반영
 
 #### 배포 후 필수 수동 조치
 
-- ⬜ Railway 환경변수 추가 확인: (Sprint 3 E2E Paper 통과 전까지) `DAILY_MAX_TRADE_COUNT_OVERRIDE=3`
-- ⬜ `docker compose exec backend python -m scripts.seed_settings` 또는 배포 자동 시드로 `daily_max_trade_count=10` row 적재 확인
-- ⬜ 프론트 대시보드 리스크 상태 카드의 "일일 리스크 카운터 리셋" 버튼 노출 + LIVE/PAPER 배지 정상
-- ⬜ 2거래일 관찰: `SELECT reason->>'breakout_tier', COUNT(*) FROM trade_signals GROUP BY 1` 3 tier 모두 출현
-- ⬜ 2거래일 관찰: 15:10~15:30 구간 WS 재연결 0회 (백엔드 로그 `동시호가 구간 — no_data 가드 스킵`)
-- ⬜ 2거래일 관찰: 재연결 시 텔레그램 `WS 재연결 완료 (구독 N종목, reason=...)` 60초 내 1통
-- ⬜ 2거래일 관찰: 15:30 이후 일일 마감 리포트 1건만 수신
-- ⬜ 13:00 이후 prev_close tier 거부 로그 존재 (`stage=prev_close_time_guard`)
-- ⬜ 상세: `docs/phase/phase8/sprint2/validation-notes.md`
+- ⬜ `docker compose up --build` (코드 반영)
+- ⬜ `docker compose exec backend alembic upgrade head` (3개 신규 테이블 생성: screening_metrics_daily, strategy_metrics_daily, virtual_signals)
+- ⬜ 1.5거래일 관찰: `/diagnostics` 페이지 카드 1~3 메트릭 정상 수집 확인
+- ⬜ 1.5거래일 관찰: 16:05 스케줄러 집계 job 실행 확인 (`metrics_rollup` job_id 로그 출력)
+- ⬜ DB 조회로 집계 확인: `SELECT * FROM screening_metrics_daily ORDER BY metric_date DESC LIMIT 20;`
+- ⬜ DB 조회로 가상 신호 확인: `SELECT * FROM virtual_signals ORDER BY observed_at DESC LIMIT 20;`
+- ⬜ Stage heatmap에서 `prev_close_time_guard` 13:00~14:00 구간 카운트 증가 확인
 
 ---
 

@@ -63,6 +63,69 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   return resp.json() as Promise<T>;
 }
 
+// === Phase 8.5 Sprint 1: 관측성 metrics API ===
+
+export interface ScoreBucketStat {
+  bucket: string;
+  count_today: number;
+  count_7d_avg: number;
+}
+
+export interface ScoreHistogramResponse {
+  date: string;
+  buckets: ScoreBucketStat[];
+}
+
+export interface StageHeatmapCell {
+  stage: string;
+  hour_min: string;
+  count: number;
+}
+
+export interface StageHeatmapResponse {
+  date: string;
+  cells: StageHeatmapCell[];
+}
+
+export interface TopRejectItem {
+  recorded_at: string | null;
+  stage: string;
+  stock_code: string | null;
+  breakout_ref: number | null;
+  current_price: number | null;
+  detail: Record<string, unknown> | null;
+}
+
+export interface TopRejectsResponse {
+  items: TopRejectItem[];
+}
+
+export interface VirtualSignalItem {
+  id: number;
+  observed_at: string;
+  stock_code: string;
+  stock_name: string | null;
+  virtual_stage: string;
+  breakout_ref: number | null;
+  current_price: number | null;
+  gap_rate: number | null;
+  prev_close: number | null;
+  would_execute: boolean;
+  detail: Record<string, unknown> | null;
+}
+
+export interface VirtualSignalsResponse {
+  items: VirtualSignalItem[];
+}
+
+export const metricsPaths = {
+  scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
+  stageHeatmap: (date = "today") =>
+    `/api/v1/metrics/stage-heatmap?date=${encodeURIComponent(date)}`,
+  topRejects: (limit = 5) => `/api/v1/metrics/top-rejects?limit=${limit}`,
+  virtualSignals: (days = 7) => `/api/v1/metrics/virtual-signals?days=${days}`,
+};
+
 /**
  * Phase 8 Sprint 2: 리스크 일일 카운터 리셋 (Hotfix #153 API 소비)
  * 연속 손절 / 비상 정지 / 일일 거래 카운터를 초기화한다.

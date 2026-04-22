@@ -48,7 +48,7 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 6  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry, portal_supplement
+    assert status["job_count"] == 7  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry, portal_supplement, metrics_rollup
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_pipeline" in job_ids
@@ -57,6 +57,7 @@ async def test_scheduler_registers_jobs():
     assert "market_open_recovery" in job_ids
     assert "premarket_retry" in job_ids
     assert "portal_supplement" in job_ids
+    assert "metrics_rollup" in job_ids
     assert "premarket_collect" not in job_ids
     assert "etf_master_collect" not in job_ids
     assert "primary_screen" not in job_ids
