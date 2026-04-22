@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-22T15:00:00+09:00",
+  "lastUpdated": "2026-04-22T16:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3202,6 +3202,29 @@
         {
           "hash": "b58baa2",
           "message": "fix(scheduler): 동시호가 no_data 가드 로그 DEBUG → INFO 승격",
+          "date": "2026-04-22"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-risk-reset-frontend-contract",
+      "name": "리스크 카운터 리셋 버튼 응답 계약 불일치 수정",
+      "status": "deployed",
+      "path": "docs/hotfix/risk-reset-frontend-contract/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/165",
+      "deployedAt": "2026-04-22",
+      "description": "프론트엔드 resetRiskCounters()가 { ok, message } 응답을 기대했으나 백엔드가 risk_status dict를 반환하는 계약 불일치로 리셋 버튼이 항상 실패 메시지를 표시하던 문제 수정. 백엔드 리셋 동작 자체는 정상이었음.",
+      "commits": [
+        {
+          "hash": "42cf0c1",
+          "message": "fix(frontend): 리스크 카운터 리셋 버튼 응답 계약 불일치 수정",
+          "date": "2026-04-22"
+        },
+        {
+          "hash": "a9e5a6b",
+          "message": "docs(hotfix): risk-reset-frontend-contract 핫픽스 문서 추가",
           "date": "2026-04-22"
         }
       ]
