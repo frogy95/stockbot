@@ -28,6 +28,24 @@ MIN_CONFIDENCE = 0.6
 
 _KST = ZoneInfo("Asia/Seoul")
 
+# Phase 8 Sprint 2: 3단계 진입 tier
+# prev_close tier는 오후 추격매수 리스크가 커 13:00 이후 비활성화한다.
+PREV_CLOSE_TIER_BLOCK_TIME = time(13, 0)
+
+# prev_close tier 전용 고정 파라미터 (Phase 8 확정 파라미터)
+PREV_CLOSE_VOLUME_THRESHOLD = 2.5
+PREV_CLOSE_MOMENTUM_DIVISOR = 7.0
+PREV_CLOSE_MOMENTUM_MULTIPLIER = 0.7
+PREV_CLOSE_CONFIDENCE_CAP = 0.75
+
+# gap_open tier momentum 가중 (Phase 8 확정 파라미터 #11)
+GAP_OPEN_MOMENTUM_MULTIPLIER = 0.85
+
+
+def _now_kst() -> datetime:
+    """테스트 주입 지점: 현재 KST 시각을 반환."""
+    return datetime.now(_KST)
+
 
 def calc_market_progress(now_kst: datetime | None = None) -> float:
     """장중 시간가중 진행도 반환 (0.15 ~ 1.0).
@@ -73,6 +91,21 @@ class MomentumBreakoutStrategy(Strategy):
             detail=detail,
         )
 
+    def _resolve_tier(
+        self, snapshot: MarketSnapshot, gap_rate: float
+    ) -> tuple[float, str]:
+        """3단계 진입 tier 결정.
+
+        - gap_open: gap_rate >= 3% (돌파 기준 = 당일 시가)
+        - prev_high: gap_rate < 3% AND current_price > prev_high (돌파 기준 = 전일 고가)
+        - prev_close: 나머지 (돌파 기준 = 전일 종가, 13:00 이후 비활성)
+        """
+        if gap_rate >= 0.03:
+            return snapshot.open_price, "gap_open"
+        if snapshot.current_price > snapshot.prev_high:
+            return snapshot.prev_high, "prev_high"
+        return snapshot.prev_close, "prev_close"
+
     async def generate_signal(
         self, snapshot: MarketSnapshot
     ) -> TradeSignalData | RejectedSignal:
@@ -83,12 +116,24 @@ class MomentumBreakoutStrategy(Strategy):
             else 0.0
         )
 
-        # 돌파 기준: 갭 3%+ 시 당일 시가(open_price), 그 외 전일 고가
-        # high 기준이면 current_price <= high가 항상 성립 → breakout 게이트가 전체 갭 종목을 거부
-        if gap_rate >= 0.03:
-            breakout_ref = snapshot.open_price
-        else:
-            breakout_ref = snapshot.prev_high
+        # 3단계 tier 결정 (gap_open / prev_high / prev_close)
+        breakout_ref, breakout_tier = self._resolve_tier(snapshot, gap_rate)
+
+        # prev_close tier는 13:00 이후 비활성 — 오후 추격매수 리스크 억제
+        if (
+            breakout_tier == "prev_close"
+            and _now_kst().time() >= PREV_CLOSE_TIER_BLOCK_TIME
+        ):
+            return self._reject(
+                snapshot,
+                "prev_close_time_guard",
+                {
+                    "breakout_tier": breakout_tier,
+                    "breakout_ref": breakout_ref,
+                    "current_price": snapshot.current_price,
+                    "block_after": "13:00 KST",
+                },
+            )
 
         # 돌파 조건
         if snapshot.current_price <= breakout_ref:
@@ -98,6 +143,7 @@ class MomentumBreakoutStrategy(Strategy):
                 {
                     "current_price": snapshot.current_price,
                     "breakout_ref": breakout_ref,
+                    "breakout_tier": breakout_tier,
                     "gap_rate": round(gap_rate, 4),
                 },
             )
@@ -128,9 +174,11 @@ class MomentumBreakoutStrategy(Strategy):
         effective_progress = max(progress, MIN_MARKET_PROGRESS)
         adjusted_ratio = snapshot.volume / (snapshot.prev_volume * effective_progress)
 
-        # 돌파 강도 연동 임계값 (강한 돌파일수록 낮은 거래량 임계값 허용)
+        # 돌파 강도 연동 임계값 (prev_close tier는 2.5 고정)
         breakout_pct = (snapshot.current_price - breakout_ref) / breakout_ref * 100
-        if breakout_pct >= 5.0:
+        if breakout_tier == "prev_close":
+            volume_threshold = PREV_CLOSE_VOLUME_THRESHOLD
+        elif breakout_pct >= 5.0:
             volume_threshold = 1.5
         elif breakout_pct >= 3.0:
             volume_threshold = 1.8
@@ -145,6 +193,7 @@ class MomentumBreakoutStrategy(Strategy):
                     "adjusted_ratio": round(adjusted_ratio, 4),
                     "volume_threshold": volume_threshold,
                     "breakout_pct": round(breakout_pct, 4),
+                    "breakout_tier": breakout_tier,
                     "market_progress": round(progress, 4),
                     "volume_ratio": round(snapshot.volume / snapshot.prev_volume, 4),
                 },
@@ -177,10 +226,17 @@ class MomentumBreakoutStrategy(Strategy):
                 },
             )
 
-        # 신뢰도 계산
-        momentum_score = min(
-            (snapshot.current_price - breakout_ref) / breakout_ref * 100 / 5.0, 1.0
-        )
+        # 신뢰도 계산 — tier별 momentum_score 가중
+        if breakout_tier == "prev_close":
+            momentum_score = (
+                min(breakout_pct / PREV_CLOSE_MOMENTUM_DIVISOR, 1.0)
+                * PREV_CLOSE_MOMENTUM_MULTIPLIER
+            )
+        elif breakout_tier == "gap_open":
+            momentum_score = min(breakout_pct / 5.0, 1.0) * GAP_OPEN_MOMENTUM_MULTIPLIER
+        else:
+            momentum_score = min(breakout_pct / 5.0, 1.0)
+
         volume_score = min(adjusted_ratio / 5.0, 1.0)
         strength_score = min((snapshot.trade_strength - 50) / 50, 1.0)
         orderbook_score = min(
@@ -194,6 +250,10 @@ class MomentumBreakoutStrategy(Strategy):
             + orderbook_score * 0.2
         )
 
+        # prev_close tier는 confidence 상한 적용 (추격매수 리스크 반영)
+        if breakout_tier == "prev_close":
+            confidence = min(confidence, PREV_CLOSE_CONFIDENCE_CAP)
+
         # 최소 임계값
         if confidence < MIN_CONFIDENCE:
             return self._reject(
@@ -206,6 +266,7 @@ class MomentumBreakoutStrategy(Strategy):
                     "volume_score": round(volume_score, 4),
                     "strength_score": round(strength_score, 4),
                     "orderbook_score": round(orderbook_score, 4),
+                    "breakout_tier": breakout_tier,
                 },
             )
 
@@ -231,6 +292,7 @@ class MomentumBreakoutStrategy(Strategy):
                 "strength_score": round(strength_score, 4),
                 "orderbook_score": round(orderbook_score, 4),
                 "breakout_ref": breakout_ref,
+                "breakout_tier": breakout_tier,
                 "gap_rate": round(gap_rate, 4),
                 "volume_ratio": round(snapshot.volume / snapshot.prev_volume, 2),
                 "adjusted_ratio": round(adjusted_ratio, 2),
