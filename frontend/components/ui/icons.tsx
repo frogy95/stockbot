@@ -44,6 +44,7 @@ export const Settings = icon(
 );
 export const ChevronLeft = icon("M15 18l-6-6 6-6");
 export const ChevronRight = icon("M9 18l6-6-6-6");
+export const Activity = icon("M22 12h-4l-3 9L9 3l-3 9H2");
 export const LogOut = icon(
   "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"
 );
