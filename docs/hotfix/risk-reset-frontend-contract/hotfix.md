@@ -57,6 +57,6 @@
 ---
 
 ## PR
-- **URL:** (PR 생성 후 기입)
+- **URL:** https://github.com/frogy95/stockbot/pull/165
 - **대상:** main
 - **역머지:** ✅ develop에 역머지 완료

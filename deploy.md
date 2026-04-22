@@ -7,6 +7,20 @@
 
 ---
 
+### Hotfix: risk-reset-frontend-contract (2026-04-22)
+
+PR: https://github.com/frogy95/stockbot/pull/165 (hotfix/risk-reset-frontend-contract → main)
+
+- ✅ 자동 검증 완료 항목:
+  - TypeScript `npx tsc --noEmit`: 통과 (main PR #165 CI 통과)
+  - 코드 리뷰: Critical/High 이슈 없음 (프론트엔드 2파일, 응답 계약 불일치 수정)
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
+  - 프로덕션 대시보드에서 리셋 버튼 클릭 시 "리셋 완료" 메시지 표시 확인
+
+---
+
 ### 프로덕션 배포 - v2.5.0 (2026-04-22)
 
 포함 스프린트: Phase 8.5 Sprint 1
