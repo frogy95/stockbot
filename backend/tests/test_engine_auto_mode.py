@@ -216,6 +216,92 @@ async def test_position_size_ratio_applied():
     assert result_half.invest_amount == int(result_full.invest_amount * 0.5)
 
 
+# ---------------------------------------------------------------------------
+# Phase 8 Sprint 2: breakout_tier 기반 size_ratio
+# ---------------------------------------------------------------------------
+
+
+def _make_signal_with_tier(tier: str, stock_code: str = "005930") -> TradeSignalData:
+    """breakout_tier를 포함한 TradeSignalData."""
+    return TradeSignalData(
+        stock_code=stock_code,
+        signal_type="buy",
+        strategy_name="momentum_breakout",
+        confidence=0.72,
+        reason={"breakout_tier": tier, "momentum_score": 0.5},
+        entry_price=73000,
+        stop_loss=71540,
+        take_profit=75190,
+    )
+
+
+@pytest.mark.asyncio
+async def test_prev_close_tier_applies_half_size_ratio():
+    """breakout_tier='prev_close' → position_sizer.calculate에 size_ratio=0.5 전달."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_close")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    engine._position_sizer.calculate.assert_called_once()
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 0.5
+
+
+@pytest.mark.asyncio
+async def test_prev_high_tier_keeps_size_ratio_1_0():
+    """breakout_tier='prev_high' → size_ratio=1.0 유지."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_high")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_gap_open_tier_keeps_size_ratio_1_0():
+    """breakout_tier='gap_open' → size_ratio=1.0 유지."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("gap_open")
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_candidate_position_size_ratio_overrides_when_smaller():
+    """candidate.position_size_ratio=0.3 + prev_close tier → min(0.3, 0.5) = 0.3."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal_with_tier("prev_close")
+    _setup_engine_basics(engine, signal)
+
+    candidate = {"stock_code": "005930", "position_size_ratio": 0.3}
+    await engine.process_screening_results([candidate])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 0.3
+
+
+@pytest.mark.asyncio
+async def test_missing_breakout_tier_defaults_to_prev_high_sizing():
+    """reason에 breakout_tier 없으면 prev_high 기본값으로 size_ratio=1.0."""
+    engine = _make_engine(trading_mode="auto")
+    signal = _make_signal()  # reason에 breakout_tier 없음
+    _setup_engine_basics(engine, signal)
+
+    await engine.process_screening_results([{"stock_code": "005930"}])
+
+    _, kwargs = engine._position_sizer.calculate.call_args
+    assert kwargs["size_ratio"] == 1.0
+
+
 @pytest.mark.asyncio
 async def test_auto_mode_sends_notification():
     """auto 모드 주문 시 notifier.send_notification("자동 주문 알림" 포함) 발송."""

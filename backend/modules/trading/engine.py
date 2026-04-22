@@ -157,7 +157,20 @@ class TradingEngine:
             auto_trade_blocked = (
                 candidate.get("is_fallback", False) or candidate.get("is_relaxed", False)
             )
-            size_ratio: float = candidate.get("position_size_ratio", 1.0)
+            candidate_ratio: float = candidate.get("position_size_ratio", 1.0)
+
+            # Phase 8 Sprint 2: prev_close tier는 반 포지션 (추격매수 리스크 억제)
+            breakout_tier = signal.reason.get("breakout_tier", "prev_high")
+            tier_ratio = 0.5 if breakout_tier == "prev_close" else 1.0
+            size_ratio: float = min(candidate_ratio, tier_ratio)
+            logger.info(
+                "진입 사이징: %s tier=%s candidate_ratio=%.2f tier_ratio=%.2f final=%.2f",
+                signal.stock_code,
+                breakout_tier,
+                candidate_ratio,
+                tier_ratio,
+                size_ratio,
+            )
 
             # 포지션 사이징 — 실잔고 조회
             balance_amount = 0
