@@ -2783,6 +2783,8 @@
           "title": "관측성 강화",
           "path": "docs/phase/phase8.5/sprint1/sprint1.md",
           "status": "completed",
+          "prUrl": "https://github.com/frogy95/stockbot/pull/162",
+          "lastUpdated": "2026-04-22",
           "progress": {
             "total": 8,
             "completed": 8

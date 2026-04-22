@@ -9,7 +9,7 @@
 
 ### Phase 8.5 Sprint 1 — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅)
 
-PR: (생성 후 기입)
+PR: https://github.com/frogy95/stockbot/pull/162
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

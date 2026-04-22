@@ -10,7 +10,7 @@
 **상태:** ✅ 완료 (2026-04-22)
 **이전 스프린트:** Phase 8 Sprint 2 (✅ 완료, PR #157)
 **브랜치명:** `phase8.5-sprint1`
-**PR:** (생성 후 기입)
+**PR:** https://github.com/frogy95/stockbot/pull/162
 
 ---
 
