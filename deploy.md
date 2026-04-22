@@ -7,6 +7,22 @@
 
 ---
 
+### Hotfix: no-data-guard-log-level — 동시호가 가드 로그 DEBUG → INFO 승격 (2026-04-22)
+
+PR: https://github.com/frogy95/stockbot/pull/159
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/test_scheduler.py`: **24 passed** (경고 5건은 AsyncMock Sprint 1 이월, 무관)
+  - 타겟 API 검증: `/api/v1/health` 200 + `{"status":"healthy","database":"connected","redis":"connected"}`, `/api/v1/screening/status` 200
+  - Playwright 타겟 검증: 로그 레벨 변경으로 UI 변경 없음 — 생략
+  - 코드 리뷰: Critical/High 이슈 없음 (로그 레벨 1줄 변경)
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
+  - Railway 로그에서 15:10~15:30 구간 `동시호가 구간 — no_data 가드 스킵` INFO 로그 출력 확인 (2거래일 관찰)
+
+---
+
 ### Phase 8 Sprint 2 — 다층 진입 + 리스크 안전장치 + 2026-04-21 버그 수정
 
 포함: momentum_breakout 3단계 tier (gap_open/prev_close/prev_high) · 13:00 가드 · confidence 상한 · prev_close 반 포지션 · 일일 거래 한도 10건/일 (+env override) · engine 차단 6지점 구조화 로그 · 프론트 리스크 리셋 버튼 · WS 동시호가 가드 · 재연결/일일 리포트 dedup + OHLC 파싱 회귀 픽스처
