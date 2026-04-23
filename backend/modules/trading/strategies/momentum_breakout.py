@@ -1,9 +1,11 @@
 """모멘텀 브레이크아웃 전략 — 전일 고가 돌파 + 다팩터 신뢰도."""
 
+import logging
 from datetime import datetime, time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
+from core.config import settings
 from modules.screening.factors import calc_volatility_factor
 from modules.trading.strategies._metrics import (
     record_shadow_stage,
@@ -17,6 +19,8 @@ from modules.trading.strategy import (
     TradeSignalData,
 )
 
+logger = logging.getLogger(__name__)
+
 # ATR 필터: 현재가 대비 ATR 비율이 이 값을 초과하면 제외
 ATR_FILTER_PCT = 0.05
 
@@ -27,7 +31,6 @@ MARKET_MINUTES = 390  # 09:00 ~ 15:30 = 6h30m
 
 # 시간가중 거래량 보정 상수
 MIN_MARKET_PROGRESS = 0.15  # 장 초반 거래량 하한 보정 계수
-MIN_VOLUME_FLOOR = 0.5  # 전일 대비 절대 거래량 하한
 
 # 최소 신뢰도 (signal_generator의 MIN_CONFIDENCE와 동일)
 MIN_CONFIDENCE = 0.6
@@ -46,6 +49,51 @@ PREV_CLOSE_CONFIDENCE_CAP = 0.75
 
 # gap_open tier momentum 가중 (Phase 8 확정 파라미터 #11)
 GAP_OPEN_MOMENTUM_MULTIPLIER = 0.85
+
+
+def _resolve_min_volume_floor(
+    snapshot: "MarketSnapshot",
+    tier: str,
+    gap_rate: float | None,
+    breakout_ref: float,
+    *,
+    mode: str | None = None,
+    hard_floor: float | None = None,
+) -> float:
+    """동적 거래량 하한 결정 함수 (순수 함수 — side effect 없음, logger.warning 제외).
+
+    Args:
+        snapshot: 현재 시장 스냅샷.
+        tier: 진입 tier ("gap_open", "prev_high", "prev_close").
+        gap_rate: 갭 비율 (None 허용).
+        breakout_ref: 돌파 기준가.
+        mode: 결정 방식 오버라이드. None이면 settings.MIN_VOLUME_FLOOR_MODE 사용.
+        hard_floor: 하한값 오버라이드. None이면 settings.MIN_VOLUME_FLOOR_HARD 사용.
+
+    Returns:
+        적용할 거래량 하한 비율 (0.0 ~ 1.0).
+    """
+    resolved_mode = mode if mode is not None else settings.MIN_VOLUME_FLOOR_MODE
+    hard = hard_floor if hard_floor is not None else settings.MIN_VOLUME_FLOOR_HARD
+
+    if resolved_mode == "legacy":
+        result = 0.5
+    else:
+        strong_gap = gap_rate is not None and gap_rate >= 0.05
+        strong_breakout = breakout_ref > 0 and snapshot.current_price >= breakout_ref * 1.03
+        strong = strong_gap or strong_breakout
+
+        if tier == "prev_close":
+            result = 0.6
+        elif strong:
+            result = 0.4
+        else:
+            result = 0.5
+
+    if result < hard:
+        logger.warning("resolved floor %.3f < HARD %.3f, forcing HARD", result, hard)
+        return hard
+    return result
 
 
 def _now_kst() -> datetime:
@@ -208,11 +256,13 @@ class MomentumBreakoutStrategy(Strategy):
             # prev_volume=0이면 volume 관련 이후 필터는 skip
             if prev_volume_ok:
                 # 4. min_volume_floor
+                shadow_floor = _resolve_min_volume_floor(
+                    snapshot, tier, gap_rate, breakout_ref
+                )
                 await record_shadow_stage(
                     self.redis_client,
                     "min_volume_floor",
-                    passed=snapshot.volume
-                    >= snapshot.prev_volume * MIN_VOLUME_FLOOR,
+                    passed=snapshot.volume >= snapshot.prev_volume * shadow_floor,
                     now_kst=now_kst,
                 )
 
@@ -374,15 +424,16 @@ class MomentumBreakoutStrategy(Strategy):
             )
 
         # 절대 거래량 하한 (너무 거래 없으면 제외)
-        if snapshot.volume < snapshot.prev_volume * MIN_VOLUME_FLOOR:
+        floor = _resolve_min_volume_floor(snapshot, breakout_tier, gap_rate, breakout_ref)
+        if snapshot.volume < snapshot.prev_volume * floor:
             return await self._reject(
                 snapshot,
                 "min_volume_floor",
                 {
                     "volume": snapshot.volume,
                     "prev_volume": snapshot.prev_volume,
-                    "floor_ratio": MIN_VOLUME_FLOOR,
-                    "required": int(snapshot.prev_volume * MIN_VOLUME_FLOOR),
+                    "floor_ratio": floor,
+                    "required": int(snapshot.prev_volume * floor),
                 },
             )
 
