@@ -195,3 +195,152 @@ async def test_backward_compatible_no_deps():
 
     assert isinstance(result, RejectedSignal)
     assert result.stage == "prev_close_time_guard"
+
+
+# ---------------------------------------------------------------------------
+# Phase 8.5 Sprint 1.5 — Shadow evaluation 회귀 안전망 (TDD RED)
+# ---------------------------------------------------------------------------
+
+def _success_snapshot(**overrides) -> MarketSnapshot:
+    """모든 조건 충족으로 TradeSignalData가 반환되는 스냅샷 (prev_high tier).
+
+    주요 수치:
+    - gap_rate 0.5% → prev_close tier 배제, current_price > prev_high → prev_high tier
+    - breakout_pct ≈ 0.99%, threshold=2.0, adjusted_ratio ≈ 3.25 → volume_threshold 통과
+    - trade_strength 150, ATR 500/102000 ≈ 0.49% → atr_filter 통과
+    - confidence ≈ 0.64 → MIN_CONFIDENCE 통과
+    """
+    defaults = {
+        "stock_code": "005930",
+        "stock_name": "삼성전자",
+        "stock_type": "STOCK",
+        "current_price": 102_000,
+        "open_price": 100_500,
+        "high": 102_500,
+        "low": 100_000,
+        "prev_close": 100_000,
+        "prev_high": 101_000,
+        "volume": 1_000_000,
+        "prev_volume": 1_000_000,
+        "change_rate": 2.0,
+        "trade_strength": 150.0,
+        "total_bid_volume": 150_000,
+        "total_ask_volume": 80_000,
+        "recent_highs": [100_500, 100_500, 100_500, 100_500, 100_500],
+        "recent_lows": [100_000, 100_000, 100_000, 100_000, 100_000],
+        "recent_closes": [100_200, 100_200, 100_200, 100_200, 100_200],
+    }
+    defaults.update(overrides)
+    return MarketSnapshot(**defaults)
+
+
+class TestShadowEvaluationInvariance:
+    """shadow evaluation 추가가 generate_signal() 반환값/타이밍에 영향 없음을 증명.
+
+    주문 경로 불변 원칙 — Sprint 1.5 최우선 요건.
+    """
+
+    @pytest.mark.asyncio
+    async def test_shadow_does_not_affect_breakout_reject(self):
+        """current_price <= breakout_ref 케이스: RejectedSignal(stage='breakout') 그대로."""
+        redis = FakeRedis()
+        strategy = MomentumBreakoutStrategy(redis_client=redis)
+        snapshot = _prev_close_snapshot(
+            current_price=70_000, prev_high=71_000, open_price=72_000
+        )
+        # gap_rate ≈ 3.6% → gap_open tier, breakout_ref = open_price = 72_000
+        # current_price (70_000) <= breakout_ref → breakout reject
+
+        with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 10, 0, tzinfo=_KST)):
+            result = await strategy.generate_signal(snapshot)
+
+        assert isinstance(result, RejectedSignal)
+        assert result.stage == "breakout"
+        assert result.detail.get("breakout_tier") == "gap_open"
+        # Sprint 1 기존 카운터 — breakout 1건만 기록 (short-circuit 유지)
+        strategy_stage_keys = [k for k in redis.counters if k.startswith("metrics:strategy:stage:")]
+        strategy_breakout = [k for k in strategy_stage_keys if ":breakout:" in k]
+        assert len(strategy_breakout) == 1, (
+            "Sprint 1 short-circuit 동작 불변: breakout reject 시 기존 stage 카운터는 breakout 1건만"
+        )
+
+    @pytest.mark.asyncio
+    async def test_shadow_does_not_affect_success_signal(self):
+        """모든 조건 통과 → TradeSignalData + confidence 결정 요인 불변."""
+        redis = FakeRedis()
+        strategy = MomentumBreakoutStrategy(redis_client=redis)
+        snapshot = _success_snapshot()
+
+        with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 11, 0, tzinfo=_KST)):
+            result = await strategy.generate_signal(snapshot)
+
+        assert isinstance(result, TradeSignalData), (
+            f"TradeSignalData 예상, 실제: {type(result).__name__} stage={getattr(result, 'stage', None)} detail={getattr(result, 'detail', None)}"
+        )
+        assert result.signal_type == "buy"
+        assert result.confidence >= 0.6
+        assert result.reason.get("breakout_tier") == "prev_high"
+        # Sprint 1 pass 카운터 1건
+        strategy_pass = [k for k in redis.counters if ":strategy:stage:" in k and ":pass:" in k]
+        assert len(strategy_pass) == 1
+
+    @pytest.mark.asyncio
+    async def test_shadow_exception_does_not_propagate(self):
+        """_shadow_evaluate에서 예외가 던져져도 generate_signal 반환값이 동일해야 한다."""
+        redis = FakeRedis()
+        strategy = MomentumBreakoutStrategy(redis_client=redis)
+        snapshot = _prev_close_snapshot(
+            current_price=70_000, prev_high=71_000, open_price=72_000
+        )
+
+        # _shadow_evaluate를 강제로 예외 발생 버전으로 교체
+        async def _raise(*_args, **_kwargs):
+            raise RuntimeError("shadow fault injection")
+
+        assert hasattr(strategy, "_shadow_evaluate"), (
+            "Task 2 미구현: _shadow_evaluate 메서드가 존재해야 한다"
+        )
+        object.__setattr__(strategy, "_shadow_evaluate", _raise)
+
+        with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 10, 0, tzinfo=_KST)):
+            result = await strategy.generate_signal(snapshot)
+
+        assert isinstance(result, RejectedSignal)
+        assert result.stage == "breakout"
+
+    @pytest.mark.asyncio
+    async def test_shadow_records_all_stages_regardless_of_short_circuit(self):
+        """breakout에서 short-circuit되더라도 shadow 네임스페이스는 나머지 stage도 독립 평가.
+
+        gap_open tier + current_price <= open_price 케이스:
+        기존 경로: breakout 1건만 기록.
+        shadow 경로: prev_close_time_guard(pass), breakout(fail), prev_volume_zero(pass),
+                     min_volume_floor, volume_threshold, trade_strength, atr_filter, confidence
+                     중 평가 가능한 모두 기록 (skip 규칙 제외).
+        """
+        redis = FakeRedis()
+        strategy = MomentumBreakoutStrategy(redis_client=redis)
+        snapshot = _prev_close_snapshot(
+            current_price=70_000, prev_high=71_000, open_price=72_000
+        )
+
+        with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 10, 0, tzinfo=_KST)):
+            await strategy.generate_signal(snapshot)
+
+        shadow_keys = [k for k in redis.counters if k.startswith("metrics:shadow:stage:")]
+        assert shadow_keys, "shadow 카운터 네임스페이스가 기록되어야 한다"
+
+        # breakout fail 기록 필수
+        breakout_fail = [k for k in shadow_keys if ":breakout:fail:" in k]
+        assert breakout_fail, f"shadow breakout fail 기록 필수 (keys={shadow_keys})"
+
+        # 최소 4개 이상의 서로 다른 stage가 독립 평가되어야 한다 (short-circuit 무관)
+        stages_seen = set()
+        for k in shadow_keys:
+            # metrics:shadow:stage:{date}:{stage}:{outcome}:{hh}:{mm}
+            parts = k.split(":")
+            if len(parts) >= 6:
+                stages_seen.add(parts[4])
+        assert len(stages_seen) >= 4, (
+            f"shadow는 최소 4개 이상의 stage를 독립 평가해야 한다. 실제: {stages_seen}"
+        )
