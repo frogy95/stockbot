@@ -10,7 +10,7 @@
 ### 프로덕션 배포 - v2.5.1 (2026-04-23)
 
 포함 스프린트: Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation
-PR: (develop → main 머지 후 자동 배포)
+PR: https://github.com/frogy95/stockbot/pull/169 (develop → main)
 
 - ✅ 자동 검증 완료 항목:
   - pytest: shadow 관련 테스트 4개 + 기존 회귀 전체 GREEN (기존 플레이크 `test_ws_manager_env_max_subscriptions` 1건은 Sprint 1.5 무관)
