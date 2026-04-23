@@ -1,3 +1,6 @@
+from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -33,6 +36,23 @@ class Settings(BaseSettings):
     # Sprint 3 이전 LIVE 초기에 일일 거래 한도를 임시 제한할 때 사용 (예: 3)
     # 미설정 시 settings 테이블의 daily_max_trade_count 값을 따름
     DAILY_MAX_TRADE_COUNT_OVERRIDE: int | None = None
+
+    # --- Phase 8.5 Sprint 2: 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR ---
+    # 거래량 하한 결정 방식 (legacy=0.5 고정 / dynamic=조건부)
+    MIN_VOLUME_FLOOR_MODE: Literal["legacy", "dynamic"] = Field(default="dynamic", description="거래량 하한 결정 방식")
+    # 어떤 분기도 이 이하로 내리지 않는 절대 하한
+    MIN_VOLUME_FLOOR_HARD: float = Field(default=0.3, ge=0.0, le=1.0, description="어떤 분기도 이 이하 금지")
+    # 2차 스크리닝 통과 < 이 값이면 1차 통과 종목으로 보강
+    SECONDARY_POOL_FALLBACK_ENABLED: bool = Field(default=True, description="2차 풀 하한 폴백 활성화")
+    SECONDARY_POOL_FALLBACK_THRESHOLD: int = Field(default=3, ge=1, le=10, description="passed_count < N 시 폴백 발동")
+    # 폴백 포함 풀 최대 종목 수
+    SECONDARY_POOL_MAX: int = Field(default=5, ge=1, le=20, description="폴백 포함 풀 상한")
+    # 전일 대비 이 이하 종목은 폴백 제외
+    FALLBACK_DROP_EXCLUDE_PCT: float = Field(default=-3.0, ge=-100.0, le=0.0, description="전일 대비 이 이하는 폴백 제외 (%)")
+    # 폴백 종목 포지션 사이즈 배수 (0.5 = 반 포지션)
+    FALLBACK_POSITION_SIZE_RATIO: float = Field(default=0.5, gt=0.0, le=1.0, description="폴백 종목 포지션 사이즈 배수")
+    # 폴백 종목 손절 % (-1.5 = -1.5%)
+    FALLBACK_STOP_LOSS_PCT: float = Field(default=-1.5, ge=-100.0, le=0.0, description="폴백 종목 손절 % (절댓값 작을수록 타이트)")
 
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
