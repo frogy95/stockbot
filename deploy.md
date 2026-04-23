@@ -7,6 +7,18 @@
 
 ---
 
+### 프로덕션 배포 - v2.6.0 (2026-04-23)
+
+포함 스프린트: Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR
+PR: (생성 예정)
+
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+---
+
 ### Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (2026-04-23)
 
 브랜치: `phase8.5-sprint2` → develop
