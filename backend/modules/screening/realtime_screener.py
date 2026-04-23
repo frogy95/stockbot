@@ -225,7 +225,20 @@ class RealtimeScreener:
                 c.setdefault("is_fallback", False)
                 c.setdefault("raw_score", _score(c))
 
-            if not settings.SECONDARY_POOL_FALLBACK_ENABLED:
+            # Redis override key가 있으면 settings.SECONDARY_POOL_FALLBACK_ENABLED 보다 우선 적용
+            fallback_enabled = settings.SECONDARY_POOL_FALLBACK_ENABLED
+            if self.redis_client is not None:
+                try:
+                    _raw = await self.redis_client.get(
+                        "settings:override:SECONDARY_POOL_FALLBACK_ENABLED"
+                    )
+                    if _raw:
+                        val = _raw if isinstance(_raw, str) else _raw.decode()
+                        fallback_enabled = val.lower() not in ("false", "0", "no")
+                except Exception:  # noqa: BLE001
+                    pass
+
+            if not fallback_enabled:
                 return scored
 
             passed = [c for c in scored if c.get("is_passed")]

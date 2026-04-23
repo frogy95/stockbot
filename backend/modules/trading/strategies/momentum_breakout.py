@@ -59,6 +59,7 @@ def _resolve_min_volume_floor(
     *,
     mode: str | None = None,
     hard_floor: float | None = None,
+    redis_override_mode: str | None = None,
 ) -> float:
     """동적 거래량 하한 결정 함수 (순수 함수 — side effect 없음, logger.warning 제외).
 
@@ -69,11 +70,14 @@ def _resolve_min_volume_floor(
         breakout_ref: 돌파 기준가.
         mode: 결정 방식 오버라이드. None이면 settings.MIN_VOLUME_FLOOR_MODE 사용.
         hard_floor: 하한값 오버라이드. None이면 settings.MIN_VOLUME_FLOOR_HARD 사용.
+        redis_override_mode: Redis override key에서 읽은 모드 문자열.
+            있으면 최우선 적용 (mode, settings 보다 우선).
 
     Returns:
         적용할 거래량 하한 비율 (0.0 ~ 1.0).
     """
-    resolved_mode = mode if mode is not None else settings.MIN_VOLUME_FLOOR_MODE
+    # 우선순위: redis_override_mode > mode > settings.MIN_VOLUME_FLOOR_MODE
+    resolved_mode = redis_override_mode or mode or settings.MIN_VOLUME_FLOOR_MODE
     hard = hard_floor if hard_floor is not None else settings.MIN_VOLUME_FLOOR_HARD
 
     if resolved_mode == "legacy":
@@ -94,6 +98,22 @@ def _resolve_min_volume_floor(
         logger.warning("resolved floor %.3f < HARD %.3f, forcing HARD", result, hard)
         return hard
     return result
+
+
+async def _get_redis_override_mode(redis_client) -> str | None:
+    """Redis에서 MIN_VOLUME_FLOOR_MODE override 값을 조회한다.
+
+    auto_rollback job이 설정한 legacy 강제 전환값이 있으면 반환, 없으면 None.
+    """
+    if redis_client is None:
+        return None
+    try:
+        raw = await redis_client.get("settings:override:MIN_VOLUME_FLOOR_MODE")
+        if raw:
+            return raw if isinstance(raw, str) else raw.decode()
+    except Exception:  # noqa: BLE001
+        pass
+    return None
 
 
 def _now_kst() -> datetime:
@@ -255,9 +275,10 @@ class MomentumBreakoutStrategy(Strategy):
 
             # prev_volume=0이면 volume 관련 이후 필터는 skip
             if prev_volume_ok:
-                # 4. min_volume_floor
+                # 4. min_volume_floor — Redis override 우선 적용
                 shadow_floor = _resolve_min_volume_floor(
-                    snapshot, tier, gap_rate, breakout_ref
+                    snapshot, tier, gap_rate, breakout_ref,
+                    redis_override_mode=await _get_redis_override_mode(self.redis_client),
                 )
                 await record_shadow_stage(
                     self.redis_client,
@@ -424,7 +445,10 @@ class MomentumBreakoutStrategy(Strategy):
             )
 
         # 절대 거래량 하한 (너무 거래 없으면 제외)
-        floor = _resolve_min_volume_floor(snapshot, breakout_tier, gap_rate, breakout_ref)
+        floor = _resolve_min_volume_floor(
+            snapshot, breakout_tier, gap_rate, breakout_ref,
+            redis_override_mode=await _get_redis_override_mode(self.redis_client),
+        )
         if snapshot.volume < snapshot.prev_volume * floor:
             return await self._reject(
                 snapshot,
