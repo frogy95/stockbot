@@ -40,12 +40,15 @@ class Strategy(ABC):
 
     async def generate_signal(
         self, snapshot: MarketSnapshot
-    ) -> TradeSignalData | None:
-        # None 반환 시 신호 없음
+    ) -> TradeSignalData | RejectedSignal:
+        # 성공: TradeSignalData
+        # 탈락: RejectedSignal(stage, detail) — 사유가 구조화되어 로그/알림에 활용
         ...
 ```
 
 현재 구현: [[momentum-breakout-strategy]]
+
+`RejectedSignal.stage`는 차단 지점을 식별한다 (`breakout`, `volume_threshold`, `trade_strength`, `atr_filter`, `confidence`, `prev_close_time_guard` 등). engine은 6지점 구조화 로그로 기록하고 선택적으로 텔레그램 알림을 발송한다.
 
 ## TradeSignal 구조
 
@@ -55,9 +58,11 @@ class Strategy(ABC):
 | `signal_type` | `buy` / `sell` |
 | `confidence` | 신뢰도 (0.0~1.0) |
 | `strategy_name` | 전략 이름 |
-| `reason` | 신호 근거 (JSON) |
+| `reason` | 신호 근거 (JSON, `breakout_tier` 포함) |
 | `status` | `pending` / `approved` / `rejected` / `executed` |
 | `suggested_price` | 제안 진입가 |
+
+`reason.breakout_tier`(`gap_open` / `prev_high` / `prev_close`)는 engine에서 [[position-sizing|포지션 사이징]] 시 반 포지션 분기에 사용된다.
 
 ## 신뢰도 임계값
 

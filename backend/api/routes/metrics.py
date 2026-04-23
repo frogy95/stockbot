@@ -15,6 +15,8 @@ from api.deps import UserInfo, get_current_user, get_db, get_redis
 from core.config import settings
 from core.metrics_keys import (
     SECONDARY_SCORE_PREFIX,
+    SHADOW_STAGE_PREFIX,
+    SHADOW_TRACKED_STAGES,
     STRATEGY_STAGE_PREFIX,
     TOP_REJECT_KEY,
 )
@@ -83,6 +85,20 @@ class VirtualSignalItem(BaseModel):
 
 class VirtualSignalsResponse(BaseModel):
     items: list[VirtualSignalItem]
+
+
+class ShadowStageCell(BaseModel):
+    stage: str
+    hour_min: str
+    pass_count: int
+    fail_count: int
+    pass_rate: float | None  # 표본 0이면 None
+
+
+class ShadowHeatmapResponse(BaseModel):
+    date: str
+    stages: list[str]
+    cells: list[ShadowStageCell]
 
 
 def _today_kst() -> date:
@@ -214,6 +230,70 @@ async def top_rejects(
             )
         )
     return TopRejectsResponse(items=items)
+
+
+@router.get("/shadow-heatmap", response_model=ShadowHeatmapResponse)
+async def shadow_heatmap(
+    date_param: str | None = Query(None, alias="date"),
+    redis: RedisClient = Depends(get_redis),
+) -> ShadowHeatmapResponse:
+    """Phase 8.5 Sprint 1.5 — 각 필터 독립 평가(shadow)의 pass/fail heatmap.
+
+    Sprint 1의 stage-heatmap과 의미가 다름:
+    - stage-heatmap: 실제 주문 경로의 short-circuit 결과 (첫 실패 stage만 기록)
+    - shadow-heatmap: 각 필터를 독립 평가 — short-circuit 무관하게 모든 stage 표본 확보
+    """
+    today = _today_kst()
+    target: date
+    if date_param in (None, "today"):
+        target = today
+    else:
+        target = date.fromisoformat(date_param)
+
+    # Redis 키 스캔 (DB fallback 없음 — Redis 7일 TTL 만으로 관찰, 과거일자 쿼리는 빈 셀 반환)
+    prefix = f"{SHADOW_STAGE_PREFIX}:{target.isoformat()}:"
+    keys = await redis.scan_keys(f"{prefix}*")
+    # (stage, hour_min) → {"pass": n, "fail": n}
+    aggregate: dict[tuple[str, str], dict[str, int]] = {}
+    for k in keys:
+        suffix = k[len(prefix):]
+        # {stage}:{outcome}:{hh}:{mm}
+        parts = suffix.rsplit(":", 3)
+        if len(parts) < 4:
+            continue
+        stage, outcome, hh, mm = parts
+        if outcome not in ("pass", "fail"):
+            continue
+        raw = await redis.get(k)
+        if raw is None:
+            continue
+        try:
+            count = int(raw)
+        except (TypeError, ValueError):
+            continue
+        hour_min = f"{hh}:{mm}"
+        bucket = aggregate.setdefault((stage, hour_min), {"pass": 0, "fail": 0})
+        bucket[outcome] += count
+
+    cells: list[ShadowStageCell] = []
+    for (stage, hour_min), counts in sorted(aggregate.items()):
+        total = counts["pass"] + counts["fail"]
+        pass_rate = counts["pass"] / total if total > 0 else None
+        cells.append(
+            ShadowStageCell(
+                stage=stage,
+                hour_min=hour_min,
+                pass_count=counts["pass"],
+                fail_count=counts["fail"],
+                pass_rate=pass_rate,
+            )
+        )
+
+    return ShadowHeatmapResponse(
+        date=target.isoformat(),
+        stages=list(SHADOW_TRACKED_STAGES),
+        cells=cells,
+    )
 
 
 @router.get("/virtual-signals", response_model=VirtualSignalsResponse)

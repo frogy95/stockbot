@@ -13,8 +13,10 @@ from typing import Any
 
 from core.config import settings
 from core.metrics_keys import (
+    SHADOW_TRACKED_STAGES,
     TOP_REJECT_KEY,
     hour_min_bucket_for,
+    shadow_stage_counter_key,
     stage_counter_key,
 )
 
@@ -55,6 +57,37 @@ async def record_stage(
             await redis_client.ltrim(TOP_REJECT_KEY, 0, TOP_REJECT_SIZE - 1)
     except Exception:  # noqa: BLE001
         logger.warning("record_stage failed (stage=%s)", stage, exc_info=True)
+
+
+async def record_shadow_stage(
+    redis_client: Any,
+    stage: str,
+    passed: bool,
+    now_kst: datetime | None = None,
+) -> None:
+    """shadow 네임스페이스에 필터 독립 평가 pass/fail 카운터 +1.
+
+    주문 경로에 영향 없음 — redis_client None이거나 예외 발생 시 조용히 무시.
+    """
+    if redis_client is None:
+        return
+    if stage not in SHADOW_TRACKED_STAGES:
+        logger.debug("record_shadow_stage: unknown stage=%s ignored", stage)
+        return
+    try:
+        if now_kst is None:
+            from zoneinfo import ZoneInfo
+
+            now_kst = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+        today = now_kst.date().isoformat()
+        hour_min = hour_min_bucket_for(now_kst)
+        outcome = "pass" if passed else "fail"
+        key = shadow_stage_counter_key(today, stage, outcome, hour_min)
+        await redis_client.incr(key, ttl=STAGE_COUNTER_TTL)
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "record_shadow_stage failed (stage=%s passed=%s)", stage, passed, exc_info=True
+        )
 
 
 async def record_virtual_signal(
