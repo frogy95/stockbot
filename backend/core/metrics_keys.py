@@ -8,6 +8,9 @@ SECONDARY_SCORE_PREFIX = "metrics:secondary:score"
 STRATEGY_STAGE_PREFIX = "metrics:strategy:stage"
 TOP_REJECT_KEY = "metrics:strategy:top_reject"
 
+# Phase 8.5 Sprint 1.5 — shadow evaluation 전용 네임스페이스
+SHADOW_STAGE_PREFIX = "metrics:shadow:stage"
+
 # momentum_breakout._reject() 에서 호출되는 stage 이름 전수 + "pass"
 TRACKED_STAGES: tuple[str, ...] = (
     "pass",
@@ -20,6 +23,18 @@ TRACKED_STAGES: tuple[str, ...] = (
     "confidence",
     "prev_volume_zero",
     "no_data",
+)
+
+# shadow 독립 평가 대상 — "pass"(전체 통과)와 "no_data"(데이터 수집 단계)는 제외
+SHADOW_TRACKED_STAGES: tuple[str, ...] = (
+    "prev_close_time_guard",
+    "breakout",
+    "prev_volume_zero",
+    "min_volume_floor",
+    "volume_threshold",
+    "trade_strength",
+    "atr_filter",
+    "confidence",
 )
 
 
@@ -67,6 +82,16 @@ def score_histogram_key(d: date | str, bucket: str) -> str:
 
 def stage_counter_key(d: date | str, stage: str, hour_min: str) -> str:
     return f"{STRATEGY_STAGE_PREFIX}:{_date_str(d)}:{stage}:{hour_min}"
+
+
+def shadow_stage_counter_key(
+    d: date | str, stage: str, outcome: str, hour_min: str
+) -> str:
+    """shadow 필터 독립 평가 카운터 키.
+
+    outcome ∈ {"pass", "fail"}. Sprint 1의 stage_counter_key와 네임스페이스가 다르다.
+    """
+    return f"{SHADOW_STAGE_PREFIX}:{_date_str(d)}:{stage}:{outcome}:{hour_min}"
 
 
 def stages() -> tuple[str, ...]:
