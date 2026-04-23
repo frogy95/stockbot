@@ -6,10 +6,12 @@
 
 **Tech Stack:** Python 3.12 / FastAPI / SQLAlchemy 2.0 (async) / Redis 7 / APScheduler / pytest-asyncio / Next.js 16 / React 19 / Tailwind 4 / SWR
 
-**Sprint 기간:** 2026-04-23 ~ (사용자 검토 후 구현)
+**상태:** ✅ 완료 (2026-04-23)
+**Sprint 기간:** 2026-04-23 ~ 2026-04-23
 **이전 스프린트:** Phase 8.5 Sprint 1.5 (✅ 완료, 2026-04-23, PR #168)
 **다음 스프린트:** Phase 8.6 Sprint 1 (E2E + LIVE 전환 게이트, Phase 8.5 관찰 5거래일 후 착수)
 **브랜치명:** `phase8.5-sprint2`
+**PR:** (생성 예정)
 
 ---
 
@@ -173,9 +175,9 @@ git commit -m "feat(phase8.5-sprint2): task1 — 동적 MIN_VOLUME_FLOOR·폴백
 ```
 
 **완료 기준:**
-- ⬜ `from core.config import settings`로 8개 필드 모두 접근 가능
-- ⬜ `.env.example`에 8개 변수 + 한글 주석 존재
-- ⬜ 기존 테스트 회귀 없음
+- ✅ `from core.config import settings`로 8개 필드 모두 접근 가능
+- ✅ `.env.example`에 8개 변수 + 한글 주석 존재
+- ✅ 기존 테스트 회귀 없음
 
 ---
 
@@ -266,10 +268,10 @@ git commit -m "feat(phase8.5-sprint2): task2 — _resolve_min_volume_floor 순�
 ```
 
 **완료 기준:**
-- ⬜ `MIN_VOLUME_FLOOR` 상수 제거 완료
-- ⬜ shadow/본체가 동일 함수를 통해 동일 값을 반환 (일관성 테스트 GREEN)
-- ⬜ HARD 하한 강제 동작 테스트 GREEN
-- ⬜ 기존 `test_momentum_breakout.py` 전체 회귀 PASS
+- ✅ `MIN_VOLUME_FLOOR` 상수 제거 완료
+- ✅ shadow/본체가 동일 함수를 통해 동일 값을 반환 (일관성 테스트 GREEN)
+- ✅ HARD 하한 강제 동작 테스트 GREEN
+- ✅ 기존 `test_momentum_breakout.py` 전체 회귀 PASS
 
 ---
 
@@ -329,11 +331,11 @@ git commit -m "feat(phase8.5-sprint2): task3 — 2차 풀 하한 폴백 + 메타
 ```
 
 **완료 기준:**
-- ⬜ `passed < THRESHOLD` 시 폴백 후보로 보강
-- ⬜ `change_rate <= -3%` 종목 제외
-- ⬜ 풀 상한 `SECONDARY_POOL_MAX` 준수
-- ⬜ 각 후보에 `is_fallback` / `raw_score` / `percentile_rank` 기록
-- ⬜ Redis counter `metrics:fallback:*` 증가
+- ✅ `passed < THRESHOLD` 시 폴백 후보로 보강
+- ✅ `change_rate <= -3%` 종목 제외
+- ✅ 풀 상한 `SECONDARY_POOL_MAX` 준수
+- ✅ 각 후보에 `is_fallback` / `raw_score` / `percentile_rank` 기록
+- ✅ Redis counter `metrics:fallback:*` 증가
 
 ---
 
@@ -370,9 +372,9 @@ git commit -m "feat(phase8.5-sprint2): task4 — engine is_fallback 분기 (posi
 ```
 
 **완료 기준:**
-- ⬜ `is_fallback=True` 시 position × 0.5, 손절 -1.5%
-- ⬜ 기존 경로 회귀 없음
-- ⬜ is_fallback + is_relaxed 복합 케이스 명시적 동작
+- ✅ `is_fallback=True` 시 position × 0.5, 손절 -1.5%
+- ✅ 기존 경로 회귀 없음
+- ✅ is_fallback + is_relaxed 복합 케이스 명시적 동작
 
 ---
 
@@ -410,9 +412,9 @@ git commit -m "feat(phase8.5-sprint2): task5 — 16:10 자동 롤백 job + Redis
 ```
 
 **완료 기준:**
-- ⬜ 16:10 CronTrigger job 등록
-- ⬜ 2거래일 연속 0건 시 Redis override 설정 + Telegram 알림
-- ⬜ `_resolve_min_volume_floor` / `screen()`이 Redis override 우선 적용
+- ✅ 16:10 CronTrigger job 등록
+- ✅ 2거래일 연속 0건 시 Redis override 설정 + Telegram 알림
+- ✅ `_resolve_min_volume_floor` / `screen()`이 Redis override 우선 적용
 
 ---
 
@@ -457,10 +459,10 @@ git commit -m "feat(phase8.5-sprint2): task6 — 폴백 통계 카드 활성화 
 ```
 
 **완료 기준:**
-- ⬜ `/api/v1/metrics/fallback-stats` 200 응답
-- ⬜ `/diagnostics` 페이지에 fallback-stats-card 렌더링
-- ⬜ 스크리닝 결과 리스트에 ⚠️ 배지
-- ⬜ tsc 에러 없음
+- ✅ `/api/v1/metrics/fallback-stats` 200 응답
+- ✅ `/diagnostics` 페이지에 fallback-stats-card 렌더링
+- ✅ 스크리닝 결과 리스트에 ⚠️ 배지
+- ✅ tsc 에러 없음
 
 ---
 
@@ -495,9 +497,9 @@ git commit -m "fix(phase8.5-sprint2): task7 — M1 top-rejects limit 상한 5 + 
 ```
 
 **완료 기준:**
-- ⬜ `/api/v1/metrics/top-rejects?limit=50` 요청 시 422 또는 5로 clamp
-- ⬜ stage-heatmap / shadow-heatmap 카드에 09:00~09:20 컬럼 표시
-- ⬜ tsc 에러 없음
+- ✅ `/api/v1/metrics/top-rejects?limit=50` 요청 시 422 또는 5로 clamp
+- ✅ stage-heatmap / shadow-heatmap 카드에 09:00~09:20 컬럼 표시
+- ✅ tsc 에러 없음
 
 ---
 
@@ -545,11 +547,11 @@ git commit -m "docs(phase8.5-sprint2): task8 — 통합 검증 스크린샷 + de
 - 사용자에게 sprint-close agent 호출 안내
 
 **완료 기준:**
-- ⬜ pytest 전체 PASS
-- ⬜ 4개 API 200 + JSON 응답
-- ⬜ `/diagnostics` 6개 카드 렌더링 스크린샷
-- ⬜ 주문 경로 회귀 0건
-- ⬜ deploy.md Railway 환경변수 항목 추가
+- ✅ pytest 전체 PASS (956 passed, 1 기존 플레이크 무관)
+- ✅ 4개 API 200 + JSON 응답
+- ✅ `/diagnostics` 6개 카드 렌더링 스크린샷
+- ✅ 주문 경로 회귀 0건
+- ✅ deploy.md Railway 환경변수 항목 추가
 
 ---
 
