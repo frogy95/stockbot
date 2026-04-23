@@ -659,3 +659,213 @@ class TestOHLCPropagation:
         assert result[0]["open_price"] == 0
         assert result[0]["high"] == 0
         assert result[0]["low"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Phase 8.5 Sprint 2: 풀 하한 폴백 테스트
+# ---------------------------------------------------------------------------
+
+def _make_scored_item(
+    code: str,
+    score: float,
+    is_passed: bool,
+    change_rate: float = 3.0,
+    stock_name: str = "테스트종목",
+) -> dict:
+    """테스트용 scored 아이템 생성."""
+    return {
+        "stock_code": code,
+        "stock_name": stock_name,
+        "stock_type": "STOCK",
+        "score": score,
+        "total_score": score,
+        "rank": 1,
+        "is_passed": is_passed,
+        "change_rate": change_rate,
+        "trade_strength": 150.0,
+        "orderbook_ratio": 1.25,
+        "factors": {"volume_factor": 80.0},
+        "current_price": 50000,
+        "volume": 200000,
+        "prev_volume": 50000,
+        "prev_close": 49000,
+        "prev_high": 51000,
+        "total_bid_volume": 100000,
+        "total_ask_volume": 80000,
+        "open_price": 49000,
+        "high": 51000,
+        "low": 48000,
+    }
+
+
+class TestFallbackLogic:
+    """Phase 8.5 Sprint 2: 풀 하한 폴백 로직 검증."""
+
+    @pytest.mark.asyncio
+    async def test_fallback_fills_pool_when_passed_below_threshold(self):
+        """passed=1종목, 1차 pool=5종목 → 폴백 후보 2개 추가되어 최종 3종목."""
+        screener = _make_screener()
+
+        # scored: 1개 is_passed=True, 4개 is_passed=False
+        scored = [
+            _make_scored_item("A001", score=90.0, is_passed=True),
+            _make_scored_item("B001", score=70.0, is_passed=False),
+            _make_scored_item("B002", score=65.0, is_passed=False),
+            _make_scored_item("B003", score=60.0, is_passed=False),
+            _make_scored_item("B004", score=55.0, is_passed=False),
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        # passed(1) + fallback(2) = 3
+        assert len(result) == 3
+        # 폴백 후보는 score 상위 2개
+        fallback_codes = {c["stock_code"] for c in result if c.get("is_fallback")}
+        assert "B001" in fallback_codes
+        assert "B002" in fallback_codes
+
+    @pytest.mark.asyncio
+    async def test_fallback_excludes_dropped_stocks(self):
+        """1차 pool에 change_rate=-5% 종목 포함 → 폴백 후보에서 제외."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item("A001", score=90.0, is_passed=True, change_rate=2.0),
+            _make_scored_item("B001", score=70.0, is_passed=False, change_rate=-5.0),  # 제외
+            _make_scored_item("B002", score=65.0, is_passed=False, change_rate=1.0),
+            _make_scored_item("B003", score=60.0, is_passed=False, change_rate=0.5),
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        # B001(-5%)은 제외, B002(1%)만 추가
+        fallback_codes = {c["stock_code"] for c in result if c.get("is_fallback")}
+        assert "B001" not in fallback_codes
+        assert "B002" in fallback_codes
+
+    @pytest.mark.asyncio
+    async def test_fallback_respects_pool_max(self):
+        """passed=0, 1차 pool=10종목, SECONDARY_POOL_MAX=5 → 최대 5종목."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item(f"B{i:03d}", score=float(80 - i), is_passed=False)
+            for i in range(10)
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        # passed(0) + fallback(min(3-0, 5-0)=3) = 3
+        # SECONDARY_POOL_MAX=5, THRESHOLD=3, need=min(3,5)=3
+        assert len(result) == 3
+
+    @pytest.mark.asyncio
+    async def test_fallback_disabled_no_boost(self):
+        """SECONDARY_POOL_FALLBACK_ENABLED=False → passed 그대로 (scored 전체 반환)."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item("A001", score=90.0, is_passed=True),
+            _make_scored_item("B001", score=70.0, is_passed=False),
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = False
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        # 비활성화 시 원본 scored 전체 반환
+        assert len(result) == 2
+        assert all(not c.get("is_fallback") for c in result)
+
+    @pytest.mark.asyncio
+    async def test_fallback_metadata_present(self):
+        """폴백 후보에 is_fallback=True, raw_score, percentile_rank 존재. 기존 passed에 is_fallback=False."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item("A001", score=90.0, is_passed=True),
+            _make_scored_item("B001", score=70.0, is_passed=False),
+            _make_scored_item("B002", score=65.0, is_passed=False),
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        # 기존 passed 후보: is_fallback=False
+        passed_items = [c for c in result if c["stock_code"] == "A001"]
+        assert len(passed_items) == 1
+        assert passed_items[0]["is_fallback"] is False
+        assert "raw_score" in passed_items[0]
+
+        # 폴백 후보: is_fallback=True, raw_score, percentile_rank 존재
+        fallback_items = [c for c in result if c.get("is_fallback")]
+        assert len(fallback_items) >= 1
+        for item in fallback_items:
+            assert item["is_fallback"] is True
+            assert "raw_score" in item
+            assert "percentile_rank" in item
+            assert 0.0 <= item["percentile_rank"] <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_fallback_counter_incremented(self):
+        """폴백 발동 시 Redis metrics:fallback:triggered:{today} 카운터 증가 확인."""
+        redis_mock = AsyncMock()
+        redis_mock.incr = AsyncMock(return_value=1)
+        screener = _make_screener(redis_client=redis_mock)
+
+        scored = [
+            _make_scored_item("A001", score=90.0, is_passed=True),
+            _make_scored_item("B001", score=70.0, is_passed=False),
+            _make_scored_item("B002", score=65.0, is_passed=False),
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings, \
+             patch("modules.screening.realtime_screener.datetime") as mock_dt:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
+            mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            from datetime import datetime as real_datetime
+            mock_dt.now.return_value = real_datetime(2026, 4, 23, 10, 0, 0)
+            mock_dt.side_effect = lambda *args, **kw: real_datetime(*args, **kw)
+
+            await screener._apply_fallback(scored)
+
+        # metrics:fallback:triggered:{today} incr 호출 확인
+        assert redis_mock.incr.await_count >= 1
+        call_keys = [str(call) for call in redis_mock.incr.call_args_list]
+        assert any("metrics:fallback:triggered:" in k for k in call_keys)

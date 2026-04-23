@@ -22,6 +22,7 @@ interface ScreeningResult {
   rank?: number;
   score: number;
   is_hot?: boolean;
+  is_fallback?: boolean;
   status?: string;
   factors?: Record<string, unknown>;
   screened_at?: string | null;
@@ -149,12 +150,28 @@ function ScreeningTable({ tab }: ScreeningTableProps) {
               </TableRow>
             )}
             {results?.map((item) => (
-              <TableRow key={item.stock_code} className="border-border/30 hover:bg-accent/30">
+              <TableRow
+                key={item.stock_code}
+                className={cn(
+                  "border-border/30 hover:bg-accent/30",
+                  item.is_fallback && "border-l-2 border-l-amber-500/60"
+                )}
+              >
                 <TableCell className="font-mono tabular-nums text-sm text-muted-foreground">
                   {item.rank ?? "—"}
                 </TableCell>
                 <TableCell>
-                  <span className="font-mono font-medium text-sm">{item.stock_code}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono font-medium text-sm">{item.stock_code}</span>
+                    {item.is_fallback && (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] font-mono px-1 py-0 border-amber-500/50 text-amber-400 bg-amber-500/10"
+                      >
+                        ⚠️ FALLBACK
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="font-mono tabular-nums text-sm">
                   {typeof item.score === "number" ? item.score.toFixed(2) : "—"}

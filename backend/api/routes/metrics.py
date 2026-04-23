@@ -209,7 +209,7 @@ async def stage_heatmap(
 
 @router.get("/top-rejects", response_model=TopRejectsResponse)
 async def top_rejects(
-    limit: int = Query(5, ge=1, le=50),
+    limit: int = Query(5, ge=1, le=5),
     redis: RedisClient = Depends(get_redis),
 ) -> TopRejectsResponse:
     raw_items = await redis.lrange(TOP_REJECT_KEY, 0, limit - 1)
@@ -293,6 +293,50 @@ async def shadow_heatmap(
         date=target.isoformat(),
         stages=list(SHADOW_TRACKED_STAGES),
         cells=cells,
+    )
+
+
+class FallbackStatsResponse(BaseModel):
+    date: str
+    triggered_count: int
+    codes: list[str]
+
+
+@router.get("/fallback-stats", response_model=FallbackStatsResponse)
+async def get_fallback_stats(
+    date_param: str | None = Query(None, alias="date"),
+    redis: RedisClient = Depends(get_redis),
+) -> FallbackStatsResponse:
+    """Phase 8.5 Sprint 2 — 폴백 발동 통계.
+
+    Redis 키:
+      - metrics:fallback:triggered:{today}: 폴백 발동 횟수 (incr)
+      - metrics:fallback:code:{code}:{today}: 종목별 폴백 발동 횟수 (incr)
+    """
+    today = _today_kst()
+    target_s = date_param if date_param not in (None, "today") else today.isoformat()
+
+    triggered_key = f"metrics:fallback:triggered:{target_s}"
+    triggered_count = int(await redis.get(triggered_key) or 0)
+
+    # metrics:fallback:code:{code}:{today} 패턴으로 종목 코드 수집
+    code_prefix = "metrics:fallback:code:"
+    pattern = f"{code_prefix}*:{target_s}"
+    keys = await redis.scan_keys(pattern)
+    codes: list[str] = []
+    for k in keys:
+        # 키 형식: metrics:fallback:code:{code}:{date}
+        suffix = k[len(code_prefix):]
+        # suffix = "{code}:{date}"
+        parts = suffix.rsplit(":", 1)
+        if len(parts) == 2 and parts[1] == target_s:
+            codes.append(parts[0])
+    codes.sort()
+
+    return FallbackStatsResponse(
+        date=target_s,
+        triggered_count=triggered_count,
+        codes=codes,
     )
 
 

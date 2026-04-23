@@ -8,3 +8,4 @@
 - [Phase 4.8 Sprint 3 검증 결과](project_phase4.8_sprint3.md) — 678 passed, 이슈 없음, Phase 4.8 완료, 수동 미완(다음 거래일 08:00 chain 실행 확인) (2026-04-05)
 - [Phase 8 Sprint 2 검증 결과](project_phase8_sprint2.md) — 895 passed, Medium 이슈 2건 수정 완료(TTL 버그+Settings 통합), Playwright 리셋 다이얼로그 정상, 수동 미완(Railway 환경변수+2거래일 관찰) (2026-04-22)
 - [Phase 8.5 Sprint 1 검증 결과](project_phase8.5_sprint1.md) — 929 passed, 코드 리뷰 이슈 없음, Medium 2건 Phase문서 기록, 수동 미완(alembic+1.5거래일 관찰) (2026-04-22)
+- [Phase 8.5 Sprint 2 검증 결과](project_phase8.5_sprint2.md) — 956 passed, Medium 1건(import bisect 인라인), M1/M2 해결 확인, 수동 미완(Railway 환경변수 8종+5거래일 관찰) (2026-04-23)

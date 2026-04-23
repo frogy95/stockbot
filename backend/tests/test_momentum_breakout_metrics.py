@@ -206,7 +206,7 @@ def _success_snapshot(**overrides) -> MarketSnapshot:
 
     주요 수치:
     - gap_rate 0.5% → prev_close tier 배제, current_price > prev_high → prev_high tier
-    - breakout_pct ≈ 0.99%, threshold=2.0, adjusted_ratio ≈ 3.25 → volume_threshold 통과
+    - breakout_pct ≈ 0.99%, threshold=2.0, adjusted_ratio = 3.25 → volume_threshold 통과
     - trade_strength 150, ATR 500/102000 ≈ 0.49% → atr_filter 통과
     - confidence ≈ 0.64 → MIN_CONFIDENCE 통과
     """
@@ -220,7 +220,7 @@ def _success_snapshot(**overrides) -> MarketSnapshot:
         "low": 100_000,
         "prev_close": 100_000,
         "prev_high": 101_000,
-        "volume": 1_000_000,
+        "volume": 3_250_000,
         "prev_volume": 1_000_000,
         "change_rate": 2.0,
         "trade_strength": 150.0,
@@ -343,4 +343,45 @@ class TestShadowEvaluationInvariance:
                 stages_seen.add(parts[4])
         assert len(stages_seen) >= 4, (
             f"shadow는 최소 4개 이상의 stage를 독립 평가해야 한다. 실제: {stages_seen}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Phase 8.5 Sprint 2 — Task 2: shadow/본체 floor 일관성 테스트
+# ---------------------------------------------------------------------------
+
+
+class TestShadowBodyFloorConsistency:
+    """shadow와 generate_signal 본체가 동일 _resolve_min_volume_floor를 사용하는지 검증."""
+
+    @pytest.mark.asyncio
+    async def test_shadow_and_body_use_same_floor(self, monkeypatch):
+        """동일 snapshot에서 shadow와 본체 모두 _resolve_min_volume_floor를 호출한다.
+
+        monkeypatch로 _resolve_min_volume_floor를 spy하여
+        generate_signal 1회 호출 시 최소 2번(shadow + 본체) 이상 호출되는지 확인한다.
+        """
+        import modules.trading.strategies.momentum_breakout as mb_module
+
+        call_count = 0
+        original_fn = mb_module._resolve_min_volume_floor
+
+        def spy_floor(snapshot, tier, gap_rate, breakout_ref, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            return original_fn(snapshot, tier, gap_rate, breakout_ref, **kwargs)
+
+        monkeypatch.setattr(mb_module, "_resolve_min_volume_floor", spy_floor)
+
+        redis = FakeRedis()
+        strategy = MomentumBreakoutStrategy(redis_client=redis)
+        # prev_volume > 0 이어야 두 경로 모두 floor 계산에 도달
+        snapshot = _success_snapshot()
+
+        with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 11, 0, tzinfo=_KST)):
+            await strategy.generate_signal(snapshot)
+
+        assert call_count >= 2, (
+            f"_resolve_min_volume_floor가 shadow + 본체에서 각 1회씩 최소 2번 호출되어야 한다. "
+            f"실제 호출 횟수: {call_count}"
         )

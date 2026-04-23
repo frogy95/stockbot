@@ -437,12 +437,22 @@ async def test_confidence_stage_rejected(mock_progress):
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
 async def test_min_volume_floor_blocks(mock_progress):
-    """전일 대비 절대 거래량이 MIN_VOLUME_FLOOR(50%) 미만이면 차단."""
+    """전일 대비 절대 거래량 하한 미만이면 차단.
+
+    dynamic 모드 + prev_high tier + weak breakout(breakout_pct < 3%): floor=0.5.
+    volume=4M / prev_volume=10M = 0.4 < 0.5 → 차단.
+
+    strong_breakout 조건: current_price >= breakout_ref * 1.03.
+    current_price=70600, prev_high=70500 → pct=0.14%, 70600 < 70500*1.03=72615 → weak.
+    """
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strategy = MomentumBreakoutStrategy()
-    # volume=4M / prev_volume=10M = 0.4 < 0.5 -> 차단
+    # current_price=70600 → breakout_pct≈0.14% → weak breakout → floor=0.5
+    # volume=4M / prev_volume=10M = 0.4 < 0.5 → 차단
     snapshot = _make_snapshot(
+        current_price=70600,
+        prev_high=70500,
         volume=4_000_000,
         prev_volume=10_000_000,
     )
@@ -760,3 +770,107 @@ async def test_gap_open_tier_uses_existing_volume_threshold_logic(mock_progress)
     assert isinstance(result, TradeSignalData)
     assert result.reason["breakout_tier"] == "gap_open"
     assert result.reason["volume_threshold"] == 1.5
+
+
+# === Phase 8.5 Sprint 2: _resolve_min_volume_floor 순수 함수 테스트 ===
+
+
+class TestResolveMinVolumeFloor:
+    """_resolve_min_volume_floor 순수 함수의 각 분기를 단위 테스트."""
+
+    def _make_snapshot(self, current_price: int = 73000, **overrides) -> "MarketSnapshot":
+        """테스트용 MarketSnapshot 생성."""
+        return _make_snapshot(current_price=current_price, **overrides)
+
+    def test_legacy_mode_returns_0_5(self):
+        """mode='legacy'이면 tier/gap_rate 무관하게 항상 0.5 반환."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot()
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="gap_open",
+            gap_rate=0.10,
+            breakout_ref=70000,
+            mode="legacy",
+            hard_floor=0.0,
+        )
+        assert result == 0.5
+
+    def test_strong_gap_returns_0_4(self):
+        """gap_rate >= 0.05이면 strong 조건 충족 → 0.4 반환."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot(current_price=73000)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="gap_open",
+            gap_rate=0.06,
+            breakout_ref=70000,
+            mode="dynamic",
+            hard_floor=0.0,
+        )
+        assert result == 0.4
+
+    def test_prev_close_tier_returns_0_6(self):
+        """tier='prev_close'이면 gap/breakout 무관하게 0.6 반환."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot(current_price=70000)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_close",
+            gap_rate=0.02,
+            breakout_ref=69500,
+            mode="dynamic",
+            hard_floor=0.0,
+        )
+        assert result == 0.6
+
+    def test_default_returns_0_5(self):
+        """tier='prev_high', gap_rate=0.02 (weak) → strong 조건 미충족 → 0.5 반환."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        # current_price=73000, breakout_ref=72000 → 73000 < 72000*1.03=74160 → strong_breakout=False
+        snapshot = self._make_snapshot(current_price=73000)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_high",
+            gap_rate=0.02,
+            breakout_ref=72000,
+            mode="dynamic",
+            hard_floor=0.0,
+        )
+        assert result == 0.5
+
+    def test_hard_floor_enforced(self):
+        """결과가 hard_floor 미만이면 hard_floor로 강제 대체."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        # dynamic mode, strong_gap=True → result=0.4, hard_floor=0.7 → 0.7 반환
+        snapshot = self._make_snapshot(current_price=73000)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="gap_open",
+            gap_rate=0.06,
+            breakout_ref=70000,
+            mode="dynamic",
+            hard_floor=0.7,
+        )
+        assert result == 0.7
+
+    def test_breakout_ref_1_03_trigger(self):
+        """current_price >= breakout_ref * 1.03 이면 strong_breakout → 0.4 반환."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        # breakout_ref=70000, 70000*1.03=72100, current_price=72200 >= 72100 → strong
+        snapshot = self._make_snapshot(current_price=72200)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_high",
+            gap_rate=0.01,  # weak gap
+            breakout_ref=70000,
+            mode="dynamic",
+            hard_floor=0.0,
+        )
+        assert result == 0.4

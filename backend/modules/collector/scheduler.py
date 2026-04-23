@@ -364,6 +364,14 @@ class CollectorScheduler:
             replace_existing=True,
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
+        # 16:10 Phase 8.5 Sprint 2 자동 롤백 검사 (2거래일 연속 신호 0건 → Redis override)
+        self._scheduler.add_job(
+            self._check_auto_rollback,
+            CronTrigger(hour=16, minute=10, timezone=tz),
+            id="auto_rollback_check",
+            replace_existing=True,
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 2차 스크리닝: 09:30~15:30 30초 주기
         if self._realtime_screener:
             self._scheduler.add_job(
@@ -880,6 +888,87 @@ class CollectorScheduler:
                 f"{max_attempts}회 시도 모두 실패 — 장중 실시간 파이프라인 마비 상태\n"
                 "수동 확인 필요"
             )
+
+    async def _check_auto_rollback(self) -> None:
+        """16:10 자동 롤백 검사 — 오늘·전 영업일 모두 신호 0건이면 Redis override + Telegram 경고.
+
+        신호가 2거래일 연속 0건인 경우:
+        - settings:override:MIN_VOLUME_FLOOR_MODE = "legacy" (TTL 7일)
+        - settings:override:SECONDARY_POOL_FALLBACK_ENABLED = "False" (TTL 7일)
+        - Telegram 시스템 경고 발송
+
+        관리자는 `DEL settings:override:*` 로 수동 해제한다.
+        """
+        try:
+            from sqlalchemy import func, select, text
+
+            from core.models.trading import TradeSignal
+            from core.trading_calendar import get_prev_trading_day
+
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+            if not is_trading_day(today):
+                logger.info("비거래일 스킵: step=auto_rollback_check date=%s", today)
+                return
+
+            prev_day = get_prev_trading_day(today)
+
+            # KST 날짜 경계를 UTC datetime으로 변환하여 timezone-aware 비교
+            kst = ZoneInfo(settings.MARKET_TIMEZONE)
+            from datetime import timedelta
+
+            def _day_range_utc(d):
+                """KST 날짜 d의 시작/끝을 UTC datetime으로 반환."""
+                kst_start = datetime(d.year, d.month, d.day, tzinfo=kst)
+                kst_end = kst_start + timedelta(days=1)
+                # UTC는 tzinfo-aware이므로 그대로 비교 가능
+                return kst_start, kst_end
+
+            today_start, today_end = _day_range_utc(today)
+            prev_start, prev_end = _day_range_utc(prev_day)
+
+            async with self._session_factory() as session:
+                today_count = (
+                    await session.execute(
+                        select(func.count()).select_from(TradeSignal).where(
+                            TradeSignal.created_at >= today_start,
+                            TradeSignal.created_at < today_end,
+                        )
+                    )
+                ).scalar_one()
+
+                prev_count = (
+                    await session.execute(
+                        select(func.count()).select_from(TradeSignal).where(
+                            TradeSignal.created_at >= prev_start,
+                            TradeSignal.created_at < prev_end,
+                        )
+                    )
+                ).scalar_one()
+
+            logger.info(
+                "auto_rollback_check: today=%s count=%d, prev=%s count=%d",
+                today, today_count, prev_day, prev_count,
+            )
+
+            if today_count == 0 and prev_count == 0:
+                ttl = 86400 * 7
+                await self._redis.set("settings:override:MIN_VOLUME_FLOOR_MODE", "legacy", ttl=ttl)
+                await self._redis.set("settings:override:SECONDARY_POOL_FALLBACK_ENABLED", "False", ttl=ttl)
+                logger.warning(
+                    "자동 롤백 발동: 2거래일(%s, %s) 연속 신호 0건 → Redis override 설정",
+                    prev_day, today,
+                )
+                alert_msg = (
+                    f"⚠️ 자동 롤백 발동 — 2거래일({prev_day}, {today}) 연속 신호 0건. "
+                    "MIN_VOLUME_FLOOR_MODE=legacy, FALLBACK=False로 강제 전환. "
+                    "관리자 확인 대기 중."
+                )
+                if self._notifier_manager is not None:
+                    await self._notifier_manager.send_system_alert("auto_rollback", alert_msg)
+                elif self._telegram_bot is not None:
+                    await self._telegram_bot.send_notification(alert_msg)
+        except Exception:  # noqa: BLE001
+            logger.exception("auto_rollback_check 실패 (스케줄러 계속 동작)")
 
     async def _rollup_daily_metrics(self) -> None:
         """Phase 8.5 Sprint 1 — 16:05 Redis 카운터 → DB 일별 집계 UPSERT.
