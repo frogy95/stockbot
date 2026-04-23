@@ -21,11 +21,13 @@ PR: https://github.com/frogy95/stockbot/pull/169 (develop → main)
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
 
-#### 실서버 자동 검증 (5단계 실행 후 업데이트)
+#### 실서버 자동 검증 (2026-04-23 11:04 KST)
 
-- ⬜ 백엔드 헬스체크 `https://api.stockbot.choiji.kr/api/v1/health`
-- ⬜ Shadow 신규 엔드포인트 `https://api.stockbot.choiji.kr/api/v1/metrics/shadow-heatmap?date=today`
-- ⬜ 프론트엔드 접속 확인 `https://stockbot.choiji.kr`
+- ✅ 백엔드 헬스체크 `https://api.stockbot.choiji.kr/api/v1/health` — `{"status":"healthy","database":"connected","redis":"connected"}`
+- ✅ Shadow 신규 엔드포인트 `https://api.stockbot.choiji.kr/api/v1/metrics/shadow-heatmap?date=today` — HTTP 401 (인증 요구, 엔드포인트 존재 확인)
+- ✅ 프론트엔드 접속 `https://stockbot.choiji.kr` — HTTP 307 (로그인 리다이렉트, 정상)
+- ✅ Railway 로그: `Application startup complete` + WS 20종목 SUBSCRIBE SUCCESS + 2차 스크리닝 30초 주기 정상, 에러/트레이스백 0건
+- ✅ Railway 로그에서 signal_generator `전략 거부 [min_volume_floor]` 기록 관찰 — Sprint 1.5 전에는 heatmap에 이 stage 1건만 찍혔으나 shadow 배포 후 나머지 7 stage도 독립 평가 누적 예상
 
 #### 수동 검증 필요 항목
 

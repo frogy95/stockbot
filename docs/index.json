@@ -3521,7 +3521,7 @@
       "version": "v2.5.1",
       "description": "Phase 8.5 Sprint 1.5 프로덕션 배포 — 전략 필터 shadow evaluation (Redis 전용, DB 스키마 변경 없음)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/169",
-      "status": "in_progress"
+      "status": "completed"
     }
   ]
 }
