@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-22T16:30:00+09:00",
+  "lastUpdated": "2026-04-23T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3512,6 +3512,15 @@
       "version": "v2.5.0",
       "description": "Phase 8.5 Sprint 1 프로덕션 배포 — 관측성 테이블 3종 Alembic 마이그레이션 + Redis 메트릭 유틸 + score 히스토그램 + stage 카운터 + 가상 신호 로깅 + 16:05 집계 배치 + metrics API 4종 + 신호 진단 대시보드 4카드",
       "prUrl": "https://github.com/frogy95/stockbot/pull/163",
+      "status": "in_progress"
+    },
+    {
+      "date": "2026-04-23",
+      "type": "sprint",
+      "ref": "phase8.5-sprint1.5",
+      "version": "v2.5.1",
+      "description": "Phase 8.5 Sprint 1.5 프로덕션 배포 — 전략 필터 shadow evaluation (Redis 전용, DB 스키마 변경 없음)",
+      "prUrl": "",
       "status": "in_progress"
     }
   ]
