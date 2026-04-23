@@ -81,6 +81,17 @@ async def test_virtual_signals_200(app, auth_headers):
 
 
 @pytest.mark.asyncio
+async def test_shadow_heatmap_200(app, auth_headers):
+    resp = await _call(app, auth_headers, "/api/v1/metrics/shadow-heatmap?date=today")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "date" in body
+    assert isinstance(body["stages"], list)
+    assert len(body["stages"]) == 8  # SHADOW_TRACKED_STAGES
+    assert isinstance(body["cells"], list)
+
+
+@pytest.mark.asyncio
 async def test_metrics_requires_auth(app):
     async with app.router.lifespan_context(app):
         async with AsyncClient(

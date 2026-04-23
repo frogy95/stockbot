@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from modules.screening.factors import calc_volatility_factor
 from modules.trading.strategies._metrics import (
+    record_shadow_stage,
     record_stage,
     record_virtual_signal,
 )
@@ -155,9 +156,176 @@ class MomentumBreakoutStrategy(Strategy):
             return snapshot.prev_high, "prev_high"
         return snapshot.prev_close, "prev_close"
 
+    async def _shadow_evaluate(
+        self, snapshot: MarketSnapshot, now_kst: datetime
+    ) -> None:
+        """각 필터 조건을 독립 평가하여 shadow 네임스페이스에 pass/fail 카운터 기록.
+
+        주문 경로와 완전 분리 — 어떤 예외도 상위로 전파하지 않는다.
+        `generate_signal()`의 반환값/타이밍/임계값에 영향을 주지 않는다.
+
+        skip 규칙: 계산이 불가능한 조건(prev_volume=0 이후의 volume 관련 필터,
+        breakout_ref<=0일 때 volume_threshold, current_price<=0일 때 atr_filter)은
+        pass도 fail도 기록하지 않는다 — 표본 오염 방지.
+        """
+        try:
+            gap_rate = (
+                (snapshot.open_price - snapshot.prev_close) / snapshot.prev_close
+                if snapshot.prev_close > 0
+                else 0.0
+            )
+            breakout_ref, tier = self._resolve_tier(snapshot, gap_rate)
+
+            # 1. prev_close_time_guard — tier=="prev_close" + 13:00 이후면 fail
+            guard_fail = (
+                tier == "prev_close" and now_kst.time() >= PREV_CLOSE_TIER_BLOCK_TIME
+            )
+            await record_shadow_stage(
+                self.redis_client,
+                "prev_close_time_guard",
+                passed=not guard_fail,
+                now_kst=now_kst,
+            )
+
+            # 2. breakout — current_price > breakout_ref
+            if breakout_ref > 0:
+                await record_shadow_stage(
+                    self.redis_client,
+                    "breakout",
+                    passed=snapshot.current_price > breakout_ref,
+                    now_kst=now_kst,
+                )
+
+            # 3. prev_volume_zero
+            prev_volume_ok = snapshot.prev_volume > 0
+            await record_shadow_stage(
+                self.redis_client,
+                "prev_volume_zero",
+                passed=prev_volume_ok,
+                now_kst=now_kst,
+            )
+
+            # prev_volume=0이면 volume 관련 이후 필터는 skip
+            if prev_volume_ok:
+                # 4. min_volume_floor
+                await record_shadow_stage(
+                    self.redis_client,
+                    "min_volume_floor",
+                    passed=snapshot.volume
+                    >= snapshot.prev_volume * MIN_VOLUME_FLOOR,
+                    now_kst=now_kst,
+                )
+
+                # 5. volume_threshold — breakout_ref>0 필요
+                if breakout_ref > 0:
+                    progress = calc_market_progress(now_kst)
+                    effective_progress = max(progress, MIN_MARKET_PROGRESS)
+                    adjusted_ratio = snapshot.volume / (
+                        snapshot.prev_volume * effective_progress
+                    )
+                    breakout_pct = (
+                        (snapshot.current_price - breakout_ref) / breakout_ref * 100
+                    )
+                    if tier == "prev_close":
+                        volume_threshold = PREV_CLOSE_VOLUME_THRESHOLD
+                    elif breakout_pct >= 5.0:
+                        volume_threshold = 1.5
+                    elif breakout_pct >= 3.0:
+                        volume_threshold = 1.8
+                    else:
+                        volume_threshold = 2.0
+                    await record_shadow_stage(
+                        self.redis_client,
+                        "volume_threshold",
+                        passed=adjusted_ratio >= volume_threshold,
+                        now_kst=now_kst,
+                    )
+
+            # 6. trade_strength — snapshot 단독 평가 가능
+            await record_shadow_stage(
+                self.redis_client,
+                "trade_strength",
+                passed=snapshot.trade_strength >= 100.0,
+                now_kst=now_kst,
+            )
+
+            # 7. atr_filter — current_price>0 필요
+            if snapshot.current_price > 0:
+                atr = calc_volatility_factor(
+                    snapshot.recent_highs,
+                    snapshot.recent_lows,
+                    snapshot.recent_closes,
+                )
+                await record_shadow_stage(
+                    self.redis_client,
+                    "atr_filter",
+                    passed=atr / snapshot.current_price <= ATR_FILTER_PCT,
+                    now_kst=now_kst,
+                )
+
+            # 8. confidence — breakout_ref>0 AND prev_volume>0 필요
+            if breakout_ref > 0 and prev_volume_ok:
+                progress = calc_market_progress(now_kst)
+                effective_progress = max(progress, MIN_MARKET_PROGRESS)
+                adjusted_ratio = snapshot.volume / (
+                    snapshot.prev_volume * effective_progress
+                )
+                breakout_pct = (
+                    (snapshot.current_price - breakout_ref) / breakout_ref * 100
+                )
+                if tier == "prev_close":
+                    momentum_score = (
+                        min(breakout_pct / PREV_CLOSE_MOMENTUM_DIVISOR, 1.0)
+                        * PREV_CLOSE_MOMENTUM_MULTIPLIER
+                    )
+                elif tier == "gap_open":
+                    momentum_score = (
+                        min(breakout_pct / 5.0, 1.0) * GAP_OPEN_MOMENTUM_MULTIPLIER
+                    )
+                else:
+                    momentum_score = min(breakout_pct / 5.0, 1.0)
+                volume_score = min(adjusted_ratio / 5.0, 1.0)
+                strength_score = min((snapshot.trade_strength - 50) / 50, 1.0)
+                orderbook_score = min(
+                    snapshot.total_bid_volume / max(snapshot.total_ask_volume, 1) / 2.0,
+                    1.0,
+                )
+                confidence = (
+                    momentum_score * 0.3
+                    + volume_score * 0.3
+                    + strength_score * 0.2
+                    + orderbook_score * 0.2
+                )
+                if tier == "prev_close":
+                    confidence = min(confidence, PREV_CLOSE_CONFIDENCE_CAP)
+                await record_shadow_stage(
+                    self.redis_client,
+                    "confidence",
+                    passed=confidence >= MIN_CONFIDENCE,
+                    now_kst=now_kst,
+                )
+        except Exception:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "shadow evaluate failed", exc_info=True
+            )
+
     async def generate_signal(
         self, snapshot: MarketSnapshot
     ) -> TradeSignalData | RejectedSignal:
+        # Phase 8.5 Sprint 1.5 — shadow 평가(관측 전용, 주문 경로 불변)
+        # 호출 자체를 try/except로 감싸 _shadow_evaluate 내부 try 실패 시에도
+        # 주문 경로가 영향을 받지 않도록 이중 방어.
+        try:
+            await self._shadow_evaluate(snapshot, _now_kst())
+        except Exception:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "shadow evaluate call failed", exc_info=True
+            )
+
         # 갭 비율 결정
         gap_rate = (
             (snapshot.open_price - snapshot.prev_close) / snapshot.prev_close
