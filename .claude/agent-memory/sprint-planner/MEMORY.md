@@ -60,10 +60,11 @@
 - Phase 8 Sprint 1 — 장중 OHLC 파싱 + 갭 분기 수정 (H0STCNT0 파서 OHLC 3필드, Redis 캐싱, snapshot 실시간 우선, breakout_ref=open_price), ✅ 완료 (2026-04-20) / PR: https://github.com/frogy95/stockbot/pull/149
 - Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
 - [Phase 8.5 Sprint 1](phase8.5-sprint1-status.md) — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/162
+- Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (각 stage 독립 pass/fail 카운터, 주문 경로 불변 TDD), 🔄 계획 수립 완료 (2026-04-23, 사용자 승인 대기)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor (Phase 8.5 Sprint 1 관측 1.5거래일 후 착수)
+- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor (Sprint 1.5 배포 후 관측 1.5거래일 후 착수)
 - Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 완료 후 착수)
 - Phase 8.6 Sprint 2 — 시스템 관리 UI (구 Phase 8 Sprint 4, Sprint 1 완료 후)
 - Phase 8.6 Sprint 3 — 성과 분석 보강 (구 Phase 8 Sprint 5, Sprint 2 완료 후)
@@ -198,6 +199,11 @@
 - Phase 6 Sprint 1: 구독 복원을 try/except로 감싸되, _receive_task 생성은 except 바깥에서 항상 실행
 - Phase 6 Sprint 1: ws_manager.py 45줄/74줄 가드 `and` -> `or` — 한쪽만 비정상이어도 차단
 - Phase 6 Sprint 1: _market_open() except에 _send_failure_alert("market_open", str(e)) 한 줄 추가
+- Phase 8.5 Sprint 1.5: `generate_signal()` 순차 short-circuit 한계로 뒤 stage 표본이 부족 — shadow evaluation으로 각 stage 독립 평가. 기존 `STRATEGY_STAGE_PREFIX` 절대 불변, shadow는 신규 `metrics:shadow:stage` 네임스페이스
+- Phase 8.5 Sprint 1.5: `_metrics.py` 순수성 원칙(TradeSignalData import 금지, 예외 전파 금지) 계승. `_shadow_evaluate` 전체를 try/except로 감싸 Logger.warning으로 흡수
+- Phase 8.5 Sprint 1.5: `_resolve_tier`/`calc_volatility_factor`는 순수 함수라 shadow/real에서 중복 호출 허용 (성능 영향 미미). `_now_kst()`는 shadow에 공유
+- Phase 8.5 Sprint 1.5: prev_volume=0 또는 breakout_ref<=0일 때 관련 stage는 기록 skip(pass/fail 둘 다 아님) — 표본 오염 방지
+- Phase 8.5 Sprint 1.5: TDD 필수 — Task 1에서 RED 테스트 선작성으로 "shadow 추가 후 기존 반환값 바이트 동일" + "shadow 예외가 상위로 전파되지 않음" 증명
 - Phase 6 Sprint 1: _market_open_recovery() 판단: ws_manager.count -> _ws_client.connected로 변경
 - Phase 6 Sprint 1: is_trading_day() import 추가 필요 (from core.trading_calendar import is_trading_day)
 - Phase 6 Sprint 1: is_trading_day() 가드 대상 2개: _run_scheduled_pipeline, _market_open (Sprint 2에서 나머지)

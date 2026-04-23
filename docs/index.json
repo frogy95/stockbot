@@ -2863,6 +2863,64 @@
               "commits": []
             }
           ]
+        },
+        {
+          "id": "phase8.5-sprint1.5",
+          "title": "전략 필터 shadow evaluation",
+          "status": "planned",
+          "branch": "phase8.5-sprint1.5",
+          "sprintDoc": "docs/phase/phase8.5/sprint1.5/sprint1.5.md",
+          "progress": {
+            "total": 5,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "phase8.5-sprint1.5-task1",
+              "title": "shadow evaluation 회귀 테스트 선작성 (TDD RED)",
+              "path": "docs/phase/phase8.5/sprint1.5/sprint1.5.md#task-1-회귀-테스트-선작성-주문-경로-불변-증명",
+              "testPlan": "기존 반환값 바이트 동일성 + shadow 카운터 증가 검증 + 예외 흡수 검증",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1.5-task2",
+              "title": "shadow 헬퍼 + 8 stage 독립 평가 구현 (TDD GREEN)",
+              "path": "docs/phase/phase8.5/sprint1.5/sprint1.5.md#task-2-shadow-헬퍼--stage-독립-평가-구현",
+              "testPlan": "Task 1 회귀 테스트 GREEN + 기존 test_momentum_breakout.py 회귀 0건",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1.5-task3a",
+              "title": "/api/v1/metrics/shadow-heatmap API 추가",
+              "path": "docs/phase/phase8.5/sprint1.5/sprint1.5.md#task-3a-apiv1metricsshadow-heatmap-api",
+              "testPlan": "FakeRedis 기반 pass_rate 계산 단위 테스트 + curl JSON 응답 확인",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1.5-task3b",
+              "title": "Shadow 필터 heatmap 카드 + /diagnostics 배치",
+              "path": "docs/phase/phase8.5/sprint1.5/sprint1.5.md#task-3b-프론트-shadowheatmapcard-컴포넌트",
+              "testPlan": "npx tsc --noEmit + Playwright /diagnostics 렌더링",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint1.5-task4",
+              "title": "통합 검증 + 주문 경로 불변 재확인",
+              "path": "docs/phase/phase8.5/sprint1.5/sprint1.5.md#task-4-통합-검증--sprint-15-마무리",
+              "testPlan": "pytest 전체 + shadow API + 프론트 타입체크 + Playwright 스크린샷",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     },

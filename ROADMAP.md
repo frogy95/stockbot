@@ -53,8 +53,8 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1 완료
-- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 진행 중** (Sprint 1 완료, Sprint 2 대기 중)
-- 현재 Sprint: **Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor** (Sprint 1 관측 데이터 수집 후 착수)
+- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 진행 중** (Sprint 1 완료, Sprint 1.5 계획 수립, Sprint 2 대기 중)
+- 현재 Sprint: **Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation** (2026-04-23 계획 수립, 사용자 승인 대기)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: **Phase 8.5 Sprint 2 (풀 하한 폴백 + 동적 min_volume_floor, 1.5거래일 관측 후 착수)** → Phase 8.6 착수
@@ -1199,6 +1199,14 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - stage × 시간대 heatmap + 탈락 상위 5종목 실시간 리스트
 - 13:00~14:00 prev_close 가상 신호 로깅 (실행 X, Phase 10.1 재평가 근거 수집)
 - 대시보드 "신호 진단 (Phase 8.5)" 섹션 신규 (카드 4개)
+
+#### Sprint 1.5: 전략 필터 shadow evaluation 🔄 (2026-04-23 계획 수립)
+> 실행 명세: `docs/phase/phase8.5/sprint1.5/sprint1.5.md` (사용자 승인 대기)
+- Sprint 1 heatmap의 short-circuit 한계 해소: 각 stage를 **독립 평가**하여 pass/fail 카운터 별도 기록
+- `metrics:shadow:stage:{date}:{stage}:{pass|fail}:{hm}` 네임스페이스 (기존 `STRATEGY_STAGE_PREFIX` 불변)
+- 주문 경로 불변 TDD 회귀 테스트 필수 (`TradeSignalData` import 금지 · 예외 전파 금지 원칙 계승)
+- `/api/v1/metrics/shadow-heatmap` + 프론트 `ShadowHeatmapCard` 추가
+- Sprint 2 의사결정(임계값 완화) 근거 데이터 확보가 목적
 
 #### Sprint 2: 풀 하한 폴백 + 동적 min_volume_floor
 - 2차 스크리닝 `passed_count<3` 시 1차 상위 score로 보강 (최대 5, `is_fallback` 메타)
