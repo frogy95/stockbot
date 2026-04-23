@@ -2,7 +2,7 @@
 
 import json
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
@@ -48,7 +48,7 @@ async def test_scheduler_registers_jobs():
 
     status = scheduler.get_status()
     assert status["running"] is True
-    assert status["job_count"] == 7  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry, portal_supplement, metrics_rollup
+    assert status["job_count"] == 8  # premarket_pipeline, market_open, market_close, market_open_recovery, premarket_retry, portal_supplement, metrics_rollup, auto_rollback_check
 
     job_ids = {j["id"] for j in status["next_jobs"]}
     assert "premarket_pipeline" in job_ids
@@ -58,6 +58,7 @@ async def test_scheduler_registers_jobs():
     assert "premarket_retry" in job_ids
     assert "portal_supplement" in job_ids
     assert "metrics_rollup" in job_ids
+    assert "auto_rollback_check" in job_ids
     assert "premarket_collect" not in job_ids
     assert "etf_master_collect" not in job_ids
     assert "primary_screen" not in job_ids
@@ -552,3 +553,157 @@ async def test_market_close_does_not_set_lock_on_failure():
     # lock이 설정되지 않았으므로 다음 시도 가능
     today_str = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
     assert fake_redis._store.get(f"scheduler:daily_report:sent:{today_str}") is None
+
+
+# === Phase 8.5 Sprint 2 Task 5: 자동 롤백 검사 ===
+
+
+def _make_scheduler_with_session(session_factory, redis=None):
+    """session_factory를 직접 주입하는 테스트용 스케줄러 팩토리."""
+    ws_manager = MagicMock()
+    ws_manager.count = 0
+    ws_manager.unsubscribe_all = AsyncMock()
+    ws_client = MagicMock()
+    ws_client.connect = AsyncMock()
+    ws_client.disconnect = AsyncMock()
+    ws_client.set_on_data = MagicMock()
+    return CollectorScheduler(
+        session_factory=session_factory,
+        rest_client=MagicMock(),
+        ws_manager=ws_manager,
+        trade_strength=MagicMock(),
+        ws_client=ws_client,
+        redis=redis if redis is not None else FakeRedis(),
+    )
+
+
+def _make_session_factory_with_counts(today_count: int, prev_count: int):
+    """DB에서 신호 건수를 반환하는 session_factory mock 생성.
+
+    execute().scalar_one() 이 today_count, prev_count 순서로 반환되도록 설정.
+    """
+    mock_session = AsyncMock()
+
+    # scalar_one()이 순서대로 today_count, prev_count를 반환
+    mock_result_today = MagicMock()
+    mock_result_today.scalar_one.return_value = today_count
+    mock_result_prev = MagicMock()
+    mock_result_prev.scalar_one.return_value = prev_count
+
+    mock_session.execute = AsyncMock(
+        side_effect=[mock_result_today, mock_result_prev]
+    )
+
+    mock_session_ctx = AsyncMock()
+    mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    mock_session_factory = MagicMock()
+    mock_session_factory.return_value = mock_session_ctx
+    return mock_session_factory
+
+
+@pytest.mark.asyncio
+async def test_auto_rollback_triggered_when_two_zero_days():
+    """오늘 + 전 영업일 모두 신호 0건 → Redis override 설정 + Telegram 경고 발동."""
+    fake_redis = FakeRedis()
+    session_factory = _make_session_factory_with_counts(today_count=0, prev_count=0)
+    scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
+
+    mock_notifier = AsyncMock()
+    mock_notifier.send_system_alert = AsyncMock()
+    scheduler._notifier_manager = mock_notifier
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._check_auto_rollback()
+
+    # Redis override 키 설정 확인
+    assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") == "legacy"
+    assert fake_redis._store.get("settings:override:SECONDARY_POOL_FALLBACK_ENABLED") == "False"
+    # Telegram 알림 발송 확인
+    mock_notifier.send_system_alert.assert_awaited_once()
+    call_args = mock_notifier.send_system_alert.call_args
+    assert call_args[0][0] == "auto_rollback"
+    assert "자동 롤백 발동" in call_args[0][1]
+
+
+@pytest.mark.asyncio
+async def test_auto_rollback_not_triggered_if_any_signal_exists():
+    """전 영업일에 신호 1건 이상 → 롤백 발동 안 함."""
+    fake_redis = FakeRedis()
+    session_factory = _make_session_factory_with_counts(today_count=0, prev_count=1)
+    scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
+
+    mock_notifier = AsyncMock()
+    mock_notifier.send_system_alert = AsyncMock()
+    scheduler._notifier_manager = mock_notifier
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._check_auto_rollback()
+
+    # Redis override 키 미설정 확인
+    assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") is None
+    assert fake_redis._store.get("settings:override:SECONDARY_POOL_FALLBACK_ENABLED") is None
+    mock_notifier.send_system_alert.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_auto_rollback_skipped_on_non_trading_day():
+    """비거래일에는 롤백 검사 자체를 스킵."""
+    fake_redis = FakeRedis()
+    session_factory = _make_session_factory_with_counts(today_count=0, prev_count=0)
+    scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=False):
+        await scheduler._check_auto_rollback()
+
+    # 비거래일 → DB 조회도 없고 Redis 변경도 없음
+    assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") is None
+
+
+def test_override_respected_by_resolve_min_volume_floor():
+    """redis_override_mode='legacy' → 0.5 반환 (pure 함수 검증)."""
+    from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+    from unittest.mock import MagicMock
+
+    # 간단한 snapshot mock
+    snapshot = MagicMock()
+    snapshot.current_price = 50000
+    snapshot.prev_close = 45000
+
+    result = _resolve_min_volume_floor(
+        snapshot,
+        tier="gap_open",
+        gap_rate=0.1,
+        breakout_ref=46000.0,
+        redis_override_mode="legacy",
+    )
+
+    assert result == 0.5
+
+
+def test_override_not_set_uses_settings_mode():
+    """redis_override_mode=None → settings.MIN_VOLUME_FLOOR_MODE 사용."""
+    from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+    from unittest.mock import MagicMock, patch
+
+    snapshot = MagicMock()
+    snapshot.current_price = 50000
+    snapshot.prev_close = 45000
+
+    # settings.MIN_VOLUME_FLOOR_MODE = "legacy" 로 패치
+    with patch(
+        "modules.trading.strategies.momentum_breakout.settings"
+    ) as mock_settings:
+        mock_settings.MIN_VOLUME_FLOOR_MODE = "legacy"
+        mock_settings.MIN_VOLUME_FLOOR_HARD = 0.3
+
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="gap_open",
+            gap_rate=0.1,
+            breakout_ref=46000.0,
+            redis_override_mode=None,
+        )
+
+    assert result == 0.5
