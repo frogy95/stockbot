@@ -3617,7 +3617,7 @@
       "ref": "phase8.5-sprint2",
       "version": "v2.6.0",
       "description": "Phase 8.5 Sprint 2 프로덕션 배포 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (환경변수 8종, 16:10 자동 롤백 job, 폴백 통계 카드 + 배지, Redis 전용, DB 스키마 변경 없음)",
-      "prUrl": "TBD",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/171",
       "status": "in_progress"
     }
   ]
