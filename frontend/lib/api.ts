@@ -118,12 +118,28 @@ export interface VirtualSignalsResponse {
   items: VirtualSignalItem[];
 }
 
+export interface ShadowStageCell {
+  stage: string;
+  hour_min: string;
+  pass_count: number;
+  fail_count: number;
+  pass_rate: number | null;
+}
+
+export interface ShadowHeatmapResponse {
+  date: string;
+  stages: string[];
+  cells: ShadowStageCell[];
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
     `/api/v1/metrics/stage-heatmap?date=${encodeURIComponent(date)}`,
   topRejects: (limit = 5) => `/api/v1/metrics/top-rejects?limit=${limit}`,
   virtualSignals: (days = 7) => `/api/v1/metrics/virtual-signals?days=${days}`,
+  shadowHeatmap: (date = "today") =>
+    `/api/v1/metrics/shadow-heatmap?date=${encodeURIComponent(date)}`,
 };
 
 /**
