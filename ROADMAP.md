@@ -53,8 +53,8 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1·1.5 완료
-- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 진행 중** (Sprint 1·1.5 완료, Sprint 2 대기 중)
-- 현재 Sprint: **Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor** (Sprint 1.5 배포 후 1.5거래일 관측 후 착수)
+- 현재 Phase: **Phase 8.5 (신호 발생 데드락 해제) 진행 중** (Sprint 1·1.5 완료, Sprint 2 계획 수립 완료)
+- 현재 Sprint: **Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor** 🔄 (2026-04-23 계획 수립, 구현 대기)
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23)
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
 - 다음 마일스톤: **Phase 8.5 Sprint 2 (풀 하한 폴백 + 동적 min_volume_floor, 1.5거래일 관측 후 착수)** → Phase 8.6 착수
@@ -1208,7 +1208,8 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - `/api/v1/metrics/shadow-heatmap` + 프론트 `ShadowHeatmapCard` 추가
 - Sprint 2 의사결정(임계값 완화) 근거 데이터 확보가 목적
 
-#### Sprint 2: 풀 하한 폴백 + 동적 min_volume_floor
+#### Sprint 2: 풀 하한 폴백 + 동적 min_volume_floor 🔄 진행 중 (2026-04-23 계획 수립)
+> 실행 명세: `docs/phase/phase8.5/sprint2/sprint2.md`
 - 2차 스크리닝 `passed_count<3` 시 1차 상위 score로 보강 (최대 5, `is_fallback` 메타)
 - 폴백 종목: position 50%, 손절 -1.5%, 전일 대비 -3% 이하 제외
 - `MIN_VOLUME_FLOOR` 동적 분기: 기본 0.5 / 강한 돌파(gap≥5% OR prev_high+3%) 0.4 / prev_close tier 0.6
