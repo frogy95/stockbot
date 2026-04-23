@@ -132,6 +132,14 @@ export interface ShadowHeatmapResponse {
   cells: ShadowStageCell[];
 }
 
+// === Phase 8.5 Sprint 2: 폴백 발동 통계 ===
+
+export interface FallbackStats {
+  date: string;
+  triggered_count: number;
+  codes: string[];
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
@@ -140,6 +148,8 @@ export const metricsPaths = {
   virtualSignals: (days = 7) => `/api/v1/metrics/virtual-signals?days=${days}`,
   shadowHeatmap: (date = "today") =>
     `/api/v1/metrics/shadow-heatmap?date=${encodeURIComponent(date)}`,
+  fallbackStats: (date = "today") =>
+    `/api/v1/metrics/fallback-stats?date=${encodeURIComponent(date)}`,
 };
 
 /**

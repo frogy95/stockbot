@@ -53,7 +53,7 @@
 | Sprint | 주제 | 주요 작업 | 의존성 |
 |--------|------|----------|--------|
 | 1 ✅ | **관측성 강화** | stage 분포 메트릭, 2차 score 분포 히스토그램, 탈락 상위 종목 로깅, 가상 신호 로깅 (13:00+ prev_close) | 없음 |
-| 2 | **풀 하한 폴백 + 동적 min_volume_floor** | `passed<3` 시 상위 score 보강, `MIN_VOLUME_FLOOR` 조건부 분기(0.4/0.5/0.6), env 변수화, HARD 상한 0.3 | Sprint 1 배포 후 1.5거래일 관찰 |
+| 2 ✅ | **풀 하한 폴백 + 동적 min_volume_floor** | `passed<3` 시 상위 score 보강, `MIN_VOLUME_FLOOR` 조건부 분기(0.4/0.5/0.6), env 변수화, HARD 상한 0.3 | Sprint 1 배포 후 1.5거래일 관찰 |
 
 > **실행 원칙**:
 > - Sprint 수 **상한 2개** (PO 경계)
@@ -166,7 +166,9 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 
 ---
 
-## Sprint 2 상세 — 풀 하한 폴백 + 동적 min_volume_floor
+## Sprint 2 상세 — 풀 하한 폴백 + 동적 min_volume_floor ✅ 완료
+
+> **완료**: PR #170 머지 대기, 2026-04-23. 956 passed / 1 failed (기존 플레이크, 이 PR 비관련). /diagnostics 폴백 통계 카드 + shadow heatmap 정상 동작 확인.
 
 ### 백엔드
 - `backend/modules/screening/realtime_screener.py`:
@@ -282,10 +284,16 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 
 ### Sprint 1 코드 리뷰에서 발견된 미해결 이슈 (Medium, Sprint 2에서 개선 권장)
 
-| # | 이슈 | Severity | 파일 | Sprint 2 개선 방향 |
-|---|------|----------|------|-------------------|
-| M1 | `top-rejects` API `limit` 파라미터 최대 50 허용이나 Redis `TOP_REJECT_SIZE=5` 고정 — 5 초과 요청은 항상 5건만 반환 | Medium | `backend/api/routes/metrics.py`, `backend/modules/trading/strategies/_metrics.py` | `TOP_REJECT_SIZE`를 env 변수로 승격하거나 API limit 상한을 5로 제한 |
-| M2 | stage heatmap 프론트엔드 `HOUR_MINS`가 09:30부터 시작 — 09:00~09:20 구간 데이터 수집은 되나 UI에 미표시 | Medium | `frontend/components/diagnostics/stage-heatmap-card.tsx` | `if (h === 9 && m < 30) continue;` 조건 제거 또는 09:00~09:20 컬럼 추가 |
+| # | 이슈 | Severity | 파일 | 상태 |
+|---|------|----------|------|------|
+| ~~M1~~ | ~~`top-rejects` API `limit` 파라미터 최대 50 허용이나 Redis `TOP_REJECT_SIZE=5` 고정 — 5 초과 요청은 항상 5건만 반환~~ | ~~Medium~~ | ~~`backend/api/routes/metrics.py`~~ | ✅ 해결 — Sprint 2 task7에서 API limit 상한 5로 제한 (`ge=1, le=5`) |
+| ~~M2~~ | ~~stage heatmap 프론트엔드 `HOUR_MINS`가 09:30부터 시작 — 09:00~09:20 구간 데이터 수집은 되나 UI에 미표시~~ | ~~Medium~~ | ~~`frontend/components/diagnostics/stage-heatmap-card.tsx`~~ | ✅ 해결 — Sprint 2 task7에서 09:00 시작 컬럼으로 수정 |
+
+### Sprint 2 코드 리뷰에서 발견된 미해결 이슈 (Medium)
+
+| # | 이슈 | Severity | 파일 | Sprint 3/8.6에서 개선 방향 |
+|---|------|----------|------|--------------------------|
+| M3 | `_apply_fallback()` 함수 내부에 `import bisect` 인라인 배치 — 동작 문제 없으나 모듈 상단 import 관례 위반 | Medium | `backend/modules/screening/realtime_screener.py` | 다음 Sprint 관련 파일 수정 시 모듈 상단으로 이동 권장 |
 
 ---
 
@@ -295,13 +303,13 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 |------|------|------|
 | Sprint 1 관측성 대시보드 카드 4개 배포 | stage 분포 + score 분포 + heatmap + 탈락 상위 | ⬜ |
 | 1.5거래일 관찰에서 관측성 메트릭 정상 수집 | Redis counter + 일별 집계 배치 동작 | ⬜ |
-| Sprint 2 풀 하한 폴백 배포 | `passed<3` 시 보강 로직 + 메타데이터 기록 | ⬜ |
-| 동적 `MIN_VOLUME_FLOOR` 배포 | 0.4/0.5/0.6 조건 분기 + HARD 0.3 | ⬜ |
-| 폴백 종목 position 50%, 손절 -1.5%, 하락 -3% 제외 동작 | 통합 테스트 통과 | ⬜ |
-| env 변수화 + `.env.example` 동기화 | 6개 변수 반영 | ⬜ |
-| 자동 롤백 트리거 스케줄러 동작 확인 | 2거래일 신호 0건 시 발동 | ⬜ |
-| Phase 8.5 관찰 5거래일에서 일평균 신호 ≥ 1 | Phase 8.6 Sprint 1 착수 전제 | ⬜ |
-| pytest 전체 통과 | — | ⬜ |
+| Sprint 2 풀 하한 폴백 배포 | `passed<3` 시 보강 로직 + 메타데이터 기록 | ✅ 완료 |
+| 동적 `MIN_VOLUME_FLOOR` 배포 | 0.4/0.5/0.6 조건 분기 + HARD 0.3 | ✅ 완료 |
+| 폴백 종목 position 50%, 손절 -1.5%, 하락 -3% 제외 동작 | 통합 테스트 통과 | ✅ 완료 |
+| env 변수화 + `.env.example` 동기화 | 6개 변수 반영 | ✅ 완료 (8종 변수) |
+| 자동 롤백 트리거 스케줄러 동작 확인 | 2거래일 신호 0건 시 발동 | ✅ 완료 (단위 테스트 통과) |
+| Phase 8.5 관찰 5거래일에서 일평균 신호 ≥ 1 | Phase 8.6 Sprint 1 착수 전제 | ⬜ 관찰 진행 중 |
+| pytest 전체 통과 | — | ✅ 완료 (956 passed / 1 기존 플레이크) |
 
 완료 후 Phase 8.6 Sprint 1 (E2E + LIVE 게이트)로 진행한다.
 

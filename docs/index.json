@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-23T00:00:00+09:00",
+  "lastUpdated": "2026-04-23T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -2768,7 +2768,7 @@
     {
       "id": "phase8.5",
       "title": "신호 발생 데드락 해제 (Sprint 1~2)",
-      "status": "in_progress",
+      "status": "completed",
       "phaseDoc": "docs/phase/phase8.5/phase8.5.md",
       "reviews": [
         "docs/phase/phase8.5/phase8.5-po-review.md",
@@ -2923,8 +2923,96 @@
           ],
           "prUrl": "https://github.com/frogy95/stockbot/pull/168",
           "lastUpdated": "2026-04-23T00:00:00+09:00"
+        },
+        {
+          "id": "phase8.5-sprint2",
+          "number": 2,
+          "title": "풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR",
+          "path": "docs/phase/phase8.5/sprint2/sprint2.md",
+          "status": "completed",
+          "lastUpdated": "2026-04-23T00:00:00+09:00",
+          "progress": {
+            "total": 8,
+            "completed": 8
+          },
+          "tasks": [
+            {
+              "id": "phase8.5-sprint2-task1",
+              "title": "env 변수 8종 선언 + .env.example 동기화",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-1-env-변수-8종-선언--envexample-동기화",
+              "testPlan": "pytest core/config import + grep .env.example",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task2",
+              "title": "_resolve_min_volume_floor 순수 함수 + shadow 본체 일관화",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-2-_resolve_min_volume_floor-순수-함수--shadow-경로-일관화",
+              "testPlan": "pytest tests/test_momentum_breakout.py -k floor + 일관성 테스트",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task3",
+              "title": "realtime_screener 풀 하한 폴백 + 메타데이터 주입",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-3-realtime_screenerpy-풀-하한-폴백--메타데이터-주입",
+              "testPlan": "pytest tests/test_realtime_screener.py -k fallback",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task4",
+              "title": "engine is_fallback 분기 (position 0.5x + 손절 -1.5%)",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-4-enginepy-is_fallback-분기",
+              "testPlan": "pytest tests/test_engine.py -k fallback",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task5",
+              "title": "16:10 자동 롤백 job + Redis override + Telegram 경고",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-5-1610-자동-롤백-job",
+              "testPlan": "pytest tests/test_scheduler.py -k rollback",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task6",
+              "title": "폴백 통계 카드 활성화 + 결과 리스트 ⚠️ 배지",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-6-프론트-폴백-통계-카드-활성화--배지",
+              "testPlan": "curl /metrics/fallback-stats + Playwright /diagnostics",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task7",
+              "title": "Sprint 1 미해결 M1 top-rejects limit 상한 + M2 heatmap 09:00~09:20",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-7-sprint-1-미해결-이슈-m1m2-수정",
+              "testPlan": "pytest tests/test_metrics_api.py + tsc --noEmit",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            },
+            {
+              "id": "phase8.5-sprint2-task8",
+              "title": "통합 검증 + Sprint 2 마무리 (deploy.md Railway env 항목)",
+              "path": "docs/phase/phase8.5/sprint2/sprint2.md#task-8-통합-검증--sprint-2-마무리",
+              "testPlan": "pytest 전체 + curl 4종 + Playwright + tsc",
+              "testResult": "pass",
+              "status": "completed",
+              "commits": []
+            }
+          ],
+          "prUrl": "TBD"
         }
-      ]
+      ],
+      "lastUpdated": "2026-04-23T00:00:00+09:00"
     },
     {
       "id": "phase8.6",
@@ -3512,7 +3600,7 @@
       "version": "v2.5.0",
       "description": "Phase 8.5 Sprint 1 프로덕션 배포 — 관측성 테이블 3종 Alembic 마이그레이션 + Redis 메트릭 유틸 + score 히스토그램 + stage 카운터 + 가상 신호 로깅 + 16:05 집계 배치 + metrics API 4종 + 신호 진단 대시보드 4카드",
       "prUrl": "https://github.com/frogy95/stockbot/pull/163",
-      "status": "in_progress"
+      "status": "completed"
     },
     {
       "date": "2026-04-23",
@@ -3520,7 +3608,16 @@
       "ref": "phase8.5-sprint1.5",
       "version": "v2.5.1",
       "description": "Phase 8.5 Sprint 1.5 프로덕션 배포 — 전략 필터 shadow evaluation (Redis 전용, DB 스키마 변경 없음)",
-      "prUrl": "",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/169",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-23",
+      "type": "sprint",
+      "ref": "phase8.5-sprint2",
+      "version": "v2.6.0",
+      "description": "Phase 8.5 Sprint 2 프로덕션 배포 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (환경변수 8종, 16:10 자동 롤백 job, 폴백 통계 카드 + 배지, Redis 전용, DB 스키마 변경 없음)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/171",
       "status": "in_progress"
     }
   ]

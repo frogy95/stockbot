@@ -15,7 +15,6 @@ const HOUR_MINS: string[] = [];
 for (let h = 9; h <= 15; h++) {
   for (let m = 0; m < 60; m += 10) {
     if (h === 15 && m > 30) break;
-    if (h === 9 && m < 30) continue;
     HOUR_MINS.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
   }
 }

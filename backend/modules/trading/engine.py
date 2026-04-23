@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 
 from core.clients.kis_rest import KISRestClient, OrderRequest
+from core.config import settings
 from core.models.settings import SystemSetting
 from core.models.trading import PositionRecord
 from core.redis import RedisClient
@@ -213,15 +214,24 @@ class TradingEngine:
 
             # 후보 플래그 확인 (is_fallback, is_relaxed)
             candidate = candidate_map.get(signal.stock_code, {})
-            auto_trade_blocked = (
-                candidate.get("is_fallback", False) or candidate.get("is_relaxed", False)
-            )
+            is_fallback: bool = candidate.get("is_fallback", False)
+            is_relaxed: bool = candidate.get("is_relaxed", False)
+            auto_trade_blocked = is_fallback or is_relaxed
             candidate_ratio: float = candidate.get("position_size_ratio", 1.0)
 
             # Phase 8 Sprint 2: prev_close tier는 반 포지션 (추격매수 리스크 억제)
             breakout_tier = signal.reason.get("breakout_tier", "prev_high")
             tier_ratio = 0.5 if breakout_tier == "prev_close" else 1.0
             size_ratio: float = min(candidate_ratio, tier_ratio)
+
+            # is_fallback + is_relaxed 복합 시 더 보수적인 배수(min) 적용
+            if is_fallback:
+                size_ratio = min(size_ratio, settings.FALLBACK_POSITION_SIZE_RATIO)
+                fallback_stop = int(
+                    signal.entry_price * (1 + settings.FALLBACK_STOP_LOSS_PCT / 100)
+                )
+                signal = signal.model_copy(update={"stop_loss": fallback_stop})
+
             logger.info(
                 "진입 사이징: %s tier=%s candidate_ratio=%.2f tier_ratio=%.2f final=%.2f",
                 signal.stock_code,

@@ -61,10 +61,10 @@
 - Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
 - [Phase 8.5 Sprint 1](phase8.5-sprint1-status.md) — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/162
 - Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (각 stage 독립 pass/fail 카운터, 주문 경로 불변 TDD), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/168
+- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, 🔄 계획 수립 (2026-04-23)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 min_volume_floor (Sprint 1.5 배포 후 관측 1.5거래일 후 착수)
 - Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 완료 후 착수)
 - Phase 8.6 Sprint 2 — 시스템 관리 UI (구 Phase 8 Sprint 4, Sprint 1 완료 후)
 - Phase 8.6 Sprint 3 — 성과 분석 보강 (구 Phase 8 Sprint 5, Sprint 2 완료 후)
@@ -252,3 +252,11 @@
 - Phase 8 Sprint 2: Task 8 동시호가 구간 스킵 — 15:10~15:30 사이에 `_secondary_no_data_count` 0으로 리셋 + return. `_market_close`는 15:30 실행이므로 영향 없음
 - Phase 8 Sprint 2: 브랜치 base는 develop (Hotfix #153이 main→develop 역머지되어 develop에 포함됨, phase8-sprint1 브랜치에는 미포함)
 - Phase 8 Sprint 2: Hotfix #153 엔드포인트는 `POST /api/v1/trading/risk/reset` — Task 7 착수 전 `backend/api/routes/trading.py` 실제 경로 재확인 필수
+- Phase 8.5 Sprint 2: `MIN_VOLUME_FLOOR=0.5` 상수는 `momentum_breakout.py` 30줄에 있음 — 함수 교체 시 사용처 4곳 (line 215, 377, 384, 385) 전부 동일 함수 사용 필수
+- Phase 8.5 Sprint 2: shadow/본체 일관성 보장 — `_shadow_evaluate`의 `min_volume_floor` stage도 반드시 동일 `_resolve_min_volume_floor` 호출 (하드코딩 금지)
+- Phase 8.5 Sprint 2: engine.py line 214~217에 이미 `is_fallback or is_relaxed` 분기 존재 — 복합 케이스 정책 명시 필요 (min 배수 선택 권고)
+- Phase 8.5 Sprint 2: Redis override (`settings:override:MIN_VOLUME_FLOOR_MODE`)는 `_resolve_min_volume_floor`와 `realtime_screener.screen()` 두 지점만 lookup — 이중 진실 관리 최소화
+- Phase 8.5 Sprint 2: 자동 롤백 16:10 job은 `trading_calendar.py` 재사용 (Phase 4.6 Sprint 2) — 주말/공휴일 오인 방지
+- Phase 8.5 Sprint 2: M1 처리 방식은 "API limit 상한 5로 제한" 단순 채택 (TOP_REJECT_SIZE env 승격 안 함) — 단일 상수 유지
+- Phase 8.5 Sprint 2: 2차 `pass_threshold=75.0` 유지 — 임계값 완화는 Sprint 2 범위 아님 (분포 데이터 별도 확인 후 판단)
+- Phase 8.5 Sprint 2: FactorScorer는 `realtime_screener.__init__`에서 `pass_threshold=75.0`으로 고정 생성됨 (line 42) — 건드리지 않음
