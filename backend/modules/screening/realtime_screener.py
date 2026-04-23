@@ -1,6 +1,7 @@
 """2차 스크리닝 엔진 — 장중 실시간 데이터(Redis) 기반 동적 필터 + 팩터 스코어링."""
 from __future__ import annotations
 
+import bisect
 import json
 import logging
 from collections import defaultdict
@@ -270,7 +271,6 @@ class RealtimeScreener:
                 return scored
 
             # percentile_rank: 정렬된 all_scores로 bisect 기반 O(n log n) 계산
-            import bisect
             all_scores_sorted = sorted(_score(c) for c in scored)
             n = len(all_scores_sorted)
 
