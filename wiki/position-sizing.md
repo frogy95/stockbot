@@ -43,6 +43,24 @@ if quantity == 0:
 
 최소 1주 미만이면 신호 포기.
 
+## tier별 사이징 (Phase 8 Sprint 2)
+
+`PositionSizer.calculate()`는 `size_ratio` 파라미터를 받아 수량/투자금을 비례 축소한다.
+
+engine이 신호 `reason.breakout_tier`로 분기:
+
+```python
+breakout_tier = signal.reason.get("breakout_tier", "prev_high")
+tier_ratio = 0.5 if breakout_tier == "prev_close" else 1.0
+size_ratio = min(candidate_ratio, tier_ratio)  # 후보 플래그와 tier 중 작은 값
+```
+
+- `prev_close` tier: **반 포지션** (추격매수 리스크 억제)
+- `gap_open` / `prev_high` tier: 전체 포지션
+- 후보 자체 `position_size_ratio`가 지정된 경우 더 작은 값을 최종 적용
+
+[[momentum-breakout-strategy|tier 결정 로직]] 참조.
+
 ## 레버리지/인버스 ETF 별도 관리
 
 [[risk-management]]의 `max_leverage_position_count`로 별도 한도 관리.
