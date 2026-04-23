@@ -22,10 +22,23 @@ PR: (생성 예정)
 - ✅ `/api/v1/metrics/stage-heatmap` — 200
 - ✅ `npx tsc --noEmit` — 에러 없음
 
-#### sprint-review 대기
+#### sprint-review 결과 (2026-04-23)
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 실서버 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+**코드 리뷰**: 이슈 없음 — Critical/High 0건, Medium 1건 (M3: import bisect 인라인 배치, 동작 무관)
+
+**자동 검증 (Docker 로컬)**:
+- ✅ pytest 전체: 956 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2 무관)
+  - Sprint 2 관련 90개 테스트 전부 통과 (`test_engine_fallback`, `test_momentum_breakout`, `test_realtime_screener`, `test_scheduler`)
+- ✅ `/api/v1/metrics/fallback-stats` — 200 OK (`{"date":"2026-04-23","triggered_count":0,"codes":[]}`)
+- ✅ `/api/v1/metrics/top-rejects?limit=5` — 200 OK (5건 반환)
+- ✅ `/api/v1/metrics/top-rejects?limit=10` — 422 (limit 상한 5 강제 확인)
+- ✅ `/api/v1/metrics/shadow-heatmap` — 200 OK
+- ✅ `/api/v1/metrics/stage-heatmap` — 200 OK
+- ✅ Playwright — /diagnostics 폴백 통계 카드, shadow heatmap, 탈락 상위 종목 리스트 정상 렌더링
+- ✅ Playwright — /screening 2차 스크리닝 탭 정상 렌더링 (is_fallback 배지 미발동 상태 확인)
+- ✅ `npx tsc --noEmit` — 에러 없음 (sprint-close 단계에서 확인)
+
+**Phase 문서 반영**: ✅ phase8.5.md — Sprint 2 완료 표시, M1/M2 해결 표시, M3 신규 추가
 
 #### 수동 검증 필요 항목 (Railway 프로덕션 배포 후)
 
