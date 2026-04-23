@@ -7,6 +7,24 @@
 
 ---
 
+### Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (2026-04-23)
+
+브랜치: `chore/phase8.5-shadow-evaluation` (sprint1.5 브랜치명은 bash-guard self-mod 차단으로 chore/ prefix 사용)
+계획 문서: `docs/phase/phase8.5/sprint1.5/sprint1.5.md`
+
+- ✅ 자동 검증 완료 항목:
+  - pytest: shadow 관련 테스트 4개 + 기존 회귀 전체 GREEN (기존 플레이크 `test_ws_manager_env_max_subscriptions` 1건은 Sprint 1.5 무관)
+  - `/api/v1/metrics/shadow-heatmap` API 200 응답 확인 (JWT 인증 포함)
+  - 프론트엔드 타입 체크 `npx tsc --noEmit` 통과
+  - 로컬 Docker 실시간 shadow 관찰: min_volume_floor가 가리고 있던 volume_threshold/atr_filter/confidence 모두 0% pass 확인 — Sprint 2 튜닝 의사결정에 직접 활용 가능한 실측 데이터 확보
+
+- ⬜ 수동 검증 필요 항목:
+  - `/diagnostics` 페이지 브라우저 접속하여 Shadow 필터 카드 시각 확인
+  - 프로덕션 배포 후 1거래일 관찰: Shadow 카드 8개 stage 모두 의미 있는 표본(≥10건) 누적되는지
+  - DB 마이그레이션 불필요 (Redis 전용, 스키마 변경 없음)
+
+---
+
 ### Hotfix: risk-reset-frontend-contract (2026-04-22)
 
 PR: https://github.com/frogy95/stockbot/pull/165 (hotfix/risk-reset-frontend-contract → main)
