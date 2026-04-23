@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.models.market_data import MarketData
 from core.models.screening_result import ScreeningResult
 from core.models.stock import Stock
@@ -202,7 +203,106 @@ class RealtimeScreener:
 
         await self._record_score_histogram(scored)
 
+        # --- Phase 8.5 Sprint 2: 풀 하한 폴백 ---
+        # passed = is_passed=True 종목, primary_candidates = scored 전체
+        scored = await self._apply_fallback(scored)
+
         return scored
+
+    async def _apply_fallback(self, scored: list[dict]) -> list[dict]:
+        """Phase 8.5 Sprint 2: 풀 하한 폴백 — passed < THRESHOLD 시 1차 후보로 보강.
+
+        scored 전체에서 is_passed=True 종목이 THRESHOLD 미만이면,
+        is_passed=False 종목 중 상위 score 종목으로 보강한다.
+        실패 시 경고 로그만 남기고 원본 scored를 그대로 반환한다.
+        """
+
+        def _score(c: dict) -> float:
+            return c.get("score", c.get("total_score", 0))
+
+        try:
+            for c in scored:
+                c.setdefault("is_fallback", False)
+                c.setdefault("raw_score", _score(c))
+
+            if not settings.SECONDARY_POOL_FALLBACK_ENABLED:
+                return scored
+
+            passed = [c for c in scored if c.get("is_passed")]
+            passed_count = len(passed)
+
+            if passed_count >= settings.SECONDARY_POOL_FALLBACK_THRESHOLD:
+                return scored
+
+            candidates = sorted(
+                (
+                    c for c in scored
+                    if not c.get("is_passed")
+                    and c.get("change_rate", 0) > settings.FALLBACK_DROP_EXCLUDE_PCT
+                ),
+                key=_score,
+                reverse=True,
+            )
+
+            need = max(
+                min(
+                    settings.SECONDARY_POOL_FALLBACK_THRESHOLD - passed_count,
+                    settings.SECONDARY_POOL_MAX - passed_count,
+                ),
+                0,
+            )
+            fallback_pool = candidates[:need]
+
+            if not fallback_pool:
+                return scored
+
+            # percentile_rank: 정렬된 all_scores로 bisect 기반 O(n log n) 계산
+            import bisect
+            all_scores_sorted = sorted(_score(c) for c in scored)
+            n = len(all_scores_sorted)
+
+            def _pct_rank(s: float) -> float:
+                return round(bisect.bisect_right(all_scores_sorted, s) / n, 4) if n else 0.0
+
+            for c in fallback_pool:
+                c["is_fallback"] = True
+                c["raw_score"] = _score(c)
+                c["percentile_rank"] = _pct_rank(_score(c))
+
+            for c in passed:
+                c.setdefault("percentile_rank", _pct_rank(_score(c)))
+
+            logger.info(
+                "풀 하한 폴백 발동: passed=%d < threshold=%d, 폴백후보=%d종목 추가",
+                passed_count,
+                settings.SECONDARY_POOL_FALLBACK_THRESHOLD,
+                len(fallback_pool),
+            )
+
+            await self._record_fallback_counter(fallback_pool)
+
+            return passed + fallback_pool
+
+        except Exception:  # noqa: BLE001
+            logger.warning("fallback logic failed, returning original scored", exc_info=True)
+            return scored
+
+    async def _record_fallback_counter(self, fallback_pool: list[dict]) -> None:
+        """폴백 발동 Redis 카운터 기록 (실패 시 조용히 무시)."""
+        if self.redis_client is None:
+            return
+        try:
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date().isoformat()
+            ttl = 86400 * 7
+            await self.redis_client.incr(f"metrics:fallback:triggered:{today}", ttl=ttl)
+            for c in fallback_pool:
+                code = c.get("stock_code", "")
+                if code:
+                    await self.redis_client.incr(
+                        f"metrics:fallback:code:{code}:{today}", ttl=ttl
+                    )
+        except Exception:  # noqa: BLE001
+            logger.warning("fallback counter recording failed", exc_info=True)
 
     async def _record_score_histogram(self, scored: list[dict]) -> None:
         """Phase 8.5 Sprint 1: total_score 분포를 Redis 카운터에 기록 (측면 기록).
