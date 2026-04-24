@@ -74,6 +74,14 @@ PR: (생성 예정)
 - ⬜ Sprint 2 env 8종(`MIN_VOLUME_FLOOR_MODE` 외) Railway에 존재 확인 (Sprint 2 배포 시 반영되었어야 함 — 재확인 목적)
 - ⬜ `python scripts/check_env_sync.py` 로컬 실행 결과 exit 0
 
+### Phase 8.5 Sprint 2.5 — 자동 검증 결과 (2026-04-24)
+- ✅ pytest 전체: 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
+- ✅ frontend tsc --noEmit: 에러 0건
+- ✅ API `/api/v1/metrics/override-status`: 인증 가드 정상 (미인증 시 "인증 토큰이 필요합니다", Sprint 2 `/fallback-stats`와 동일 패턴)
+- ✅ `python scripts/check_env_sync.py`: `OK: 39 variables synced` (exit 0)
+- ⬜ Playwright `/diagnostics` 스크린샷 — 배너 미렌더 정상 상태 (수동 검증 항목)
+- ⬜ Playwright `/diagnostics` 스크린샷 — Redis override 수동 SET 후 배너 렌더 (선택)
+
 ---
 
 ## 참고
