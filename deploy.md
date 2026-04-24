@@ -69,6 +69,13 @@ PR: (생성 예정)
 
 ---
 
+### Phase 8.5 Sprint 2.5 — Railway 환경변수 동기화
+- ⬜ `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인
+- ⬜ Sprint 2 env 8종(`MIN_VOLUME_FLOOR_MODE` 외) Railway에 존재 확인 (Sprint 2 배포 시 반영되었어야 함 — 재확인 목적)
+- ⬜ `python scripts/check_env_sync.py` 로컬 실행 결과 exit 0
+
+---
+
 ## 참고
 
 - 검증 원칙: `.claude/rules/dev-process.md` 섹션 5
