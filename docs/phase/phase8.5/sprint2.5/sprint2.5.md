@@ -10,7 +10,7 @@
 **Sprint 기간:** 2026-04-24 ~ (5거래일 관찰 동시 진행)
 **이전 스프린트:** Phase 8.5 Sprint 2 (✅ 완료, 2026-04-23)
 **다음 스프린트:** Phase 8.6 Sprint 1 (E2E + LIVE 전환 게이트) — Phase 8.5 Sprint 2 배포 + 5거래일 관찰 완료 후
-**브랜치명:** `phase8.5-sprint2.5`
+**브랜치명:** `phase8.5-sprint3` (개념상 Sprint 2.5 — bash-guard 훅 정규식이 sprint 번호 소수점 미허용하여 이름만 3으로 명명. 커밋 scope도 `phase8.5-sprint3` 사용, Sprint 문서 디렉토리는 `sprint2.5/` 유지)
 **PR:** (생성 예정)
 
 ---
@@ -236,7 +236,7 @@ git add backend/core/settings_override.py backend/core/config.py .env.example \
   backend/modules/screening/realtime_screener.py \
   backend/modules/collector/scheduler.py \
   backend/tests/core/test_settings_override.py
-git commit -m "refactor(phase8.5-sprint2.5): task1 — resolve_override 유틸 통합 + triggered_at/reason 기록"
+git commit -m "refactor(phase8.5-sprint3): task1 — resolve_override 유틸 통합 + triggered_at/reason 기록"
 ```
 
 **완료 기준:**
@@ -269,7 +269,7 @@ git commit -m "refactor(phase8.5-sprint2.5): task1 — resolve_override 유틸 �
 **Step 3: 커밋**
 ```
 git add scripts/check_env_sync.py deploy.md
-git commit -m "chore(phase8.5-sprint2.5): task2 — env 동기화 스크립트 + deploy.md Railway 항목"
+git commit -m "chore(phase8.5-sprint3): task2 — env 동기화 스크립트 + deploy.md Railway 항목"
 ```
 
 **완료 기준:**
@@ -319,7 +319,7 @@ GET /api/v1/metrics/override-status
 git add backend/api/routes/metrics.py \
   frontend/components/diagnostics/override-banner.tsx \
   frontend/app/\(dashboard\)/diagnostics/page.tsx frontend/lib/api.ts
-git commit -m "feat(phase8.5-sprint2.5): task3 — 자동 롤백 발동 경고 배너 (API + UI)"
+git commit -m "feat(phase8.5-sprint3): task3 — 자동 롤백 발동 경고 배너 (API + UI)"
 ```
 
 **완료 기준:**
@@ -348,7 +348,7 @@ git commit -m "feat(phase8.5-sprint2.5): task3 — 자동 롤백 발동 경고 �
 **Step 3: 커밋**
 ```
 git add frontend/components/diagnostics/fallback-stats-card.tsx
-git commit -m "feat(phase8.5-sprint2.5): task4 — fallback-stats 카드 롤백 상태 표시"
+git commit -m "feat(phase8.5-sprint3): task4 — fallback-stats 카드 롤백 상태 표시"
 ```
 
 **완료 기준:**
@@ -393,7 +393,7 @@ git commit -m "feat(phase8.5-sprint2.5): task4 — fallback-stats 카드 롤백 
 **Step 4: 커밋**
 ```
 git add docs/phase/phase8/phase8.md
-git commit -m "docs(phase8.5-sprint2.5): task5 — phase8 Sprint3 LIVE 게이트 DoD D1~D7 재정의 반영"
+git commit -m "docs(phase8.5-sprint3): task5 — phase8 Sprint3 LIVE 게이트 DoD D1~D7 재정의 반영"
 ```
 
 **완료 기준:**
@@ -428,7 +428,7 @@ git commit -m "docs(phase8.5-sprint2.5): task5 — phase8 Sprint3 LIVE 게이트
 **Step 4: 커밋 + sprint-close 안내**
 ```
 git add docs/phase/phase8.5/sprint2.5/sprint2.5.md deploy.md
-git commit -m "chore(phase8.5-sprint2.5): task6 — 통합 검증 결과 + 의사결정 트리 확증"
+git commit -m "chore(phase8.5-sprint3): task6 — 통합 검증 결과 + 의사결정 트리 확증"
 ```
 
 마지막에 사용자에게 안내:
@@ -548,4 +548,4 @@ Phase 8.5 Sprint 2 배포일(2026-04-23) + 5거래일 관찰 종료 시점에, �
 | tsc --noEmit 통과 | — | ⬜ |
 | `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인 | deploy.md 체크 | ⬜ |
 
-완료 후 sprint-close agent 호출 → `phase8.5-sprint2.5` → develop PR 생성.
+완료 후 sprint-close agent 호출 → `phase8.5-sprint3` → develop PR 생성.
