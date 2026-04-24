@@ -27,7 +27,7 @@ PR: https://github.com/frogy95/stockbot/pull/172
 
 - ⬜ `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인
 - ⬜ Sprint 2 env 8종(`MIN_VOLUME_FLOOR_MODE` 외) Railway에 존재 확인 (Sprint 2 배포 시 반영되었어야 함 — 재확인 목적)
-- ⬜ `python scripts/check_env_sync.py` 로컬 실행 결과 exit 0
+- ⬜ `python scripts/check_env_sync.py` 실행 결과 exit 0 (pydantic-settings 설치 필요: `pip install pydantic-settings`, 또는 `docker compose exec backend python /scripts/check_env_sync.py` — 단, Docker 이미지 미포함이므로 로컬 직접 실행 권장)
 - ⬜ Playwright `/diagnostics` 스크린샷 — 배너 미렌더 정상 상태
 - ⬜ 5거래일 관찰 종료 후 의사결정 트리(A~E) 판정: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` 하단 참조
 - ⬜ DB 마이그레이션 불필요 (Redis + env + 문서만 변경, 스키마 변경 없음)
