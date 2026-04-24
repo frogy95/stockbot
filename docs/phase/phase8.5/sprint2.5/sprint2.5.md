@@ -6,7 +6,7 @@
 
 **Tech Stack:** Python 3.12 / FastAPI / SQLAlchemy 2.0 (async) / Redis 7 / APScheduler / pytest-asyncio / Next.js 16 / React 19 / Tailwind 4 / SWR
 
-**상태:** 📋 계획 수립 완료 (2026-04-23)
+**상태:** ✅ 완료 (2026-04-23)
 **Sprint 기간:** 2026-04-24 ~ (5거래일 관찰 동시 진행)
 **이전 스프린트:** Phase 8.5 Sprint 2 (✅ 완료, 2026-04-23)
 **다음 스프린트:** Phase 8.6 Sprint 1 (E2E + LIVE 전환 게이트) — Phase 8.5 Sprint 2 배포 + 5거래일 관찰 완료 후
@@ -537,15 +537,15 @@ Phase 8.5 Sprint 2 배포일(2026-04-23) + 5거래일 관찰 종료 시점에, �
 
 | 항목 | 기준 | 상태 |
 |------|------|------|
-| `core/settings_override.py::resolve_override` 통합 유틸 배포 | 3개 호출부 경유 | ⬜ |
-| Sprint 2 행동 동일성 회귀 GREEN | 기존 테스트 전원 PASS | ⬜ |
-| env 동기화 체크 스크립트 + deploy.md 항목 | `scripts/check_env_sync.py` exit 0 | ⬜ |
-| 자동 롤백 경고 배너 (API + UI) | `/override-status` 200 + 배너 조건부 렌더 | ⬜ |
-| fallback-stats 카드 롤백 상태 표시 | 롤백 중 dimmed + 메시지 | ⬜ |
-| `phase8.md` Sprint 3 DoD D1~D7 재정의 반영 | 원안 폐기 각주 포함 | ⬜ |
+| `core/settings_override.py::resolve_override` 통합 유틸 배포 | 3개 호출부 경유 | ✅ |
+| Sprint 2 행동 동일성 회귀 GREEN | 기존 테스트 전원 PASS | ✅ |
+| env 동기화 체크 스크립트 + deploy.md 항목 | `scripts/check_env_sync.py` exit 0 | ✅ |
+| 자동 롤백 경고 배너 (API + UI) | `/override-status` 200 + 배너 조건부 렌더 | ✅ |
+| fallback-stats 카드 롤백 상태 표시 | 롤백 중 dimmed + 메시지 | ✅ |
+| `phase8.md` Sprint 3 DoD D1~D7 재정의 반영 | 원안 폐기 각주 포함 | ✅ |
 | 5거래일 관찰 의사결정 트리 문서화 | sprint2.5.md 하단 분기 A~E | ✅ (본 문서) |
-| pytest 전체 통과 | 신규 실패 0건 | ⬜ |
-| tsc --noEmit 통과 | — | ⬜ |
-| `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인 | deploy.md 체크 | ⬜ |
+| pytest 전체 통과 | 신규 실패 0건 (963 passed / 1 기존 플레이크) | ✅ |
+| tsc --noEmit 통과 | — | ✅ |
+| `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인 | deploy.md 수동 검증 항목 추가 | ✅ |
 
 완료 후 sprint-close agent 호출 → `phase8.5-sprint3` → develop PR 생성.

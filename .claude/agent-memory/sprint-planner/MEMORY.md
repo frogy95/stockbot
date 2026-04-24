@@ -61,11 +61,12 @@
 - Phase 8 Sprint 2 — 다층 진입 조건 + 리스크 안전장치 + 이관 버그 수정 (breakout_tier 3단계, daily_trade_count 10건/일, 동시호가 가드, 재연결/일일리포트 dedup, 프론트 리셋 버튼), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/157
 - [Phase 8.5 Sprint 1](phase8.5-sprint1-status.md) — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/162
 - Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (각 stage 독립 pass/fail 카운터, 주문 경로 불변 TDD), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/168
-- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, 🔄 계획 수립 (2026-04-23)
+- Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
+- Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: (생성 예정)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 완료 후 착수)
+- **Phase 8.6 Sprint 1** — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 5거래일 관찰 완료 후 착수, DoD D1~D7 기준)
 - Phase 8.6 Sprint 2 — 시스템 관리 UI (구 Phase 8 Sprint 4, Sprint 1 완료 후)
 - Phase 8.6 Sprint 3 — 성과 분석 보강 (구 Phase 8 Sprint 5, Sprint 2 완료 후)
 
@@ -260,3 +261,6 @@
 - Phase 8.5 Sprint 2: M1 처리 방식은 "API limit 상한 5로 제한" 단순 채택 (TOP_REJECT_SIZE env 승격 안 함) — 단일 상수 유지
 - Phase 8.5 Sprint 2: 2차 `pass_threshold=75.0` 유지 — 임계값 완화는 Sprint 2 범위 아님 (분포 데이터 별도 확인 후 판단)
 - Phase 8.5 Sprint 2: FactorScorer는 `realtime_screener.__init__`에서 `pass_threshold=75.0`으로 고정 생성됨 (line 42) — 건드리지 않음
+- Phase 8.5 Sprint 2.5: `resolve_override(key, default, cast=...)` 단일 유틸 — Redis 예외 시 default 반환 (무음 실패). `SETTINGS_OVERRIDE_ENABLED=False`로 override 전체 차단 가능 (긴급 스위치)
+- Phase 8.5 Sprint 2.5: `settings:override:triggered_at` / `reason` 키가 존재하면 대시보드 배너 렌더 — Redis에서 수동 삭제 시 배너 사라짐
+- Phase 8.5 Sprint 2.5: 5거래일 관찰 종료 의사결정 트리(A~E) 근거: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` § 5거래일 관찰 종료 후 의사결정 트리

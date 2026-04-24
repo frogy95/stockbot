@@ -3016,11 +3016,11 @@
           "number": 2.5,
           "title": "인프라 보강 + 관측성·문서 정합성",
           "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md",
-          "status": "planned",
+          "status": "completed",
           "lastUpdated": "2026-04-23T00:00:00+09:00",
           "progress": {
             "total": 6,
-            "completed": 0
+            "completed": 6
           },
           "tasks": [
             {
@@ -3028,8 +3028,8 @@
               "title": "resolve_override 유틸 통합 + triggered_at/reason 기록",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-1-resolve_override-유틸-통합",
               "testPlan": "pytest tests/core/test_settings_override.py + 행동 동일성 회귀",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3037,8 +3037,8 @@
               "title": "env 동기화 체크 스크립트 + deploy.md Railway 항목",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-2-env-동기화-체크-스크립트--deploymd-항목",
               "testPlan": "python scripts/check_env_sync.py exit 0",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3046,8 +3046,8 @@
               "title": "자동 롤백 경고 배너 (API + UI)",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-3-자동-롤백-경고-배너-api--ui",
               "testPlan": "curl /metrics/override-status + Playwright /diagnostics 배너",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3055,8 +3055,8 @@
               "title": "fallback-stats 카드 롤백 상태 필드",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-4-fallback-stats-카드-롤백-상태-필드",
               "testPlan": "npx tsc --noEmit + Playwright 2 상태 스크린샷",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3064,8 +3064,8 @@
               "title": "phase8.md Sprint 3 LIVE 게이트 DoD D1~D7 재정의 반영",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-5-phase8md-sprint-3-live-게이트-dod-재정의-반영",
               "testPlan": "grep 원안 DoD 문구 제거 + D1~D7 존재",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3073,12 +3073,12 @@
               "title": "통합 검증 + 의사결정 트리 확증 + 마무리",
               "path": "docs/phase/phase8.5/sprint2.5/sprint2.5.md#task-6-통합-검증--관찰-의사결정-트리-확증--마무리",
               "testPlan": "pytest 전체 + tsc + API curl 2종 + Playwright + deploy.md 업데이트",
-              "testResult": "pending",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             }
           ],
-          "prUrl": null
+          "prUrl": "TBD"
         }
       ],
       "lastUpdated": "2026-04-23T00:00:00+09:00"
