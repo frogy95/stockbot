@@ -1,7 +1,8 @@
 "use client";
 
+import useSWR from "swr";
 import { usePolling } from "@/lib/hooks/use-polling";
-import { metricsPaths, FallbackStats } from "@/lib/api";
+import { metricsPaths, FallbackStats, fetchOverrideStatus } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -18,6 +19,10 @@ export function FallbackStatsCard() {
     metricsPaths.fallbackStats("today"),
     30000
   );
+  const { data: override } = useSWR("override-status", fetchOverrideStatus, {
+    refreshInterval: 60_000,
+  });
+  const overrideActive = override?.is_active === true;
 
   const triggeredCount = data?.triggered_count ?? 0;
   const codes = data?.codes ?? [];
@@ -29,10 +34,16 @@ export function FallbackStatsCard() {
         "transition-colors",
         hasFallback
           ? "border-amber-500/60 bg-amber-950/10"
-          : "border-border"
+          : "border-border",
+        overrideActive && "opacity-50"
       )}
     >
       <CardHeader>
+        {overrideActive && (
+          <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-900 dark:text-amber-200">
+            ⚠️ 현재 자동 롤백 중 — 폴백 일시 비활성 (과거 통계 참조용)
+          </p>
+        )}
         <CardTitle className="flex items-center gap-2">
           폴백 발동 통계
           {hasFallback && (
