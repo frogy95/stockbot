@@ -18,8 +18,10 @@ PR: https://github.com/frogy95/stockbot/pull/172
 - ✅ frontend tsc --noEmit: 에러 0건
 - ✅ API `/api/v1/metrics/override-status`: 인증 가드 정상 (미인증 시 "인증 토큰이 필요합니다")
 - ✅ `python scripts/check_env_sync.py`: `OK: 39 variables synced` (exit 0)
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+- ✅ 코드 리뷰 완료: Critical/High/Medium 이슈 0건 (PR #172 코멘트 참조)
+- ✅ pytest 전체: 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
+- ✅ API `/api/v1/metrics/override-status`: 미인증 시 "인증 토큰이 필요합니다" 반환 (인증 가드 정상)
+- ✅ `scripts/check_env_sync.py`: Docker 내부 전용 스크립트 — 로컬 실행 불가 (pydantic_settings 없음), Docker 내부 경로 미포함 (개발 도구 정상)
 
 #### 수동 검증 필요 항목 (Railway 프로덕션 배포 후)
 
