@@ -52,12 +52,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1·1.5·2 완료 (Phase 8.5 종결)
-- 현재 Phase: **Phase 8.6 (E2E 검증 + LIVE 전환 + 시스템 관리 UI) 대기 중** (Phase 8.5 완료, 5거래일 관찰 후 착수)
-- 현재 Sprint: **대기 중 — Phase 8.5 Sprint 2 배포 후 5거래일 관찰 진행 중** (일평균 신호 ≥ 1 확인 후 Phase 8.6 Sprint 1 착수)
+- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1·1.5·2 완료, Sprint 2.5 계획 수립 완료 (2026-04-23)
+- 현재 Phase: **Phase 8.5 Sprint 2.5 (인프라 보강 + 관측성·문서 정합성) 진행 대기 + 5거래일 관찰 병행**
+- 현재 Sprint: **Phase 8.5 Sprint 2.5 계획 수립 완료 (2026-04-23)** — 구현 착수 대기. Sprint 2 배포 후 5거래일 관찰 병행.
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), **Phase 8.5 Sprint 2 (2026-04-23)**
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.5 5거래일 관찰 후 착수, DoD: 일평균 신호 ≥ 1)
+- 다음 마일스톤: **Phase 8.5 Sprint 2.5 구현** (인프라 보강 — `resolve_override` 통합 + 경고 배너 + 문서 DoD 동기화) → **Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.5 5거래일 관찰 후 착수, DoD: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5)
+- Phase 9 착수 조건 보강 제안: **Phase 8.6 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 착수 (데이터 수집 인프라). 현 ROADMAP "Phase 9 Sprint 0 = 데이터 축적 시작" 원칙 유지.
 - 후속 마일스톤: **Phase 8.6 Sprint 2 — 시스템 관리 UI** (구 Phase 8 Sprint 4)
 - 이후 마일스톤: Phase 8.6 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
@@ -1175,7 +1176,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 
 ---
 
-## Phase 8.5: 신호 발생 데드락 해제 (Sprint 1~2) ✅ (2026-04-23 완료)
+## Phase 8.5: 신호 발생 데드락 해제 (Sprint 1~2.5) 🔄 진행 중 (2026-04-23)
 
 ### 배경 (2026-04-22 프로덕션 관측)
 Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구조**가 확인됨:
@@ -1216,6 +1217,17 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - **HARD 하한 `MIN_VOLUME_FLOOR_HARD=0.3`** (어떤 분기도 이 이하 금지)
 - 모든 파라미터 env 변수화 (`MIN_VOLUME_FLOOR_MODE`, `SECONDARY_POOL_FALLBACK_ENABLED`, `FALLBACK_THRESHOLD`, `SECONDARY_POOL_MAX`, `FALLBACK_POSITION_SIZE_RATIO`, `FALLBACK_STOP_LOSS_PCT`)
 - 자동 롤백 트리거: Sprint 2 배포 후 2거래일 연속 신호 0건 시 원복 (관리자 확인 1회)
+
+#### Sprint 2.5: 인프라 보강 + 관측성·문서 정합성 📋 계획 수립 완료 (2026-04-23)
+> 실행 명세: `docs/phase/phase8.5/sprint2.5/sprint2.5.md`
+> 배경: Sprint 2 advisor 권고안(A) 채택. 파라미터 불변, 인프라·문서만 보강.
+- **`core/settings_override.py::resolve_override` 통합 유틸** — Redis `settings:override:*` lookup을 3개 호출부(momentum_breakout / realtime_screener / scheduler)에서 단일 함수 경유
+- **env 동기화 체크 스크립트** — `.env.example` ↔ `core/config.py::Settings` 필드명 일치 검증 + deploy.md Railway 환경변수 체크 항목
+- **자동 롤백 경고 배너** — `/api/v1/metrics/override-status` + 프론트 `OverrideBanner` 컴포넌트 (Telegram 미확인 대비)
+- **fallback-stats 카드 롤백 상태 표시** — 롤백 활성 시 카드 dimmed + 메시지
+- **`docs/phase/phase8/phase8.md` Sprint 3 LIVE 게이트 DoD** — Phase 8.5 재정의(D1~D7)판으로 교체, 원안("3거래일 연속") 폐기
+- **5거래일 관찰 종료 후 의사결정 트리** — 분기 A(LIVE 게이트 착수) / B(관측 연장) / C(Phase 10.1 검토) / D(롤백 지속) / E(폴백 차단)
+- 불변: Sprint 2 확정 파라미터 #1~#26 일체 변경 없음, 관찰 5거래일 단축 없음, DB 스키마 변경 없음
 
 ### 거부된 제안 (전문가 4명 전원)
 - **시간 슬라이딩 `min_volume_floor`** (0.2→0.5) — 자유도 증가 과적합(박퀀트), 오후 완화 단타 반상식(김단타)
