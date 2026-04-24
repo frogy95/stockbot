@@ -7,21 +7,20 @@
 
 ---
 
-### Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (2026-04-23)
+### Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (2026-04-24)
 
 브랜치: `phase8.5-sprint3` → develop
 PR: https://github.com/frogy95/stockbot/pull/172
 
-#### 자동 검증 결과 (2026-04-23)
+#### 자동 검증 결과 (2026-04-24, sprint-review 완료)
 
-- ✅ pytest 전체: 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
+- ✅ 코드 리뷰: Critical/High/Medium 이슈 0건 (PR #172 코멘트 참조)
+- ✅ pytest 전체: **963 passed / 1 failed** (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
 - ✅ frontend tsc --noEmit: 에러 0건
-- ✅ API `/api/v1/metrics/override-status`: 인증 가드 정상 (미인증 시 "인증 토큰이 필요합니다")
-- ✅ `python scripts/check_env_sync.py`: `OK: 39 variables synced` (exit 0)
-- ✅ 코드 리뷰 완료: Critical/High/Medium 이슈 0건 (PR #172 코멘트 참조)
-- ✅ pytest 전체: 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
-- ✅ API `/api/v1/metrics/override-status`: 미인증 시 "인증 토큰이 필요합니다" 반환 (인증 가드 정상)
-- ✅ `scripts/check_env_sync.py`: Docker 내부 전용 스크립트 — 로컬 실행 불가 (pydantic_settings 없음), Docker 내부 경로 미포함 (개발 도구 정상)
+- ✅ API `/api/v1/metrics/override-status`: 인증 가드 정상 (미인증 시 "인증 토큰이 필요합니다" 반환)
+- ✅ `/diagnostics` 접속: HTTP 307 인증 리다이렉트 (정상)
+- ✅ `python scripts/check_env_sync.py`: `OK: 39 variables synced` (Docker 내부 실행, exit 0)
+  - 주의: `pydantic-settings` 의존성 필요. 로컬 실행 시 `pip install pydantic-settings` 또는 `docker compose exec backend` 사용
 
 #### 수동 검증 필요 항목 (Railway 프로덕션 배포 후)
 

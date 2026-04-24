@@ -209,7 +209,7 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 
 ## Sprint 2.5 상세 — 인프라 보강 + 관측성·문서 정합성 ✅ 완료
 
-> **완료**: PR #172 머지 대기, 2026-04-23. 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, 이 Sprint 비관련).
+> **완료**: PR #172 머지 대기, 2026-04-24 sprint-review 완료. 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, 이 Sprint 비관련).
 
 ### 구현 내용
 
