@@ -11,7 +11,7 @@
 **이전 스프린트:** Phase 8.5 Sprint 2 (✅ 완료, 2026-04-23)
 **다음 스프린트:** Phase 8.6 Sprint 1 (E2E + LIVE 전환 게이트) — Phase 8.5 Sprint 2 배포 + 5거래일 관찰 완료 후
 **브랜치명:** `phase8.5-sprint3` (개념상 Sprint 2.5 — bash-guard 훅 정규식이 sprint 번호 소수점 미허용하여 이름만 3으로 명명. 커밋 scope도 `phase8.5-sprint3` 사용, Sprint 문서 디렉토리는 `sprint2.5/` 유지)
-**PR:** (생성 예정)
+**PR:** https://github.com/frogy95/stockbot/pull/172
 
 ---
 

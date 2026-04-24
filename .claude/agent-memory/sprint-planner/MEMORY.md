@@ -62,7 +62,7 @@
 - [Phase 8.5 Sprint 1](phase8.5-sprint1-status.md) — 관측성 강화 (score 히스토그램 + stage heatmap + 탈락 상위 + 가상 신호 로깅), ✅ 완료 (2026-04-22) / PR: https://github.com/frogy95/stockbot/pull/162
 - Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (각 stage 독립 pass/fail 카운터, 주문 경로 불변 TDD), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/168
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
-- Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: (생성 예정)
+- Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 
 ## 다음 사용 가능한 스프린트
 
