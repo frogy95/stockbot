@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     # 폴백 종목 손절 % (-1.5 = -1.5%)
     FALLBACK_STOP_LOSS_PCT: float = Field(default=-1.5, ge=-100.0, le=0.0, description="폴백 종목 손절 % (절댓값 작을수록 타이트)")
 
+    # --- Phase 8.5 Sprint 2.5: Redis settings override 경로 제어 ---
+    SETTINGS_OVERRIDE_ENABLED: bool = Field(default=True, description="Redis settings override 경로 활성화 (긴급 차단용)")
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 

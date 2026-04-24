@@ -21,6 +21,7 @@ from core.models.stock import Stock
 
 from core.clients.kis_rest import KISRestClient
 from core.redis import RedisClient
+from core.settings_override import OVERRIDE_PREFIX
 from core.trading_calendar import is_trading_day
 from modules.collector.models import CollectionResult, ValidationResult
 from modules.collector.validator import CollectionValidator
@@ -952,8 +953,20 @@ class CollectorScheduler:
 
             if today_count == 0 and prev_count == 0:
                 ttl = 86400 * 7
-                await self._redis.set("settings:override:MIN_VOLUME_FLOOR_MODE", "legacy", ttl=ttl)
-                await self._redis.set("settings:override:SECONDARY_POOL_FALLBACK_ENABLED", "False", ttl=ttl)
+                await self._redis.set(f"{OVERRIDE_PREFIX}MIN_VOLUME_FLOOR_MODE", "legacy", ttl=ttl)
+                await self._redis.set(f"{OVERRIDE_PREFIX}SECONDARY_POOL_FALLBACK_ENABLED", "False", ttl=ttl)
+                # Phase 8.5 Sprint 2.5: 대시보드 배너용 메타데이터
+                kst = ZoneInfo(settings.MARKET_TIMEZONE)
+                await self._redis.set(
+                    f"{OVERRIDE_PREFIX}triggered_at",
+                    datetime.now(kst).isoformat(),
+                    ttl=ttl,
+                )
+                await self._redis.set(
+                    f"{OVERRIDE_PREFIX}reason",
+                    "auto_rollback_2d_zero_signals",
+                    ttl=ttl,
+                )
                 logger.warning(
                     "자동 롤백 발동: 2거래일(%s, %s) 연속 신호 0건 → Redis override 설정",
                     prev_day, today,
