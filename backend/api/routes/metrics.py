@@ -20,6 +20,7 @@ from core.metrics_keys import (
     STRATEGY_STAGE_PREFIX,
     TOP_REJECT_KEY,
 )
+from core.settings_override import resolve_override
 from core.models.metrics import (
     ScreeningMetricsDaily,
     StrategyMetricsDaily,
@@ -337,6 +338,32 @@ async def get_fallback_stats(
         date=target_s,
         triggered_count=triggered_count,
         codes=codes,
+    )
+
+
+class OverrideStatusResponse(BaseModel):
+    is_active: bool
+    triggered_at: str | None
+    reason: str | None
+    affected_keys: list[str]
+
+
+@router.get("/override-status", response_model=OverrideStatusResponse)
+async def get_override_status(
+    redis: RedisClient = Depends(get_redis),
+) -> OverrideStatusResponse:
+    """Phase 8.5 Sprint 2.5 — 자동 롤백 발동 상태 조회.
+
+    Redis `settings:override:triggered_at`이 존재하면 is_active=True.
+    `settings:override:reason`은 발동 사유.
+    """
+    triggered_at = await resolve_override(redis, "triggered_at", default=None)
+    reason = await resolve_override(redis, "reason", default=None)
+    return OverrideStatusResponse(
+        is_active=triggered_at is not None,
+        triggered_at=triggered_at,
+        reason=reason,
+        affected_keys=["MIN_VOLUME_FLOOR_MODE", "SECONDARY_POOL_FALLBACK_ENABLED"],
     )
 
 

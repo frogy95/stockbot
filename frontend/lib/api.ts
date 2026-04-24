@@ -140,6 +140,15 @@ export interface FallbackStats {
   codes: string[];
 }
 
+// === Phase 8.5 Sprint 2.5: 자동 롤백 발동 상태 ===
+
+export interface OverrideStatus {
+  is_active: boolean;
+  triggered_at: string | null;
+  reason: string | null;
+  affected_keys: string[];
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
@@ -150,7 +159,16 @@ export const metricsPaths = {
     `/api/v1/metrics/shadow-heatmap?date=${encodeURIComponent(date)}`,
   fallbackStats: (date = "today") =>
     `/api/v1/metrics/fallback-stats?date=${encodeURIComponent(date)}`,
+  overrideStatus: () => `/api/v1/metrics/override-status`,
 };
+
+/**
+ * 자동 롤백 발동 상태 조회 (Phase 8.5 Sprint 2.5).
+ * OverrideBanner / FallbackStatsCard 등에서 공유.
+ */
+export async function fetchOverrideStatus(): Promise<OverrideStatus> {
+  return apiGet<OverrideStatus>(metricsPaths.overrideStatus());
+}
 
 /**
  * 리스크 일일 카운터 리셋. 백엔드는 리셋 후 최신 risk_status dict를 반환한다.
