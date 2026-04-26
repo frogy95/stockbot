@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from core.config import settings
+from core.settings_override import resolve_override
 from modules.screening.factors import calc_volatility_factor
 from modules.trading.strategies._metrics import (
     record_shadow_stage,
@@ -98,22 +99,6 @@ def _resolve_min_volume_floor(
         logger.warning("resolved floor %.3f < HARD %.3f, forcing HARD", result, hard)
         return hard
     return result
-
-
-async def _get_redis_override_mode(redis_client) -> str | None:
-    """Redis에서 MIN_VOLUME_FLOOR_MODE override 값을 조회한다.
-
-    auto_rollback job이 설정한 legacy 강제 전환값이 있으면 반환, 없으면 None.
-    """
-    if redis_client is None:
-        return None
-    try:
-        raw = await redis_client.get("settings:override:MIN_VOLUME_FLOOR_MODE")
-        if raw:
-            return raw if isinstance(raw, str) else raw.decode()
-    except Exception:  # noqa: BLE001
-        pass
-    return None
 
 
 def _now_kst() -> datetime:
@@ -278,7 +263,11 @@ class MomentumBreakoutStrategy(Strategy):
                 # 4. min_volume_floor — Redis override 우선 적용
                 shadow_floor = _resolve_min_volume_floor(
                     snapshot, tier, gap_rate, breakout_ref,
-                    redis_override_mode=await _get_redis_override_mode(self.redis_client),
+                    redis_override_mode=await resolve_override(
+                        self.redis_client,
+                        "MIN_VOLUME_FLOOR_MODE",
+                        default=None,
+                    ),
                 )
                 await record_shadow_stage(
                     self.redis_client,
@@ -447,7 +436,11 @@ class MomentumBreakoutStrategy(Strategy):
         # 절대 거래량 하한 (너무 거래 없으면 제외)
         floor = _resolve_min_volume_floor(
             snapshot, breakout_tier, gap_rate, breakout_ref,
-            redis_override_mode=await _get_redis_override_mode(self.redis_client),
+            redis_override_mode=await resolve_override(
+                self.redis_client,
+                "MIN_VOLUME_FLOOR_MODE",
+                default=None,
+            ),
         )
         if snapshot.volume < snapshot.prev_volume * floor:
             return await self._reject(

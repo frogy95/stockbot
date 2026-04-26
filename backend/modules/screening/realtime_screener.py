@@ -12,6 +12,7 @@ from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
+from core.settings_override import resolve_override
 from core.models.market_data import MarketData
 from core.models.screening_result import ScreeningResult
 from core.models.stock import Stock
@@ -227,17 +228,12 @@ class RealtimeScreener:
                 c.setdefault("raw_score", _score(c))
 
             # Redis override key가 있으면 settings.SECONDARY_POOL_FALLBACK_ENABLED 보다 우선 적용
-            fallback_enabled = settings.SECONDARY_POOL_FALLBACK_ENABLED
-            if self.redis_client is not None:
-                try:
-                    _raw = await self.redis_client.get(
-                        "settings:override:SECONDARY_POOL_FALLBACK_ENABLED"
-                    )
-                    if _raw:
-                        val = _raw if isinstance(_raw, str) else _raw.decode()
-                        fallback_enabled = val.lower() not in ("false", "0", "no")
-                except Exception:  # noqa: BLE001
-                    pass
+            fallback_enabled = await resolve_override(
+                self.redis_client,
+                "SECONDARY_POOL_FALLBACK_ENABLED",
+                default=settings.SECONDARY_POOL_FALLBACK_ENABLED,
+                cast=lambda s: s.lower() not in ("false", "0", "no"),
+            )
 
             if not fallback_enabled:
                 return scored
