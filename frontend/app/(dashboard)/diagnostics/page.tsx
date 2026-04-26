@@ -3,10 +3,12 @@ import { StageHeatmapCard } from "@/components/diagnostics/stage-heatmap-card";
 import { TopRejectsCard } from "@/components/diagnostics/top-rejects-card";
 import { FallbackStatsCard } from "@/components/diagnostics/fallback-stats-card";
 import { ShadowHeatmapCard } from "@/components/diagnostics/shadow-heatmap-card";
+import { OverrideBanner } from "@/components/diagnostics/override-banner";
 
 export default function DiagnosticsPage() {
   return (
     <div className="space-y-6 p-6">
+      <OverrideBanner />
       <header className="space-y-1">
         <h1 className="text-lg font-mono font-semibold tracking-wide">
           신호 진단 (Phase 8.5)

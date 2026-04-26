@@ -54,6 +54,7 @@
 |--------|------|----------|--------|
 | 1 ✅ | **관측성 강화** | stage 분포 메트릭, 2차 score 분포 히스토그램, 탈락 상위 종목 로깅, 가상 신호 로깅 (13:00+ prev_close) | 없음 |
 | 2 ✅ | **풀 하한 폴백 + 동적 min_volume_floor** | `passed<3` 시 상위 score 보강, `MIN_VOLUME_FLOOR` 조건부 분기(0.4/0.5/0.6), env 변수화, HARD 상한 0.3 | Sprint 1 배포 후 1.5거래일 관찰 |
+| 2.5 ✅ | **인프라 보강 + 관측성·문서 정합성** | `resolve_override()` 단일 진입점, env 동기화 스크립트, override-status API + 배너, phase8.md 문서 정합성 | Sprint 2 완료 후 |
 
 > **실행 원칙**:
 > - Sprint 수 **상한 2개** (PO 경계)
@@ -206,6 +207,33 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 
 ---
 
+## Sprint 2.5 상세 — 인프라 보강 + 관측성·문서 정합성 ✅ 완료
+
+> **완료**: PR #172 머지 대기, 2026-04-24 sprint-review 완료. 963 passed / 1 failed (기존 플레이크 `test_ws_manager_env_max_subscriptions`, 이 Sprint 비관련).
+
+### 구현 내용
+
+- `backend/core/settings_override.py`: `resolve_override()` 유틸 통합 — Redis `settings:override:*` 단일 진입점. 기존 인라인 override 로직과 행동 동일성 검증 완료.
+- `scripts/check_env_sync.py`: `.env.example` ↔ `Settings` 필드 동기화 검증 스크립트 (CI 외부 안전망)
+- `backend/api/routes/metrics.py` + `frontend/components/diagnostics/override-banner.tsx`: `/api/v1/metrics/override-status` + `OverrideBanner` — 자동 롤백 발동 상태 관측성 배너
+- `frontend/components/diagnostics/fallback-stats-card.tsx`: 롤백 중 dimmed 상태 (opacity-50 + 경고 메시지)
+- `docs/phase/phase8/phase8.md`: Sprint 3 DoD D1~D7 재정의 잔재 정리 (Phase 8.5 재정의판으로 교체)
+
+### 코드 리뷰 결과
+
+이슈 없음. Critical/High/Medium 0건. PR #172 코멘트 참조.
+
+### 불변 파라미터 검증
+
+| 파라미터 | 확인 결과 |
+|----------|----------|
+| `ATR_FILTER_PCT` 기본값 0.05 | 변경 없음 |
+| `MIN_VOLUME_FLOOR` 분기값 (0.4/0.5/0.6/HARD 0.3) | 변경 없음 |
+| `SECONDARY_POOL_PASS_THRESHOLD=75.0` | 변경 없음 |
+| 폴백 파라미터 (THRESHOLD=3, MAX=5, position 0.5, 손절 -1.5%, 제외 -3%) | 변경 없음 |
+
+---
+
 ## ROADMAP 재편 delta 제안 (본 문서 승인 시 적용)
 
 ### 변경 내용
@@ -309,7 +337,7 @@ Phase 8.6 Sprint 1 (구 Phase 8 Sprint 3) 원문 DoD 중 "신호 발생 3거래�
 | env 변수화 + `.env.example` 동기화 | 6개 변수 반영 | ✅ 완료 (8종 변수) |
 | 자동 롤백 트리거 스케줄러 동작 확인 | 2거래일 신호 0건 시 발동 | ✅ 완료 (단위 테스트 통과) |
 | Phase 8.5 관찰 5거래일에서 일평균 신호 ≥ 1 | Phase 8.6 Sprint 1 착수 전제 | ⬜ 관찰 진행 중 |
-| pytest 전체 통과 | — | ✅ 완료 (956 passed / 1 기존 플레이크) |
+| pytest 전체 통과 | — | ✅ 완료 (963 passed / 1 기존 플레이크) |
 
 완료 후 Phase 8.6 Sprint 1 (E2E + LIVE 게이트)로 진행한다.
 
