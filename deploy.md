@@ -7,26 +7,24 @@
 
 ---
 
-### Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (2026-04-24)
+### 프로덕션 배포 - v2.6.1 (2026-04-23)
 
-브랜치: `phase8.5-sprint3` → develop
-PR: https://github.com/frogy95/stockbot/pull/172
+포함 스프린트: Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성
+PR: https://github.com/frogy95/stockbot/pull/173 (develop → main)
 
-#### 자동 검증 결과 (2026-04-24, sprint-review 완료)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
-- ✅ 코드 리뷰: Critical/High/Medium 이슈 0건 (PR #172 코멘트 참조)
-- ✅ pytest 전체: **963 passed / 1 failed** (기존 플레이크 `test_ws_manager_env_max_subscriptions`, Sprint 2.5 무관)
-- ✅ frontend tsc --noEmit: 에러 0건
-- ✅ API `/api/v1/metrics/override-status`: 인증 가드 정상 (미인증 시 "인증 토큰이 필요합니다" 반환)
-- ✅ `/diagnostics` 접속: HTTP 307 인증 리다이렉트 (정상)
-- ✅ `python scripts/check_env_sync.py`: `OK: 39 variables synced` (Docker 내부 실행, exit 0)
-  - 주의: `pydantic-settings` 의존성 필요. 로컬 실행 시 `pip install pydantic-settings` 또는 `docker compose exec backend` 사용
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+#### 신규 환경변수 (Railway 수동 설정 필요)
+
+- ⬜ `SETTINGS_OVERRIDE_ENABLED=True` Railway에 추가 (기본값 True, 미설정 시에도 동작하나 명시 권장)
 
 #### 수동 검증 필요 항목 (Railway 프로덕션 배포 후)
 
 - ⬜ `SETTINGS_OVERRIDE_ENABLED=True` Railway 반영 확인
-- ⬜ Sprint 2 env 8종(`MIN_VOLUME_FLOOR_MODE` 외) Railway에 존재 확인 (Sprint 2 배포 시 반영되었어야 함 — 재확인 목적)
-- ⬜ `python scripts/check_env_sync.py` 실행 결과 exit 0 (pydantic-settings 설치 필요: `pip install pydantic-settings`, 또는 `docker compose exec backend python /scripts/check_env_sync.py` — 단, Docker 이미지 미포함이므로 로컬 직접 실행 권장)
+- ⬜ Sprint 2 env 8종(`MIN_VOLUME_FLOOR_MODE` 외) Railway에 존재 확인 (재확인 목적)
 - ⬜ Playwright `/diagnostics` 스크린샷 — 배너 미렌더 정상 상태
 - ⬜ 5거래일 관찰 종료 후 의사결정 트리(A~E) 판정: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` 하단 참조
 - ⬜ DB 마이그레이션 불필요 (Redis + env + 문서만 변경, 스키마 변경 없음)

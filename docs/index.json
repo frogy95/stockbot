@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-23T10:00:00+09:00",
+  "lastUpdated": "2026-04-23T11:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3687,6 +3687,15 @@
       "version": "v2.6.0",
       "description": "Phase 8.5 Sprint 2 프로덕션 배포 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (환경변수 8종, 16:10 자동 롤백 job, 폴백 통계 카드 + 배지, Redis 전용, DB 스키마 변경 없음)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/171",
+      "status": "completed"
+    },
+    {
+      "date": "2026-04-23",
+      "type": "sprint",
+      "ref": "phase8.5-sprint2.5",
+      "version": "v2.6.1",
+      "description": "Phase 8.5 Sprint 2.5 프로덕션 배포 — 인프라 보강 + 관측성·문서 정합성 (resolve_override() 통합, /metrics/override-status 신규, OverrideBanner, fallback-stats-card dimmed, phase8.md DoD 동기화)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/173",
       "status": "in_progress"
     }
   ]
