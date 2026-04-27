@@ -29,6 +29,46 @@ PR: https://github.com/frogy95/stockbot/pull/173 (develop → main)
 - ⬜ 5거래일 관찰 종료 후 의사결정 트리(A~E) 판정: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` 하단 참조
 - ⬜ DB 마이그레이션 불필요 (Redis + env + 문서만 변경, 스키마 변경 없음)
 
+#### Phase 8.5 5거래일 관찰 누적 (2026-04-23 ~ 2026-04-29)
+
+> 관찰 기준: Phase 8.5 Sprint 2 배포(v2.6.1, 2026-04-23) 이후 5거래일.
+> 거래일: 04-23(목), 04-24(금), 04-27(월), 04-28(화), 04-29(수).
+> 수집 방법: `curl -s "https://api.stockbot.choiji.kr/api/v1/health/observation-daily?date=YYYY-MM-DD"` (관측 전용 unauth API).
+
+| 거래일 | 신호 수(M-S1) | tier(M-S3) | 폴백 발동(M-F1) | 자동 롤백(M-R) | 비고 |
+|--------|--------------|------------|----------------|--------------|------|
+| 04-23 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | 배포일 |
+| 04-24 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | |
+| 04-27 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | |
+| 04-28 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | |
+| 04-29 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | ⬜ 미수집 | |
+| **합계** | M-S1= | M-S3= | M-F1= 일 | M-R= | |
+
+**부수 관찰**
+
+- ✅ Paper 핫픽스 0건 — `git log --since=2026-04-23 --oneline | grep hotfix` 결과 0건 (로컬 기준)
+- ⬜ 09:00 일일 리스크 카운터 초기화 로그 5일 연속 — 로그 조회 필요
+- ⬜ 장중 OHLC 파싱 경고율 < 1% — 로그 조회 필요
+- ⬜ WS 재연결/일일 리포트 중복 발송 재발 없음 — 로그 조회 필요
+
+**수집 방법**
+
+hotfix `observation-daily-api` 배포 후 단일 호출로 6개 지표 수집:
+
+```bash
+curl -s "https://api.stockbot.choiji.kr/api/v1/health/observation-daily?date=2026-04-24"
+```
+
+응답 예시:
+```json
+{
+  "date": "2026-04-24",
+  "signals": {"gap_open": 0, "prev_high": 0, "prev_close": 0, "other": 0, "total": 0},
+  "fallback": {"triggered_count": 0, "codes": []},
+  "rollback": {"is_active": false, "triggered_at": null, "reason": null}
+}
+```
+
 ---
 
 ## 참고

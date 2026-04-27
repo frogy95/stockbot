@@ -1,9 +1,12 @@
 import asyncio
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from core.config import settings
 from core.database import get_engine, get_session_factory
 from core.redis import redis_client
 
@@ -122,6 +125,86 @@ async def db_stats():
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/health/observation-daily")
+async def observation_daily(
+    date_param: str | None = Query(None, alias="date"),
+):
+    """Phase 8.5 5거래일 관찰용 — 6개 지표를 한 번에 반환.
+
+    KST 기준 일별 집계.
+    - M-S1/M-S2/M-S3: tier별 신호 수 (gap_open / prev_high / prev_close)
+    - M-F1: 폴백 발동 횟수 + 종목 코드
+    - M-R: 자동 롤백 발동 여부 + 사유
+    인증 없음 (집계 카운터만 노출, 민감 정보 없음).
+    """
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    target: date = (
+        date.fromisoformat(date_param)
+        if date_param and date_param != "today"
+        else datetime.now(tz).date()
+    )
+    target_s = target.isoformat()
+
+    # 1) tier별 신호 수 — trade_signals.reason->>'breakout_tier'
+    factory = get_session_factory()
+    async with factory() as session:
+        rows = (
+            await session.execute(
+                text(
+                    """
+                    SELECT COALESCE(reason->>'breakout_tier', 'unknown') AS tier,
+                           COUNT(*) AS n
+                    FROM trade_signals
+                    WHERE (created_at AT TIME ZONE :tz)::date = :d
+                    GROUP BY tier
+                    """
+                ),
+                {"tz": settings.MARKET_TIMEZONE, "d": target},
+            )
+        ).all()
+    tier_counts = {tier: int(n) for tier, n in rows}
+    signals = {
+        "gap_open": tier_counts.get("gap_open", 0),
+        "prev_high": tier_counts.get("prev_high", 0),
+        "prev_close": tier_counts.get("prev_close", 0),
+        "other": sum(
+            n for t, n in tier_counts.items()
+            if t not in ("gap_open", "prev_high", "prev_close")
+        ),
+        "total": sum(tier_counts.values()),
+    }
+
+    # 2) 폴백 발동 (Redis: metrics:fallback:triggered:{date})
+    triggered_count = int(await redis_client.get(f"metrics:fallback:triggered:{target_s}") or 0)
+    code_pattern = f"metrics:fallback:code:*:{target_s}"
+    code_keys = await redis_client.scan_keys(code_pattern)
+    fallback_codes: list[str] = []
+    for k in code_keys:
+        suffix = k[len("metrics:fallback:code:"):]
+        parts = suffix.rsplit(":", 1)
+        if len(parts) == 2 and parts[1] == target_s:
+            fallback_codes.append(parts[0])
+    fallback_codes.sort()
+
+    # 3) 자동 롤백 (Redis: settings:override:{triggered_at,reason})
+    rollback_at = await redis_client.get("settings:override:triggered_at")
+    rollback_reason = await redis_client.get("settings:override:reason")
+
+    return {
+        "date": target_s,
+        "signals": signals,
+        "fallback": {
+            "triggered_count": triggered_count,
+            "codes": fallback_codes,
+        },
+        "rollback": {
+            "is_active": rollback_at is not None,
+            "triggered_at": rollback_at,
+            "reason": rollback_reason,
+        },
+    }
 
 
 @router.get("/health/ws-diag")
