@@ -62,6 +62,8 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 - 후속 마일스톤: **Phase 8.6 Sprint 2 — 시스템 관리 UI** (구 Phase 8 Sprint 4)
 - 이후 마일스톤: Phase 8.6 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
+- 분기 D 트리거 선제 마일스톤: **Phase 10.1 — 신호 생성 로직 구조 재설계 🔄** (2026-04-28 Phase 8.5 v2.6.1 자동 롤백 발동 → 직렬 AND→병렬 OR + ATR 분위수 + volume_surge tier + DoR G1~G3 + 60일 walk-forward, 4 Sprint)
+- 기존 Phase 10.1(누적 백로그 통합) → **Phase 10.2로 이관** (피라미딩, 2차 스크리닝 하이브리드, Phase 10 Sprint 3 + 3개월 안정 운영 후 착수)
 
 ### 2026-04-20 Phase 재편성
 - 사용자 지시(A안 + 3개 Phase 분할)로 기존 Phase 7.1/7.2/8/9를 Phase 8/9/10으로 재편성
@@ -69,6 +71,13 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 - 기존 Phase 7.1(5분봉 가속도), 8(Z-score/VWAP) 초안 → **Phase 9로 통합** (박퀀트 권고: 지표 상관관계 관리)
 - 기존 Phase 9(U자형 비선형) 초안 → **Phase 10**으로 재편 + 백로그는 Phase 10.1로 분리
 - 기존 초안 파일은 `docs/phase/archive/`로 이동하여 이력 보존
+
+### 2026-04-28 Phase 10.1 재정의 (분기 D 트리거 선제 착수)
+- Phase 8.5 v2.6.1 5거래일 관찰 분기 D 확정(2026-04-28 16:10 `auto_rollback_2d_zero_signals`) → 사용자 구조 재설계 노선 채택
+- 기존 **Phase 10.1: 누적 백로그 통합** (피라미딩, 2차 하이브리드) → **Phase 10.2**로 이관 + 본 자리 `Phase 10.1`은 **신호 생성 로직 구조 재설계**로 재정의
+- 4 Sprint: Sprint 1(선행 패치 + 가드레일 G1~G3) / 2(병렬 OR + ATR 분위수) / 3(volume_surge tier + 시간 필터) / 4(walk-forward 60일 + KS 자동 감지)
+- 데이터 의존성 없음 (분기 D는 데이터 부족이 아닌 구조 결함). Phase 9·10 순서 자체는 변경하지 않음
+- Phase 8.6 Sprint 1(E2E+LIVE 게이트)은 Phase 10.1 완료 후 착수
 
 ## 기술 아키텍처 결정 사항
 
@@ -114,7 +123,8 @@ Phase 0 (완료)
                                                                                 └─(데이터 부분 완화, KIS 백필 + 점진 활성화)─> Phase 9
                                                                                       └─(코드)─> Phase 10: U자형 비선형 보정
                                                                                       └─(데이터: 2~6개월)─> Phase 10
-                                                                                            └─> Phase 10.1: 누적 백로그 통합 (피라미딩, 2차 스크리닝 N=1 등)
+                                                                                            └─> Phase 10.2: 누적 백로그 통합 (피라미딩, 2차 스크리닝 N=1 등)
+                                                                                └─(분기 D 트리거, 코드)─> Phase 10.1: 신호 생성 로직 구조 재설계 (병렬 OR + volume_surge + walk-forward)
 ```
 
 > **범례**: `(코드)` = 코드 의존성 (이전 모듈/인프라 필요), `(데이터: N)` = 데이터 의존성 (최소 N 축적 필요)
@@ -144,7 +154,8 @@ Phase 0 (완료)
 - Phase 8 Sprint 순서: Sprint 1(OHLC) → 2(다층 진입) → 3(E2E+LIVE 게이트) → 4(관리 UI) → 5(성과 분석). Sprint 번호 = 실행 순서.
 - Phase 6.1 + Phase 8 -> 9: **(코드)** 5분봉 수집 인프라 + 매매 신호 복구 완료 후 Z-score/VWAP/5분봉 가속도 통합 설계. **(데이터 완화)** 사용자 지시 재검토 결과 KIS 과거 분봉 백필 + 점진 활성화로 20거래일 대기 우회 가능.
 - Phase 9 -> 10: **(코드)** 실시간 VWAP + 백테스트 데이터셋, **(데이터)** U자형 함수 피팅은 완화 불가 — 최소 2개월(대안 C), 3~6개월(본격 피팅) 필수.
-- Phase 10 -> 10.1: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리.
+- Phase 8.5 분기 D -> 10.1 (2026-04-28 추가): v2.6.1 자동 롤백 발동 → 신호 생성 로직 구조 재설계(병렬 OR + ATR 분위수 + volume_surge tier + walk-forward 60일). 데이터 축적 불필요, 즉시 착수. Phase 8.6 Sprint 1 선행 조건이 됨.
+- Phase 10 -> 10.2: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리. 구 Phase 10.1 백로그가 본 위치로 이관됨.
 
 ## MVP 범위 (Must)
 
@@ -1414,14 +1425,57 @@ Phase 6.1의 선형 시간가중 보정을 **실제 관측 기반 U자형 비선
 
 ---
 
-## Phase 10.1: 누적 백로그 통합 (Sprint 1~2, 예정) 📋
+## Phase 10.1: 신호 생성 로직 구조 재설계 (Sprint 1~4) 🔄
 
 ### 목표
-Phase 10 완료 + 3개월 안정 운영 후 착수. Phase 4~10 리뷰에서 의도적으로 보류했던 장기 고도화 항목 일괄 처리.
+Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 노출한 직렬 AND 게이트 + 시뮬-실측 분포 괴리 + 단일 시각(가격 돌파) 한계를 해소. 분기 D 4명 재리뷰(PO/리스크/퀀트/단타) 권고를 통합하여 **병렬 OR 다중 진입 경로**로 신호 생성 로직을 구조 재설계한다.
+
+### 트리거
+- 2026-04-28 16:10 자동 롤백 발동 (4거래일 본 신호 1건 / 폴백 605회)
+- 시뮬 2nd-screening pass율 38.9% vs 실측 ~3% (10배 이상 괴리)
+- tier 다양성 1종(prev_high만), 직렬 AND 곱셈으로 통과율 0 수렴
+
+### 범위 (4 Sprint, 3~4주)
+- **Sprint 1** — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금
+- **Sprint 2** — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡
+- **Sprint 3** — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 (09:00~09:10 진입 금지, 점심 floor 0.7, 14:30+ 신규 진입 금지)
+- **Sprint 4** — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND)
+
+### Definition of Ready (Sprint 2 착수 차단 해제 조건)
+- G1: 폴백 신호율(M-F2) 산출 가능화 — `signal.fallback=true` 메타데이터 신호→주문→체결 전파
+- G2: 자동 롤백 R1~R4 다중 트리거 OR 조합 (R1=0건 3일 / R2=폴백 발동률 ≥50% 3일 / R3=tier 1종 5일 / R4=폴백 비중 ≥70% 1일)
+- G3: 일별 2차 통과율(폴백 제외) <10% 3일 연속 시 본 Phase 변경분 자동 비활성화
+
+### 필요 선행 데이터
+- 없음 (분기 D는 구조 결함, 데이터 부족 아님). 단, Sprint 4 walk-forward는 KIS 분봉 백필 60일분 필요 (Phase 9 Sprint 0 백필 메커니즘 일부 차용)
+
+### 완료 기준 (Definition of Done)
+- DoR 4종 통과 (G1·G2·G3 + Phase 7.0 잠금)
+- 병렬 OR tier 분리 + ATR 분위수 캘리브레이션 동작
+- `volume_surge` tier dry_run 배포 + Paper 5거래일 dry_run 신호 ≥5건
+- Paper 5거래일 G-A(일평균 신호 ≥1.5) + G-B(0건 일수 ≤30%) + G-C(tier ≥3종) 동시 충족
+- 60일 Walk-forward 백테스트 KS 검정 p≥0.05
+- LIVE 토글 게이트 G-Bt1·G-Bt2·G-Bt3 미충족 시 dry_run 강제 유지 검증
+
+### 후속
+- Phase 10.1 완료 후 → **Phase 8.6 Sprint 1** (E2E + LIVE 게이트, 구 Phase 8 Sprint 3) 착수
+- Phase 9 Sprint 0 (5분봉 가속도 + KIS 백필) 순서는 변경 없음
+
+> Phase 상세 계획: `docs/phase/phase10.1/phase10.1.md` ✅ 계획 수립 완료 (2026-04-28)
+> 전문가 검토: 분기 D 재리뷰 4명 — `docs/phase/phase8.5/phase8.5-branch-d-{po,risk,quant,daytrader}-review.md`
+
+---
+
+## Phase 10.2: 누적 백로그 통합 (Sprint 1~2, 예정) 📋
+
+### 목표
+Phase 10 완료 + 3개월 안정 운영 후 착수. 기존 Phase 10.1(누적 백로그)에서 이관됨. Phase 4~10 리뷰에서 의도적으로 보류했던 장기 고도화 항목 일괄 처리.
 
 ### 범위
 - **당일 고가 갱신 진입 (피라미딩)** — position_size 30%, +3% 이상 이익 조건, 14:00 비활성, 호가 매수/매도 잔량 비율 0.5+ (김단타+최리스크 강력 권고)
 - **2차 스크리닝 하이브리드** — 상대 백분위 70% + 절대 점수 30%, 절대 70점 하한, 전일 대비 -5% 이하 제외 (Phase 7.0 미해결 #10 근본 해결)
+- **VI 재개 tier (`vi_resume`)** — 김단타 분기 D §3 3순위 (변동성 리스크 큰 만큼 후순위)
+- **테마 모멘텀 가중치 (`theme_momentum`)** — 김단타 분기 D §3 2순위 (섹터 메타데이터 인프라 필요)
 - **기타 ⚠️ 백로그** — Phase 4~10 리뷰 리포트 ⚠️ 항목 점검
 
 ### 필요 선행 데이터
