@@ -601,22 +601,22 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 
 ### 핵심 게이트 4종
 
-- ⬜ G1 (M-F2 산출 가능 + 메타데이터 전파) — Task 3
-- ⬜ G2 (R1~R4 다중 트리거 + R4 분모 baseline counter) — Task 4
-- ⬜ G3 (회로차단기 + counter pair 분모 + 청산 신호 보존) — Task 5
-- ⬜ Phase 7.0 LIVE 파라미터 코드 잠금 (Final + 런타임 assert + CI grep 가드) — Task 1
+- ✅ G1 (M-F2 산출 가능 + 메타데이터 전파) — Task 3 — `is_fallback` candidate→signal→order DB 컬럼 + reason JSON 이중 보존, M-F2 `/metrics/fallback-signal-rate` 엔드포인트, 6 신규 pytest PASS
+- ✅ G2 (R1~R4 다중 트리거 + R4 분모 baseline counter) — Task 4 — `AutoRollbackEvaluator` OR 결합, env 5종 토글, 16:10 KST 평가, R3 기본 비활성, R4 baseline `screener:candidates:primary:{date}` TTL 30d, 13 신규 pytest PASS
+- ✅ G3 (회로차단기 + counter pair 분모 + 청산 신호 보존) — Task 5 — `CircuitBreaker` 3거래일 통과율 평가, counter pair 동시 적재, 분모=0 fail-safe, 청산 계열 통과 검증, 9 신규 pytest PASS
+- ✅ Phase 7.0 LIVE 파라미터 코드 잠금 (Final + 런타임 assert + CI grep 가드) — Task 1
 
 ### P0 보강 5건 (재리뷰 합의)
 
-- ⬜ G3 counter pair 동시 적재 + 분모=0 fail-safe (Task 5)
-- ⬜ R4 분모 baseline `screener:candidates:primary:{date}` Redis counter (Task 4)
-- ⬜ G3 발동 시 청산 신호(`exit/stop_loss/take_profit`) 보존 + pytest 회귀 (Task 5)
-- ⬜ dry_run 가드 이중화 — `Final` + 런타임 assert + sprint-review CI grep 가드 (Task 1)
-- ⬜ Alembic upgrade/downgrade/upgrade 왕복 테스트 PR 머지 게이트 + 백필 정책 명시 (Task 3)
+- ✅ G3 counter pair 동시 적재 + 분모=0 fail-safe (Task 5 — `test_zero_denominator_fails_safe_to_circuit_on` PASS)
+- ✅ R4 분모 baseline `screener:candidates:primary:{date}` Redis counter (Task 4 — scheduler `_primary_screen` 종점 적재 TTL 30d)
+- ✅ G3 발동 시 청산 신호(`exit/stop_loss/take_profit`) 보존 + pytest 회귀 (Task 5 — `test_circuit_breaker_does_not_block_exit_signals` + `test_circuit_breaker_blocks_only_entry_signals` PASS)
+- ✅ dry_run 가드 이중화 — `Final` + 런타임 assert + sprint-review CI grep 가드 (Task 1)
+- ✅ Alembic upgrade/downgrade/upgrade 왕복 테스트 PR 머지 게이트 + 백필 정책 명시 (Task 3 — 3단계 모두 성공)
 
 ### LIVE 게이트 합의 (재명시)
 
-- ⬜ **Sprint 1 완료 ≠ LIVE 전환 가능** (Risk 합의) — 본 Sprint는 dry_run + 메타데이터 + 회로차단기 골격만
+- ✅ **Sprint 1 완료 ≠ LIVE 전환 가능** (Risk 합의) — 본 Sprint는 dry_run + 메타데이터 + 회로차단기 골격만 — `deploy.md` `### Sprint: phase8.6/sprint1` 섹션 명시
 - ⬜ LIVE 전환은 Sprint 2 R2 v1 / R3 OR + Sprint 4 walk-forward 60일 통과 후
 
 위 모두 ✅ 후에만 Sprint 2 착수 가능 (Phase 8.6 §3 DoR).
