@@ -6,6 +6,8 @@ import { ShadowHeatmapCard } from "@/components/diagnostics/shadow-heatmap-card"
 import { OverrideBanner } from "@/components/diagnostics/override-banner";
 import { FallbackSignalRateCard } from "@/components/diagnostics/fallback-signal-rate-card";
 import { AutoRollbackMultiTrigger } from "@/components/diagnostics/auto-rollback-multi-trigger";
+import { TierCorrelationCard } from "@/components/diagnostics/tier-correlation-card";
+import { TierPassRateCard } from "@/components/diagnostics/tier-pass-rate-card";
 
 export default function DiagnosticsPage() {
   return (
@@ -25,6 +27,8 @@ export default function DiagnosticsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <FallbackSignalRateCard />
         <AutoRollbackMultiTrigger />
+        <TierCorrelationCard />
+        <TierPassRateCard />
         <ScoreHistogramCard />
         <StageHeatmapCard />
         <TopRejectsCard />
