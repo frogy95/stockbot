@@ -44,9 +44,11 @@ class Settings(BaseSettings):
     MIN_VOLUME_FLOOR_HARD: float = Field(default=0.3, ge=0.0, le=1.0, description="어떤 분기도 이 이하 금지")
     # 2차 스크리닝 통과 < 이 값이면 1차 통과 종목으로 보강
     SECONDARY_POOL_FALLBACK_ENABLED: bool = Field(default=True, description="2차 풀 하한 폴백 활성화")
-    SECONDARY_POOL_FALLBACK_THRESHOLD: int = Field(default=3, ge=1, le=10, description="passed_count < N 시 폴백 발동")
+    SECONDARY_POOL_FALLBACK_THRESHOLD: int = Field(default=5, ge=1, le=10, description="passed_count < N 시 폴백 발동 (Phase 8.6 Sprint 1: 3→5 분기 D 풀 협소 대응)")
     # 폴백 포함 풀 최대 종목 수
     SECONDARY_POOL_MAX: int = Field(default=5, ge=1, le=20, description="폴백 포함 풀 상한")
+    # 폴백 보강 종목 수 상한 (Phase 8.6 Sprint 1)
+    SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP: int = Field(default=5, ge=1, le=10, description="폴백 보강 종목 수 상한")
     # 전일 대비 이 이하 종목은 폴백 제외
     FALLBACK_DROP_EXCLUDE_PCT: float = Field(default=-3.0, ge=-100.0, le=0.0, description="전일 대비 이 이하는 폴백 제외 (%)")
     # 폴백 종목 포지션 사이즈 배수 (0.5 = 반 포지션)

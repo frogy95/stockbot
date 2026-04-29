@@ -719,6 +719,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -747,6 +748,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -771,6 +773,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -794,6 +797,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = False
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -818,6 +822,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -856,6 +861,7 @@ class TestFallbackLogic:
             mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
             mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 3
             mock_settings.SECONDARY_POOL_MAX = 5
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
             mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
             mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
 
@@ -869,3 +875,52 @@ class TestFallbackLogic:
         assert redis_mock.incr.await_count >= 1
         call_keys = [str(call) for call in redis_mock.incr.call_args_list]
         assert any("metrics:fallback:triggered:" in k for k in call_keys)
+
+    @pytest.mark.asyncio
+    async def test_fallback_threshold_5_triggers_when_passed_below_5(self):
+        """Phase 8.6 Sprint 1: 임계 5 — passed=4 → 폴백 발동 1종 backfill."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item(f"P{i:03d}", score=float(95 - i), is_passed=True)
+            for i in range(4)
+        ] + [
+            _make_scored_item(f"B{i:03d}", score=float(80 - i), is_passed=False)
+            for i in range(10)
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 5
+            mock_settings.SECONDARY_POOL_MAX = 10
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        fallback_codes = {c["stock_code"] for c in result if c.get("is_fallback")}
+        assert len(fallback_codes) == 1
+
+    @pytest.mark.asyncio
+    async def test_fallback_hard_cap_clamps_backfill_count(self):
+        """hard_cap=5 → passed=0, 1차 풀=50종목이어도 폴백은 최대 5종목."""
+        screener = _make_screener()
+
+        scored = [
+            _make_scored_item(f"B{i:03d}", score=float(100 - i), is_passed=False)
+            for i in range(50)
+        ]
+
+        with patch("modules.screening.realtime_screener.settings") as mock_settings:
+            mock_settings.SECONDARY_POOL_FALLBACK_ENABLED = True
+            mock_settings.SECONDARY_POOL_FALLBACK_THRESHOLD = 5
+            mock_settings.SECONDARY_POOL_MAX = 50
+            mock_settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP = 5
+            mock_settings.FALLBACK_DROP_EXCLUDE_PCT = -3.0
+            mock_settings.MARKET_TIMEZONE = "Asia/Seoul"
+
+            result = await screener._apply_fallback(scored)
+
+        fallback_codes = [c["stock_code"] for c in result if c.get("is_fallback")]
+        assert len(fallback_codes) == 5

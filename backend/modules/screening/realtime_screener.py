@@ -258,6 +258,7 @@ class RealtimeScreener:
                 min(
                     settings.SECONDARY_POOL_FALLBACK_THRESHOLD - passed_count,
                     settings.SECONDARY_POOL_MAX - passed_count,
+                    settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP,
                 ),
                 0,
             )
