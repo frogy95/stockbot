@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-29 업데이트)
+## 스프린트 현황 (2026-04-29 업데이트 — Phase 8.6 Sprint 2 완료)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -64,17 +64,21 @@
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 - **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
-- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, 🔄 v2 갱신 완료 (2026-04-29 4명 리뷰 합의 반영), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종), 구현 즉시 착수 가능
+- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: (sprint-close 완료 후 기록 예정)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.6 Sprint 2 v2 — 병렬 OR tier + ATR 캘리브레이션 + 시뮬-실측 절대차 (v2 계획 갱신 완료, 즉시 구현 가능)
-- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 본 가드 (TEMP_TIME_GUARD_SPRINT2 제거) (Sprint 2 후)
+- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 본 가드 (TEMP_TIME_GUARD_SPRINT2 제거) (Sprint 2 후, Paper 1거래일 관찰 후 착수 권장)
 - Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + KS 검정 + ATR 분포 카드(Sprint 2에서 이관) (Sprint 3 + Paper 5거래일 후)
 - Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.6 완료 후)
 
 ## 핵심 주의사항
 
+- Phase 8.6 Sprint 2 완료: 병렬 OR tier 분기 시 TEMP_TIME_GUARD_SPRINT2=true 로 09:00~09:10 / 14:30+ 임시 차단. Sprint 3에서 본 가드 도입 후 제거 필수
+- Phase 8.6 Sprint 2 완료: Alembic 마이그레이션 2종 적용 필요 — `stocks.is_kospi200`(c1f2a30b8201) + `trade_signals.matched_tiers`(d2a30b8201ef). Railway 프로덕션 배포 전 반드시 `alembic upgrade head` 실행 확인
+- Phase 8.6 Sprint 2 완료: env 10종 Railway 수동 설정 필요 (PARALLEL_OR_TIER_ENABLED, ATR_CALIBRATION_ENABLED, ATR_CALIBRATION_METHOD, ATR_FLOOR, ATR_CEIL_HARD, ATR_CEIL_FALLBACK, ATR_CEIL_MULT, ATR_CALIBRATION_WINDOW_DAYS, TEMP_TIME_GUARD_SPRINT2, SAFE_MODE_TIMEOUT_MIN)
+- Phase 8.6 Sprint 2 완료: G3 회로차단기는 OR 모드 통과율 N배 증가 시 오발동 위험 — G3_OR_MODE_MULT 보정 계수 적용됨. Sprint 3에서 지속 모니터링
+- Phase 8.6 Sprint 3 착수 게이트: Paper 1거래일(2026-04-30) ATR 캘리브레이션 잡 Redis 4종 키 적재 + matched_tiers 메타데이터 1건 이상 기록 확인 권장
 - Phase 1 Sprint 1에서 확인: SQLAlchemy async 모델에서 UniqueConstraint는 `__table_args__`로 명시 필요
 - redis[hiredis] 패키지명으로 설치 시 redis.asyncio 임포트 정상 동작 확인
 - pytest-asyncio는 `asyncio_mode = "auto"` 설정 필수 (pytest.ini 또는 pyproject.toml)

@@ -7,35 +7,13 @@
 
 ---
 
-### 프로덕션 배포 - v2.7.0 (2026-04-29)
+### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
 
-포함 스프린트: Phase 8.6 Sprint 1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
-PR: https://github.com/frogy95/stockbot/pull/182 (develop → main)
+브랜치: `phase8.6-sprint2` → develop
+PR: (sprint-close 완료 후 기록 예정)
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
-
-#### 자동 검증 결과 (배포 완료 후)
-
-- ✅ 백엔드 헬스체크 (Railway): `{"status":"healthy","database":"connected","redis":"connected"}`
-- ✅ 프론트엔드 접속 (Vercel): HTTP 200 (https://stockbot.choiji.kr)
-- ✅ Alembic 마이그레이션: `upgrade a430a1c931b2 -> b8f1c2a30201, Phase 8.6 Sprint 1 — fallback 컬럼 추가 (TradeSignal·Order)` 성공
-- ✅ 서버 기동: KIS 클라이언트, APScheduler, WS 연결 20개 정상 (Railway 로그 확인)
-- ✅ 로그인 페이지 렌더 (Playwright): 정상 표시
-- ✅ Playwright `/diagnostics` 페이지 (수동 로그인 후 확인) — `FallbackSignalRateCard`, `AutoRollbackMultiTrigger`(R1~R4+G3), 자동 롤백 배너 모두 정상 렌더 (스크린샷: `docs/phase/phase8.6/sprint1/diagnostics-prod-2026-04-29.png`)
-  - 자동 롤백 배너 표시: `auto_rollback_2d_zero_signals` (2026-04-28 16:10 KST 발동 = Phase 8.5 분기 D 기존 발동, Sprint 1 가드레일이 정확히 시각화 중)
-  - R3은 `AUTO_ROLLBACK_R3_ENABLED=False` 정상 표시 (Sprint 2까지 의도된 비활성)
-
-#### 수동 검증 필요 항목
-
-- ⬜ Paper 모드 1거래일 회귀: `signals.fallback=true` 1건 이상 DB 기록 + M-F2 API 응답 정상 (다음 거래일 2026-04-30 장 마감 후 확인 — 단, 현재 자동 롤백 발동 중이므로 폴백 비활성 상태. 수동으로 Redis override 해제 후 검증 필요)
-- ⬜ G2/G3 가드레일 실 동작 확인: 16:10 자동 롤백 잡 + 회로차단기 counter 정상 적재 (다음 거래일 장 후 Railway 로그 확인)
-
-배포 모드: Paper/dry_run — LIVE 전환은 Sprint 2 DoR 4종 통과 후
-
----
-
-### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션 (PR 예정)
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
 
 배포 대상 변경 요약: Sprint 1 직렬 AND tier가 병렬 OR + tier별 독립 sub-게이트로 분리. ATR 5% 고정 상한이 KOSPI200 분위수 동적 상한(P80×1.2, HARD 0.08 캡)으로 전환. 시뮬-실측 통과율 절대차 메트릭(`metrics:quant:sim_vs_real_diff`) 도입.
 

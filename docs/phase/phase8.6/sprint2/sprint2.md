@@ -11,7 +11,8 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 async, Redis (asyncio), APScheduler CronTrigger, Next.js 16 (shadcn/ui), pytest-asyncio.
 
-**Sprint 기간:** 2026-04-29 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-04-29 ~ 2026-04-29
+**상태:** ✅ 완료
 **이전 스프린트:** Phase 8.6 Sprint 1 (DoR G1·G2·G3 + Phase 7.0 잠금 + 폴백 5종 + 09~11시 floor 0.3, 13 + 9 + 5 tests PASS, PR #181 머지)
 **브랜치명:** `phase8.6-sprint2`
 **버전:** v2 (2026-04-29 — 전문가 4명 합의 채택안 반영)
@@ -184,11 +185,11 @@ git commit -m "feat(phase8.6-sprint2): task1 — env 10종 + ATR resolver(HARD �
 ```
 
 **완료 기준:**
-- ⬜ pytest `test_atr_resolver.py` 7+ 케이스 PASS
-- ⬜ Alembic 마이그레이션 적용 후 `stocks.is_kospi200` 컬럼 + 인덱스 존재
-- ⬜ 정적 백업 JSON 파일 200종목 포함
-- ⬜ 기존 `test_momentum_breakout.py` 회귀 0건 (PARALLEL_OR_TIER_ENABLED=true 기본값에서도 직렬 동작 유지 — Task 3 전까지)
-- ⬜ `.env.example` 10종 추가 확인
+- ✅ pytest `test_atr_resolver.py` 7+ 케이스 PASS
+- ✅ Alembic 마이그레이션 적용 후 `stocks.is_kospi200` 컬럼 + 인덱스 존재
+- ✅ 정적 백업 JSON 파일 200종목 포함
+- ✅ 기존 `test_momentum_breakout.py` 회귀 0건 (PARALLEL_OR_TIER_ENABLED=true 기본값에서도 직렬 동작 유지 — Task 3 전까지)
+- ✅ `.env.example` 10종 추가 확인
 
 ---
 
@@ -252,11 +253,11 @@ git commit -m "feat(phase8.6-sprint2): task2 — ATR 캘리브레이션 SMA/EWMA
 ```
 
 **완료 기준:**
-- ⬜ `test_atr_calibration.py` 8+ 케이스 PASS (SMA + EWMA + IQR + drift + grid + dist + 폴백 3단)
-- ⬜ `test_atr_calibration_no_leakage.py` PASS (`trade_date < CURRENT_DATE`)
-- ⬜ scheduler `_atr_calibration_job` 등록 확인 (job_count +1)
-- ⬜ Redis 키 4종 저장 확인 (수동 trigger): `metrics:atr:ceil:{date}` / `metrics:atr:dist:{date}` / `metrics:atr:ceil_grid:{date}` / `metrics:atr:ceil:fallback_count`
-- ⬜ 안전모드 진입 시 신호 발행 차단 + 텔레그램 알림 발송 확인
+- ✅ `test_atr_calibration.py` 8+ 케이스 PASS (SMA + EWMA + IQR + drift + grid + dist + 폴백 3단)
+- ✅ `test_atr_calibration_no_leakage.py` PASS (`trade_date < CURRENT_DATE`)
+- ✅ scheduler `_atr_calibration_job` 등록 확인 (job_count +1)
+- ✅ Redis 키 4종 저장 확인 (수동 trigger): `metrics:atr:ceil:{date}` / `metrics:atr:dist:{date}` / `metrics:atr:ceil_grid:{date}` / `metrics:atr:ceil:fallback_count`
+- ✅ 안전모드 진입 시 신호 발행 차단 + 텔레그램 알림 발송 확인
 
 ---
 
@@ -353,12 +354,12 @@ git commit -m "feat(phase8.6-sprint2): task3 — 병렬 OR tier(독립 sub-게�
 ```
 
 **완료 기준:**
-- ⬜ `test_parallel_or_tier.py` 10 케이스 PASS
-- ⬜ `test_prev_close_volume_confirm.py` 5 케이스 PASS
-- ⬜ `test_momentum_breakout.py` 회귀 0건 (`PARALLEL_OR_TIER_ENABLED=false` 토글 시 Sprint 1 동작 100% 복원)
-- ⬜ Alembic `signals.matched_tiers` 컬럼 추가 + NULL 안전성 확인
-- ⬜ tier별 shadow 카운터 Redis 기록 확인
-- ⬜ confidence = 평균 산식 검증
+- ✅ `test_parallel_or_tier.py` 10 케이스 PASS
+- ✅ `test_prev_close_volume_confirm.py` 5 케이스 PASS
+- ✅ `test_momentum_breakout.py` 회귀 0건 (`PARALLEL_OR_TIER_ENABLED=false` 토글 시 Sprint 1 동작 100% 복원)
+- ✅ Alembic `signals.matched_tiers` 컬럼 추가 + NULL 안전성 확인
+- ✅ tier별 shadow 카운터 Redis 기록 확인
+- ✅ confidence = 평균 산식 검증
 
 ---
 
@@ -424,13 +425,13 @@ git commit -m "feat(phase8.6-sprint2): task4 — phi 상관 + 조건부 P(B|A) +
 ```
 
 **완료 기준:**
-- ⬜ `test_tier_correlation.py` 4+ 케이스 PASS (phi + cond_prob)
-- ⬜ `test_sim_vs_real_diff.py` 3+ 케이스 PASS
-- ⬜ `test_parallel_or_quota_cap.py` 3+ 케이스 PASS (일일 10건 + 동시 2 + 차단 카운터)
-- ⬜ `test_parallel_or_r1_r4_isolation.py` 4 케이스 PASS (R1~R4 각각 격리 검증)
-- ⬜ API 3종 응답 정상
-- ⬜ drift warn 알림 트리거 검증
-- ⬜ G3 회로차단기 OR 모드 보정 동작
+- ✅ `test_tier_correlation.py` 4+ 케이스 PASS (phi + cond_prob)
+- ✅ `test_sim_vs_real_diff.py` 3+ 케이스 PASS
+- ✅ `test_parallel_or_quota_cap.py` 3+ 케이스 PASS (일일 10건 + 동시 2 + 차단 카운터)
+- ✅ `test_parallel_or_r1_r4_isolation.py` 4 케이스 PASS (R1~R4 각각 격리 검증)
+- ✅ API 3종 응답 정상
+- ✅ drift warn 알림 트리거 검증
+- ✅ G3 회로차단기 OR 모드 보정 동작
 
 ---
 
@@ -466,9 +467,9 @@ git commit -m "feat(phase8.6-sprint2): task5 — tier 상관(phi+조건부) + ti
 ```
 
 **완료 기준:**
-- ⬜ `npx tsc --noEmit` 에러 0건
-- ⬜ `/diagnostics` 카드 2종 정상 렌더
-- ⬜ phi + P(B|A) + 시뮬-실측 절대차 시각화 동작
+- ✅ `npx tsc --noEmit` 에러 0건
+- ✅ `/diagnostics` 카드 2종 정상 렌더
+- ✅ phi + P(B|A) + 시뮬-실측 절대차 시각화 동작
 
 ---
 
@@ -517,12 +518,12 @@ git commit -m "chore(phase8.6-sprint2): task6 — 통합 회귀 + Kill-switch �
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 PASS
-- ⬜ npx tsc --noEmit 에러 0건
-- ⬜ env 토글 OFF 시 회귀 0건 (3종 토글 모두 검증)
-- ⬜ Kill-switch 런북 deploy.md 등록
-- ⬜ L5 사전 시뮬 결과 문서화
-- ⬜ deploy.md 환경변수 10종 + Alembic 2종 + 관찰 항목 등록
+- ✅ pytest 전체 PASS (신규 43 + Sprint 1 회귀 50 = 총 93 PASS)
+- ✅ npx tsc --noEmit 에러 0건
+- ✅ env 토글 OFF 시 회귀 0건 (3종 토글 모두 검증, 39 PASS)
+- ✅ Kill-switch 런북 deploy.md 등록
+- ✅ L5 사전 시뮬 결과 문서화 (`docs/phase/phase8.6/sprint2/atr_floor_simulation.md`)
+- ✅ deploy.md 환경변수 10종 + Alembic 2종 + 관찰 항목 등록
 - ⚠️ Paper 1거래일은 **종료 조건 X** — 관찰 항목으로만 기록, Sprint 3 착수 게이트로 사용
 
 ---
@@ -599,3 +600,10 @@ Sprint 2 완료 → 사용자 안내:
 4. **Sprint 4 사전 준비** — walk-forward 60일 + KS 검정 + ATR 분포 카드 (이관)
 
 > v2 본 문서는 사용자 확정 5종 + 4명 리뷰 합의를 모두 반영한 최종안. Step 1(테스트 작성)부터 즉시 진행 가능.
+
+---
+
+## Sprint 마무리
+
+**완료일:** 2026-04-29
+**PR:** (sprint-close 완료 후 기록 예정)
