@@ -52,6 +52,71 @@ PREV_CLOSE_CONFIDENCE_CAP = 0.75
 GAP_OPEN_MOMENTUM_MULTIPLIER = 0.85
 
 
+async def _resolve_atr_ceil(
+    snapshot: "MarketSnapshot",
+    tier: str,
+    redis_client: Any,
+    is_fallback: bool,
+    *,
+    now_kst: datetime | None = None,
+) -> float | None:
+    """ATR 상한값을 결정 (Phase 8.6 Sprint 2 v2).
+
+    반환값:
+        float — 적용할 ATR 상한 비율 (current_price 기준)
+        None  — ATR 하한(`ATR_FLOOR`) 미달 등으로 즉시 reject 신호
+
+    규칙:
+        1. ATR < `ATR_FLOOR`(0.025) — 모든 tier(gap_open 포함) 즉시 None 반환
+        2. is_fallback=True — `ATR_CEIL_FALLBACK`(0.05) 정적 사용 (동적 미적용)
+        3. tier == "gap_open" — `ATR_CEIL_HARD`(0.08) 절대 한계 적용 (Sprint v1 우회 X)
+        4. tier IN ("prev_high", "prev_close"):
+           - `ATR_CALIBRATION_ENABLED=true` + Redis `metrics:atr:ceil:{date}` 존재 → 그 값
+             (단, `ATR_CEIL_HARD`로 캡)
+           - 키 부재 또는 `ATR_CALIBRATION_ENABLED=false` → `ATR_CEIL_HARD` 폴백
+    """
+    # ATR 비율 계산 — current_price 기준
+    if snapshot.current_price <= 0:
+        return None
+    atr = calc_volatility_factor(
+        snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
+    )
+    atr_ratio = atr / snapshot.current_price
+
+    floor = settings.ATR_FLOOR
+    hard = settings.ATR_CEIL_HARD
+
+    # Rule 1: 하한 미달 — 즉시 reject
+    if atr_ratio < floor:
+        return None
+
+    # Rule 2: 폴백 종목 — 정적 상한
+    if is_fallback:
+        return settings.ATR_CEIL_FALLBACK
+
+    # Rule 3: gap_open — HARD 절대 한계
+    if tier == "gap_open":
+        return hard
+
+    # Rule 4: prev_high / prev_close — 동적 상한 또는 HARD
+    if not settings.ATR_CALIBRATION_ENABLED or redis_client is None:
+        return hard
+
+    effective_now = now_kst if now_kst is not None else _now_kst()
+    today = effective_now.date().isoformat()
+    try:
+        cached = await redis_client.get(f"metrics:atr:ceil:{today}")
+    except Exception:  # noqa: BLE001
+        cached = None
+    if cached is None:
+        return hard
+    try:
+        dynamic = float(cached)
+    except (TypeError, ValueError):
+        return hard
+    return min(dynamic, hard)
+
+
 def _resolve_min_volume_floor(
     snapshot: "MarketSnapshot",
     tier: str,
