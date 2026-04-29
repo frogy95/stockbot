@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-23T11:00:00+09:00",
+  "lastUpdated": "2026-04-27T00:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3443,6 +3443,24 @@
           "hash": "a9e5a6b",
           "message": "docs(hotfix): risk-reset-frontend-contract 핫픽스 문서 추가",
           "date": "2026-04-22"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-observation-daily-api",
+      "name": "Phase 8.5 5거래일 관찰 지표 단일 API 엔드포인트 추가",
+      "status": "deployed",
+      "path": ".claude/agents/phase8.5-observation-check.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/175",
+      "deployedAt": "2026-04-27",
+      "description": "railway run python 직접 DB/Redis 접근 방식이 보안 훅에 차단되어 관찰 지표 자동 수집 불가 문제 해결. GET /api/v1/health/observation-daily 엔드포인트 추가로 curl 한 줄에 6개 지표(M-S1/M-S2/M-S3/M-F1/M-R) KST 기준 일별 집계 반환.",
+      "commits": [
+        {
+          "hash": "e8e3e47",
+          "message": "feat(observability): Phase 8.5 관찰 지표 단일 API 엔드포인트 추가",
+          "date": "2026-04-27"
         }
       ]
     }
