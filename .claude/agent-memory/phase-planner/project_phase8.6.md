@@ -1,19 +1,19 @@
 ---
-name: Phase 10.1 계획
+name: Phase 8.6 계획
 description: 2026-04-28 분기 D 트리거 선제 착수, 신호 생성 로직 구조 재설계 (병렬 OR + ATR 분위수 + volume_surge tier + walk-forward 60일)
 type: project
 ---
 
-# Phase 10.1 계획 (2026-04-28 수립)
+# Phase 8.6 계획 (2026-04-28 수립)
 
 ## 트리거
 - Phase 8.5 v2.6.1 5거래일 관찰 분기 D 확정 (2026-04-28 16:10 `auto_rollback_2d_zero_signals`)
 - 4거래일 본 신호 1건 / 폴백 605회 / 시뮬 pass율 38.9% vs 실측 ~3% (10배 괴리)
 - 사용자가 PO Sprint 2.6 제안 거부, 구조 재설계 노선(퀀트/단타) 선택
 
-## 재정의 (Phase 10.1 ↔ 10.2 분리)
-- 기존 Phase 10.1 (누적 백로그 통합: 피라미딩, 2차 하이브리드) → **Phase 10.2로 이관**
-- 본 자리 Phase 10.1 = **신호 생성 로직 구조 재설계** (분기 D 선제 착수)
+## 재정의 (Phase 8.6 ↔ 10.2 분리)
+- 기존 Phase 8.6 (누적 백로그 통합: 피라미딩, 2차 하이브리드) → **Phase 10.1로 이관**
+- 본 자리 Phase 8.6 = **신호 생성 로직 구조 재설계** (분기 D 선제 착수)
 
 ## 4 Sprint 구조
 1. Sprint 1 — 선행 패치 + 가드레일 (PO Sprint 2.6 흡수 + 리스크 G1~G3 DoR)
@@ -45,11 +45,11 @@ type: project
 - Sprint 1 흡수 결정: PO §3 (Sprint 2.6 안)
 
 ## ROADMAP / index.json 갱신
-- ROADMAP §장기 마일스톤 + 의존성 트리 + Phase 10.1·10.2 본문 섹션 (4군데)
-- index.json: phase10.1 status=planned + phaseDoc 추가 + reviews(분기 D 4종) + phase10.2 신규
+- ROADMAP §장기 마일스톤 + 의존성 트리 + Phase 8.6·10.2 본문 섹션 (4군데)
+- index.json: phase8.6 status=planned + phaseDoc 추가 + reviews(분기 D 4종) + phase10.1 신규
 
 ## 브랜치
-- `docs/phase10.1-plan` (docs/* 브랜치, hotfix/observation-daily-api와 분리)
+- `docs/phase8.6-plan` (docs/* 브랜치, hotfix/observation-daily-api와 분리)
 - deploy.md M 변경은 stash로 분리, hotfix 브랜치에 그대로 보존
 
 ## 데이터 의존성
@@ -57,4 +57,4 @@ type: project
 
 ## 사용자 결정 대기 항목
 - KIS 분봉 백필 분리 진행 여부 / dry_run→LIVE 자동 토글 여부
-- Phase 10.1↔10.2 분리는 본 Phase 전제로 채택 (사용자 명시 거부 시에만 재작성)
+- Phase 8.6↔10.2 분리는 본 Phase 전제로 채택 (사용자 명시 거부 시에만 재작성)

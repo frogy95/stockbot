@@ -26,4 +26,4 @@
 - [Phase 8/9/10 재편성 계획](project_phase8_9_10.md) — 2026-04-20 사용자 A안 지시 반영, 전문가 4명 리뷰, Phase 7.1/7.2/8/9 초안을 8/9/10으로 재편성, Phase 9 데이터 의존성 재검토(KIS 백필+점진 활성화), Phase 10은 완화 불가 명시, Phase 10.1 분리
 - [Phase 8.5 계획 제안](project_phase8.5.md) — 2026-04-22 신호 0건 교차 단절 브리지, 전문가 4명 페르소나 기반 리뷰, 2 Sprint (관측성+풀 폴백/동적 floor), 시간 슬라이딩·prev_close 연장 거부, Phase 9/10/10.1 순서 유지, ROADMAP 미반영(사용자 승인 대기)
 - [Phase 8.5 Sprint 2.5 계획](project_phase8.5-sprint2.5.md) — 2026-04-23 advisor A안 채택, 파라미터 불변 + 인프라 보강 단일 Sprint, 6 Task (resolve_override 통합 + env 동기화 + 경고 배너 + fallback 카드 + phase8 DoD 재정의 + 5거래일 관찰 의사결정 트리 A~E), 브랜치 phase8.5-sprint2.5
-- [Phase 10.1 계획](project_phase10.1.md) — 2026-04-28 분기 D 트리거 선제 착수, 신호 생성 로직 구조 재설계 (직렬 AND→병렬 OR + ATR 분위수 + volume_surge tier + DoR G1~G3 + walk-forward 60일), 4 Sprint, 38건 파라미터, 구 Phase 10.1(백로그) → Phase 10.2 이관, 분기 D 4명 재리뷰 입력
+- [Phase 8.6 계획](project_phase8.6.md) — 2026-04-28 분기 D 트리거 선제 착수, 신호 생성 로직 구조 재설계 (직렬 AND→병렬 OR + ATR 분위수 + volume_surge tier + DoR G1~G3 + walk-forward 60일), 4 Sprint, 38건 파라미터, 기존 Phase 8.6(LIVE 게이트) → Phase 8.7로 시프트, 기존 Phase 10.1(백로그) → Phase 10.1 자리 유지(Phase 10.2 폐기), 분기 D 4명 재리뷰 입력

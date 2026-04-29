@@ -52,18 +52,17 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.6으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23)
-- 현재 Phase: **Phase 8.5 완료 — 5거래일 관찰 진행 중 (의사결정 트리 A~E 대기)**
-- 현재 Sprint: **Phase 8.5 Sprint 2.5 완료 (2026-04-23)** — 5거래일 관찰 종료 후 Phase 8.6 Sprint 1 착수 여부 결정 (DoD D1~D7 기준)
+- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)**
+- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (계획 수립 완료, Sprint 1 착수 대기)**
+- 현재 Sprint: **Phase 8.6 Sprint 1 착수 대기** — 선행 패치(분기 D 손실 차단) + DoR 가드레일 G1~G3 동시 구축
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), **Phase 8.5 Sprint 2.5 (2026-04-23)**
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.6 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.5 5거래일 관찰 종료 후 착수, DoD D1~D7 기준: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5)
-- Phase 9 착수 조건 보강 제안: **Phase 8.6 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 착수 (데이터 수집 인프라). 현 ROADMAP "Phase 9 Sprint 0 = 데이터 축적 시작" 원칙 유지.
-- 후속 마일스톤: **Phase 8.6 Sprint 2 — 시스템 관리 UI** (구 Phase 8 Sprint 4)
-- 이후 마일스톤: Phase 8.6 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 (데이터 수집 인프라 + KIS 백필 + 5분봉 가속도)
+- 다음 마일스톤: **Phase 8.6 Sprint 1 — 신호 구조 재설계 선행 패치 + 가드레일 G1~G3** (분기 D 트리거 즉시 착수, 데이터 의존성 없음)
+- 후속 마일스톤: **Phase 8.6 Sprint 2~4** — 병렬 OR + ATR 분위수 / volume_surge tier + 시간 필터 / walk-forward 60일 + KS 자동 감지
+- LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 완료 후 착수, DoD: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5, tier 다양성 ≥ 2종)
+- Phase 9 착수 조건: **Phase 8.7 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 (Z-score/VWAP/5분봉 가속도 통합 데이터 수집 인프라).
+- 이후 마일스톤: Phase 8.7 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 → Phase 10 (U자형, 2개월+ 축적) → Phase 10.1 (누적 백로그)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
-- 분기 D 트리거 선제 마일스톤: **Phase 10.1 — 신호 생성 로직 구조 재설계 🔄** (2026-04-28 Phase 8.5 v2.6.1 자동 롤백 발동 → 직렬 AND→병렬 OR + ATR 분위수 + volume_surge tier + DoR G1~G3 + 60일 walk-forward, 4 Sprint)
-- 기존 Phase 10.1(누적 백로그 통합) → **Phase 10.2로 이관** (피라미딩, 2차 스크리닝 하이브리드, Phase 10 Sprint 3 + 3개월 안정 운영 후 착수)
 
 ### 2026-04-20 Phase 재편성
 - 사용자 지시(A안 + 3개 Phase 분할)로 기존 Phase 7.1/7.2/8/9를 Phase 8/9/10으로 재편성
@@ -72,12 +71,15 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 - 기존 Phase 9(U자형 비선형) 초안 → **Phase 10**으로 재편 + 백로그는 Phase 10.1로 분리
 - 기존 초안 파일은 `docs/phase/archive/`로 이동하여 이력 보존
 
-### 2026-04-28 Phase 10.1 재정의 (분기 D 트리거 선제 착수)
+### 2026-04-28 Phase 번호 재정렬 (분기 D 트리거 선제 착수)
 - Phase 8.5 v2.6.1 5거래일 관찰 분기 D 확정(2026-04-28 16:10 `auto_rollback_2d_zero_signals`) → 사용자 구조 재설계 노선 채택
-- 기존 **Phase 10.1: 누적 백로그 통합** (피라미딩, 2차 하이브리드) → **Phase 10.2**로 이관 + 본 자리 `Phase 10.1`은 **신호 생성 로직 구조 재설계**로 재정의
-- 4 Sprint: Sprint 1(선행 패치 + 가드레일 G1~G3) / 2(병렬 OR + ATR 분위수) / 3(volume_surge tier + 시간 필터) / 4(walk-forward 60일 + KS 자동 감지)
+- **번호 = 실행순서 원칙으로 재정렬**:
+  - 신규 **Phase 8.6**: 신호 생성 로직 구조 재설계 (분기 D 트리거 선제 착수, 4 Sprint)
+  - 기존 **Phase 8.6 (E2E + LIVE 게이트 + 관리 UI + 성과 분석)** → **Phase 8.7로 시프트**
+  - 기존 **Phase 10.1 (누적 백로그 통합 = 피라미딩, 2차 하이브리드)** → **Phase 10.1 자리 유지** (구 Phase 10.2 명칭 폐기)
+- Phase 8.6 4 Sprint: Sprint 1(선행 패치 + 가드레일 G1~G3) / 2(병렬 OR + ATR 분위수) / 3(volume_surge tier + 시간 필터) / 4(walk-forward 60일 + KS 자동 감지)
 - 데이터 의존성 없음 (분기 D는 데이터 부족이 아닌 구조 결함). Phase 9·10 순서 자체는 변경하지 않음
-- Phase 8.6 Sprint 1(E2E+LIVE 게이트)은 Phase 10.1 완료 후 착수
+- 실행 순서: Phase 8.5 ✅ → 8.6 (신규) → 8.7 (구 8.6) → 9 → 10 → 10.1 (구 백로그)
 
 ## 기술 아키텍처 결정 사항
 
@@ -118,13 +120,12 @@ Phase 0 (완료)
                                                               └─(코드)─> Phase 7.0: 매매 엔진 결함 수정 + LIVE 전환
                                                                     └─(코드)─> Phase 8: 즉시 착수 개선 통합 (구 7.2 S1·S2 + 4.5 S2 + 5 S3 + 7.0 S3)
                                                                           └─(코드, 2026-04-22 추가)─> Phase 8.5: 신호 발생 데드락 해제 (풀 하한 폴백 + 동적 min_volume_floor + 관측성)
-                                                                                └─> Phase 8.6: E2E + LIVE 게이트 + 관리 UI + 성과 분석 (구 Phase 8 Sprint 3·4·5 이관, 2026-04-22)
-                                                                                      └─(코드)─> Phase 9: Z-score + VWAP + 5분봉 가속도 통합
-                                                                                └─(데이터 부분 완화, KIS 백필 + 점진 활성화)─> Phase 9
-                                                                                      └─(코드)─> Phase 10: U자형 비선형 보정
-                                                                                      └─(데이터: 2~6개월)─> Phase 10
-                                                                                            └─> Phase 10.2: 누적 백로그 통합 (피라미딩, 2차 스크리닝 N=1 등)
-                                                                                └─(분기 D 트리거, 코드)─> Phase 10.1: 신호 생성 로직 구조 재설계 (병렬 OR + volume_surge + walk-forward)
+                                                                                └─(분기 D 트리거 2026-04-28, 코드)─> Phase 8.6: 신호 생성 로직 구조 재설계 (병렬 OR + ATR 분위수 + volume_surge + walk-forward 60일)
+                                                                                      └─(코드)─> Phase 8.7: E2E + LIVE 게이트 + 관리 UI + 성과 분석 (구 Phase 8.6, 2026-04-22)
+                                                                                            └─(코드 + LIVE 2주 안정)─> Phase 9: Z-score + VWAP + 5분봉 가속도 통합
+                                                                                                  └─(코드)─> Phase 10: U자형 비선형 보정
+                                                                                                  └─(데이터: 2~6개월)─> Phase 10
+                                                                                                        └─(데이터: 3개월+ 안정 운영)─> Phase 10.1: 누적 백로그 통합 (피라미딩, 2차 스크리닝 하이브리드)
 ```
 
 > **범례**: `(코드)` = 코드 의존성 (이전 모듈/인프라 필요), `(데이터: N)` = 데이터 의존성 (최소 N 축적 필요)
@@ -146,16 +147,16 @@ Phase 0 (완료)
 - Phase 6 -> 6.1: 전략 volume_ratio 단위 불일치 수정 (장중 누적 vs 전일 마감 누적 → 시간가중 보정) + 5분봉 수집 파이프라인 선행 구축
 - Phase 6.1 -> 6.2: 포털 수집 타이밍 불일치(08:00 vs 정책 T+1 13시) 진단 → 재시도 조건 강화 + 14:00 보조 cron + KIS 폴백 streak 관리
 - Phase 6.2 -> 7.0: **(긴급)** 매매 엔진 치명적 결함 3건 (가격 갱신 미연결, 포지션 미생성, 청산 미실행) + LIVE 전환 준비. 데이터 축적 불필요, 즉시 착수.
-- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. LIVE 전환 게이트(현 Phase 8.6 Sprint 1, 구 Phase 8 Sprint 3)의 선행 조건.
+- Phase 7.0 Sprint 2 -> 7.0.1: **(긴급)** KIS LIVE WS 연결 실패 — ws_url 경로 누락 + Railway Static IP. LIVE 전환 게이트(현 Phase 8.7 Sprint 1, 구 Phase 8 Sprint 3)의 선행 조건.
 - Phase 7.0 -> 8: 매매 엔진 수정 완료 후, 전략 진입 조건 개선 (구 7.2 흡수) + 관리 UI + 성과 분석 + E2E 게이트(구 7.0 S3) 통합. Phase 7.0 Sprint 3은 2026-04-20 Phase 8 Sprint 3으로 이관, Phase 7.0은 종결.
 - Phase 8 Sprint 2 -> 8.5 (2026-04-22 추가): Sprint 2 배포 후 프로덕션 관측에서 신호 0건 교차 단절 구조 확인 → Phase 10.1 하이브리드의 MVP(풀 하한 폴백)와 전략 게이트 동적 분기를 선제 적용.
-- Phase 8 -> 8.6 범위 이관 (2026-04-22 사용자 지시): Phase 8을 Sprint 1·2로 종결. 구 Sprint 3(E2E+LIVE), Sprint 4(관리 UI), Sprint 5(성과 분석)는 Phase 8.6 Sprint 1·2·3으로 이관.
-- Phase 8.5 -> 8.6: 일평균 신호 ≥ 1 확보 후 Phase 8.6 Sprint 1(E2E + LIVE 전환 게이트) 진행 (DoD 재정의 — "3거래일 연속" → "일평균 ≥ 1, 0건 일수 ≤ 2/5").
+- Phase 8 -> 8.6 범위 이관 (2026-04-22 사용자 지시): Phase 8을 Sprint 1·2로 종결. 구 Sprint 3(E2E+LIVE), Sprint 4(관리 UI), Sprint 5(성과 분석)는 Phase 8.7 Sprint 1·2·3으로 이관.
+- Phase 8.5 -> 8.6: 일평균 신호 ≥ 1 확보 후 Phase 8.7 Sprint 1(E2E + LIVE 전환 게이트) 진행 (DoD 재정의 — "3거래일 연속" → "일평균 ≥ 1, 0건 일수 ≤ 2/5").
 - Phase 8 Sprint 순서: Sprint 1(OHLC) → 2(다층 진입) → 3(E2E+LIVE 게이트) → 4(관리 UI) → 5(성과 분석). Sprint 번호 = 실행 순서.
 - Phase 6.1 + Phase 8 -> 9: **(코드)** 5분봉 수집 인프라 + 매매 신호 복구 완료 후 Z-score/VWAP/5분봉 가속도 통합 설계. **(데이터 완화)** 사용자 지시 재검토 결과 KIS 과거 분봉 백필 + 점진 활성화로 20거래일 대기 우회 가능.
 - Phase 9 -> 10: **(코드)** 실시간 VWAP + 백테스트 데이터셋, **(데이터)** U자형 함수 피팅은 완화 불가 — 최소 2개월(대안 C), 3~6개월(본격 피팅) 필수.
-- Phase 8.5 분기 D -> 10.1 (2026-04-28 추가): v2.6.1 자동 롤백 발동 → 신호 생성 로직 구조 재설계(병렬 OR + ATR 분위수 + volume_surge tier + walk-forward 60일). 데이터 축적 불필요, 즉시 착수. Phase 8.6 Sprint 1 선행 조건이 됨.
-- Phase 10 -> 10.2: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리. 구 Phase 10.1 백로그가 본 위치로 이관됨.
+- Phase 8.5 분기 D -> 8.6 (2026-04-28 추가): v2.6.1 자동 롤백 발동 → 신호 생성 로직 구조 재설계(병렬 OR + ATR 분위수 + volume_surge tier + walk-forward 60일). 데이터 축적 불필요, 즉시 착수. Phase 8.7 Sprint 1(구 Phase 8.6) 선행 조건이 됨.
+- Phase 10 -> 10.1: U자형 보정 배포 + 안정 운영 3개월 이상 축적 후 누적 백로그(피라미딩, 2차 스크리닝 하이브리드 등) 통합 처리.
 
 ## MVP 범위 (Must)
 
@@ -575,7 +576,7 @@ Next.js 기반 웹 대시보드 구현. 메인 대시보드, 포지션/주문/�
 
 ---
 
-## Phase 4.5: 스케줄러 안정화 + 장애 복구 (Sprint 1~2) 🔄
+## Phase 4.5: 스케줄러 안정화 + 장애 복구 (Sprint 1) 🔀 Sprint 1 ✅ / Sprint 2 → Phase 8.7 Sprint 2 이관
 
 ### 목표
 2026-04-01 장전 테스트 장애 근본 해결. 스케줄 의존성 체인(선행 실패 시 후속 중지 + 매매 엔진 차단), 상태값 Redis 영속화, 수동 파이프라인 재실행 API + 대시보드 UI, ETF sanity check 조건부 완화, health/readiness 강화.
@@ -1143,7 +1144,7 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 ## Phase 8: 즉시 착수 개선 사항 통합 (Sprint 1~2) ✅ 완료 (2026-04-22)
 
 ### 목표
-데이터 축적 대기 없이 즉시 착수 가능한 개선 사항 중 **매매 신호 0건 근본 원인 해결 (구 Phase 7.2 Sprint 1·2 흡수)**만 Phase 8 범위로 축소. **E2E + LIVE 게이트 + 시스템 관리 UI + 성과 분석은 Phase 8.6으로 이관** (2026-04-22 사용자 지시).
+데이터 축적 대기 없이 즉시 착수 가능한 개선 사항 중 **매매 신호 0건 근본 원인 해결 (구 Phase 7.2 Sprint 1·2 흡수)**만 Phase 8 범위로 축소. **E2E + LIVE 게이트 + 시스템 관리 UI + 성과 분석은 Phase 8.7으로 이관** (2026-04-22 사용자 지시).
 
 ### 필요 선행 데이터
 - 없음 (코드 수정 — 데이터 축적 불필요)
@@ -1161,16 +1162,16 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 > Sprint 계획: `docs/phase/phase8/sprint2/sprint2.md` (2026-04-22)
 - prev_close(1단계) + prev_high(2단계) + gap_open 3단계 진입 (breakout_tier 메타데이터)
 - prev_close: confidence 상한 0.75, 반 포지션(50%), volume_threshold 2.5 고정
-- 일일 최대 거래 10건 (Phase 8.6 Sprint 1 LIVE 전환 전 env override 3건/일)
+- 일일 최대 거래 10건 (Phase 8.7 Sprint 1 LIVE 전환 전 env override 3건/일)
 - 13:00 이후 prev_close 돌파 비활성화
 - Sprint 1 OHLC 회귀 테스트 픽스처 강화 + engine 차단 사유 관측성
 - Hotfix PR #153 프론트 리스크 리셋 버튼 연동 (2단계 확인 + LIVE 배지)
 - 2026-04-21 신규 버그 3종: WS false-positive 재연결 가드(동시호가 스킵), 재연결 알림 dedup, 일일 리포트 중복 차단
 
-#### 🔀 이관 (2026-04-22): Sprint 3·4·5 → Phase 8.6
-- 구 Sprint 3 (E2E + LIVE 게이트) → **Phase 8.6 Sprint 1** (DoD는 Phase 8.5 관측 기반으로 재정의 적용)
-- 구 Sprint 4 (시스템 관리 UI) → **Phase 8.6 Sprint 2**
-- 구 Sprint 5 (성과 분석) → **Phase 8.6 Sprint 3**
+#### 🔀 이관 (2026-04-22): Sprint 3·4·5 → Phase 8.7
+- 구 Sprint 3 (E2E + LIVE 게이트) → **Phase 8.7 Sprint 1** (DoD는 Phase 8.5 관측 기반으로 재정의 적용)
+- 구 Sprint 4 (시스템 관리 UI) → **Phase 8.7 Sprint 2**
+- 구 Sprint 5 (성과 분석) → **Phase 8.7 Sprint 3**
 - 사용자 지시: Phase 8은 Sprint 1·2로 종결, 잔여는 8.6으로 분리. 중간에 Phase 8.5(신호 발생 데드락 해제) 선행 필수.
 
 ### 완료 기준 (Definition of Done) — Phase 8 축소 범위
@@ -1179,25 +1180,25 @@ momentum_breakout 전략의 volume_ratio 조건이 "장중 누적 vs 전일 마�
 - Sprint 1·2 pytest 전체 통과 ✅
 
 ### 기술 고려사항
-- Phase 8 범위는 Sprint 1·2만. 잔여 Sprint 3~5는 Phase 8.6으로 분리됨.
-- Phase 8 → Phase 8.5 (브리지) → Phase 8.6 (구 Sprint 3·4·5) → Phase 9 순서.
+- Phase 8 범위는 Sprint 1·2만. 잔여 Sprint 3~5는 Phase 8.7으로 분리됨.
+- Phase 8 → Phase 8.5 (브리지) → Phase 8.7 (구 Sprint 3·4·5) → Phase 9 순서.
 
 > Phase 상세 계획: `docs/phase/phase8/phase8.md` ✅ 계획 수립 완료 (2026-04-20, 범위 재편 2026-04-22)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명
 
 ---
 
-## Phase 8.5: 신호 발생 데드락 해제 (Sprint 1~2.5) 🔄 진행 중 (2026-04-23)
+## Phase 8.5: 신호 발생 데드락 해제 (Sprint 1~2.5) 🔀 Sprint 1·1.5·2·2.5 ✅ / 5거래일 관찰 분기 D 확정 → 후속작업 Phase 8.6 이관 (2026-04-28)
 
 ### 배경 (2026-04-22 프로덕션 관측)
 Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구조**가 확인됨:
 - 2차 스크리닝이 하루 종일 1종목만 통과 (모집단 ≈ 1, 기댓값 ≈ 0)
 - 오전: `min_volume_floor=0.5` 컷 (거래량 31% 정체) / 13:00+: `prev_close_time_guard` 컷
-- Phase 8.6 Sprint 1(구 Phase 8 Sprint 3) DoD("신호 발생 3거래일 연속")는 현 구조에서 **논리적 달성 불가**
+- Phase 8.7 Sprint 1(구 Phase 8 Sprint 3) DoD("신호 발생 3거래일 연속")는 현 구조에서 **논리적 달성 불가**
 - Phase 10.1 하이브리드가 근본 해결책이나 최소 6개월+ 뒤 → 중간 브리지 필수
 
 ### 목표
-데이터 축적 대기 없이 코드·파라미터 수정만으로 **2차 스크리닝 풀과 전략 게이트의 교차 가능 집합을 양수**로 만들어 Phase 8.6 Sprint 1(구 Phase 8 Sprint 3) 착수 전제를 확보한다. Phase 9·10·10.1의 순서·전제·DoD는 **건드리지 않는다**.
+데이터 축적 대기 없이 코드·파라미터 수정만으로 **2차 스크리닝 풀과 전략 게이트의 교차 가능 집합을 양수**로 만들어 Phase 8.7 Sprint 1(구 Phase 8 Sprint 3) 착수 전제를 확보한다. Phase 9·10·10.1의 순서·전제·DoD는 **건드리지 않는다**.
 
 ### 필요 선행 데이터
 - 없음 (코드·파라미터 수정만)
@@ -1245,20 +1246,20 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - **`prev_close_time_guard` 13:00→14:00 연장** — 오후 되돌림 70%+(김단타), Sprint 2 확정 직후 번복 금지(최리스크)
 - **Phase 9 Sprint 0 브리지와 병행** (전원 거부)
 - **Phase 10 "대안 C만" 조기 착수** (2026-04-20 "완화 불가" 확정 번복 금지)
-- **Phase 10.1 하이브리드 전체 조기 착수** (MVP=풀 하한 폴백만 Phase 8.5에 흡수, 본격 고도화는 Phase 10.1 유지)
+- **Phase 10.1 하이브리드 전체 조기 착수** (MVP=풀 하한 폴백만 Phase 8.5에 흡수, 본격 고도화는 Phase 8.6 유지)
 
 ### 완료 기준 (Definition of Done)
 - Sprint 1 관측성 대시보드 카드 4개 배포 + 1.5거래일 관찰에서 메트릭 수집 정상
 - Sprint 2 풀 하한 폴백 + 동적 `MIN_VOLUME_FLOOR` + `is_fallback` 메타 + HARD 0.3 배포
 - env 변수화 6개 + `.env.example` 동기화
 - 자동 롤백 트리거 스케줄러 동작 확인
-- Phase 8.5 관찰 5거래일에서 **일평균 신호 ≥ 1** (Phase 8.6 Sprint 1 착수 전제)
+- Phase 8.5 관찰 5거래일에서 **일평균 신호 ≥ 1** (Phase 8.7 Sprint 1 착수 전제)
 - pytest 전체 통과
 
 ### 기술 고려사항
 - Sprint 1 → Sprint 2 순차 (관측성 선행, 모든 튜닝은 데이터 기반)
 - Sprint 1 → Sprint 2 관찰 기간: **1.5거래일** (배포 당일 2시간 + 다음 거래일 종일)
-- Sprint 2 → Phase 8.6 Sprint 1 관찰 기간: **5거래일 유지**
+- Sprint 2 → Phase 8.7 Sprint 1 관찰 기간: **5거래일 유지**
 - 전 파라미터 env 변수화로 즉시 롤백 가능
 - 2차 `pass_threshold=75.0`은 Phase 8.5에서 유지 (Sprint 1 데이터 수집 후 재평가)
 
@@ -1267,10 +1268,51 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 
 ---
 
-## Phase 8.6: E2E 검증 + LIVE 전환 게이트 + 시스템 관리 UI + 성과 분석 (Sprint 1~3) 📋
+## Phase 8.6: 신호 생성 로직 구조 재설계 (Sprint 1~4) 🔄
+
+### 목표
+Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 노출한 직렬 AND 게이트 + 시뮬-실측 분포 괴리 + 단일 시각(가격 돌파) 한계를 해소. 분기 D 4명 재리뷰(PO/리스크/퀀트/단타) 권고를 통합하여 **병렬 OR 다중 진입 경로**로 신호 생성 로직을 구조 재설계한다.
+
+### 트리거
+- 2026-04-28 16:10 자동 롤백 발동 (4거래일 본 신호 1건 / 폴백 605회)
+- 시뮬 2nd-screening pass율 38.9% vs 실측 ~3% (10배 이상 괴리)
+- tier 다양성 1종(prev_high만), 직렬 AND 곱셈으로 통과율 0 수렴
+
+### 범위 (4 Sprint, 3~4주)
+- **Sprint 1** — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금
+- **Sprint 2** — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡
+- **Sprint 3** — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 (09:00~09:10 진입 금지, 점심 floor 0.7, 14:30+ 신규 진입 금지)
+- **Sprint 4** — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND)
+
+### Definition of Ready (Sprint 2 착수 차단 해제 조건)
+- G1: 폴백 신호율(M-F2) 산출 가능화 — `signal.fallback=true` 메타데이터 신호→주문→체결 전파
+- G2: 자동 롤백 R1~R4 다중 트리거 OR 조합 (R1=0건 3일 / R2=폴백 발동률 ≥50% 3일 / R3=tier 1종 5일 / R4=폴백 비중 ≥70% 1일)
+- G3: 일별 2차 통과율(폴백 제외) <10% 3일 연속 시 본 Phase 변경분 자동 비활성화
+
+### 필요 선행 데이터
+- 없음 (분기 D는 구조 결함, 데이터 부족 아님). 단, Sprint 4 walk-forward는 KIS 분봉 백필 60일분 필요 (Phase 9 Sprint 0 백필 메커니즘 일부 차용)
+
+### 완료 기준 (Definition of Done)
+- DoR 4종 통과 (G1·G2·G3 + Phase 7.0 잠금)
+- 병렬 OR tier 분리 + ATR 분위수 캘리브레이션 동작
+- `volume_surge` tier dry_run 배포 + Paper 5거래일 dry_run 신호 ≥5건
+- Paper 5거래일 G-A(일평균 신호 ≥1.5) + G-B(0건 일수 ≤30%) + G-C(tier ≥3종) 동시 충족
+- 60일 Walk-forward 백테스트 KS 검정 p≥0.05
+- LIVE 토글 게이트 G-Bt1·G-Bt2·G-Bt3 미충족 시 dry_run 강제 유지 검증
+
+### 후속
+- Phase 8.6 완료 후 → **Phase 8.7 Sprint 1** (E2E + LIVE 게이트, 구 Phase 8 Sprint 3) 착수
+- Phase 9 Sprint 0 (5분봉 가속도 + KIS 백필) 순서는 변경 없음
+
+> Phase 상세 계획: `docs/phase/phase8.6/phase8.6.md` ✅ 계획 수립 완료 (2026-04-28)
+> 전문가 검토: 분기 D 재리뷰 4명 — `docs/phase/phase8.5/phase8.5-branch-d-{po,risk,quant,daytrader}-review.md`
+
+---
+
+## Phase 8.7: E2E 검증 + LIVE 전환 게이트 + 시스템 관리 UI + 성과 분석 (Sprint 1~3) 📋
 
 ### 배경 (2026-04-22 재편)
-사용자 지시로 Phase 8을 Sprint 1·2(신호 근본 원인 해결)로 종결하고, 구 Sprint 3·4·5를 Phase 8.6으로 분리 이관. Phase 8.5(신호 발생 데드락 해제) 완료 후 착수.
+사용자 지시로 Phase 8을 Sprint 1·2(신호 근본 원인 해결)로 종결하고, 구 Sprint 3·4·5를 Phase 8.7으로 분리 이관. Phase 8.5(신호 발생 데드락 해제) 완료 후 착수.
 
 ### 목표
 (1) E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3 = 구 Phase 7.0 Sprint 3)
@@ -1314,7 +1356,7 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 - Sprint 2·3은 LIVE 안정 운영 이후 순차 (정프로 P1 — 1명 개발자 컨텍스트 분산 방지).
 - 5분봉 가속도 지표는 Phase 9 Sprint 0으로 이관 (박퀀트 Q1 — 지표 상관관계 관리).
 
-> Phase 상세 계획: `docs/phase/phase8/phase8.md`의 Sprint 3·4·5 섹션 참조 (범위 이관, 별도 phase8.6 문서는 Sprint 착수 시점에 작성)
+> Phase 상세 계획: `docs/phase/phase8/phase8.md`의 Sprint 3·4·5 섹션 참조 (범위 이관, 별도 phase8.7 문서는 Sprint 착수 시점에 작성)
 > 전문가 검토: 정프로(PO), 최리스크(리스크관리), 김단타(단타), 박퀀트(퀀트) — 4명 (Phase 8 검토 승계)
 
 ---
@@ -1425,51 +1467,10 @@ Phase 6.1의 선형 시간가중 보정을 **실제 관측 기반 U자형 비선
 
 ---
 
-## Phase 10.1: 신호 생성 로직 구조 재설계 (Sprint 1~4) 🔄
+## Phase 10.1: 누적 백로그 통합 (Sprint 1~2, 예정) 📋
 
 ### 목표
-Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 노출한 직렬 AND 게이트 + 시뮬-실측 분포 괴리 + 단일 시각(가격 돌파) 한계를 해소. 분기 D 4명 재리뷰(PO/리스크/퀀트/단타) 권고를 통합하여 **병렬 OR 다중 진입 경로**로 신호 생성 로직을 구조 재설계한다.
-
-### 트리거
-- 2026-04-28 16:10 자동 롤백 발동 (4거래일 본 신호 1건 / 폴백 605회)
-- 시뮬 2nd-screening pass율 38.9% vs 실측 ~3% (10배 이상 괴리)
-- tier 다양성 1종(prev_high만), 직렬 AND 곱셈으로 통과율 0 수렴
-
-### 범위 (4 Sprint, 3~4주)
-- **Sprint 1** — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금
-- **Sprint 2** — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡
-- **Sprint 3** — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 (09:00~09:10 진입 금지, 점심 floor 0.7, 14:30+ 신규 진입 금지)
-- **Sprint 4** — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND)
-
-### Definition of Ready (Sprint 2 착수 차단 해제 조건)
-- G1: 폴백 신호율(M-F2) 산출 가능화 — `signal.fallback=true` 메타데이터 신호→주문→체결 전파
-- G2: 자동 롤백 R1~R4 다중 트리거 OR 조합 (R1=0건 3일 / R2=폴백 발동률 ≥50% 3일 / R3=tier 1종 5일 / R4=폴백 비중 ≥70% 1일)
-- G3: 일별 2차 통과율(폴백 제외) <10% 3일 연속 시 본 Phase 변경분 자동 비활성화
-
-### 필요 선행 데이터
-- 없음 (분기 D는 구조 결함, 데이터 부족 아님). 단, Sprint 4 walk-forward는 KIS 분봉 백필 60일분 필요 (Phase 9 Sprint 0 백필 메커니즘 일부 차용)
-
-### 완료 기준 (Definition of Done)
-- DoR 4종 통과 (G1·G2·G3 + Phase 7.0 잠금)
-- 병렬 OR tier 분리 + ATR 분위수 캘리브레이션 동작
-- `volume_surge` tier dry_run 배포 + Paper 5거래일 dry_run 신호 ≥5건
-- Paper 5거래일 G-A(일평균 신호 ≥1.5) + G-B(0건 일수 ≤30%) + G-C(tier ≥3종) 동시 충족
-- 60일 Walk-forward 백테스트 KS 검정 p≥0.05
-- LIVE 토글 게이트 G-Bt1·G-Bt2·G-Bt3 미충족 시 dry_run 강제 유지 검증
-
-### 후속
-- Phase 10.1 완료 후 → **Phase 8.6 Sprint 1** (E2E + LIVE 게이트, 구 Phase 8 Sprint 3) 착수
-- Phase 9 Sprint 0 (5분봉 가속도 + KIS 백필) 순서는 변경 없음
-
-> Phase 상세 계획: `docs/phase/phase10.1/phase10.1.md` ✅ 계획 수립 완료 (2026-04-28)
-> 전문가 검토: 분기 D 재리뷰 4명 — `docs/phase/phase8.5/phase8.5-branch-d-{po,risk,quant,daytrader}-review.md`
-
----
-
-## Phase 10.2: 누적 백로그 통합 (Sprint 1~2, 예정) 📋
-
-### 목표
-Phase 10 완료 + 3개월 안정 운영 후 착수. 기존 Phase 10.1(누적 백로그)에서 이관됨. Phase 4~10 리뷰에서 의도적으로 보류했던 장기 고도화 항목 일괄 처리.
+Phase 10 완료 + 3개월 안정 운영 후 착수. Phase 4~10 리뷰에서 의도적으로 보류했던 장기 고도화 항목 일괄 처리. (2026-04-28 분기 D 재정렬에서 잠시 Phase 10.2로 이관되었다가 본 자리로 복귀)
 
 ### 범위
 - **당일 고가 갱신 진입 (피라미딩)** — position_size 30%, +3% 이상 이익 조건, 14:00 비활성, 호가 매수/매도 잔량 비율 0.5+ (김단타+최리스크 강력 권고)
