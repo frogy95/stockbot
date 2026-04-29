@@ -17,6 +17,7 @@ class TradeSignalData(BaseModel):
     stop_loss: int
     take_profit: int
     fallback: bool = False  # Phase 8.6 Sprint 1 — G1 폴백 메타데이터
+    matched_tiers: list[str] | None = None  # Phase 8.6 Sprint 2 — 병렬 OR 통과 tier (NULL=Kill-switch)
 
 
 class RejectedSignal(BaseModel):

@@ -119,6 +119,7 @@ class SignalGenerator:
                     take_profit=signal_data.take_profit,
                     status="pending",
                     fallback=is_fallback,
+                    matched_tiers=signal_data.matched_tiers,  # Phase 8.6 Sprint 2
                 )
                 session.add(record)
                 generated.append(signal_data)
