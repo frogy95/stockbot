@@ -52,12 +52,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)**
-- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (계획 수립 완료, Sprint 1 착수 대기)**
-- 현재 Sprint: **Phase 8.6 Sprint 1 착수 대기** — 선행 패치(분기 D 손실 차단) + DoR 가드레일 G1~G3 동시 구축
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), **Phase 8.5 Sprint 2.5 (2026-04-23)**
+- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)** + **Phase 8.6 Sprint 1 완료 (2026-04-29)**
+- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (Sprint 1 완료, Sprint 2 착수 대기)**
+- 현재 Sprint: **Phase 8.6 Sprint 2 — 착수 대기** (`docs/phase/phase8.6/sprint2/sprint2.md`) — tier 직렬 AND → 병렬 OR 분리 + ATR 분위수 캘리브레이션
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), Phase 8.5 Sprint 2.5 (2026-04-23), **Phase 8.6 Sprint 1 (2026-04-29)**
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.6 Sprint 1 — 신호 구조 재설계 선행 패치 + 가드레일 G1~G3** (분기 D 트리거 즉시 착수, 데이터 의존성 없음)
+- 다음 마일스톤: **Phase 8.6 Sprint 2 — tier 직렬 AND → 병렬 OR 분리 + ATR 분위수 캘리브레이션**
 - 후속 마일스톤: **Phase 8.6 Sprint 2~4** — 병렬 OR + ATR 분위수 / volume_surge tier + 시간 필터 / walk-forward 60일 + KS 자동 감지
 - LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 완료 후 착수, DoD: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5, tier 다양성 ≥ 2종)
 - Phase 9 착수 조건: **Phase 8.7 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 (Z-score/VWAP/5분봉 가속도 통합 데이터 수집 인프라).
@@ -1279,7 +1279,7 @@ Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 �
 - tier 다양성 1종(prev_high만), 직렬 AND 곱셈으로 통과율 0 수렴
 
 ### 범위 (4 Sprint, 3~4주)
-- **Sprint 1** — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금
+- **Sprint 1** ✅ (2026-04-29 완료) — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금 — `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
 - **Sprint 2** — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡
 - **Sprint 3** — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 (09:00~09:10 진입 금지, 점심 floor 0.7, 14:30+ 신규 진입 금지)
 - **Sprint 4** — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND)

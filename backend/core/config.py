@@ -44,9 +44,11 @@ class Settings(BaseSettings):
     MIN_VOLUME_FLOOR_HARD: float = Field(default=0.3, ge=0.0, le=1.0, description="어떤 분기도 이 이하 금지")
     # 2차 스크리닝 통과 < 이 값이면 1차 통과 종목으로 보강
     SECONDARY_POOL_FALLBACK_ENABLED: bool = Field(default=True, description="2차 풀 하한 폴백 활성화")
-    SECONDARY_POOL_FALLBACK_THRESHOLD: int = Field(default=3, ge=1, le=10, description="passed_count < N 시 폴백 발동")
+    SECONDARY_POOL_FALLBACK_THRESHOLD: int = Field(default=5, ge=1, le=10, description="passed_count < N 시 폴백 발동 (Phase 8.6 Sprint 1: 3→5 분기 D 풀 협소 대응)")
     # 폴백 포함 풀 최대 종목 수
     SECONDARY_POOL_MAX: int = Field(default=5, ge=1, le=20, description="폴백 포함 풀 상한")
+    # 폴백 보강 종목 수 상한 (Phase 8.6 Sprint 1)
+    SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP: int = Field(default=5, ge=1, le=10, description="폴백 보강 종목 수 상한")
     # 전일 대비 이 이하 종목은 폴백 제외
     FALLBACK_DROP_EXCLUDE_PCT: float = Field(default=-3.0, ge=-100.0, le=0.0, description="전일 대비 이 이하는 폴백 제외 (%)")
     # 폴백 종목 포지션 사이즈 배수 (0.5 = 반 포지션)
@@ -56,6 +58,24 @@ class Settings(BaseSettings):
 
     # --- Phase 8.5 Sprint 2.5: Redis settings override 경로 제어 ---
     SETTINGS_OVERRIDE_ENABLED: bool = Field(default=True, description="Redis settings override 경로 활성화 (긴급 차단용)")
+
+    # --- Phase 8.6 Sprint 1: G2 자동 롤백 R1~R4 ---
+    AUTO_ROLLBACK_ENABLED: bool = Field(default=True, description="G2 자동 롤백 마스터 토글")
+    AUTO_ROLLBACK_R1_ENABLED: bool = Field(default=True, description="R1: 신호 0건 3거래일 연속")
+    AUTO_ROLLBACK_R2_ENABLED: bool = Field(default=True, description="R2: 폴백 발동 3거래일 연속 (v0)")
+    AUTO_ROLLBACK_R3_ENABLED: bool = Field(default=False, description="R3: tier 종류 ≤1 5거래일 (Sprint 2 후 활성)")
+    AUTO_ROLLBACK_R4_ENABLED: bool = Field(default=True, description="R4: 폴백 비중 ≥70% 1거래일")
+
+    # --- Phase 8.6 Sprint 1: G3 1차→2차 통과율 회로차단기 ---
+    CIRCUIT_BREAKER_ENABLED: bool = Field(default=True, description="G3 회로차단기 마스터 토글")
+    CIRCUIT_BREAKER_PASS_RATE_THRESHOLD: float = Field(
+        default=0.10, ge=0.0, le=1.0,
+        description="일별 1차→2차 통과율 임계 (이 미만이 N일 연속이면 발동)",
+    )
+    CIRCUIT_BREAKER_CONSECUTIVE_DAYS: int = Field(
+        default=3, ge=1, le=10,
+        description="회로차단기 발동 연속 일수 임계",
+    )
 
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"

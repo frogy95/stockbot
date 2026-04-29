@@ -16,6 +16,7 @@ class TradeSignalData(BaseModel):
     entry_price: int
     stop_loss: int
     take_profit: int
+    fallback: bool = False  # Phase 8.6 Sprint 1 — G1 폴백 메타데이터
 
 
 class RejectedSignal(BaseModel):

@@ -63,6 +63,31 @@ sprint-close가 생성한 PR에 대해 다음을 수행합니다:
   - 검증 실패 시 스크린샷을 `docs/phase/phase{P}/sprint{N}/` 폴더에 저장
   - task별 검증 결과는 `docs/phase/phase{P}/sprint{N}/task{N}/test-result.md`에 기록 (형식: `docs/templates/EXAMPLE-test-result.md`)
 
+**Phase 7.0 LIVE 파라미터 코드 잠금 — CI grep 가드 (Phase 8.6 Sprint 1~)**:
+
+주문 실행 경로의 LIVE 파라미터 우회 변경을 PR 머지 전 자동 차단합니다.
+
+```bash
+git diff develop...HEAD -- \
+  backend/modules/trading/executor.py \
+  backend/modules/trading/order_manager.py \
+  | grep -E "(max_position|position_size|daily_max_loss|emergency_stop)"
+```
+
+- 위 grep 결과가 **0줄**이어야 통과. 1줄이라도 매칭되면 Phase 7.0 잠금 위반으로 간주하고 PR 머지를 차단합니다.
+- 위반 발견 시 deploy.md 검증 결과에 `⬜ Phase 7.0 CI grep 가드 위반 — 변경 라인 N건` 기록 후 사용자 승인을 받기 전까지 머지 금지.
+- 본 가드는 `backend/core/constants.py`(Final + 런타임 assert)와 짝을 이루는 PR-time 안전망입니다.
+
+**Alembic 왕복 테스트 (Phase 8.6 Sprint 1 Task 3 — DB 컬럼 추가가 있는 PR)**:
+
+```bash
+docker compose exec -T backend alembic upgrade head
+docker compose exec -T backend alembic downgrade -1
+docker compose exec -T backend alembic upgrade head
+```
+
+3단계 모두 성공해야 머지 가능. 실패 시 deploy.md에 단계별 에러 로그 기록.
+
 **수동 필요 항목**: `.claude/rules/dev-process.md` 섹션 5 수동 컬럼 참조
 
 ### 4단계: Phase 문서 반영 검증

@@ -437,26 +437,22 @@ async def test_confidence_stage_rejected(mock_progress):
 @patch(_PATCH_PROGRESS, return_value=1.0)
 @pytest.mark.asyncio
 async def test_min_volume_floor_blocks(mock_progress):
-    """전일 대비 절대 거래량 하한 미만이면 차단.
+    """전일 대비 절대 거래량 하한 미만이면 차단 (오후 시각 — 시간대 슬라이딩 미적용).
 
     dynamic 모드 + prev_high tier + weak breakout(breakout_pct < 3%): floor=0.5.
     volume=4M / prev_volume=10M = 0.4 < 0.5 → 차단.
-
-    strong_breakout 조건: current_price >= breakout_ref * 1.03.
-    current_price=70600, prev_high=70500 → pct=0.14%, 70600 < 70500*1.03=72615 → weak.
     """
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
-    strategy = MomentumBreakoutStrategy()
-    # current_price=70600 → breakout_pct≈0.14% → weak breakout → floor=0.5
-    # volume=4M / prev_volume=10M = 0.4 < 0.5 → 차단
-    snapshot = _make_snapshot(
-        current_price=70600,
-        prev_high=70500,
-        volume=4_000_000,
-        prev_volume=10_000_000,
-    )
-    result = await strategy.generate_signal(snapshot)
+    with patch(_PATCH_NOW_KST, return_value=_AFTER_1300):
+        strategy = MomentumBreakoutStrategy()
+        snapshot = _make_snapshot(
+            current_price=70600,
+            prev_high=70500,
+            volume=4_000_000,
+            prev_volume=10_000_000,
+        )
+        result = await strategy.generate_signal(snapshot)
     assert isinstance(result, RejectedSignal)
     assert result.stage == "min_volume_floor"
 
@@ -798,7 +794,7 @@ class TestResolveMinVolumeFloor:
         assert result == 0.5
 
     def test_strong_gap_returns_0_4(self):
-        """gap_rate >= 0.05이면 strong 조건 충족 → 0.4 반환."""
+        """gap_rate >= 0.05이면 strong 조건 충족 → 0.4 반환 (오후 시각, 시간대 슬라이딩 미적용)."""
         from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
 
         snapshot = self._make_snapshot(current_price=73000)
@@ -809,11 +805,12 @@ class TestResolveMinVolumeFloor:
             breakout_ref=70000,
             mode="dynamic",
             hard_floor=0.0,
+            now_kst=_AFTER_1300,
         )
         assert result == 0.4
 
     def test_prev_close_tier_returns_0_6(self):
-        """tier='prev_close'이면 gap/breakout 무관하게 0.6 반환."""
+        """tier='prev_close'이면 gap/breakout 무관하게 0.6 반환 (오후 시각)."""
         from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
 
         snapshot = self._make_snapshot(current_price=70000)
@@ -824,11 +821,12 @@ class TestResolveMinVolumeFloor:
             breakout_ref=69500,
             mode="dynamic",
             hard_floor=0.0,
+            now_kst=_AFTER_1300,
         )
         assert result == 0.6
 
     def test_default_returns_0_5(self):
-        """tier='prev_high', gap_rate=0.02 (weak) → strong 조건 미충족 → 0.5 반환."""
+        """tier='prev_high', gap_rate=0.02 (weak) → strong 조건 미충족 → 0.5 반환 (오후 시각)."""
         from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
 
         # current_price=73000, breakout_ref=72000 → 73000 < 72000*1.03=74160 → strong_breakout=False
@@ -840,6 +838,7 @@ class TestResolveMinVolumeFloor:
             breakout_ref=72000,
             mode="dynamic",
             hard_floor=0.0,
+            now_kst=_AFTER_1300,
         )
         assert result == 0.5
 
@@ -856,11 +855,12 @@ class TestResolveMinVolumeFloor:
             breakout_ref=70000,
             mode="dynamic",
             hard_floor=0.7,
+            now_kst=_AFTER_1300,
         )
         assert result == 0.7
 
     def test_breakout_ref_1_03_trigger(self):
-        """current_price >= breakout_ref * 1.03 이면 strong_breakout → 0.4 반환."""
+        """current_price >= breakout_ref * 1.03 이면 strong_breakout → 0.4 반환 (오후 시각)."""
         from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
 
         # breakout_ref=70000, 70000*1.03=72100, current_price=72200 >= 72100 → strong
@@ -872,5 +872,59 @@ class TestResolveMinVolumeFloor:
             breakout_ref=70000,
             mode="dynamic",
             hard_floor=0.0,
+            now_kst=_AFTER_1300,
+        )
+        assert result == 0.4
+
+    # === Phase 8.6 Sprint 1: 09:00~11:00 KST 시간대 슬라이딩 (분기 D 손실 차단) ===
+
+    def test_resolve_min_volume_floor_morning_window_returns_0_3(self):
+        """09:00~11:00 KST 윈도우에서는 dynamic 결과를 0.3으로 추가 완화."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot(current_price=73000)
+        morning = datetime(2026, 4, 22, 9, 30, tzinfo=_KST)
+        # tier=prev_high, weak gap → 원래 0.5 → 슬라이딩 적용 시 0.3
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_high",
+            gap_rate=0.02,
+            breakout_ref=72000,
+            mode="dynamic",
+            hard_floor=0.0,
+            now_kst=morning,
+        )
+        assert result == 0.3
+
+    def test_resolve_min_volume_floor_afternoon_window_keeps_legacy(self):
+        """13:00 KST는 윈도우 밖 — 슬라이딩 미적용 (기존 0.5 유지)."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot(current_price=73000)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_high",
+            gap_rate=0.02,
+            breakout_ref=72000,
+            mode="dynamic",
+            hard_floor=0.0,
+            now_kst=_AFTER_1300,
+        )
+        assert result == 0.5
+
+    def test_resolve_min_volume_floor_morning_window_respects_hard_floor(self):
+        """오전 슬라이딩으로 0.3이 나와도 hard_floor=0.4면 0.4로 강제 상향."""
+        from modules.trading.strategies.momentum_breakout import _resolve_min_volume_floor
+
+        snapshot = self._make_snapshot(current_price=73000)
+        morning = datetime(2026, 4, 22, 9, 30, tzinfo=_KST)
+        result = _resolve_min_volume_floor(
+            snapshot,
+            tier="prev_high",
+            gap_rate=0.02,
+            breakout_ref=72000,
+            mode="dynamic",
+            hard_floor=0.4,
+            now_kst=morning,
         )
         assert result == 0.4
