@@ -30,6 +30,7 @@ StockBot — 한국 주식/ETF 단타 자동 매매 시스템의 지식 베이�
 - [[trading-modes]] — 반자동/완전자동 매매 모드
 - [[signal-generation]] — 매매 신호 생성 프로세스
 - [[momentum-breakout-strategy]] — 모멘텀 돌파 전략 상세
+- [[tier-architecture]] — 병렬 OR tier 구조 + ATR 동적 캘리브레이션 (Phase 8.6 Sprint 2)
 - [[order-execution]] — 주문 실행 및 체결 관리
 - [[position-management]] — 포지션 생명주기 관리
 
