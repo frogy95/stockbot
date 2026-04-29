@@ -425,6 +425,53 @@ async def get_override_status(
     )
 
 
+class Phase86StatusResponse(BaseModel):
+    rollback_active: bool  # phase86:rollback:active (G2)
+    circuit_breaker_active: bool  # phase86:circuit_breaker:active (G3)
+    fallback_share: float | None  # 오늘 R4 비율 (분모=0 시 None)
+    fallback_signals: int
+    primary_candidates: int
+
+
+@router.get("/phase86-status", response_model=Phase86StatusResponse)
+async def get_phase86_status(
+    session: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+) -> Phase86StatusResponse:
+    """Phase 8.6 Sprint 1 — G2(R1~R4)/G3 활성 상태 + R4 분자/분모 스냅샷."""
+    rollback_active = (await redis.get("phase86:rollback:active")) is not None
+    circuit_active = (await redis.get("phase86:circuit_breaker:active")) is not None
+
+    today = _today_kst()
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    start = datetime.combine(today, datetime.min.time(), tzinfo=tz)
+    end = start + timedelta(days=1)
+    fallback_signals = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.fallback.is_(True),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+    primary_raw = await redis.get(f"screener:candidates:primary:{today.isoformat()}")
+    primary_candidates = int(primary_raw or 0)
+    denom = fallback_signals + primary_candidates
+    share = round(fallback_signals / denom, 4) if denom > 0 else None
+
+    return Phase86StatusResponse(
+        rollback_active=rollback_active,
+        circuit_breaker_active=circuit_active,
+        fallback_share=share,
+        fallback_signals=fallback_signals,
+        primary_candidates=primary_candidates,
+    )
+
+
 @router.get("/virtual-signals", response_model=VirtualSignalsResponse)
 async def virtual_signals(
     days: int = Query(7, ge=1, le=90),

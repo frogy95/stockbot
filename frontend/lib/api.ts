@@ -149,6 +149,23 @@ export interface OverrideStatus {
   affected_keys: string[];
 }
 
+// === Phase 8.6 Sprint 1: M-F2 (G1) + R1~R4 다중 트리거 ===
+
+export interface FallbackSignalRate {
+  date: string;
+  fallback_signals: number;
+  fallback_triggered_codes: number;
+  rate: number | null;
+}
+
+export interface Phase86Status {
+  rollback_active: boolean;
+  circuit_breaker_active: boolean;
+  fallback_share: number | null;
+  fallback_signals: number;
+  primary_candidates: number;
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
@@ -160,6 +177,9 @@ export const metricsPaths = {
   fallbackStats: (date = "today") =>
     `/api/v1/metrics/fallback-stats?date=${encodeURIComponent(date)}`,
   overrideStatus: () => `/api/v1/metrics/override-status`,
+  fallbackSignalRate: (date = "today") =>
+    `/api/v1/metrics/fallback-signal-rate?date=${encodeURIComponent(date)}`,
+  phase86Status: () => `/api/v1/metrics/phase86-status`,
 };
 
 /**
