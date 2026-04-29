@@ -7,6 +7,18 @@
 
 ---
 
+### 프로덕션 배포 - v2.8.0 (2026-04-29)
+
+포함 스프린트: Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
+PR: (develop → main, 아래 PR 생성 후 업데이트)
+
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+---
+
 ### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
 
 브랜치: `phase8.6-sprint2` → develop
