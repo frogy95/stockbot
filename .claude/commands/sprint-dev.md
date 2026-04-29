@@ -47,41 +47,75 @@ docs/phase/phase{P}/sprint{N}/sprint{N}.md에 따라 스프린트를 구현하�
    팀으로 병렬 실행할까요? (y/순차로 진행)
    ```
 3. 사용자가 승인하면:
-   - Agent 도구로 **동시에** 여러 에이전트를 실행한다.
-   - 각 에이전트의 프롬프트에는 해당 Task의 전체 Step, 파일 목록, 검증 명령을 포함한다.
-   - **skill 주입**: Task의 `skill:` 헤더에 명시된 스킬명과 핵심 원칙을 에이전트 프롬프트에 포함한다.
-   - 에이전트에게 **커밋은 하지 말 것**을 명시한다 (커밋은 메인 오케스트레이터가 수행).
-   - 에이전트 완료 후 메인 세션에서 **simplify + 커밋**을 순차 수행한다.
+   - Agent 도구로 **동시에** 여러 에이전트를 실행한다 (한 메시지에서 다중 Agent 호출).
+   - 각 에이전트는 § 순차 Phase의 **에이전트 프롬프트 템플릿**을 그대로 사용 (skill 로드 + Step + 검증 + simplify + 커밋 포함).
+   - 모델 선택은 § 순차 Phase의 **모델 선택 매트릭스**를 동일하게 적용한다.
+   - **병렬 충돌 회피**: 동일 파일을 수정하는 Task는 병렬 그룹에 함께 넣지 않는다. sprint{N}.md의 의존성 그래프와 파일 목록을 사전에 확인한다.
 4. 사용자가 거부하면 → 순차 Phase와 동일하게 처리
 
-#### 순차 Phase인 경우
+#### 순차 Phase인 경우 — Task별 에이전트 위임
 
-Phase 내 각 Task를 순서대로 실행한다. **매 Task마다 아래 체크리스트를 반드시 수행한다:**
+Phase 내 각 Task를 **별도의 에이전트로 순차 위임**한다. 메인 오케스트레이터는 컨텍스트 윈도우를 보존하기 위해 직접 코드를 작성하지 않고, Agent 도구로 위임한 뒤 결과만 받는다.
+
+##### Task별 에이전트 실행 절차
+
+각 Task에 대해 메인 오케스트레이터는:
+
+1. **복잡도 판단 → 모델 선택** (아래 매트릭스 참조)
+2. **Task 시작 알림 출력**: `🔨 Task {N}: {제목} — 모델: {opus|sonnet} (사유: ...)`
+3. **Agent 도구 호출** (`subagent_type=general-purpose`, `model={opus|sonnet}`)
+4. **에이전트 결과 확인** — 커밋 SHA / 검증 출력 요약 수신
+5. **다음 Task로 진행**
+
+##### 모델 선택 매트릭스
+
+| 모델 | 적용 기준 |
+|------|----------|
+| **opus** | (1) skill이 `brainstorming` / `feature-dev:feature-dev` / `systematic-debugging`, (2) 신규 모듈/아키텍처 설계, (3) 4개 이상 파일 + 100줄 이상 코드 변경, (4) DB 스키마 + 비즈니스 로직 동시 변경 |
+| **sonnet** | (1) skill이 `simplify` / 없음, (2) 기존 패턴 반복 적용 (테스트 추가, 환경변수 추가, 문서 업데이트), (3) 3개 이하 파일 + 50줄 이하 변경, (4) frontend-design (UI 컴포넌트 단일) |
+
+판단 모호 시 **opus**를 기본값으로 한다 (스프린트 품질 우선).
+
+##### 에이전트 프롬프트 템플릿
+
+각 Task 에이전트 프롬프트에는 다음을 모두 포함한다:
 
 ```
-Task 실행 체크리스트 (건너뛰기 금지):
-1. ⬜ skill 로드 — `skill:` 헤더가 있으면 Skill 도구 호출
-2. ⬜ Step 실행 — sprint{N}.md의 Step 순서대로 (skill별 실행 전략 참조)
-3. ⬜ 검증 통과 — 명시된 검증 명령 실행
-4. ⬜ simplify — Skill("simplify") 실행 (생략 불가)
-5. ⬜ 커밋 — 커밋 메시지에 task ID 필수 포함 (예: `feat(phase1-sprint1): task3 — 내용`)
+당신은 Phase {P} Sprint {N}의 Task {N}을 구현하는 전담 에이전트입니다.
+
+## Task 명세 (sprint{N}.md 발췌)
+
+- 제목: {Task 제목}
+- skill: {skill 이름 또는 "없음"}
+- Step:
+  {sprint{N}.md의 Step 전체 인용}
+- 검증 명령: {검증 명령 전체}
+- 커밋 메시지: feat(phase{P}-sprint{N}): task{N} — {sprint{N}.md 명시 내용}
+
+## 실행 체크리스트 (건너뛰기 금지)
+
+1. skill 로드 — `skill:` 헤더가 있으면 Skill 도구 호출 (skill별 실행 전략은 sprint-dev.md § skill별 실행 전략 참조)
+2. Step 순서대로 실행 — sprint{N}.md 명시 순서 엄격 준수
+3. 검증 명령 실행 — 결과를 실증(로그/출력)으로 확보
+4. simplify — Skill("simplify") 실행 (생략 불가)
+5. 커밋 — 커밋 메시지에 task ID 필수 포함 (예: `feat(phase{P}-sprint{N}): task{N} — 설명`)
+   - PostToolUse hook(`posttooluse-index-sync.sh`)이 자동으로 task.status → completed, progress 갱신, commits[] 기록 수행
+   - hook이 수정한 index.json은 **다음 task 커밋에 stage**되도록 그대로 둔다
+   - **worktree/cd 접두사 금지**, 브랜치는 이미 `phase{P}-sprint{N}`로 체크아웃되어 있음
+
+## 보고 형식 (완료 시)
+
+- 커밋 SHA: {sha}
+- 검증 결과: {pytest 통과 수 / tsc 에러 수 / 기타 핵심 메트릭}
+- 변경 파일 수 / 추가 줄 수
+- 주의사항이나 후속 Task에 영향 줄 수 있는 결정사항 (있는 경우만)
+
+300단어 이내로 보고하세요.
 ```
 
-> **index.json 자동 동기화**: PostToolUse hook(`posttooluse-index-sync.sh`)이 `git commit` 감지 시 자동으로 task.status → completed, progress 갱신, commits[] 기록을 수행합니다. 수동 업데이트 불필요.
+##### index.json 자동 동기화
 
-각 단계 상세:
-
-1. **Task 시작 알림**: `🔨 Task {N}: {제목} 시작`
-2. **skill 로드**: Task의 `skill:` 헤더에 명시된 스킬이 있으면 Skill 도구로 로드하고 skill별 실행 전략에 따라 진행한다.
-3. **Step 실행**: sprint{N}.md에 명시된 Step을 순서대로 수행한다.
-4. **검증**: sprint{N}.md에 명시된 검증 명령을 실행하고 결과를 확인한다.
-5. **simplify**: Skill 도구로 `simplify`를 로드하고, 이번 Task에서 수정한 코드를 정리한다.
-6. **커밋**: 커밋 메시지에 **task ID를 반드시 포함**한다. 형식: `feat(phase{P}-sprint{N}): task{N} — 설명`
-   - 예: `feat(phase1-sprint1): task3 — SQLAlchemy 모델 + Alembic 마이그레이션`
-   - sprint{N}.md에 커밋 메시지가 명시되어 있으면 앞에 `task{N} — `를 추가한다.
-   - hook이 task ID(`task1`, `task2` 등)로 매칭하여 index.json을 자동 업데이트한다 (task.status, progress, commits[]).
-   - hook이 수정한 index.json은 **다음 커밋에 포함**시킨다 (별도 chore 커밋 불필요, 다음 task 커밋에 함께 stage).
-7. **완료 보고**: 완료 기준 체크리스트를 표시한다.
+PostToolUse hook(`posttooluse-index-sync.sh`)이 `git commit` 감지 시 자동으로 task.status → completed, progress 갱신, commits[] 기록을 수행합니다. 에이전트가 커밋만 하면 자동 반영됩니다.
 
 ### 4단계: Phase 체크포인트
 
