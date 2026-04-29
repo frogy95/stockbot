@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-27T00:30:00+09:00",
+  "lastUpdated": "2026-04-29T01:13:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3449,18 +3449,43 @@
     {
       "id": "hotfix-observation-daily-api",
       "name": "Phase 8.5 5거래일 관찰 지표 단일 API 엔드포인트 추가",
-      "status": "deployed",
+      "status": "closed",
       "path": ".claude/agents/phase8.5-observation-check.md",
       "assignee": "ChoiJiSeon",
       "reviewer": "hotfix-close agent",
       "pr": "https://github.com/frogy95/stockbot/pull/175",
       "deployedAt": "2026-04-27",
-      "description": "railway run python 직접 DB/Redis 접근 방식이 보안 훅에 차단되어 관찰 지표 자동 수집 불가 문제 해결. GET /api/v1/health/observation-daily 엔드포인트 추가로 curl 한 줄에 6개 지표(M-S1/M-S2/M-S3/M-F1/M-R) KST 기준 일별 집계 반환.",
+      "description": "5거래일 관찰 완료: 분기 D 확정 (2026-04-28T16:10 자동 롤백 발동, reason: auto_rollback_2d_zero_signals). GET /api/v1/health/observation-daily 단일 API로 M-S1/M-S2/M-S3/M-F1/M-R 6개 지표 KST 기준 일별 집계 반환. legacy 모드 유지 + Phase 10.1 신호 구조 재설계 착수 결정.",
       "commits": [
         {
           "hash": "e8e3e47",
           "message": "feat(observability): Phase 8.5 관찰 지표 단일 API 엔드포인트 추가",
           "date": "2026-04-27"
+        },
+        {
+          "hash": "683cb8e",
+          "message": "docs(hotfix): observation-daily-api 핫픽스 검증 결과 및 index.json 업데이트",
+          "date": "2026-04-27"
+        },
+        {
+          "hash": "469c31b",
+          "message": "docs(hotfix): Phase 8.5 분기 D 확정 — 5거래일 관찰 결과 및 에이전트 메모리 기록",
+          "date": "2026-04-29"
+        }
+      ],
+      "closedAt": "2026-04-29",
+      "prs": [
+        {
+          "number": 175,
+          "url": "https://github.com/frogy95/stockbot/pull/175",
+          "purpose": "코드 변경 (API 추가)",
+          "mergedAt": "2026-04-27"
+        },
+        {
+          "number": 177,
+          "url": "https://github.com/frogy95/stockbot/pull/177",
+          "purpose": "문서 변경 (분기 D 관찰 결과)",
+          "mergedAt": "2026-04-29"
         }
       ]
     }
