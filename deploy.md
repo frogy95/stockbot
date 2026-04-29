@@ -10,12 +10,13 @@
 ### 프로덕션 배포 - v2.8.0 (2026-04-29)
 
 포함 스프린트: Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
-PR: https://github.com/frogy95/stockbot/pull/185 (develop → main)
+PR: https://github.com/frogy95/stockbot/pull/185 (develop → main, merged 098053b)
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
-
-자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+- ✅ Vercel 프론트엔드 자동 배포 (https://stockbot.choiji.kr 307 — auth redirect 정상)
+- ✅ Railway 백엔드 자동 배포 (`/api/v1/health` → status:healthy, database:connected, redis:connected)
+- ✅ Railway 환경변수 10종 설정 완료 (CLI batch set 검증)
+- ✅ Alembic 마이그레이션 자동 적용 (Railway start command `alembic upgrade head` — 정상 기동 확인)
+- ✅ 백엔드 로그 0 에러 (ATR 캘리브레이션 잡 등록 확인)
 
 ---
 
@@ -31,21 +32,21 @@ PR: https://github.com/frogy95/stockbot/pull/184
 
 #### Railway 환경변수 추가 확인 (10종)
 
-- ⬜ `PARALLEL_OR_TIER_ENABLED=true` — Kill-switch 마스터 토글
-- ⬜ `ATR_CALIBRATION_ENABLED=true` — 08:35 캘리브레이션 잡 활성화
-- ⬜ `ATR_CALIBRATION_METHOD=sma` — `sma`(20일) 또는 `ewma`(λ=0.94)
-- ⬜ `ATR_FLOOR=0.025` — ATR 하한 (모든 tier 공통)
-- ⬜ `ATR_CEIL_HARD=0.08` — ATR 상한 절대 한계 (gap_open 우회 X)
-- ⬜ `ATR_CEIL_FALLBACK=0.05` — 폴백 종목 정적 상한
-- ⬜ `ATR_CEIL_MULT=1.2` — P80×mult 계수 (shadow grid 1.0/1.1/1.2/1.3 중 실 진입값)
-- ⬜ `ATR_CALIBRATION_WINDOW_DAYS=20`
-- ⬜ `TEMP_TIME_GUARD_SPRINT2=true` — 09:00~09:10 / 14:30+ 차단 (Sprint 3에서 본 가드 도입 후 제거)
-- ⬜ `SAFE_MODE_TIMEOUT_MIN=120` — 폴백 3단 안전모드 신호 중단(분)
+- ✅ `PARALLEL_OR_TIER_ENABLED=true` — Kill-switch 마스터 토글
+- ✅ `ATR_CALIBRATION_ENABLED=true` — 08:35 캘리브레이션 잡 활성화
+- ✅ `ATR_CALIBRATION_METHOD=sma` — `sma`(20일) 또는 `ewma`(λ=0.94)
+- ✅ `ATR_FLOOR=0.025` — ATR 하한 (모든 tier 공통)
+- ✅ `ATR_CEIL_HARD=0.08` — ATR 상한 절대 한계 (gap_open 우회 X)
+- ✅ `ATR_CEIL_FALLBACK=0.05` — 폴백 종목 정적 상한
+- ✅ `ATR_CEIL_MULT=1.2` — P80×mult 계수 (shadow grid 1.0/1.1/1.2/1.3 중 실 진입값)
+- ✅ `ATR_CALIBRATION_WINDOW_DAYS=20`
+- ✅ `TEMP_TIME_GUARD_SPRINT2=true` — 09:00~09:10 / 14:30+ 차단 (Sprint 3에서 본 가드 도입 후 제거)
+- ✅ `SAFE_MODE_TIMEOUT_MIN=120` — 폴백 3단 안전모드 신호 중단(분)
 
 #### Alembic 마이그레이션 적용 (2종)
 
-- ⬜ `c1f2a30b8201` — `stocks.is_kospi200 BOOLEAN NOT NULL DEFAULT FALSE` + `ix_stocks_is_kospi200`
-- ⬜ `d2a30b8201ef` — `trade_signals.matched_tiers JSONB NULL` (Kill-switch 시 NULL 안전)
+- ✅ `c1f2a30b8201` — `stocks.is_kospi200 BOOLEAN NOT NULL DEFAULT FALSE` + `ix_stocks_is_kospi200`
+- ✅ `d2a30b8201ef` — `trade_signals.matched_tiers JSONB NULL` (Kill-switch 시 NULL 안전)
 
 #### Kill-switch 런북 (Phase 8.6 Sprint 2)
 
