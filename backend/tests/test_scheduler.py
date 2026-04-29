@@ -615,7 +615,7 @@ async def test_auto_rollback_triggered_when_two_zero_days():
     scheduler._notifier_manager = mock_notifier
 
     with patch("modules.collector.scheduler.is_trading_day", return_value=True):
-        await scheduler._check_auto_rollback()
+        await scheduler._evaluate_phase85_zero_signals()
 
     # Redis override 키 설정 확인
     assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") == "legacy"
@@ -639,7 +639,7 @@ async def test_auto_rollback_not_triggered_if_any_signal_exists():
     scheduler._notifier_manager = mock_notifier
 
     with patch("modules.collector.scheduler.is_trading_day", return_value=True):
-        await scheduler._check_auto_rollback()
+        await scheduler._evaluate_phase85_zero_signals()
 
     # Redis override 키 미설정 확인
     assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") is None
@@ -655,7 +655,7 @@ async def test_auto_rollback_skipped_on_non_trading_day():
     scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
 
     with patch("modules.collector.scheduler.is_trading_day", return_value=False):
-        await scheduler._check_auto_rollback()
+        await scheduler._evaluate_phase85_zero_signals()
 
     # 비거래일 → DB 조회도 없고 Redis 변경도 없음
     assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") is None

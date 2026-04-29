@@ -61,6 +61,7 @@ def _resolve_min_volume_floor(
     mode: str | None = None,
     hard_floor: float | None = None,
     redis_override_mode: str | None = None,
+    now_kst: datetime | None = None,
 ) -> float:
     """동적 거래량 하한 결정 함수 (순수 함수 — side effect 없음, logger.warning 제외).
 
@@ -73,6 +74,8 @@ def _resolve_min_volume_floor(
         hard_floor: 하한값 오버라이드. None이면 settings.MIN_VOLUME_FLOOR_HARD 사용.
         redis_override_mode: Redis override key에서 읽은 모드 문자열.
             있으면 최우선 적용 (mode, settings 보다 우선).
+        now_kst: KST 현재 시각. None이면 `_now_kst()` 호출. dynamic 모드에서
+            09:00~11:00 KST이면 결과를 0.3으로 추가 완화한다 (Phase 8.6 Sprint 1).
 
     Returns:
         적용할 거래량 하한 비율 (0.0 ~ 1.0).
@@ -94,6 +97,11 @@ def _resolve_min_volume_floor(
             result = 0.4
         else:
             result = 0.5
+
+        # Phase 8.6 Sprint 1 — 09:00~11:00 KST 시간대 슬라이딩 (분기 D 손실 차단)
+        effective_now = now_kst if now_kst is not None else _now_kst()
+        if 9 <= effective_now.hour < 11:
+            result = min(result, 0.3)
 
     if result < hard:
         logger.warning("resolved floor %.3f < HARD %.3f, forcing HARD", result, hard)
@@ -268,6 +276,7 @@ class MomentumBreakoutStrategy(Strategy):
                         "MIN_VOLUME_FLOOR_MODE",
                         default=None,
                     ),
+                    now_kst=now_kst,
                 )
                 await record_shadow_stage(
                     self.redis_client,

@@ -209,7 +209,34 @@ class RealtimeScreener:
         # passed = is_passed=True 종목, primary_candidates = scored 전체
         scored = await self._apply_fallback(scored)
 
+        # Phase 8.6 Sprint 1 Task 5 — G3 회로차단기 분모/분자 동시 적재.
+        # 분자(passed)는 폴백 보강 종목 제외(`is_fallback`=False), 분모(total)는 입력 candidate 수.
+        await self._record_g3_counter_pair(
+            total=len(candidate_codes),
+            passed=sum(1 for c in scored if c.get("is_passed") and not c.get("is_fallback")),
+        )
+
         return scored
+
+    async def _record_g3_counter_pair(self, *, total: int, passed: int) -> None:
+        """G3 회로차단기 baseline counter 동시 적재 — TTL 30일.
+
+        분모(total)와 분자(passed)는 **반드시 함께** 증가시킨다.
+        한쪽만 누락되면 회로차단기가 분모=0 fail-safe로 강제 ON되거나 통과율 산출 불가.
+        """
+        if self.redis_client is None:
+            return
+        try:
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date().isoformat()
+            ttl = 86400 * 30
+            await self.redis_client.incr(
+                f"screener:candidates:total:{today}", amount=total, ttl=ttl
+            )
+            await self.redis_client.incr(
+                f"screener:candidates:passed:{today}", amount=passed, ttl=ttl
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("G3 counter pair 적재 실패", exc_info=True)
 
     async def _apply_fallback(self, scored: list[dict]) -> list[dict]:
         """Phase 8.5 Sprint 2: 풀 하한 폴백 — passed < THRESHOLD 시 1차 후보로 보강.
@@ -258,6 +285,7 @@ class RealtimeScreener:
                 min(
                     settings.SECONDARY_POOL_FALLBACK_THRESHOLD - passed_count,
                     settings.SECONDARY_POOL_MAX - passed_count,
+                    settings.SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP,
                 ),
                 0,
             )

@@ -26,6 +26,7 @@ from core.models.metrics import (
     StrategyMetricsDaily,
     VirtualSignal,
 )
+from core.models.trading import TradeSignal
 from core.redis import RedisClient
 
 router = APIRouter(
@@ -341,6 +342,63 @@ async def get_fallback_stats(
     )
 
 
+class FallbackSignalRateResponse(BaseModel):
+    date: str
+    fallback_signals: int
+    fallback_triggered_codes: int
+    rate: float | None  # 분모=0 시 None
+
+
+@router.get("/fallback-signal-rate", response_model=FallbackSignalRateResponse)
+async def get_fallback_signal_rate(
+    date_param: str | None = Query(None, alias="date"),
+    session: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+) -> FallbackSignalRateResponse:
+    """Phase 8.6 Sprint 1 — G1 M-F2: 일별 폴백 신호율.
+
+    분자: trade_signals.fallback=True 신호 수 (해당 날짜)
+    분모: 그날 폴백 발동 종목 수 (Redis `metrics:fallback:code:*:{date}`)
+    rate = 분자 / 분모 (분모=0 시 None — fail-safe)
+    """
+    today = _today_kst()
+    target_s = date_param if date_param not in (None, "today") else today.isoformat()
+    target = date.fromisoformat(target_s)
+
+    # 분자 — DB
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    start = datetime.combine(target, datetime.min.time(), tzinfo=tz)
+    end = start + timedelta(days=1)
+    fallback_signals = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.fallback.is_(True),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+
+    keys = await redis.scan_keys(f"metrics:fallback:code:*:{target_s}")
+    fallback_triggered_codes = len(keys)
+
+    rate = (
+        round(fallback_signals / fallback_triggered_codes, 4)
+        if fallback_triggered_codes
+        else None
+    )
+
+    return FallbackSignalRateResponse(
+        date=target_s,
+        fallback_signals=fallback_signals,
+        fallback_triggered_codes=fallback_triggered_codes,
+        rate=rate,
+    )
+
+
 class OverrideStatusResponse(BaseModel):
     is_active: bool
     triggered_at: str | None
@@ -364,6 +422,53 @@ async def get_override_status(
         triggered_at=triggered_at,
         reason=reason,
         affected_keys=["MIN_VOLUME_FLOOR_MODE", "SECONDARY_POOL_FALLBACK_ENABLED"],
+    )
+
+
+class Phase86StatusResponse(BaseModel):
+    rollback_active: bool  # phase86:rollback:active (G2)
+    circuit_breaker_active: bool  # phase86:circuit_breaker:active (G3)
+    fallback_share: float | None  # 오늘 R4 비율 (분모=0 시 None)
+    fallback_signals: int
+    primary_candidates: int
+
+
+@router.get("/phase86-status", response_model=Phase86StatusResponse)
+async def get_phase86_status(
+    session: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+) -> Phase86StatusResponse:
+    """Phase 8.6 Sprint 1 — G2(R1~R4)/G3 활성 상태 + R4 분자/분모 스냅샷."""
+    rollback_active = (await redis.get("phase86:rollback:active")) is not None
+    circuit_active = (await redis.get("phase86:circuit_breaker:active")) is not None
+
+    today = _today_kst()
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    start = datetime.combine(today, datetime.min.time(), tzinfo=tz)
+    end = start + timedelta(days=1)
+    fallback_signals = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.fallback.is_(True),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+    primary_raw = await redis.get(f"screener:candidates:primary:{today.isoformat()}")
+    primary_candidates = int(primary_raw or 0)
+    denom = fallback_signals + primary_candidates
+    share = round(fallback_signals / denom, 4) if denom > 0 else None
+
+    return Phase86StatusResponse(
+        rollback_active=rollback_active,
+        circuit_breaker_active=circuit_active,
+        fallback_share=share,
+        fallback_signals=fallback_signals,
+        primary_candidates=primary_candidates,
     )
 
 

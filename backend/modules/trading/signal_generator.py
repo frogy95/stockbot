@@ -30,10 +30,14 @@ class SignalGenerator:
         session_factory: async_sessionmaker[AsyncSession],
         redis_client: RedisClient,
         strategy: Strategy,
+        circuit_breaker=None,
     ):
         self._session_factory = session_factory
         self._redis = redis_client
         self._strategy = strategy
+        # Phase 8.6 Sprint 1 Task 5 — Daytrader Critical 보강 적용 위치.
+        # 회로차단기 활성 시 신규 진입(buy)만 차단, 청산 계열은 통과.
+        self._circuit_breaker = circuit_breaker
 
     async def generate_signals(
         self, screened_candidates: list[dict]
@@ -62,6 +66,8 @@ class SignalGenerator:
 
                 # 전략 적용
                 signal_data = await self._strategy.generate_signal(snapshot)
+                # Phase 8.6 Sprint 1 — G1: candidate.is_fallback → signal/DB 전파
+                is_fallback = bool(candidate.get("is_fallback", False))
                 if isinstance(signal_data, RejectedSignal):
                     skip_stats["strategy_none"] += 1
                     logger.info(
@@ -77,6 +83,20 @@ class SignalGenerator:
                     logger.info(
                         "신뢰도 부족: %s confidence=%.3f < %.2f",
                         stock_code, signal_data.confidence, MIN_CONFIDENCE,
+                    )
+                    continue
+
+                # G1: 폴백 메타데이터 전파 — TradeSignalData + reason JSON 둘 다 보존
+                reason = {**signal_data.reason, "fallback": is_fallback}
+                signal_data = signal_data.model_copy(
+                    update={"fallback": is_fallback, "reason": reason}
+                )
+
+                # G3 회로차단기: 활성 시 신규 진입만 차단(청산 계열은 통과).
+                if self._circuit_breaker is not None and not await self._circuit_breaker.allow_signal(signal_data):
+                    logger.warning(
+                        "G3 회로차단기 진입 신호 차단: %s (보유 포지션 청산 신호는 영향 없음)",
+                        stock_code,
                     )
                     continue
 
@@ -98,6 +118,7 @@ class SignalGenerator:
                     stop_loss=signal_data.stop_loss,
                     take_profit=signal_data.take_profit,
                     status="pending",
+                    fallback=is_fallback,
                 )
                 session.add(record)
                 generated.append(signal_data)

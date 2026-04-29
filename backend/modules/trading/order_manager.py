@@ -94,6 +94,7 @@ class OrderManager:
         3. 생성된 Order 레코드를 반환한다.
         """
         async with self._session_factory() as session:
+            # Phase 8.6 Sprint 1 — G1: 부모 신호의 fallback 플래그 승계
             order = Order(
                 signal_id=None,
                 stock_code=signal.stock_code,
@@ -104,6 +105,7 @@ class OrderManager:
                 status="submitted",
                 submitted_at=datetime.now(tz=timezone.utc),
                 signal_json=signal.model_dump(),
+                fallback=signal.fallback,
             )
             session.add(order)
             await session.commit()

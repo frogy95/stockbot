@@ -161,7 +161,14 @@ async def lifespan(app: FastAPI):
         redis_client=redis_client,
         session_factory=session_factory,
     )
-    signal_generator = SignalGenerator(session_factory, redis_client, strategy)
+    # Phase 8.6 Sprint 1 Task 5 — G3 회로차단기 (신규 진입 차단, 청산 계열 통과)
+    from modules.safety.circuit_breaker import CircuitBreaker
+    circuit_breaker = CircuitBreaker(
+        redis_client=redis_client, settings=app_settings, notifier=None,
+    )
+    signal_generator = SignalGenerator(
+        session_factory, redis_client, strategy, circuit_breaker=circuit_breaker,
+    )
     order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
     position_manager = PositionManager(session_factory, redis_client, risk_manager)
     await position_manager.load_trailing_highs()
