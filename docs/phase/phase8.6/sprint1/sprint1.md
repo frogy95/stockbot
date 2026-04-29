@@ -2,6 +2,10 @@
 
 **Goal:** Phase 8.5 분기 D 손실을 빠르게 차단하고 (PO Sprint 2.6 안 흡수), Sprint 2 착수의 차단 해제 조건인 LIVE 자금 보호 가드레일(G1·G2·G3 + Phase 7.0 LIVE 파라미터 코드 잠금)을 구축한다.
 
+> **LIVE 게이트 합의 (4명 전문가 재리뷰 만장일치 / Risk 명시 합의)**
+> **Sprint 1 완료 ≠ LIVE 전환 가능**. 본 Sprint는 dry_run + 메타데이터 + 회로차단기 골격까지만 검증한다.
+> LIVE 전환은 Sprint 2 R2 v1(streak 정확화) / R3 OR(병렬 tier) + Sprint 4 walk-forward 60일 통과 후로 미룬다.
+
 **Architecture:**
 - 폴백/플로어 파라미터(SECONDARY_POOL_FALLBACK_THRESHOLD=5, min_volume_floor 시간대 슬라이딩 0.3 09~11시)는 기존 `realtime_screener._apply_fallback`·`_resolve_min_volume_floor` 분기에 최소 침습 추가.
 - M-F2(G1)는 `is_fallback` 플래그를 신호 → 주문 → 체결 → DB까지 전파하기 위한 컬럼·메타데이터 채널을 신설하여 일별 폴백 신호율 계산을 가능하게 만든다.
@@ -58,13 +62,18 @@
 
 ---
 
-### Task 1: Phase 7.0 LIVE 파라미터 코드 잠금 + 회귀 방지 테스트
+### Task 1: Phase 7.0 LIVE 파라미터 코드 잠금 + dry_run 이중 가드 (Risk Critical P0 보강)
 
 **skill:** —
+
+> **P0 보강 (4명 전문가 재리뷰 — Risk Critical)**: `Final` 상수만으로는 monkeypatch/env override 차단 불충분.
+> (a) **런타임 assert 이중 가드**: 모듈 import 시점에 값 검증 (변조 시도 시 `AssertionError`)
+> (b) **CI grep 가드**: 주문 실행 경로(`modules/trading/executor.py` 등)의 git diff 0줄 검증을 sprint-review 게이트로 격상
 
 **Files:**
 - Create: `backend/core/constants.py`
 - Create: `backend/tests/core/test_phase70_locked_constants.py`
+- Modify: `.claude/agents/sprint-review.md` (CI grep 가드 항목 추가 — Sprint 종료 시 적용)
 
 **Step 1: 테스트 작성 (회귀 시 빌드 실패)**
 - `backend/tests/core/test_phase70_locked_constants.py` 생성
@@ -73,6 +82,7 @@
   - 4개 상수의 값이 정확히 `2, 5.0, -2.0, -3.0`
   - `typing.get_type_hints` 또는 `typing.Final` 메타데이터 검사로 `Final[...]` 타입임을 확인 (`typing._SpecialForm` / `__metadata__` 활용)
   - 모듈 내에 위 상수를 재할당하는 `=` 라인이 없음을 정적 검사 (텍스트 grep으로 충분)
+  - **신규 회귀 케이스 `test_phase7_constants_immutable_at_runtime`**: `monkeypatch.setattr` / `os.environ` 우회 시도 시 모듈 import 시점 assert가 `AssertionError`로 차단됨을 검증
 - 검증: `docker compose exec backend pytest tests/core/test_phase70_locked_constants.py -v`
 - 예상: FAIL (모듈 미존재)
 
@@ -89,8 +99,20 @@
   LIVE_POSITION_SIZE_PCT: Final[float] = 5.0
   LIVE_DAILY_MAX_LOSS_PCT: Final[float] = -2.0
   LIVE_EMERGENCY_STOP_PCT: Final[float] = -3.0
+
+  # 이중 가드 — 런타임 assert (Risk Critical P0 보강)
+  # monkeypatch / env override / 모듈 후처리로 값 변조 시도 시 import 시점에 차단.
+  assert LIVE_MAX_POSITION_COUNT == 2, "Phase 7.0 잠금 위반: LIVE_MAX_POSITION_COUNT"
+  assert LIVE_POSITION_SIZE_PCT == 5.0, "Phase 7.0 잠금 위반: LIVE_POSITION_SIZE_PCT"
+  assert LIVE_DAILY_MAX_LOSS_PCT == -2.0, "Phase 7.0 잠금 위반: LIVE_DAILY_MAX_LOSS_PCT"
+  assert LIVE_EMERGENCY_STOP_PCT == -3.0, "Phase 7.0 잠금 위반: LIVE_EMERGENCY_STOP_PCT"
   ```
 - 본 상수는 **참조 전용**. 기존 `seed_settings.py` / DB settings 키 동작은 그대로 유지하되, 향후 Phase 8.6 어떤 변경에서도 위 4개 값을 변경하지 못하도록 만드는 게이트로 사용.
+
+**Step 2-bis: CI grep 가드 (sprint-review 게이트 격상)**
+- sprint-review agent가 PR 머지 전 다음 grep을 자동 실행하여 0줄이 아니면 머지 차단:
+  - `git diff develop...HEAD -- backend/modules/trading/executor.py backend/modules/trading/order_manager.py | grep -E "(max_position|position_size|daily_max_loss|emergency_stop)"` → 0줄
+  - 위 패턴이 매칭되면 Phase 7.0 잠금 위반으로 간주, sprint-review 자동 차단
 - 검증: `docker compose exec backend pytest tests/core/test_phase70_locked_constants.py -v`
 - 예상: PASS
 
@@ -101,8 +123,9 @@ git commit -m "feat(phase8.6-sprint1): task1 — Phase 7.0 LIVE 파라미터 Fin
 ```
 
 **완료 기준:**
-- ⬜ pytest `test_phase70_locked_constants.py` 통과
-- ⬜ 4개 상수 모두 `Final[...]` 타입으로 선언
+- ⬜ pytest `test_phase70_locked_constants.py` 통과 (런타임 assert 회귀 케이스 포함)
+- ⬜ 4개 상수 모두 `Final[...]` 타입 + 런타임 assert 이중 가드 선언
+- ⬜ sprint-review CI grep 가드 항목 추가 (주문 실행 경로 git diff 0줄 검증)
 
 ---
 
@@ -195,14 +218,22 @@ git commit -m "feat(phase8.6-sprint1): task2 — 폴백 임계 5종 + min_volume
 - 검증: `docker compose exec backend pytest tests/test_g1_fallback_metadata_propagation.py -v`
 - 예상: FAIL
 
-**Step 2: DB 모델 + Alembic 마이그레이션**
+**Step 2: DB 모델 + Alembic 마이그레이션 (왕복 테스트 PR 게이트 — Risk + PO P0 보강)**
 - `core/models/trading.py`:
   - `TradeSignal`에 `fallback: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")` 추가
   - `Order`에 동일 컬럼 추가
 - Alembic 마이그레이션 파일 생성 (수동 작성):
   - 두 컬럼 server_default `false` 추가
   - 인덱스 `ix_trade_signals_fallback_created`(`fallback`, `created_at`) 추가 — M-F2 일별 집계 성능
-- 검증: `docker compose exec backend alembic upgrade head` 성공
+  - **백필 정책 명시 (Quant 권고)**: 기존 row의 `is_fallback NULL → False` 명시 (server_default가 보장하지만 마이그레이션 주석에 명시) — censored data 회피
+- **PR 머지 게이트 — Alembic upgrade/downgrade 왕복 테스트**:
+  ```bash
+  docker compose exec backend alembic upgrade head
+  docker compose exec backend alembic downgrade -1
+  docker compose exec backend alembic upgrade head
+  ```
+  - 3 단계 모두 성공해야 머지 가능 (sprint-review 자동 검증 항목으로 등록)
+  - 컬럼 드롭 시 인덱스도 함께 드롭됨을 확인 (downgrade 단계)
 
 **Step 3: SignalGenerator + 주문 생성 경로에 전파**
 - `signal_generator.py`:
@@ -237,20 +268,26 @@ git commit -m "feat(phase8.6-sprint1): task3 — G1 is_fallback 메타데이터 
 
 **완료 기준:**
 - ⬜ Alembic 마이그레이션 적용 + 컬럼 2개 존재
+- ⬜ **Alembic 왕복 테스트 통과** (`upgrade head → downgrade -1 → upgrade head` 3단계 — PR 머지 게이트)
+- ⬜ 백필 정책 (`is_fallback NULL → False`) 마이그레이션 주석에 명시
 - ⬜ pytest test_g1_* 4 시나리오 PASS
 - ⬜ M-F2 API 정상 응답 (분모 0일 때 `rate=null`)
 
 ---
 
-### Task 4: G2 — 자동 롤백 R1~R4 OR 트리거 모듈 + 16:10 잡
+### Task 4: G2 — 자동 롤백 R1~R4 OR 트리거 모듈 + R4 분모 baseline + 16:10 잡
 
 **skill:** —
+
+> **P0 보강 (Quant 권고)**: R4 분모 baseline을 Sprint 1에서 미리 적재해야 Sprint 4 walk-forward 분포 비교가 가능.
+> R4 정의 정정: "**폴백 신호 / (폴백 + 1차 신호)**" 명시 (기존 `count(fallback=true)/count(*)` 유지하되 `screener:candidates:primary:{date}` Redis counter 일별 별도 적재).
 
 **Files:**
 - Create: `backend/modules/safety/__init__.py`
 - Create: `backend/modules/safety/auto_rollback.py`
 - Create: `backend/tests/safety/test_auto_rollback.py`
 - Modify: `backend/core/config.py` (env 5종 추가)
+- Modify: `backend/modules/screening/primary_screener.py` (1차 candidate Redis counter 적재 — `screener:candidates:primary:{date}`)
 - Modify: `backend/modules/collector/scheduler.py` (16:10 또는 16:15 잡 등록)
 - Modify: `.env.example`
 
@@ -278,7 +315,8 @@ git commit -m "feat(phase8.6-sprint1): task3 — G1 is_fallback 메타데이터 
       - R1: `daily_signal_count` (DB `trade_signals` group by date)
       - R2: `metrics:fallback:triggered:{date}` Redis 카운터 / 1차 풀 크기 (별도 측정 필요 — 일단 v0은 폴백 발동 종목수 / 폴백 임계×N 비율로 근사하거나 `daily_screening_metrics` 테이블 도입 고려; **v0은 R2를 "폴백 발동 일수 ≥ 3일 연속"의 단순 카운트로 시작**하고 향후 더 정확한 분모 도입은 Sprint 2로 이관)
       - R3: 신호의 `reason["tier"]` 분포 그룹화 — Sprint 2에서 tier 다양화 작업과 함께 정합성 확보
-      - R4: `count(fallback=true) / count(*)` per date (Task 3 컬럼 활용)
+      - R4: `count(fallback=true) / count(*)` per date (Task 3 컬럼 활용) — **분모 baseline은 별도 Redis counter `screener:candidates:primary:{date}`에 일별 적재** (Sprint 4 walk-forward 분포 검증용)
+- **신규 코드 위치**: `primary_screener.py` 통과 시점에 `redis.incr(f"screener:candidates:primary:{date}")` 1줄 추가 (TTL 30일)
 
 **Step 3: env 추가 + 16:10 잡 등록**
 - `core/config.py`:
@@ -305,17 +343,26 @@ git commit -m "feat(phase8.6-sprint1): task4 — G2 자동 롤백 R1~R4 OR 트�
 - ⬜ R1~R4 8개 테스트 시나리오 PASS
 - ⬜ env 토글로 개별 트리거 비활성화 동작
 - ⬜ 발동 시 Phase 8.5 폴백은 영향 없음 (테스트 검증)
+- ⬜ `screener:candidates:primary:{date}` Redis counter 일별 적재 동작 (Sprint 4 baseline)
+- ⬜ R4 분자/분모 정의가 마이그레이션 주석 + 코드 docstring에 명시
 
 ---
 
-### Task 5: G3 — 1차→2차 통과율 회로차단기
+### Task 5: G3 — 1차→2차 통과율 회로차단기 + 분모 counter pair + 청산 신호 보존
 
 **skill:** —
+
+> **P0 보강 #1 (만장일치 — Critical)**: G3 분모(2차 candidate) 부재 위험. Redis counter pair `screener:candidates:total` + `screener:candidates:passed` **동시 적재 필수**.
+> 분모=0 시 **fail-safe로 회로차단기 강제 ON** (Sprint 1 시점 데이터 부족을 보수적으로 해석). counter pair 누락 시 PR 머지 차단.
+>
+> **P0 보강 #3 (Daytrader Critical 신규)**: G3 발동 시 **신규 진입 신호만 차단, 청산/익절/손절/손절매 신호는 항상 유지**. 미명시 시 보유 포지션 청산 막혀 손실 확대 위험.
 
 **Files:**
 - Create: `backend/modules/safety/circuit_breaker.py`
 - Create: `backend/tests/safety/test_circuit_breaker.py`
 - Modify: `backend/core/config.py` (env 추가)
+- Modify: `backend/modules/screening/realtime_screener.py` (counter pair `screener:candidates:total` + `screener:candidates:passed` 동시 적재)
+- Modify: `backend/modules/trading/signal_generator.py` 또는 `engine.py` (회로차단기 평가 시 `signal.action in ("exit", "stop_loss", "take_profit")`인 경우 통과 — 코드 위치 명시)
 - Modify: `backend/modules/collector/scheduler.py` (Task 4 16:10 잡과 동일 시점에 CircuitBreaker도 평가)
 - Modify: `.env.example`
 
@@ -325,12 +372,26 @@ git commit -m "feat(phase8.6-sprint1): task4 — G2 자동 롤백 R1~R4 OR 트�
   - `test_pass_rate_above_threshold_does_not_trigger`: [12%, 8%, 11%] → 미발동
   - `test_threshold_env_override`: `CIRCUIT_BREAKER_THRESHOLD=0.05` → [3%, 4%, 6%]도 R3을 깸으로 미발동(6%>5%)
   - `test_trigger_disables_phase86_and_phase85_fallback`: 발동 시 `PHASE86_*_ENABLED=False` + `SECONDARY_POOL_FALLBACK_ENABLED=False`로 Redis override 설정 (Phase 8.5 폴백도 차단 — DoR §3 G3 명시)
+  - **`test_zero_denominator_fails_safe_to_circuit_on` (P0 보강 #1)**: counter pair에서 분모(`screener:candidates:total`)=0이면 데이터 부족으로 보수 해석 → `should_trigger=True` 강제 ON
+  - **`test_circuit_breaker_does_not_block_exit_signals` (P0 보강 #3 — Daytrader Critical)**: 회로차단기 활성 상태에서도 `signal.action in ("exit", "stop_loss", "take_profit")` 신호는 통과 (보유 포지션 청산 보존)
+  - **`test_circuit_breaker_blocks_only_entry_signals`**: `signal.action == "entry"` 만 차단됨을 검증
 - 검증: 예상 FAIL
 
-**Step 2: circuit_breaker.py 구현**
-- 일별 2차 통과율(폴백 제외) = `daily_screening_metrics.passed_count / daily_screening_metrics.candidate_count` 또는 `realtime_screener` 결과를 기록하는 기존 메트릭 레디스 카운터 활용
-- (현시점에 정확한 분모 메트릭이 미존재할 경우, **본 Task에서 Redis counter 한 쌍** `metrics:secondary:passed:{date}` / `metrics:secondary:candidate:{date}`을 `realtime_screener.screen()` 종점에서 increment하는 코드를 함께 추가)
+**Step 2: circuit_breaker.py 구현 (P0 보강 #1 — counter pair 격상)**
+- 일별 2차 통과율(폴백 제외) = `screener:candidates:passed:{date}` / `screener:candidates:total:{date}`
+- **본 Task에서 Redis counter pair 동시 적재 필수**: `realtime_screener.screen()` 종점에서 `screener:candidates:total:{date}` += candidate 수, `screener:candidates:passed:{date}` += passed 수를 **항상 함께 incr** (TTL 30일)
+- **분모=0 fail-safe**: `total == 0`이면 데이터 부족으로 보수 해석 → `should_trigger=True` 강제 ON (pytest 회귀 케이스 포함)
 - 3거래일 연속 < 임계 시 Redis override 2종 설정 + Telegram 알림
+
+**Step 2-bis: 청산 신호 보존 (P0 보강 #3 — Daytrader Critical)**
+- `signal_generator.py` 또는 `engine.py`의 회로차단기 평가 진입점에서:
+  ```python
+  if signal.action in ("exit", "stop_loss", "take_profit"):
+      return signal  # 청산 계열은 회로차단기 무시 — 보유 포지션 보호
+  if circuit_breaker.is_active() and signal.action == "entry":
+      return None  # 신규 진입만 차단
+  ```
+- 적용 위치를 코드 docstring에 명시 ("Phase 8.6 Sprint 1 Task 5 — Daytrader Critical 보강").
 
 **Step 3: env + 잡 연결**
 - `CIRCUIT_BREAKER_ENABLED: bool = True`
@@ -345,9 +406,11 @@ git commit -m "feat(phase8.6-sprint1): task5 — G3 1차→2차 통과율 회로
 ```
 
 **완료 기준:**
-- ⬜ 4개 테스트 시나리오 PASS
+- ⬜ 7개 테스트 시나리오 PASS (기존 4 + zero_denominator + exit_signals_pass + entry_only_block)
 - ⬜ 발동 시 Phase 8.5 폴백 동시 차단 검증
-- ⬜ Redis counter pair 일별 증가 검증
+- ⬜ **counter pair `screener:candidates:total` + `screener:candidates:passed` 동시 적재 검증 (PR 머지 차단 조건 — 누락 시 머지 불가)**
+- ⬜ **분모=0 fail-safe 동작 검증** (pytest `test_zero_denominator_fails_safe_to_circuit_on`)
+- ⬜ **청산 신호 보존 검증** (pytest `test_circuit_breaker_does_not_block_exit_signals`)
 
 ---
 
@@ -408,8 +471,8 @@ git commit -m "feat(phase8.6-sprint1): task6 — M-F2 카드 + R1~R4 다중 트�
 - `signals.fallback=true` 1건 이상 DB 기록 확인
 - M-F2 API 응답 정상
 
-**Step 4: DoR 4종 체크 + deploy.md 환경변수 등록**
-- DoR §3 4종 (G1·G2·G3 + Phase 7.0 잠금) 모두 ✅ 표시
+**Step 4: DoR 4종 + P0 보강 5건 체크 + deploy.md 환경변수 등록**
+- DoR §3 4종 (G1·G2·G3 + Phase 7.0 잠금) + P0 보강 5건 + LIVE 게이트 합의 모두 ✅ 표시
 - `deploy.md`의 수동 검증 항목에 다음 추가:
   ```
   ## Phase 8.6 Sprint 1 — Railway 환경변수 추가 확인
@@ -435,6 +498,10 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 - ⬜ pytest 전체 통과
 - ⬜ npx tsc --noEmit 0 errors
 - ⬜ DoR 4종 모두 ✅ 명시
+- ⬜ P0 보강 5건 모두 ✅ 명시
+- ⬜ LIVE 게이트 합의 (Sprint 1 ≠ LIVE) deploy.md/sprint1.md 명시
+- ⬜ Alembic 왕복 테스트 PR 게이트 통과 결과 기록
+- ⬜ CI grep 가드 (주문 실행 경로 git diff 0줄) 결과 기록
 - ⬜ deploy.md Railway 환경변수 10종 등록
 
 ---
@@ -454,13 +521,29 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 | KIS API 실거래 확인 | — | 본 Sprint는 KIS 호출 패스 변경 없음 |
 | UI 디자인 시각 품질 | ⬜ Task 6 + Task 7 | 사용자 수동 |
 
-### 알려진 위험
+### 4명 전문가 재리뷰 P0 보강 5건 (반영 완료)
 
-1. **R2 분모(1차 풀 크기) 메트릭 부재** — 본 Sprint v0에서는 "폴백 발동 일수 ≥3일 연속"으로 단순화. 정확한 분모(=일별 1차 풀 크기)는 Sprint 2 tier 분리 작업에서 함께 정비.
-2. **R3(tier 다양성)는 현재 1종(prev_high) 고정 상태** — Sprint 1 시점에는 `AUTO_ROLLBACK_R3_ENABLED=False` 기본값으로 두고, Sprint 2 병렬 OR 완료 후 True 전환. 본 Sprint는 모듈/테스트만 준비.
-3. **G3 회로차단기의 분모(2차 candidate 수)** — 기존 메트릭 부재 시 Task 5에서 Redis counter pair 직접 추가. 누락 시 G3 검증 불가 → Task 5 첫 단계에서 정합성 확인.
-4. **Alembic 마이그레이션 회귀 위험** — Task 3에서 `fallback` 컬럼 추가 시 `server_default="false"` 명시로 기존 데이터 NULL 회피. Paper Docker에서 `alembic upgrade head` 성공 확인.
-5. **dry_run 안전 가드 위반 위험** — 본 Sprint는 폴백 임계/플로어/메타데이터/롤백 신호 평가만 변경. 실 거래 경로(주문 발행·체결) 로직 변경 없음 → 리스크 P0 가드레일 유지.
+| # | 위험 | 평가 | 흡수 Task | 보강 내용 |
+|---|------|------|-----------|----------|
+| 1 | G3 분모(2차 candidate) 부재 | **만장일치 P0 / Daytrader Critical** | Task 5 | `screener:candidates:total` + `screener:candidates:passed` counter pair 동시 적재 + 분모=0 fail-safe 강제 ON + counter pair 누락 시 PR 머지 차단 |
+| 2 | R4 분모 baseline 부재 | Quant 권고 P0 | Task 4 | `screener:candidates:primary:{date}` Redis counter 일별 적재 (Sprint 4 walk-forward 분포 비교 baseline) + R4 정의 정정 ("폴백 / (폴백+1차)") |
+| 3 | G3 발동 시 청산 신호 차단 위험 | **Daytrader Critical 신규** | Task 5 | 신규 진입만 차단, 청산/익절/손절/손절매 신호는 항상 유지 (`signal.action in ("exit","stop_loss","take_profit")` 통과) + pytest 회귀 |
+| 4 | dry_run 가드 우회 | **Risk Critical** | Task 1 | `Final` 상수 + 런타임 assert 이중 가드 + sprint-review CI grep 가드 (주문 실행 경로 git diff 0줄) + `test_phase7_constants_immutable_at_runtime` |
+| 5 | Alembic 마이그레이션 회귀 | Risk + PO | Task 3 | `upgrade head → downgrade -1 → upgrade head` 왕복 테스트 PR 머지 게이트 + 백필 정책 명시 (`is_fallback NULL → False`) |
+
+### 알려진 잔존 리스크 (Sprint 2 이관 — 합의됨)
+
+1. **R2 v0 단순화의 통계적 부정확성** — Sprint 1 v0은 "폴백 발동 일수 ≥3일 연속" 카운트로 시작 (streak 지표 false negative 高). **Sprint 2 v1 보강 필요**(예: 가중 streak / 분모-정확화). 코드 TODO 주석으로 명시 (`# TODO(phase8.6-sprint2): R2 streak 정확화 v1 보강`).
+2. **R3(tier 다양성) 비활성 상태** — `AUTO_ROLLBACK_R3_ENABLED=False` 기본값. **Sprint 2 병렬 OR 완료 후 True 전환**. 단, **비활성 상태에서도 tier label은 메타데이터로 적재**(shadow 모드, OR 미참여)하여 Sprint 2 baseline 확보.
+3. **is_fallback 종목 별도 포지션 한도 미적용** — 본 Sprint는 메타데이터 전파만. **Sprint 2 risk_manager 동반 작업으로 이관**: 폴백 종목 전체 포지션 한도(예: 30%) + 시장가 금지 / 지정가 강제.
+4. **Alembic 마이그레이션 일반 회귀** — Task 3 왕복 테스트 PR 게이트로 차단.
+5. **dry_run 안전 가드 위반** — Task 1 이중 가드 + CI grep 가드로 차단.
+
+### LIVE 게이트 합의 (재명시)
+
+- **Sprint 1 완료 ≠ LIVE 전환 가능** (Risk 명시 합의).
+- 본 Sprint는 dry_run + 메타데이터 + 회로차단기 골격까지만 검증.
+- LIVE 전환은 Sprint 2 R2 v1 / R3 OR + Sprint 4 walk-forward 60일 통과 후로 미룬다.
 
 ---
 
@@ -481,6 +564,16 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 | `CIRCUIT_BREAKER_PASS_RATE_THRESHOLD` | `0.10` | 2차 통과율 임계 | Task 5 |
 | `CIRCUIT_BREAKER_CONSECUTIVE_DAYS` | `3` | 연속 일수 | Task 5 |
 
+### 신규 Redis Counter Key (P0 보강 — 코드에서 자동 적재, env 아님)
+
+| Key 패턴 | 적재 위치 | TTL | 용도 |
+|----------|-----------|-----|------|
+| `screener:candidates:total:{date}` | `realtime_screener.screen()` 종점 | 30일 | G3 분모 (P0 보강 #1 — 만장일치) |
+| `screener:candidates:passed:{date}` | `realtime_screener.screen()` 종점 | 30일 | G3 분자 (P0 보강 #1 — counter pair 필수) |
+| `screener:candidates:primary:{date}` | `primary_screener` 통과 시점 | 30일 | R4 분모 baseline (P0 보강 #2 — Sprint 4 walk-forward 분포 비교) |
+
+> **머지 차단 조건 (PR 게이트)**: 위 3개 counter 적재 코드 누락 시 sprint-review가 PR 머지 차단.
+
 ---
 
 ## 최종 검증 계획 (Task 7)
@@ -493,6 +586,11 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 | G2 R1~R4 | `docker compose exec backend pytest tests/safety/test_auto_rollback.py -v` | 8 PASS |
 | G3 회로차단기 | `docker compose exec backend pytest tests/safety/test_circuit_breaker.py -v` | 4 PASS |
 | Alembic 마이그레이션 | `docker compose exec backend alembic upgrade head` | 성공 |
+| **Alembic 왕복 테스트 (PR 게이트)** | `alembic upgrade head && alembic downgrade -1 && alembic upgrade head` | 3단계 모두 성공 |
+| **CI grep 가드 (sprint-review)** | `git diff develop...HEAD -- backend/modules/trading/executor.py backend/modules/trading/order_manager.py \| grep -E "(max_position\|position_size\|daily_max_loss\|emergency_stop)"` | 0줄 |
+| **G3 분모 counter pair 적재** | `redis-cli KEYS "screener:candidates:total:*"` + `KEYS "screener:candidates:passed:*"` | 1개 이상 (당일 키) |
+| **R4 분모 baseline 적재** | `redis-cli KEYS "screener:candidates:primary:*"` | 1개 이상 (당일 키) |
+| **G3 청산 신호 보존** | `pytest tests/safety/test_circuit_breaker.py::test_circuit_breaker_does_not_block_exit_signals -v` | PASS |
 | M-F2 API | `curl -s http://localhost:8000/api/v1/metrics/fallback-signal-rate \| jq .` | `{date, fallback_signals, fallback_triggered_codes, rate}` |
 | 프론트 타입체크 | `cd frontend && npx tsc --noEmit` | 0 errors |
 | Paper 1거래일 회귀 | 로컬 Docker Paper 1사이클 | `signals.fallback=true` 1건 이상 |
@@ -501,12 +599,27 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 
 ## DoR 체크리스트 (Sprint 종료 시)
 
-- ⬜ G1 (M-F2 산출 가능 + 메타데이터 전파) — Task 3
-- ⬜ G2 (R1~R4 다중 트리거) — Task 4
-- ⬜ G3 (회로차단기) — Task 5
-- ⬜ Phase 7.0 LIVE 파라미터 코드 잠금 — Task 1
+### 핵심 게이트 4종
 
-위 4개 모두 ✅ 후에만 Sprint 2 착수 가능 (Phase 8.6 §3 DoR).
+- ⬜ G1 (M-F2 산출 가능 + 메타데이터 전파) — Task 3
+- ⬜ G2 (R1~R4 다중 트리거 + R4 분모 baseline counter) — Task 4
+- ⬜ G3 (회로차단기 + counter pair 분모 + 청산 신호 보존) — Task 5
+- ⬜ Phase 7.0 LIVE 파라미터 코드 잠금 (Final + 런타임 assert + CI grep 가드) — Task 1
+
+### P0 보강 5건 (재리뷰 합의)
+
+- ⬜ G3 counter pair 동시 적재 + 분모=0 fail-safe (Task 5)
+- ⬜ R4 분모 baseline `screener:candidates:primary:{date}` Redis counter (Task 4)
+- ⬜ G3 발동 시 청산 신호(`exit/stop_loss/take_profit`) 보존 + pytest 회귀 (Task 5)
+- ⬜ dry_run 가드 이중화 — `Final` + 런타임 assert + sprint-review CI grep 가드 (Task 1)
+- ⬜ Alembic upgrade/downgrade/upgrade 왕복 테스트 PR 머지 게이트 + 백필 정책 명시 (Task 3)
+
+### LIVE 게이트 합의 (재명시)
+
+- ⬜ **Sprint 1 완료 ≠ LIVE 전환 가능** (Risk 합의) — 본 Sprint는 dry_run + 메타데이터 + 회로차단기 골격만
+- ⬜ LIVE 전환은 Sprint 2 R2 v1 / R3 OR + Sprint 4 walk-forward 60일 통과 후
+
+위 모두 ✅ 후에만 Sprint 2 착수 가능 (Phase 8.6 §3 DoR).
 
 ---
 
