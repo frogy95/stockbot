@@ -79,7 +79,13 @@ def _build_engine(
     eod.is_entry_blocked = MagicMock(return_value=entry_blocked)
 
     redis = AsyncMock()
-    redis.get = AsyncMock(return_value="true")  # pipeline_healthy 가드 통과
+
+    async def _redis_get(key):  # Phase 8.6 Sprint 2 — key-aware mock
+        if key == "scheduler:pipeline_healthy":
+            return "true"
+        return None  # safe_mode:active 등 기본 None
+
+    redis.get = AsyncMock(side_effect=_redis_get)
 
     engine = TradingEngine(
         signal_generator=signal_gen,

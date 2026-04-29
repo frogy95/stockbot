@@ -99,6 +99,44 @@ class NotifierManager:
         else:
             logger.warning("notify_timeout: token=%s 에 해당하는 pending 메시지 없음", token)
 
+    async def send_safe_mode_alert(self, *, reason: str, until: str) -> None:
+        """Phase 8.6 Sprint 2 — 안전모드 진입 알림 (ATR 캘리브레이션 폴백 3단)."""
+        if self._bot is None:
+            return
+        text = (
+            "🚨 안전모드 진입\n"
+            f"이유: {reason}\n"
+            f"신호 발행 중단 ~ {until}\n"
+            "수동 해제: Redis DEL safe_mode:active"
+        )
+        await self._bot.send_notification(text)
+
+    async def send_drift_warn(self, *, date_iso: str, today_p80: float) -> None:
+        """ATR 분포 단면-시계열 P80 차 ≥0.015 (분포 드리프트 경고)."""
+        if self._bot is None:
+            return
+        text = (
+            "⚠️ ATR 분포 드리프트 경고\n"
+            f"날짜: {date_iso}\n"
+            f"오늘 P80: {today_p80:.4f}\n"
+            "직전 5거래일 평균과 0.015 이상 차이 — 시장 국면 변화 가능성"
+        )
+        await self._bot.send_notification(text)
+
+    async def send_sim_real_diff_alert(
+        self, *, date_iso: str, diff: float, threshold: float
+    ) -> None:
+        """Phase 8.6 Sprint 2 — 시뮬-실측 통과율 절대차 ≥ threshold."""
+        if self._bot is None:
+            return
+        text = (
+            "⚠️ 시뮬-실측 통과율 괴리\n"
+            f"날짜: {date_iso}\n"
+            f"절대차: {diff:.3f} (임계 {threshold})\n"
+            "분기 D 회귀 의심 — Kill-switch PARALLEL_OR_TIER_ENABLED=false 검토"
+        )
+        await self._bot.send_notification(text)
+
     async def send_system_alert(self, alert_type: str, details: str) -> None:
         """시스템 경고 알림을 텔레그램으로 발송한다.
 

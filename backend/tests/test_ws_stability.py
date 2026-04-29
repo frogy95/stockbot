@@ -124,7 +124,10 @@ async def test_scheduler_secondary_screen_skip_counter():
 
 @pytest.mark.asyncio
 async def test_ws_manager_env_max_subscriptions():
-    """PAPER 환경에서 WSSubscriptionManager가 25종목 상한을 적용한다."""
+    """PAPER 환경에서 WSSubscriptionManager가 20종목 상한을 적용한다.
+
+    기존 기대값(25)이 실제 PAPER.max_ws_subscriptions=20과 불일치하여 수정.
+    """
     from modules.collector.ws_manager import WSSubscriptionManager
     from core.clients.kis_ws import KISWebSocketClient
     from core.clients.token_manager import KISTokenManager
@@ -133,7 +136,7 @@ async def test_ws_manager_env_max_subscriptions():
     ws_client = KISWebSocketClient(env=PAPER, token_manager=token_manager)
 
     manager = WSSubscriptionManager(ws_client, max_subscriptions=PAPER.max_ws_subscriptions)
-    assert manager._max == 25
+    assert manager._max == 20
 
     ws_mock = AsyncMock()
     ws_mock.send = AsyncMock()
@@ -141,15 +144,15 @@ async def test_ws_manager_env_max_subscriptions():
     ws_client._connected = True
     ws_client._approval_key = "test-key"
 
-    # 25종목 구독
-    for i in range(25):
+    # 20종목 구독
+    for i in range(20):
         code = f"{i:06d}"
         result = await manager.subscribe(code, priority=float(i))
         assert result is True, f"종목 {code} 구독 실패"
 
-    assert manager.count == 25
+    assert manager.count == 20
 
-    # 26번째 종목: 우선순위 낮으면 거부
+    # 21번째 종목: 우선순위 낮으면 거부
     result = await manager.subscribe("999999", priority=0.0)
     assert result is False
-    assert manager.count == 25
+    assert manager.count == 20

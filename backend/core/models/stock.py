@@ -17,6 +17,9 @@ class Stock(Base):
     market_type: Mapped[str] = mapped_column(String(10), nullable=False)
     stock_type: Mapped[str] = mapped_column(String(20), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_kospi200: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     listed_shares: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     extra_data: Mapped[dict] = mapped_column(JSON, default=dict)
     updated_at: Mapped[datetime | None] = mapped_column(

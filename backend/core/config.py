@@ -77,6 +77,28 @@ class Settings(BaseSettings):
         description="회로차단기 발동 연속 일수 임계",
     )
 
+    # --- Phase 8.6 Sprint 2: 병렬 OR tier + ATR 분위수 캘리브레이션 ---
+    # 병렬 OR tier 분기 활성화 (false 시 Sprint 1 직렬 동작 복원 — Kill-switch)
+    PARALLEL_OR_TIER_ENABLED: bool = Field(default=True, description="병렬 OR tier 분기 활성화 (false=Sprint 1 직렬 복원)")
+    # 08:35 KOSPI200 ATR 분위수 캘리브레이션 잡 활성화
+    ATR_CALIBRATION_ENABLED: bool = Field(default=True, description="ATR 캘리브레이션 잡 활성화 (false=ATR_CEIL_HARD 정적 사용)")
+    # 캘리브레이션 방식 — sma(20일 평균) 또는 ewma(λ=0.94)
+    ATR_CALIBRATION_METHOD: Literal["sma", "ewma"] = Field(default="sma", description="ATR 캘리브레이션 방식 (sma|ewma)")
+    # ATR 하한 (모든 tier 공통, 폴백 종목 포함, gap_open도 적용)
+    ATR_FLOOR: float = Field(default=0.025, ge=0.0, le=0.5, description="ATR 하한 (모든 tier 공통)")
+    # ATR 상한 절대 한계 (gap_open 우회 시에도 적용, 동적 상한도 이 값 초과 금지)
+    ATR_CEIL_HARD: float = Field(default=0.08, ge=0.0, le=0.5, description="ATR 상한 절대 한계 (HARD)")
+    # 폴백 종목 ATR 상한 (동적 미적용)
+    ATR_CEIL_FALLBACK: float = Field(default=0.05, ge=0.0, le=0.5, description="폴백 종목 ATR 상한 (정적)")
+    # 동적 상한 곱계수 (P80 × mult). shadow 그리드 {1.0, 1.1, 1.2, 1.3} 중 실 진입값
+    ATR_CEIL_MULT: float = Field(default=1.2, gt=0.0, le=3.0, description="동적 상한 곱계수 (P80×mult)")
+    # KOSPI200 ATR 캘리브레이션 윈도우 (영업일 단위)
+    ATR_CALIBRATION_WINDOW_DAYS: int = Field(default=20, ge=5, le=120, description="ATR 캘리브레이션 윈도우(일)")
+    # 임시 시간가드 (09:00~09:10 / 14:30+ 진입 차단), Sprint 3 본 가드 도입 시 제거
+    TEMP_TIME_GUARD_SPRINT2: bool = Field(default=True, description="임시 시간가드 (09:00~09:10 / 14:30+ 차단)")
+    # 폴백 3단 안전모드 신호 발행 중단 시간 (분)
+    SAFE_MODE_TIMEOUT_MIN: int = Field(default=120, ge=1, le=720, description="안전모드 신호 발행 중단 시간(분)")
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 

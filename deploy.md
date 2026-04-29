@@ -7,83 +7,92 @@
 
 ---
 
-### Sprint: phase8.6/sprint1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
+### 프로덕션 배포 - v2.8.0 (2026-04-29)
 
-브랜치: `phase8-sprint1` (develop 머지 예정)
-PR: https://github.com/frogy95/stockbot/pull/181
+포함 스프린트: Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
+PR: https://github.com/frogy95/stockbot/pull/185 (develop → main)
 
-#### sprint-review 상태 (2026-04-29 완료)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
-**코드 리뷰 결과**: Critical/High 이슈 없음 — 코드 리뷰 통과
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 
-- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용, `router.dependencies=[Depends(get_current_user)]` 인증 적용
-- ✅ 성능: N+1 없음, Redis counter 패턴 적절, DB 인덱스 추가 (`ix_trade_signals_fallback_created`)
-- ✅ 코드 품질: TypeScript `any` 사용 없음, 에러 핸들링 적절 (`except Exception: logger.exception`)
-- ✅ 테스트: 신규 기능 pytest 전체 추가 (G1 6종 + G2 13종 + G3 9종 + Task1 5종 = 33종), 회귀 없음
-- ✅ 패턴: `modules/safety/` 신규 디렉토리, 프로젝트 컨벤션 준수
+---
 
-Medium 이슈 (기능 영향 없음, Sprint 2에서 개선 권장):
-- M1: `_prev_days` 함수 독스트링 "오늘 포함 직전 count일"과 모듈 독스트링 "직전 3거래일" 표현 불일치 (문서 혼란 소지, 기능 의도적)
-- M2: `phase86-status` API의 rollback_active/circuit_active 판정이 `is not None` (key 존재 확인) 방식 사용 — `circuit_breaker.is_active()`는 값 체크. 실제 쓰기가 항상 "true"여서 동작은 동일하나 일관성 결여
+### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
 
-**자동 검증 결과**:
+브랜치: `phase8.6-sprint2` → develop
+PR: https://github.com/frogy95/stockbot/pull/184
 
-- ✅ pytest 변경 파일 대상 (tests/safety/ + tests/core/ + test_g1* + test_momentum_breakout + test_realtime_screener): **102 passed, 0 failed**
-- ✅ 프론트엔드 `npx tsc --noEmit`: 0 errors
-- ✅ Phase 7.0 CI grep 가드 (`max_position|position_size|daily_max_loss|emergency_stop` in order_manager/executor): **0줄 (통과)**
-- ✅ 백엔드 health check: `http://localhost:8000/docs` → 200 OK
-- ✅ 프론트엔드 health check: `http://localhost:3000` → 200 OK
-- ⬜ Playwright `/diagnostics` 페이지 렌더 확인 — Docker 내 Playwright 미설치, 수동 확인 필요
+- ✅ 코드 리뷰 완료 (2026-04-29, Critical/High/Medium 0건 — 977aa05 재리뷰 통과)
+- ✅ 자동 검증 완료 (2026-04-29, pytest **1056 passed**, tsc 0건, API 3종 200, Playwright 정상)
 
-**Phase 문서 반영**: ✅ `docs/phase/phase8.6/phase8.6.md` Sprint 1 완료 마킹 + DoR 4종 ✅ 업데이트
+배포 대상 변경 요약: Sprint 1 직렬 AND tier가 병렬 OR + tier별 독립 sub-게이트로 분리. ATR 5% 고정 상한이 KOSPI200 분위수 동적 상한(P80×1.2, HARD 0.08 캡)으로 전환. 시뮬-실측 통과율 절대차 메트릭(`metrics:quant:sim_vs_real_diff`) 도입.
 
-**LIVE 게이트 합의**: 본 Sprint는 **LIVE 전환 아님** — Paper 모드에서 R1~R4/G3 가드레일 검증. LIVE 전환은 Sprint 2 병렬 OR 완료 + DoR 4종 모두 통과 후.
+#### Railway 환경변수 추가 확인 (10종)
 
-#### Railway 환경변수 추가 확인 (10종 — 신규/조정)
+- ⬜ `PARALLEL_OR_TIER_ENABLED=true` — Kill-switch 마스터 토글
+- ⬜ `ATR_CALIBRATION_ENABLED=true` — 08:35 캘리브레이션 잡 활성화
+- ⬜ `ATR_CALIBRATION_METHOD=sma` — `sma`(20일) 또는 `ewma`(λ=0.94)
+- ⬜ `ATR_FLOOR=0.025` — ATR 하한 (모든 tier 공통)
+- ⬜ `ATR_CEIL_HARD=0.08` — ATR 상한 절대 한계 (gap_open 우회 X)
+- ⬜ `ATR_CEIL_FALLBACK=0.05` — 폴백 종목 정적 상한
+- ⬜ `ATR_CEIL_MULT=1.2` — P80×mult 계수 (shadow grid 1.0/1.1/1.2/1.3 중 실 진입값)
+- ⬜ `ATR_CALIBRATION_WINDOW_DAYS=20`
+- ⬜ `TEMP_TIME_GUARD_SPRINT2=true` — 09:00~09:10 / 14:30+ 차단 (Sprint 3에서 본 가드 도입 후 제거)
+- ⬜ `SAFE_MODE_TIMEOUT_MIN=120` — 폴백 3단 안전모드 신호 중단(분)
 
-- ✅ `SECONDARY_POOL_FALLBACK_THRESHOLD=5`  # Phase 8.6 Sprint 1 — 분기 D 풀 협소 대응 (3→5)
-- ✅ `SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP=5`
-- ✅ `AUTO_ROLLBACK_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R1_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R2_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R3_ENABLED=false`  # Sprint 2 tier 분리 후 true 전환
-- ✅ `AUTO_ROLLBACK_R4_ENABLED=true`
-- ✅ `CIRCUIT_BREAKER_ENABLED=true`
-- ✅ `CIRCUIT_BREAKER_PASS_RATE_THRESHOLD=0.10`
-- ✅ `CIRCUIT_BREAKER_CONSECUTIVE_DAYS=3`
+#### Alembic 마이그레이션 적용 (2종)
 
-#### 자동 검증 (Sprint 1 — develop PR 시점)
+- ⬜ `c1f2a30b8201` — `stocks.is_kospi200 BOOLEAN NOT NULL DEFAULT FALSE` + `ix_stocks_is_kospi200`
+- ⬜ `d2a30b8201ef` — `trade_signals.matched_tiers JSONB NULL` (Kill-switch 시 NULL 안전)
 
-- ✅ pytest 전체: **1001 passed, 1 failed (test_ws_stability — Sprint 무관, 기존 환경 문제 / Sprint 1 변경분 64 PASS)**
-- ✅ 신규 테스트 PASS:
-  - G1 메타데이터 전파: 6 PASS (`tests/test_g1_fallback_metadata_propagation.py`)
-  - G2 자동 롤백 R1~R4: 13 PASS (`tests/safety/test_auto_rollback.py`)
-  - G3 회로차단기: 9 PASS (`tests/safety/test_circuit_breaker.py`)
-- ✅ Alembic 왕복 테스트 (PR 머지 게이트): `upgrade head → downgrade -1 → upgrade head` 3단계 모두 성공 (Task 3 시점)
-- ✅ frontend `npx tsc --noEmit`: 0 errors
+#### Kill-switch 런북 (Phase 8.6 Sprint 2)
 
-#### DoR 4종 + P0 보강 5건 (반영 결과)
+##### 즉시 원복 (1줄)
 
-- ✅ **DoR §3 G1**: `is_fallback` candidate→signal→order 메타데이터 전파 + DB 컬럼 + M-F2 API
-- ✅ **DoR §3 G2**: R1~R4 OR 자동 롤백 + 16:10 평가 + Phase 8.5 폴백 격리
-- ✅ **DoR §3 G3**: 1차→2차 통과율 회로차단기 + counter pair + Phase 8.5 폴백 동시 차단
-- ✅ **Phase 7.0 LIVE 잠금**: `Final` 상수 + 런타임 assert 이중 가드 (Task 1)
+Railway 환경변수 `PARALLEL_OR_TIER_ENABLED=false` 설정 후 backend 재배포. Sprint 1 직렬 동작 100% 복원.
 
-P0 보강 5건:
+##### 검증 (3단)
 
-- ✅ **#1 (Daytrader Critical)** G3 분모 부재 — counter pair 동시 적재 + 분모=0 fail-safe 강제 ON (`test_zero_denominator_fails_safe_to_circuit_on`)
-- ✅ **#2** R4 분모 baseline — `screener:candidates:primary:{date}` Redis counter 일별 적재 (TTL 30d)
-- ✅ **#3 (Daytrader Critical)** G3 청산 신호 보존 — `signal.action in (exit/stop_loss/take_profit)` 또는 `signal_type=='sell'` 통과 (`test_circuit_breaker_does_not_block_exit_signals`, `test_circuit_breaker_blocks_only_entry_signals`)
-- ✅ **#4 (Risk Critical)** dry_run 우회 방지 — `Final` 상수 + 런타임 assert + `test_phase7_constants_immutable_at_runtime`
-- ✅ **#5** Alembic 왕복 회귀 — `upgrade head → downgrade -1 → upgrade head` 3단계 PASS
+1. `curl https://api.stockbot.choiji.kr/api/v1/diagnostics | jq .parallel_or_enabled` → `false` 확인 (또는 `/api/v1/metrics/phase86-status` 응답 확인)
+2. PostgreSQL: `SELECT COUNT(*) FROM trade_signals WHERE matched_tiers IS NULL AND created_at >= NOW() - INTERVAL '1 hour';` → 신규 신호 NULL 안전 확인 (Kill-switch 모드에서는 모두 NULL)
+3. 텔레그램 신호 발행 확인 — Sprint 1 직렬 동작과 동일한 reject stage 패턴
 
-#### 수동 검증 필요 항목 (Railway 프로덕션 배포 후 — 본 Sprint는 LIVE 아니지만 Paper 회귀 + env 등록 확인 필요)
+##### 안전모드 해제 (수동)
 
-- ⬜ `docker compose up --build` 빌드 검증 (DB 컬럼 추가 — `trade_signals.fallback`, `orders.fallback`)
-- ⬜ Paper 모드 1거래일 회귀: `signals.fallback=true` 1건 이상 DB 기록 + M-F2 API 응답 정상
-- ⬜ Playwright `/diagnostics` 페이지 접속 — `FallbackSignalRateCard` + `AutoRollbackMultiTrigger` 정상 렌더
-- ⬜ CI grep 가드 (주문 실행 경로 git diff 0줄) — Sprint 1은 `core/clients/kis_rest.py` / `modules/trading/order_manager.py` 변경분에 LIVE 토글/하드코딩 시도 없음 확인 (sprint-review에서 재확인)
+```
+docker compose exec redis redis-cli DEL safe_mode:active
+```
 
+또는 Railway Redis CLI에서 동일 명령. 자동 해제는 `SAFE_MODE_TIMEOUT_MIN=120`분 TTL.
+
+##### 캘리브레이션만 비활성
+
+`ATR_CALIBRATION_ENABLED=false` → 동적 P80 캐싱 무시, 모든 tier에서 정적 `ATR_CEIL_HARD=0.08` 사용. `ATR_FLOOR`/`gap_open HARD`는 그대로 유지.
+
+#### 자동 검증 결과 (2026-04-29 sprint-review 실측)
+
+- ✅ pytest — **1056 passed, 0 failed** (977aa05에서 M1/M2/M3 8건 모두 수정)
+  - M1: `test_momentum_breakout_metrics.py` 6건 — prev_close_volume_confirm 게이트 순서 반영하여 stage 기대값 업데이트
+  - M2: `test_pipeline_health.py` 1건 — redis mock을 키별 분기로 수정하여 safe_mode:active가 signal_generator를 차단하지 않도록 조정
+  - M3: `test_ws_stability.py` 1건 — max_subscriptions 기대값 25 → 20 (PAPER 실제값 일치)
+- ✅ `npx tsc --noEmit` 에러 0건
+- ✅ tier 카드 2종 (`/diagnostics`) Playwright 시각 검증 — `tier 상관(phi + 조건부 P(B|A))` + `tier pass rate · 시뮬-실측 절대차` 정상 렌더링 확인 (스크린샷: `docs/phase/phase8.6/sprint2/diagnostics-tier-cards.png`)
+- ✅ `/api/v1/metrics/tier-correlation` / `tier-pass-rate` / `sim-vs-real-diff` 200 응답 (인증 후 모두 정상)
+
+#### 코드 리뷰 결과 (2026-04-29)
+
+- Critical/High/Medium 이슈: **0건** (977aa05 재리뷰 통과 — sprint-pr-fix로 M1/M2/M3 8건 모두 수정됨)
+
+#### 관찰 항목 (Sprint 3 착수 게이트, 종료 조건 X)
+
+- ⬜ Paper 1거래일 (2026-04-30) ATR 캘리브레이션 잡 → Redis 4종 키(`metrics:atr:ceil`/`dist`/`ceil_grid`/`fallback_count`) 적재
+- ⬜ 병렬 OR tier 신호 1건 이상 + `matched_tiers` 메타데이터 JSON 기록
+- ⬜ 시뮬-실측 절대차 ≤0.15 유지 (≥0.15 시 텔레그램 알림 + 분기 D 회귀 의심)
+- ⬜ L5 사전 시뮬: `docs/phase/phase8.6/sprint2/atr_floor_simulation.md` (fail율 추정 35~45% < 60% → ATR_FLOOR=0.025 시작값 유지)
+
+배포 모드: Paper — Sprint 3에서 시간 필터 본 가드 + volume_surge tier 도입 후 LIVE 전환 검토
 
 ---
 

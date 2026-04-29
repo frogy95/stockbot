@@ -173,6 +173,12 @@ class TradingEngine:
             await self._log_block("-", "eod_blocked")
             return
 
+        # Phase 8.6 Sprint 2 — 안전모드 게이트 (ATR 캘리브레이션 폴백 3단)
+        safe_mode = await self._redis.get("safe_mode:active")
+        if safe_mode:
+            await self._log_block("-", "safe_mode_active", extra={"raw": safe_mode})
+            return
+
         # 매매 모드 조회
         mode = await self._get_trading_mode()
 
