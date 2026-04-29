@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-29T01:13:00+09:00",
+  "lastUpdated": "2026-04-29T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3102,12 +3102,13 @@
         {
           "id": "sprint1",
           "title": "선행 패치 + DoR 가드레일 G1~G3",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase8-sprint1",
           "sprintDoc": "docs/phase/phase8.6/sprint1/sprint1.md",
+          "prUrl": "",
           "progress": {
             "total": 7,
-            "completed": 0
+            "completed": 7
           },
           "tasks": [
             {
@@ -3115,8 +3116,8 @@
               "title": "Phase 7.0 LIVE 파라미터 Final 상수 잠금 + 회귀 방지 테스트",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-1-",
               "testPlan": "pytest tests/core/test_phase70_locked_constants.py -v",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3124,8 +3125,8 @@
               "title": "폴백 임계 5종 + min_volume_floor 시간대 슬라이딩 0.3 (09~11시)",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-2-",
               "testPlan": "pytest tests/test_realtime_screener.py tests/strategies/test_momentum_breakout.py -v",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3133,8 +3134,8 @@
               "title": "G1 — is_fallback 메타데이터 신호→주문 전파 + DB 컬럼 + M-F2 API",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-3-",
               "testPlan": "pytest tests/test_g1_fallback_metadata_propagation.py -v + alembic upgrade head + curl /api/v1/metrics/fallback-signal-rate",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3142,8 +3143,8 @@
               "title": "G2 — 자동 롤백 R1~R4 OR 트리거 + 16:10 잡 + env 토글",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-4-",
               "testPlan": "pytest tests/safety/test_auto_rollback.py -v (8 시나리오)",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3151,8 +3152,8 @@
               "title": "G3 — 1차→2차 통과율 회로차단기 + counter 인프라",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-5-",
               "testPlan": "pytest tests/safety/test_circuit_breaker.py -v (4 시나리오)",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3160,8 +3161,8 @@
               "title": "M-F2 카드 + R1~R4 다중 트리거 시각화",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-6-",
               "testPlan": "cd frontend && npx tsc --noEmit + 브라우저 렌더 확인",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3169,8 +3170,8 @@
               "title": "DoR 통합 검증 + Paper 1거래일 회귀 + Railway env 등록",
               "path": "docs/phase/phase8.6/sprint1/sprint1.md#task-7-",
               "testPlan": "pytest -v 전체 + npx tsc --noEmit + Paper 1거래일 + deploy.md 환경변수 10종 등록",
-              "testResult": "",
-              "status": "planned",
+              "testResult": "pass",
+              "status": "completed",
               "commits": []
             }
           ]

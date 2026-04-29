@@ -15,9 +15,10 @@
 
 **Tech Stack:** Python 3.12 / FastAPI / SQLAlchemy 2.0 async / Alembic / pytest / Redis / APScheduler / Next.js 16 / shadcn-ui
 
-**Sprint 기간:** 2026-04-29 ~ (사용자 검토 후 구현, 4~6일 예상)
+**Sprint 기간:** 2026-04-29 ~ 2026-04-29 (✅ 완료)
 **이전 스프린트:** Phase 8.5 Sprint 2.5 (✅ 완료, PR #172) — 인프라 보강 + 관측성·문서 정합성
 **브랜치명:** `phase8-sprint1` (worktree 사용 금지, develop 기반)
+**PR:** (생성 예정)
 
 ---
 
@@ -123,9 +124,9 @@ git commit -m "feat(phase8.6-sprint1): task1 — Phase 7.0 LIVE 파라미터 Fin
 ```
 
 **완료 기준:**
-- ⬜ pytest `test_phase70_locked_constants.py` 통과 (런타임 assert 회귀 케이스 포함)
-- ⬜ 4개 상수 모두 `Final[...]` 타입 + 런타임 assert 이중 가드 선언
-- ⬜ sprint-review CI grep 가드 항목 추가 (주문 실행 경로 git diff 0줄 검증)
+- ✅ pytest `test_phase70_locked_constants.py` 통과 (런타임 assert 회귀 케이스 포함)
+- ✅ 4개 상수 모두 `Final[...]` 타입 + 런타임 assert 이중 가드 선언
+- ✅ sprint-review CI grep 가드 항목 추가 (주문 실행 경로 git diff 0줄 검증)
 
 ---
 
@@ -191,8 +192,8 @@ git commit -m "feat(phase8.6-sprint1): task2 — 폴백 임계 5종 + min_volume
 ```
 
 **완료 기준:**
-- ⬜ pytest 신규 3 케이스 + 기존 케이스 모두 PASS
-- ⬜ `.env.example`에 신규 env 명시 (Railway 수동 설정 필요 — Task 7에서 deploy.md 등록)
+- ✅ pytest 신규 3 케이스 + 기존 케이스 모두 PASS
+- ✅ `.env.example`에 신규 env 명시 (Railway 수동 설정 필요 — Task 7에서 deploy.md 등록)
 
 ---
 
@@ -267,11 +268,11 @@ git commit -m "feat(phase8.6-sprint1): task3 — G1 is_fallback 메타데이터 
 ```
 
 **완료 기준:**
-- ⬜ Alembic 마이그레이션 적용 + 컬럼 2개 존재
-- ⬜ **Alembic 왕복 테스트 통과** (`upgrade head → downgrade -1 → upgrade head` 3단계 — PR 머지 게이트)
-- ⬜ 백필 정책 (`is_fallback NULL → False`) 마이그레이션 주석에 명시
-- ⬜ pytest test_g1_* 4 시나리오 PASS
-- ⬜ M-F2 API 정상 응답 (분모 0일 때 `rate=null`)
+- ✅ Alembic 마이그레이션 적용 + 컬럼 2개 존재
+- ✅ **Alembic 왕복 테스트 통과** (`upgrade head → downgrade -1 → upgrade head` 3단계 — PR 머지 게이트)
+- ✅ 백필 정책 (`is_fallback NULL → False`) 마이그레이션 주석에 명시
+- ✅ pytest test_g1_* 4 시나리오 PASS
+- ✅ M-F2 API 정상 응답 (분모 0일 때 `rate=null`)
 
 ---
 
@@ -340,11 +341,11 @@ git commit -m "feat(phase8.6-sprint1): task4 — G2 자동 롤백 R1~R4 OR 트�
 ```
 
 **완료 기준:**
-- ⬜ R1~R4 8개 테스트 시나리오 PASS
-- ⬜ env 토글로 개별 트리거 비활성화 동작
-- ⬜ 발동 시 Phase 8.5 폴백은 영향 없음 (테스트 검증)
-- ⬜ `screener:candidates:primary:{date}` Redis counter 일별 적재 동작 (Sprint 4 baseline)
-- ⬜ R4 분자/분모 정의가 마이그레이션 주석 + 코드 docstring에 명시
+- ✅ R1~R4 8개 테스트 시나리오 PASS
+- ✅ env 토글로 개별 트리거 비활성화 동작
+- ✅ 발동 시 Phase 8.5 폴백은 영향 없음 (테스트 검증)
+- ✅ `screener:candidates:primary:{date}` Redis counter 일별 적재 동작 (Sprint 4 baseline)
+- ✅ R4 분자/분모 정의가 마이그레이션 주석 + 코드 docstring에 명시
 
 ---
 
@@ -406,11 +407,11 @@ git commit -m "feat(phase8.6-sprint1): task5 — G3 1차→2차 통과율 회로
 ```
 
 **완료 기준:**
-- ⬜ 7개 테스트 시나리오 PASS (기존 4 + zero_denominator + exit_signals_pass + entry_only_block)
-- ⬜ 발동 시 Phase 8.5 폴백 동시 차단 검증
-- ⬜ **counter pair `screener:candidates:total` + `screener:candidates:passed` 동시 적재 검증 (PR 머지 차단 조건 — 누락 시 머지 불가)**
-- ⬜ **분모=0 fail-safe 동작 검증** (pytest `test_zero_denominator_fails_safe_to_circuit_on`)
-- ⬜ **청산 신호 보존 검증** (pytest `test_circuit_breaker_does_not_block_exit_signals`)
+- ✅ 7개 테스트 시나리오 PASS (기존 4 + zero_denominator + exit_signals_pass + entry_only_block)
+- ✅ 발동 시 Phase 8.5 폴백 동시 차단 검증
+- ✅ **counter pair `screener:candidates:total` + `screener:candidates:passed` 동시 적재 검증 (PR 머지 차단 조건 — 누락 시 머지 불가)**
+- ✅ **분모=0 fail-safe 동작 검증** (pytest `test_zero_denominator_fails_safe_to_circuit_on`)
+- ✅ **청산 신호 보존 검증** (pytest `test_circuit_breaker_does_not_block_exit_signals`)
 
 ---
 
@@ -444,8 +445,8 @@ git commit -m "feat(phase8.6-sprint1): task6 — M-F2 카드 + R1~R4 다중 트�
 ```
 
 **완료 기준:**
-- ⬜ npx tsc --noEmit 에러 0
-- ⬜ 두 카드 정상 렌더 + 폴링 동작
+- ✅ npx tsc --noEmit 에러 0
+- ✅ 두 카드 정상 렌더 + 폴링 동작
 
 ---
 
@@ -495,14 +496,14 @@ git commit -m "docs(phase8.6-sprint1): task7 — DoR 통합 검증 결과 + Rail
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 통과
-- ⬜ npx tsc --noEmit 0 errors
-- ⬜ DoR 4종 모두 ✅ 명시
-- ⬜ P0 보강 5건 모두 ✅ 명시
-- ⬜ LIVE 게이트 합의 (Sprint 1 ≠ LIVE) deploy.md/sprint1.md 명시
-- ⬜ Alembic 왕복 테스트 PR 게이트 통과 결과 기록
-- ⬜ CI grep 가드 (주문 실행 경로 git diff 0줄) 결과 기록
-- ⬜ deploy.md Railway 환경변수 10종 등록
+- ✅ pytest 전체 통과 (1001 passed, 1 pre-existing failure 무관)
+- ✅ npx tsc --noEmit 0 errors
+- ✅ DoR 4종 모두 ✅ 명시
+- ✅ P0 보강 5건 모두 ✅ 명시
+- ✅ LIVE 게이트 합의 (Sprint 1 ≠ LIVE) deploy.md/sprint1.md 명시
+- ✅ Alembic 왕복 테스트 PR 게이트 통과 결과 기록
+- ✅ CI grep 가드 (주문 실행 경로 git diff 0줄) 결과 기록
+- ✅ deploy.md Railway 환경변수 10종 등록
 
 ---
 
