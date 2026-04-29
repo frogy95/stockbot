@@ -891,7 +891,116 @@ class CollectorScheduler:
             )
 
     async def _check_auto_rollback(self) -> None:
-        """16:10 자동 롤백 검사 — 오늘·전 영업일 모두 신호 0건이면 Redis override + Telegram 경고.
+        """16:10 자동 롤백 검사 — Phase 8.6 G2(R1~R4 OR) + Phase 8.5 2일 zero-signal 폴백.
+
+        Phase 8.6 G2가 발동하면 `phase86:rollback:active=true`로 Phase 8.6 변경분만 일괄 비활성화.
+        Phase 8.5 2일 zero-signal은 별도 — `MIN_VOLUME_FLOOR_MODE=legacy` + `SECONDARY_POOL_FALLBACK_ENABLED=False`.
+        """
+        await self._evaluate_phase86_g2()
+        await self._evaluate_phase85_zero_signals()
+
+    async def _evaluate_phase86_g2(self) -> None:
+        """Phase 8.6 G2 R1~R4 OR 평가 + 발동 시 Redis override."""
+        try:
+            from modules.safety.auto_rollback import AutoRollbackEvaluator
+
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+            if not is_trading_day(today):
+                logger.info("비거래일 스킵: step=phase86_g2 date=%s", today)
+                return
+
+            evaluator = AutoRollbackEvaluator(
+                redis_client=self._redis,
+                session_factory=self._session_factory,
+                settings=settings,
+                signal_count_loader=self._load_daily_signal_count,
+                fallback_triggered_loader=self._load_daily_fallback_triggered,
+                fallback_signal_count_loader=self._load_daily_fallback_signal_count,
+                primary_candidate_count_loader=self._load_daily_primary_candidates,
+                tier_count_loader=self._load_daily_tier_count,
+                notifier=self._notifier_manager,
+            )
+            result = await evaluator.evaluate(today)
+            logger.info(
+                "phase86_g2: should_rollback=%s triggered=%s",
+                result.should_rollback, result.triggered,
+            )
+            if result.should_rollback:
+                await evaluator.execute_rollback(result)
+        except Exception:  # noqa: BLE001
+            logger.exception("phase86_g2 평가 실패 (스케줄러 계속 동작)")
+
+    async def _load_daily_signal_count(self, target_day) -> int:
+        from sqlalchemy import func, select
+        from core.models.trading import TradeSignal
+
+        kst = ZoneInfo(settings.MARKET_TIMEZONE)
+        from datetime import timedelta as _td
+        start = datetime(target_day.year, target_day.month, target_day.day, tzinfo=kst)
+        end = start + _td(days=1)
+        async with self._session_factory() as session:
+            return int(
+                (
+                    await session.execute(
+                        select(func.count()).select_from(TradeSignal).where(
+                            TradeSignal.created_at >= start,
+                            TradeSignal.created_at < end,
+                        )
+                    )
+                ).scalar_one()
+            )
+
+    async def _load_daily_fallback_triggered(self, target_day) -> int:
+        raw = await self._redis.get(f"metrics:fallback:triggered:{target_day.isoformat()}")
+        return int(raw or 0)
+
+    async def _load_daily_fallback_signal_count(self, target_day) -> int:
+        from sqlalchemy import func, select
+        from core.models.trading import TradeSignal
+
+        kst = ZoneInfo(settings.MARKET_TIMEZONE)
+        from datetime import timedelta as _td
+        start = datetime(target_day.year, target_day.month, target_day.day, tzinfo=kst)
+        end = start + _td(days=1)
+        async with self._session_factory() as session:
+            return int(
+                (
+                    await session.execute(
+                        select(func.count()).select_from(TradeSignal).where(
+                            TradeSignal.fallback.is_(True),
+                            TradeSignal.created_at >= start,
+                            TradeSignal.created_at < end,
+                        )
+                    )
+                ).scalar_one()
+            )
+
+    async def _load_daily_primary_candidates(self, target_day) -> int:
+        raw = await self._redis.get(f"screener:candidates:primary:{target_day.isoformat()}")
+        return int(raw or 0)
+
+    async def _load_daily_tier_count(self, target_day) -> int:
+        """일별 활성 tier 종류 수 (TradeSignal.reason["breakout_tier"] distinct)."""
+        from sqlalchemy import distinct, func, select
+        from core.models.trading import TradeSignal
+
+        kst = ZoneInfo(settings.MARKET_TIMEZONE)
+        from datetime import timedelta as _td
+        start = datetime(target_day.year, target_day.month, target_day.day, tzinfo=kst)
+        end = start + _td(days=1)
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(
+                    func.count(distinct(TradeSignal.reason["breakout_tier"].astext))
+                ).where(
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+            return int(result.scalar_one() or 0)
+
+    async def _evaluate_phase85_zero_signals(self) -> None:
+        """Phase 8.5 자동 롤백 검사 — 오늘·전 영업일 모두 신호 0건이면 Redis override + Telegram 경고.
 
         신호가 2거래일 연속 0건인 경우:
         - settings:override:MIN_VOLUME_FLOOR_MODE = "legacy" (TTL 7일)
@@ -1152,6 +1261,18 @@ class CollectorScheduler:
             self._last_primary_screen = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
             await self._save_last_timestamp("primary_screen", self._last_primary_screen)
             await self._update_step_status("primary_screen", "success", collected_count=len(passed), validation=validation)
+
+            # Phase 8.6 Sprint 1 — R4 분모 baseline (Sprint 4 walk-forward 분포 비교)
+            try:
+                today_kst = self._last_primary_screen.date().isoformat()
+                await self._redis.set(
+                    f"screener:candidates:primary:{today_kst}",
+                    str(len(passed)),
+                    ttl=86400 * 30,
+                )
+            except Exception:  # noqa: BLE001
+                logger.exception("R4 baseline counter 적재 실패")
+
             logger.info("1차 스크리닝 완료: %d후보, %d통과", len(results), len(passed))
             return {"candidates": len(results), "passed": len(passed)}
         except Exception as e:

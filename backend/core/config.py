@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     # --- Phase 8.5 Sprint 2.5: Redis settings override 경로 제어 ---
     SETTINGS_OVERRIDE_ENABLED: bool = Field(default=True, description="Redis settings override 경로 활성화 (긴급 차단용)")
 
+    # --- Phase 8.6 Sprint 1: G2 자동 롤백 R1~R4 ---
+    AUTO_ROLLBACK_ENABLED: bool = Field(default=True, description="G2 자동 롤백 마스터 토글")
+    AUTO_ROLLBACK_R1_ENABLED: bool = Field(default=True, description="R1: 신호 0건 3거래일 연속")
+    AUTO_ROLLBACK_R2_ENABLED: bool = Field(default=True, description="R2: 폴백 발동 3거래일 연속 (v0)")
+    AUTO_ROLLBACK_R3_ENABLED: bool = Field(default=False, description="R3: tier 종류 ≤1 5거래일 (Sprint 2 후 활성)")
+    AUTO_ROLLBACK_R4_ENABLED: bool = Field(default=True, description="R4: 폴백 비중 ≥70% 1거래일")
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 
