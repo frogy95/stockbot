@@ -66,6 +66,17 @@ class Settings(BaseSettings):
     AUTO_ROLLBACK_R3_ENABLED: bool = Field(default=False, description="R3: tier 종류 ≤1 5거래일 (Sprint 2 후 활성)")
     AUTO_ROLLBACK_R4_ENABLED: bool = Field(default=True, description="R4: 폴백 비중 ≥70% 1거래일")
 
+    # --- Phase 8.6 Sprint 1: G3 1차→2차 통과율 회로차단기 ---
+    CIRCUIT_BREAKER_ENABLED: bool = Field(default=True, description="G3 회로차단기 마스터 토글")
+    CIRCUIT_BREAKER_PASS_RATE_THRESHOLD: float = Field(
+        default=0.10, ge=0.0, le=1.0,
+        description="일별 1차→2차 통과율 임계 (이 미만이 N일 연속이면 발동)",
+    )
+    CIRCUIT_BREAKER_CONSECUTIVE_DAYS: int = Field(
+        default=3, ge=1, le=10,
+        description="회로차단기 발동 연속 일수 임계",
+    )
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 

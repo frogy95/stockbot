@@ -897,6 +897,7 @@ class CollectorScheduler:
         Phase 8.5 2일 zero-signal은 별도 — `MIN_VOLUME_FLOOR_MODE=legacy` + `SECONDARY_POOL_FALLBACK_ENABLED=False`.
         """
         await self._evaluate_phase86_g2()
+        await self._evaluate_phase86_g3()
         await self._evaluate_phase85_zero_signals()
 
     async def _evaluate_phase86_g2(self) -> None:
@@ -929,6 +930,31 @@ class CollectorScheduler:
                 await evaluator.execute_rollback(result)
         except Exception:  # noqa: BLE001
             logger.exception("phase86_g2 평가 실패 (스케줄러 계속 동작)")
+
+    async def _evaluate_phase86_g3(self) -> None:
+        """Phase 8.6 G3 회로차단기 평가 + 발동 시 Redis override 2종."""
+        try:
+            from modules.safety.circuit_breaker import CircuitBreaker
+
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+            if not is_trading_day(today):
+                logger.info("비거래일 스킵: step=phase86_g3 date=%s", today)
+                return
+
+            breaker = CircuitBreaker(
+                redis_client=self._redis,
+                settings=settings,
+                notifier=self._notifier_manager,
+            )
+            result = await breaker.evaluate(today)
+            logger.info(
+                "phase86_g3: should_trigger=%s reason=%s",
+                result.should_trigger, result.reason,
+            )
+            if result.should_trigger:
+                await breaker.execute(result)
+        except Exception:  # noqa: BLE001
+            logger.exception("phase86_g3 평가 실패 (스케줄러 계속 동작)")
 
     async def _load_daily_signal_count(self, target_day) -> int:
         from sqlalchemy import func, select
