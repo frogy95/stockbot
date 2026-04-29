@@ -18,7 +18,7 @@
 **Sprint 기간:** 2026-04-29 ~ 2026-04-29 (✅ 완료)
 **이전 스프린트:** Phase 8.5 Sprint 2.5 (✅ 완료, PR #172) — 인프라 보강 + 관측성·문서 정합성
 **브랜치명:** `phase8-sprint1` (worktree 사용 금지, develop 기반)
-**PR:** (생성 예정)
+**PR:** https://github.com/frogy95/stockbot/pull/181
 
 ---
 

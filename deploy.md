@@ -10,7 +10,7 @@
 ### Sprint: phase8.6/sprint1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
 
 브랜치: `phase8-sprint1` (develop 머지 예정)
-PR: (생성 예정)
+PR: https://github.com/frogy95/stockbot/pull/181
 
 #### sprint-review 상태
 
