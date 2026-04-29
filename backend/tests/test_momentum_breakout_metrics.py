@@ -22,6 +22,16 @@ class FakeRedis:
         self.counters: dict[str, int] = {}
         self.ttls: dict[str, int] = {}
         self.lists: dict[str, list[str]] = {}
+        self.store: dict[str, str] = {}
+
+    async def get(self, key: str) -> str | None:
+        # safe_mode:active 는 항상 None 반환 (safe_mode 게이트 차단 방지)
+        if key == "safe_mode:active":
+            return None
+        return self.store.get(key)
+
+    async def set(self, key: str, value: str, ex: int | None = None) -> None:
+        self.store[key] = value
 
     async def incr(self, key: str, amount: int = 1, ttl: int | None = None) -> int:
         self.counters[key] = self.counters.get(key, 0) + amount
@@ -91,7 +101,16 @@ def _prev_close_snapshot(**overrides) -> MarketSnapshot:
 @pytest.mark.asyncio
 async def test_virtual_signal_recorded_within_13_14_window():
     """13:30 KST prev_close tier → virtual_signals 1건 INSERT + RejectedSignal 반환."""
+    import json as _json
     redis = FakeRedis()
+    # Sprint 2 — prev_close_volume_confirm 게이트 통과를 위해 양봉 2연속 데이터 주입
+    redis.store["vol_5m:005930"] = _json.dumps([
+        {"volume": 100_000, "is_bullish": True},
+        {"volume": 110_000, "is_bullish": True},
+        {"volume": 120_000, "is_bullish": True},
+        {"volume": 130_000, "is_bullish": True},
+        {"volume": 140_000, "is_bullish": True},
+    ])
     store: list = []
     strategy = MomentumBreakoutStrategy(
         redis_client=redis, session_factory=make_session_factory(store)
@@ -136,15 +155,27 @@ async def test_no_virtual_signal_before_1300():
 
 @pytest.mark.asyncio
 async def test_no_virtual_signal_after_1400():
-    """14:30 KST → prev_close_time_guard는 발동하지만 시간창(13~14) 밖이라 가상 신호 미기록."""
+    """14:10 KST → prev_close_time_guard 발동 + 시간창(13~14) 밖이라 가상 신호 미기록.
+
+    Sprint 2 변경: 14:30 이상은 temp_time_guard가 선행 차단하므로 14:10으로 검증.
+    """
+    import json as _json
     redis = FakeRedis()
+    # Sprint 2 — prev_close_volume_confirm 게이트 통과를 위해 양봉 2연속 데이터 주입
+    redis.store["vol_5m:005930"] = _json.dumps([
+        {"volume": 100_000, "is_bullish": True},
+        {"volume": 110_000, "is_bullish": True},
+        {"volume": 120_000, "is_bullish": True},
+        {"volume": 130_000, "is_bullish": True},
+        {"volume": 140_000, "is_bullish": True},
+    ])
     store: list = []
     strategy = MomentumBreakoutStrategy(
         redis_client=redis, session_factory=make_session_factory(store)
     )
     snapshot = _prev_close_snapshot()
 
-    with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 22, 14, 30, tzinfo=_KST)):
+    with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 22, 14, 10, tzinfo=_KST)):
         result = await strategy.generate_signal(snapshot)
 
     assert isinstance(result, RejectedSignal)
@@ -186,7 +217,10 @@ async def test_stage_counter_recorded_on_reject():
 
 @pytest.mark.asyncio
 async def test_backward_compatible_no_deps():
-    """redis_client/session_factory None이어도 전략 동작 정상 (기존 테스트 회귀 방지)."""
+    """redis_client/session_factory None이어도 전략 동작 정상 (기존 테스트 회귀 방지).
+
+    Sprint 2 변경: redis_client=None이면 prev_close_volume_confirm(fail-safe)에서 먼저 reject.
+    """
     strategy = MomentumBreakoutStrategy()
     snapshot = _prev_close_snapshot()
 
@@ -194,7 +228,9 @@ async def test_backward_compatible_no_deps():
         result = await strategy.generate_signal(snapshot)
 
     assert isinstance(result, RejectedSignal)
-    assert result.stage == "prev_close_time_guard"
+    # redis_client=None → _check_prev_close_volume_confirm이 fail-safe(False) 반환
+    # → prev_close_volume_confirm stage에서 reject (prev_close_time_guard 도달 전)
+    assert result.stage == "prev_close_volume_confirm"
 
 
 # ---------------------------------------------------------------------------
@@ -207,8 +243,12 @@ def _success_snapshot(**overrides) -> MarketSnapshot:
     주요 수치:
     - gap_rate 0.5% → prev_close tier 배제, current_price > prev_high → prev_high tier
     - breakout_pct ≈ 0.99%, threshold=2.0, adjusted_ratio = 3.25 → volume_threshold 통과
-    - trade_strength 150, ATR 500/102000 ≈ 0.49% → atr_filter 통과
+    - trade_strength 150 → trade_strength 통과
     - confidence ≈ 0.64 → MIN_CONFIDENCE 통과
+
+    Sprint 2 ATR 조건:
+    - recent_highs/lows 범위를 넓혀 ATR≈4000, atr_ratio≈3.9% (ATR_FLOOR=2.5% 통과)
+    - atr_ratio < ATR_CEIL_HARD(8%) → atr_ceil 통과
     """
     defaults = {
         "stock_code": "005930",
@@ -226,9 +266,11 @@ def _success_snapshot(**overrides) -> MarketSnapshot:
         "trade_strength": 150.0,
         "total_bid_volume": 150_000,
         "total_ask_volume": 80_000,
-        "recent_highs": [100_500, 100_500, 100_500, 100_500, 100_500],
-        "recent_lows": [100_000, 100_000, 100_000, 100_000, 100_000],
-        "recent_closes": [100_200, 100_200, 100_200, 100_200, 100_200],
+        # ATR_FLOOR(0.025) 통과: high-low≈4000 → atr≈4000, ratio≈0.039 > 0.025
+        # ATR_CEIL_HARD(0.08) 미초과: 4000/102000≈0.039 < 0.08
+        "recent_highs": [105_000, 105_000, 105_000, 105_000, 105_000],
+        "recent_lows": [101_000, 101_000, 101_000, 101_000, 101_000],
+        "recent_closes": [103_000, 103_000, 103_000, 103_000, 103_000],
     }
     defaults.update(overrides)
     return MarketSnapshot(**defaults)
@@ -242,26 +284,30 @@ class TestShadowEvaluationInvariance:
 
     @pytest.mark.asyncio
     async def test_shadow_does_not_affect_breakout_reject(self):
-        """current_price <= breakout_ref 케이스: RejectedSignal(stage='breakout') 그대로."""
+        """gap_open tier + 시초가 >= 현재가 케이스: RejectedSignal(stage='gap_open_absorb').
+
+        Sprint 2 변경: gap_open_absorb 게이트가 breakout 게이트 앞에 추가됨.
+        open_price(72_000) >= current_price(70_000) → gap_open_absorb에서 먼저 reject.
+        """
         redis = FakeRedis()
         strategy = MomentumBreakoutStrategy(redis_client=redis)
         snapshot = _prev_close_snapshot(
             current_price=70_000, prev_high=71_000, open_price=72_000
         )
         # gap_rate ≈ 3.6% → gap_open tier, breakout_ref = open_price = 72_000
-        # current_price (70_000) <= breakout_ref → breakout reject
+        # Sprint 2: open_price(72_000) >= current_price(70_000) → gap_open_absorb reject (breakout 전)
 
         with patch(_PATCH_NOW_KST, return_value=datetime(2026, 4, 23, 10, 0, tzinfo=_KST)):
             result = await strategy.generate_signal(snapshot)
 
         assert isinstance(result, RejectedSignal)
-        assert result.stage == "breakout"
+        assert result.stage == "gap_open_absorb"
         assert result.detail.get("breakout_tier") == "gap_open"
-        # Sprint 1 기존 카운터 — breakout 1건만 기록 (short-circuit 유지)
+        # gap_open_absorb에서 short-circuit — 기존 stage 카운터 1건만 기록
         strategy_stage_keys = [k for k in redis.counters if k.startswith("metrics:strategy:stage:")]
-        strategy_breakout = [k for k in strategy_stage_keys if ":breakout:" in k]
-        assert len(strategy_breakout) == 1, (
-            "Sprint 1 short-circuit 동작 불변: breakout reject 시 기존 stage 카운터는 breakout 1건만"
+        strategy_absorb = [k for k in strategy_stage_keys if ":gap_open_absorb:" in k]
+        assert len(strategy_absorb) == 1, (
+            "Sprint 2 short-circuit 동작 불변: gap_open_absorb reject 시 stage 카운터는 1건만"
         )
 
     @pytest.mark.asyncio
@@ -306,7 +352,8 @@ class TestShadowEvaluationInvariance:
             result = await strategy.generate_signal(snapshot)
 
         assert isinstance(result, RejectedSignal)
-        assert result.stage == "breakout"
+        # Sprint 2: gap_open_absorb 게이트가 breakout 앞에 추가됨 → gap_open_absorb reject
+        assert result.stage == "gap_open_absorb"
 
     @pytest.mark.asyncio
     async def test_shadow_records_all_stages_regardless_of_short_circuit(self):
