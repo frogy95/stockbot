@@ -63,12 +63,14 @@
 - Phase 8.5 Sprint 1.5 — 전략 필터 shadow evaluation (각 stage 독립 pass/fail 카운터, 주문 경로 불변 TDD), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/168
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
+- **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), 🔄 계획 수립 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
 
 ## 다음 사용 가능한 스프린트
 
-- **Phase 8.6 Sprint 1** — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.5 5거래일 관찰 완료 후 착수, DoD D1~D7 기준)
-- Phase 8.6 Sprint 2 — 시스템 관리 UI (구 Phase 8 Sprint 4, Sprint 1 완료 후)
-- Phase 8.6 Sprint 3 — 성과 분석 보강 (구 Phase 8 Sprint 5, Sprint 2 완료 후)
+- Phase 8.6 Sprint 2 — 병렬 OR tier 분리 + ATR 분위수 캘리브레이션 (Sprint 1 DoR 4종 통과 후)
+- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 필터 (Sprint 2 후)
+- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + 시뮬↔실측 KS 자동 감지 (Sprint 3 + Paper 5거래일 관찰 후)
+- Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.6 완료 후)
 
 ## 핵심 주의사항
 
