@@ -64,7 +64,7 @@
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 - **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
-- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: (sprint-close 완료 후 기록 예정)
+- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: https://github.com/frogy95/stockbot/pull/184
 
 ## 다음 사용 가능한 스프린트
 

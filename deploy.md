@@ -10,7 +10,7 @@
 ### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
 
 브랜치: `phase8.6-sprint2` → develop
-PR: (sprint-close 완료 후 기록 예정)
+PR: https://github.com/frogy95/stockbot/pull/184
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
 - ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)

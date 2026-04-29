@@ -15,6 +15,7 @@
 **상태:** ✅ 완료
 **이전 스프린트:** Phase 8.6 Sprint 1 (DoR G1·G2·G3 + Phase 7.0 잠금 + 폴백 5종 + 09~11시 floor 0.3, 13 + 9 + 5 tests PASS, PR #181 머지)
 **브랜치명:** `phase8.6-sprint2`
+**PR:** https://github.com/frogy95/stockbot/pull/184
 **버전:** v2 (2026-04-29 — 전문가 4명 합의 채택안 반영)
 
 ---
