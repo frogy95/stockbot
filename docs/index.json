@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-29T18:00:00+09:00",
+  "lastUpdated": "2026-04-29T22:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3178,55 +3178,55 @@
         },
         {
           "id": "sprint2",
-          "title": "병렬 OR tier 분리 + ATR 분위수 캘리브레이션",
+          "title": "병렬 OR tier 분리 + ATR 분위수 캘리브레이션 (v2 — 4명 리뷰 합의 반영)",
           "status": "planned",
           "branch": "phase8.6-sprint2",
           "sprintDoc": "docs/phase/phase8.6/sprint2/sprint2.md",
           "progress": {
-            "total": 7,
+            "total": 6,
             "completed": 0
           },
           "tasks": [
             {
               "id": "task1",
-              "title": "env 6종 추가 + ATR resolver 함수 추출 (gap_open ATR 우회 / 폴백 0.05 고정 / 동적 상한)",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-1-env-추가--atr-상수-분리",
-              "testPlan": "pytest tests/strategies/test_atr_resolver.py -v (6 케이스)",
+              "title": "env 10종 + ATR resolver(HARD 절대상한) + stocks.is_kospi200 Alembic + 정적 백업 200종목",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-1-env-10종--atr-resolver-함수--stocksis_kospi200-alembic",
+              "testPlan": "pytest tests/strategies/test_atr_resolver.py tests/test_stocks_is_kospi200_migration.py -v",
               "testResult": null,
               "status": "planned",
               "commits": []
             },
             {
               "id": "task2",
-              "title": "ATR 캘리브레이션 모듈 + 08:55 KOSPI200 P80 잡 (직전일 캐시 폴백)",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-2-atr-캘리브레이션-모듈--0900-스케줄-잡",
-              "testPlan": "pytest tests/screening/test_atr_calibration.py tests/test_scheduler.py -v",
+              "title": "ATR 캘리브레이션 SMA/EWMA + IQR 트리밍 + 폴백 3단(직전일/HARD/안전모드) + 누수 가드 + 08:35 잡",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-2-atr-캘리브레이션-모듈--0835-잡--폴백-3단--ewma--iqr--누수-가드",
+              "testPlan": "pytest tests/screening/test_atr_calibration.py tests/screening/test_atr_calibration_no_leakage.py tests/test_scheduler.py -v",
               "testResult": null,
               "status": "planned",
               "commits": []
             },
             {
               "id": "task3",
-              "title": "병렬 OR tier 분리 (gap_open / prev_high / prev_close 독립 sub-게이트 + matched_tiers)",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-3-병렬-or-tier-분리--momentumbreakoutstrategy-재구조화",
-              "testPlan": "pytest tests/strategies/test_parallel_or_tier.py tests/test_momentum_breakout.py -v (8 신규 + 회귀)",
+              "title": "병렬 OR tier 분리 + signals.matched_tiers + prev_close 거래량 컨펌 + gap_open 시초가 컷 + ATR HARD 절대상한",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-3-병렬-or-tier-분리--signalsmatched_tiers--prev_close-거래량-컨펌--gap_open-시초가-컷",
+              "testPlan": "pytest tests/strategies/test_parallel_or_tier.py tests/strategies/test_prev_close_volume_confirm.py tests/test_momentum_breakout.py -v (15+ 신규 + 회귀)",
               "testResult": null,
               "status": "planned",
               "commits": []
             },
             {
               "id": "task4",
-              "title": "tier 페어와이즈 상관 메트릭 + signals.matched_tiers DB 컬럼 + API 2종",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-4-tier-페어와이즈-상관-메트릭--m-g-d-api",
-              "testPlan": "pytest tests/screening/test_tier_correlation.py -v + alembic upgrade head + curl /api/v1/metrics/tier-correlation",
+              "title": "phi 상관 + 조건부 P(B|A) + 시뮬-실측 절대차 + R1~R4 격리 + 쿼터 캡 + drift warn + G3 OR 보정",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-4-tier-phi-상관--조건부-통과율--시뮬-실측-절대차--r1r4-격리--쿼터-캡--atr-shadow-그리드--drift-warn",
+              "testPlan": "pytest tests/screening/test_tier_correlation.py tests/screening/test_sim_vs_real_diff.py tests/strategies/test_parallel_or_quota_cap.py tests/strategies/test_parallel_or_r1_r4_isolation.py -v + curl API 3종",
               "testResult": null,
               "status": "planned",
               "commits": []
             },
             {
               "id": "task5",
-              "title": "tier-correlation-card + tier-pass-rate-card UI (G-C·G-D 시각화)",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-5-tier-correlation-card-ui",
+              "title": "tier-correlation-card + tier-pass-rate-card UI (ATR 분포 카드는 Sprint 4 이관)",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-5-tier-correlation-card--tier-pass-rate-card-ui-atr-분포-카드-제거",
               "testPlan": "cd frontend && npx tsc --noEmit + 브라우저 /diagnostics 확인",
               "testResult": null,
               "status": "planned",
@@ -3234,18 +3234,9 @@
             },
             {
               "id": "task6",
-              "title": "atr-distribution-card UI + /metrics/atr-calibration API",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-6-atr-distribution-card-ui",
-              "testPlan": "curl /api/v1/metrics/atr-calibration + npx tsc --noEmit",
-              "testResult": null,
-              "status": "planned",
-              "commits": []
-            },
-            {
-              "id": "task7",
-              "title": "통합 회귀 + Paper 1거래일 + deploy.md env 6종 등록",
-              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-7-통합-회귀--paper-1거래일--deploymd-환경변수-등록",
-              "testPlan": "pytest -v 전체 + npx tsc --noEmit + PARALLEL_OR_TIER_ENABLED=false 토글 회귀 + Paper 1거래일",
+              "title": "통합 회귀 + 임시 시간가드 + Kill-switch 런북 + L5 사전 시뮬 + deploy.md env 10종 등록 (Paper 1거래일은 관찰 항목)",
+              "path": "docs/phase/phase8.6/sprint2/sprint2.md#task-6-통합-회귀--임시-시간가드--kill-switch-런북--deploymd-env-10종-등록",
+              "testPlan": "pytest -v 전체 + npx tsc --noEmit + 토글 OFF 회귀(3종) + L5 ATR_FLOOR 시뮬 + Kill-switch 런북",
               "testResult": null,
               "status": "planned",
               "commits": []

@@ -64,13 +64,13 @@
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 - **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
-- **Phase 8.6 Sprint 2** — 병렬 OR tier 분리(gap_open=ATR우회+gap≥3% / prev_high=ATR+breakout / prev_close=시간가드만) + ATR 분위수 캘리브레이션(ATR_FLOOR=0.025 + 동적 상한 min(0.08, KOSPI200 P80×1.2), 08:55 잡), 🔄 계획 수립 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (7 Task), 사용자 확정 5종 답변 대기
+- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, 🔄 v2 갱신 완료 (2026-04-29 4명 리뷰 합의 반영), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종), 구현 즉시 착수 가능
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.6 Sprint 2 — 병렬 OR tier 분리 + ATR 분위수 캘리브레이션 (계획 수립 완료, 사용자 확정 답변 후 구현)
-- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 필터 (Sprint 2 후)
-- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + 시뮬↔실측 KS 자동 감지 (Sprint 3 + Paper 5거래일 관찰 후)
+- Phase 8.6 Sprint 2 v2 — 병렬 OR tier + ATR 캘리브레이션 + 시뮬-실측 절대차 (v2 계획 갱신 완료, 즉시 구현 가능)
+- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 본 가드 (TEMP_TIME_GUARD_SPRINT2 제거) (Sprint 2 후)
+- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + KS 검정 + ATR 분포 카드(Sprint 2에서 이관) (Sprint 3 + Paper 5거래일 후)
 - Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.6 완료 후)
 
 ## 핵심 주의사항
@@ -267,11 +267,26 @@
 - Phase 8.5 Sprint 2.5: `resolve_override(key, default, cast=...)` 단일 유틸 — Redis 예외 시 default 반환 (무음 실패). `SETTINGS_OVERRIDE_ENABLED=False`로 override 전체 차단 가능 (긴급 스위치)
 - Phase 8.5 Sprint 2.5: `settings:override:triggered_at` / `reason` 키가 존재하면 대시보드 배너 렌더 — Redis에서 수동 삭제 시 배너 사라짐
 - Phase 8.5 Sprint 2.5: 5거래일 관찰 종료 의사결정 트리(A~E) 근거: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` § 5거래일 관찰 종료 후 의사결정 트리
-- Phase 8.6 Sprint 2: 09:00 ETF 시세 수집 잡과 ATR 캘리브레이션 시각 충돌 — 신규 잡은 **08:55 KST**로 5분 선행 배치 (Phase 2.5 ETF 마스터 08:15 + ETF 시세 09:00과 분리)
-- Phase 8.6 Sprint 2: `momentum_breakout.py`의 `ATR_FILTER_PCT=0.05` 상수는 Sprint 1 회귀 방지 위해 그대로 유지 + 새 `_resolve_atr_ceil()` 함수가 호출자에 우선 적용. `PARALLEL_OR_TIER_ENABLED=false` 토글 시 Sprint 1 직렬 동작 100% 복원이 회귀 게이트
-- Phase 8.6 Sprint 2: tier 병렬 OR 결합 시 신호 메타데이터 `matched_tiers: list[str]` (Phase §9.3 권고 (b) — G-D 페어와이즈 상관 측정용 데이터 보존). signals 테이블에 `matched_tiers JSON` 컬럼 추가 Alembic 마이그레이션 필요
-- Phase 8.6 Sprint 2: 시뮬-실측 ATR 분포 캘리브레이션 윈도우는 종목별 20일 이동평균 ATR을 KOSPI200 단면으로 모은 분포의 P80 사용 (Phase §5.2 #6, 사용자 확정 #5 권고 (a))
-- Phase 8.6 Sprint 2: 신규 env 6종 — PARALLEL_OR_TIER_ENABLED, ATR_CALIBRATION_ENABLED, ATR_FLOOR, ATR_CEIL_HARD, ATR_CEIL_FALLBACK, ATR_CALIBRATION_WINDOW_DAYS. Railway 환경변수 등록 필요 (deploy.md 수동 검증 항목)
-- Phase 8.6 Sprint 2: `gap_open` tier ATR 우회 시에도 ATR_FLOOR=0.025 하한은 적용 (사용자 확정 #3 권고 — 단타 부적합 종목 차단)
-- Phase 8.6 Sprint 2: 폴백 종목(`is_fallback=true`)은 ATR_CEIL_FALLBACK=0.05 고정, 동적 상한 미적용 (리스크 §3 G4)
-- Phase 8.6 Sprint 2 사용자 확정 필요 5종: (1) KOSPI200 마스터 출처(`stocks.is_kospi200` vs 별도 리스트), (2) 캘리브레이션 잡 실패 폴백 정책(직전일 캐시→HARD), (3) gap_open ATR 하한 적용 여부, (4) 다중 tier 통과 시 메타데이터 형식, (5) 분위수 윈도우 형식 — 답변 전까지 Task 1 Step 1까지만 진행
+- Phase 8.6 Sprint 2 v2: ATR 캘리브레이션 잡 시각 **08:35 KST**로 변경 (v1 08:55 → 08:35, 김단타 KIS 동시호가 부하 회피)
+- Phase 8.6 Sprint 2 v2: `momentum_breakout.py`의 `ATR_FILTER_PCT=0.05` 상수는 Sprint 1 회귀 방지 위해 그대로 유지 + 새 `_resolve_atr_ceil()` 함수가 호출자에 우선 적용. `PARALLEL_OR_TIER_ENABLED=false` 토글 시 Sprint 1 직렬 동작 100% 복원이 회귀 게이트
+- Phase 8.6 Sprint 2 v2: tier 병렬 OR 결합 시 `matched_tiers: list[str]` + **confidence는 통과 tier 평균** (사용자 확정 #4, 최리스크 보수 채택 — v1의 "최댓값"에서 변경). signals.matched_tiers JSON 컬럼 Alembic 마이그레이션 필요
+- Phase 8.6 Sprint 2 v2: ATR 캘리브레이션 종목별 20일 평균 ATR → KOSPI200 단면 P80, **IQR ×1.5 트리밍 + EWMA λ=0.94 옵션**(env `ATR_CALIBRATION_METHOD=sma|ewma`)
+- Phase 8.6 Sprint 2 v2: 신규 env **10종** — PARALLEL_OR_TIER_ENABLED, ATR_CALIBRATION_ENABLED, ATR_CALIBRATION_METHOD, ATR_FLOOR, ATR_CEIL_HARD, ATR_CEIL_FALLBACK, ATR_CEIL_MULT, ATR_CALIBRATION_WINDOW_DAYS, TEMP_TIME_GUARD_SPRINT2, SAFE_MODE_TIMEOUT_MIN
+- Phase 8.6 Sprint 2 v2: **gap_open tier도 ATR_CEIL_HARD=0.08 절대 한계 적용** (v1의 "ATR 우회"에서 변경 — 최리스크 ★). 우회 X. ATR_FLOOR=0.025 하한도 적용
+- Phase 8.6 Sprint 2 v2: gap_open tier에 **시초가 ≥ 현재가 컷** 추가 (김단타 — 매물 흡수 실패 종목 거름)
+- Phase 8.6 Sprint 2 v2: prev_close tier에 **5분봉 거래량 컨펌** 추가 (양봉 2연속 OR vol_5m ≥ 직전 4봉 평균 ×2, 김단타). 기존 시간가드만으로는 약함
+- Phase 8.6 Sprint 2 v2: 폴백 정책 3단 — 직전일 캐시(TTL **3거래일**, v1 7일에서 단축) → ATR_CEIL_HARD 정적 → **안전모드 신호 발행 일시 중단 2시간 + 텔레그램 알림** (최리스크 ★, fallback_count ≥3회 누적 시)
+- Phase 8.6 Sprint 2 v2: KOSPI200 마스터는 **`stocks.is_kospi200` 플래그 + 정적 백업 리스트 이중화** (`backend/data/kospi200_static_backup.json` 200종목, KRX 분기별 리밸런싱 시 수동 갱신). market_data 결측 ≥30종 시 캘리브레이션 skip → 직전일 캐시 폴백
+- Phase 8.6 Sprint 2 v2: **TEMP_TIME_GUARD_SPRINT2=true** 임시 시간가드 (09:00~09:10 / 14:30+ 차단) — Sprint 3 본 시간대 필터 도입 시 제거 (김단타). Paper 1거래일 노이즈 데이터 방지
+- Phase 8.6 Sprint 2 v2: **시뮬-실측 통과율 절대차** 메트릭 즉시 도입 (`metrics:quant:sim_vs_real_diff:{date}`, ≥0.15 시 텔레그램 알림). Sprint 4 walk-forward 이전 1주 내 분기 D 회귀 감지 (박퀀트 ★)
+- Phase 8.6 Sprint 2 v2: ATR 상한 곱계수 `{1.0, 1.1, 1.2, 1.3}` shadow 그리드 동시 저장(`metrics:atr:ceil_grid:{date}`, 실 진입은 ATR_CEIL_MULT=1.2). ATR 분포 P10/P20/P50/P80/P95 + sample_n도 동시 기록(`metrics:atr:dist:{date}`)
+- Phase 8.6 Sprint 2 v2: tier 페어와이즈 상관은 **phi coefficient + 조건부 P(B|A)** 병기 (v1 Pearson에서 변경, 박퀀트). 단면 P80 vs 시계열 P80 차 ≥0.015 시 `quant_dist_drift_warn` 카운터
+- Phase 8.6 Sprint 2 v2: 캘리브레이션 데이터 누수 방지 — `trade_date < CURRENT_DATE` (당일 행 미포함) 단위 테스트 명시. `tests/screening/test_atr_calibration_no_leakage.py`
+- Phase 8.6 Sprint 2 v2: **Kill-switch 런북** deploy.md 명시 — `PARALLEL_OR_TIER_ENABLED=false` 즉시 원복 + `signals.matched_tiers IS NULL` 안전성 SQL 검증 + curl /diagnostics 1줄 + 안전모드 해제 `DEL safe_mode:active`
+- Phase 8.6 Sprint 2 v2: **R1~R4 격리 회귀 테스트** — `matched_tiers` 추가가 폴백 비중 산식 분모/분자에 영향 없음 단위 검증 (`tests/strategies/test_parallel_or_r1_r4_isolation.py`)
+- Phase 8.6 Sprint 2 v2: **G3 회로차단기 OR 모드 보정** — 통과율 → "체결 손실 누적" 임계로 일시 전환 OR `G3_OR_MODE_MULT` 보정 계수 (병렬 OR 직후 통과율 N배 시 G3 오발동/무력화 방지, 최리스크)
+- Phase 8.6 Sprint 2 v2: **쿼터 캡 단위 테스트** — 일일 신호 한도 10건 + 동시 보유 2 포지션이 병렬 OR 직후에도 강제 적용 (`tests/strategies/test_parallel_or_quota_cap.py`, 최리스크)
+- Phase 8.6 Sprint 2 v2: **L5 사전 시뮬레이션** — Task 6 Step 2에서 Sprint 1 shadow 데이터로 ATR_FLOOR=0.025 fail율 산출. ≥60%면 0.020으로 시작값 변경 후 deploy.md 사유 기록 (최리스크)
+- Phase 8.6 Sprint 2 v2: ATR 분포 카드 UI는 Sprint 4로 이관 (walk-forward와 묶을 때 가치). Sprint 2 UI는 tier-correlation-card + tier-pass-rate-card 2종만
+- Phase 8.6 Sprint 2 v2: **Paper 1거래일은 종료 게이트 X — 관찰 항목**으로만 deploy.md 기록, Sprint 3 착수 게이트로 사용 (정프로 PO 합의)
+- Phase 8.6 Sprint 2 v2: Task 수 7 → **6**로 축소. 구 Task 4(matched_tiers DB)와 Task 6(ATR 분포 카드)을 각각 Task 3 흡수 / Sprint 4 이관
