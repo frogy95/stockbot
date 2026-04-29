@@ -26,6 +26,7 @@ from core.models.metrics import (
     StrategyMetricsDaily,
     VirtualSignal,
 )
+from core.models.trading import TradeSignal
 from core.redis import RedisClient
 
 router = APIRouter(
@@ -338,6 +339,63 @@ async def get_fallback_stats(
         date=target_s,
         triggered_count=triggered_count,
         codes=codes,
+    )
+
+
+class FallbackSignalRateResponse(BaseModel):
+    date: str
+    fallback_signals: int
+    fallback_triggered_codes: int
+    rate: float | None  # 분모=0 시 None
+
+
+@router.get("/fallback-signal-rate", response_model=FallbackSignalRateResponse)
+async def get_fallback_signal_rate(
+    date_param: str | None = Query(None, alias="date"),
+    session: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+) -> FallbackSignalRateResponse:
+    """Phase 8.6 Sprint 1 — G1 M-F2: 일별 폴백 신호율.
+
+    분자: trade_signals.fallback=True 신호 수 (해당 날짜)
+    분모: 그날 폴백 발동 종목 수 (Redis `metrics:fallback:code:*:{date}`)
+    rate = 분자 / 분모 (분모=0 시 None — fail-safe)
+    """
+    today = _today_kst()
+    target_s = date_param if date_param not in (None, "today") else today.isoformat()
+    target = date.fromisoformat(target_s)
+
+    # 분자 — DB
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    start = datetime.combine(target, datetime.min.time(), tzinfo=tz)
+    end = start + timedelta(days=1)
+    fallback_signals = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.fallback.is_(True),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+
+    keys = await redis.scan_keys(f"metrics:fallback:code:*:{target_s}")
+    fallback_triggered_codes = len(keys)
+
+    rate = (
+        round(fallback_signals / fallback_triggered_codes, 4)
+        if fallback_triggered_codes
+        else None
+    )
+
+    return FallbackSignalRateResponse(
+        date=target_s,
+        fallback_signals=fallback_signals,
+        fallback_triggered_codes=fallback_triggered_codes,
+        rate=rate,
     )
 
 

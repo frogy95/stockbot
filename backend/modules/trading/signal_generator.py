@@ -62,6 +62,8 @@ class SignalGenerator:
 
                 # 전략 적용
                 signal_data = await self._strategy.generate_signal(snapshot)
+                # Phase 8.6 Sprint 1 — G1: candidate.is_fallback → signal/DB 전파
+                is_fallback = bool(candidate.get("is_fallback", False))
                 if isinstance(signal_data, RejectedSignal):
                     skip_stats["strategy_none"] += 1
                     logger.info(
@@ -79,6 +81,12 @@ class SignalGenerator:
                         stock_code, signal_data.confidence, MIN_CONFIDENCE,
                     )
                     continue
+
+                # G1: 폴백 메타데이터 전파 — TradeSignalData + reason JSON 둘 다 보존
+                reason = {**signal_data.reason, "fallback": is_fallback}
+                signal_data = signal_data.model_copy(
+                    update={"fallback": is_fallback, "reason": reason}
+                )
 
                 logger.info(
                     "전략 통과 [%s]: %s confidence=%.3f entry=%d reason=%s",
@@ -98,6 +106,7 @@ class SignalGenerator:
                     stop_loss=signal_data.stop_loss,
                     take_profit=signal_data.take_profit,
                     status="pending",
+                    fallback=is_fallback,
                 )
                 session.add(record)
                 generated.append(signal_data)

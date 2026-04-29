@@ -21,6 +21,7 @@ class TradeSignal(Base):
     __tablename__ = "trade_signals"
     __table_args__ = (
         Index("ix_trade_signals_stock_status", "stock_code", "status"),
+        Index("ix_trade_signals_fallback_created", "fallback", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -35,6 +36,9 @@ class TradeSignal(Base):
     stop_loss: Mapped[int] = mapped_column(Numeric(12, 0), nullable=False)
     take_profit: Mapped[int] = mapped_column(Numeric(12, 0), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="pending")
+    fallback: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -74,6 +78,9 @@ class Order(Base):
         DateTime(timezone=True), onupdate=func.now()
     )
     signal_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    fallback: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
 
 class PositionRecord(Base):
