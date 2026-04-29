@@ -3920,7 +3920,7 @@
       "ref": "phase8.6-sprint2",
       "version": "v2.8.0",
       "description": "Phase 8.6 Sprint 2 프로덕션 배포 — 병렬 OR tier + ATR 분위수 캘리브레이션 (병렬 OR+tier 독립 sub-게이트, ATR KOSPI200 분위수 동적 상한 P80×1.2, 시뮬-실측 절대차 메트릭, tier 상관·pass rate 카드, Kill-switch PARALLEL_OR_TIER_ENABLED, Alembic 마이그레이션 2종)",
-      "prUrl": "",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/185",
       "status": "in_progress"
     }
   ]

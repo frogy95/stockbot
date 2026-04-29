@@ -10,7 +10,7 @@
 ### 프로덕션 배포 - v2.8.0 (2026-04-29)
 
 포함 스프린트: Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
-PR: (develop → main, 아래 PR 생성 후 업데이트)
+PR: https://github.com/frogy95/stockbot/pull/185 (develop → main)
 
 - ✅ Vercel 프론트엔드 자동 배포
 - ✅ Railway 백엔드 자동 배포
