@@ -350,6 +350,15 @@ class CollectorScheduler:
             id="premarket_retry",
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
+        # 08:35 Phase 8.6 Sprint 2 — KOSPI200 ATR 분위수 캘리브레이션
+        # (잡 자체에서 ATR_CALIBRATION_ENABLED 토글 검사 → 비활성 시 no-op)
+        self._scheduler.add_job(
+            self._atr_calibration_job,
+            CronTrigger(hour=8, minute=35, timezone=tz),
+            id="atr_calibration",
+            replace_existing=True,
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 16:00 포털 보조 수집: market_cap/listed_shares 갱신 (장전 파이프라인과 독립)
         self._scheduler.add_job(
             self._portal_supplement_collect,
@@ -889,6 +898,28 @@ class CollectorScheduler:
                 f"{max_attempts}회 시도 모두 실패 — 장중 실시간 파이프라인 마비 상태\n"
                 "수동 확인 필요"
             )
+
+    async def _atr_calibration_job(self) -> None:
+        """Phase 8.6 Sprint 2 — 08:35 KOSPI200 ATR 분위수 캘리브레이션."""
+        if not settings.ATR_CALIBRATION_ENABLED:
+            logger.info("ATR_CALIBRATION_ENABLED=false — skip")
+            return
+        try:
+            today = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE)).date()
+            if not is_trading_day(today):
+                logger.info("비거래일 스킵: step=atr_calibration date=%s", today)
+                return
+            from modules.screening.atr_calibration import run_atr_calibration
+
+            result = await run_atr_calibration(
+                self._session_factory,
+                self._redis,
+                self._notifier_manager,
+                today=today,
+            )
+            logger.info("atr_calibration: %s", result)
+        except Exception:  # noqa: BLE001
+            logger.exception("ATR 캘리브레이션 잡 실패")
 
     async def _check_auto_rollback(self) -> None:
         """16:10 자동 롤백 검사 — Phase 8.6 G2(R1~R4 OR) + Phase 8.5 2일 zero-signal 폴백.

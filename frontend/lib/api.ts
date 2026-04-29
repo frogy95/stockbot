@@ -166,6 +166,41 @@ export interface Phase86Status {
   primary_candidates: number;
 }
 
+export interface TierCorrelationResponse {
+  window_days: number;
+  phi: Record<string, number>;
+  cond_prob: Record<string, number>;
+  max_phi: number;
+  max_cond: number;
+  phi_threshold: number;
+  cond_threshold: number;
+  ok: boolean;
+}
+
+export interface TierPassRateBucket {
+  date: string;
+  gap_open: number;
+  prev_high: number;
+  prev_close: number;
+}
+
+export interface TierPassRateResponse {
+  window_days: number;
+  buckets: TierPassRateBucket[];
+}
+
+export interface SimVsRealDiffBucket {
+  date: string;
+  diff: number;
+}
+
+export interface SimVsRealDiffResponse {
+  window_days: number;
+  threshold: number;
+  buckets: SimVsRealDiffBucket[];
+  ok: boolean;
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
@@ -180,6 +215,10 @@ export const metricsPaths = {
   fallbackSignalRate: (date = "today") =>
     `/api/v1/metrics/fallback-signal-rate?date=${encodeURIComponent(date)}`,
   phase86Status: () => `/api/v1/metrics/phase86-status`,
+  tierCorrelation: (days = 7) =>
+    `/api/v1/metrics/tier-correlation?days=${days}`,
+  tierPassRate: (days = 7) => `/api/v1/metrics/tier-pass-rate?days=${days}`,
+  simVsRealDiff: (days = 7) => `/api/v1/metrics/sim-vs-real-diff?days=${days}`,
 };
 
 /**

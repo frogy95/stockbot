@@ -92,8 +92,13 @@ def mock_eod_liquidator():
 @pytest.fixture
 def mock_redis():
     redis = AsyncMock()
-    # pipeline_healthy = "true"로 설정 — 가드 통과를 위한 기본값
-    redis.get = AsyncMock(return_value="true")
+
+    async def _redis_get(key):  # Phase 8.6 Sprint 2 — key-aware mock
+        if key == "scheduler:pipeline_healthy":
+            return "true"
+        return None  # safe_mode:active 등 기본 None
+
+    redis.get = AsyncMock(side_effect=_redis_get)
     return redis
 
 

@@ -51,6 +51,75 @@ PREV_CLOSE_CONFIDENCE_CAP = 0.75
 # gap_open tier momentum 가중 (Phase 8 확정 파라미터 #11)
 GAP_OPEN_MOMENTUM_MULTIPLIER = 0.85
 
+# Phase 8.6 Sprint 2 — 임시 시간가드 경계
+TEMP_GUARD_MORNING_END = time(9, 10)
+TEMP_GUARD_AFTERNOON_START = time(14, 30)
+
+
+async def _resolve_atr_ceil(
+    snapshot: "MarketSnapshot",
+    tier: str,
+    redis_client: Any,
+    is_fallback: bool,
+    *,
+    now_kst: datetime | None = None,
+) -> float | None:
+    """ATR 상한값을 결정 (Phase 8.6 Sprint 2 v2).
+
+    반환값:
+        float — 적용할 ATR 상한 비율 (current_price 기준)
+        None  — ATR 하한(`ATR_FLOOR`) 미달 등으로 즉시 reject 신호
+
+    규칙:
+        1. ATR < `ATR_FLOOR`(0.025) — 모든 tier(gap_open 포함) 즉시 None 반환
+        2. is_fallback=True — `ATR_CEIL_FALLBACK`(0.05) 정적 사용 (동적 미적용)
+        3. tier == "gap_open" — `ATR_CEIL_HARD`(0.08) 절대 한계 적용 (Sprint v1 우회 X)
+        4. tier IN ("prev_high", "prev_close"):
+           - `ATR_CALIBRATION_ENABLED=true` + Redis `metrics:atr:ceil:{date}` 존재 → 그 값
+             (단, `ATR_CEIL_HARD`로 캡)
+           - 키 부재 또는 `ATR_CALIBRATION_ENABLED=false` → `ATR_CEIL_HARD` 폴백
+    """
+    # ATR 비율 계산 — current_price 기준
+    if snapshot.current_price <= 0:
+        return None
+    atr = calc_volatility_factor(
+        snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
+    )
+    atr_ratio = atr / snapshot.current_price
+
+    floor = settings.ATR_FLOOR
+    hard = settings.ATR_CEIL_HARD
+
+    # Rule 1: 하한 미달 — 즉시 reject
+    if atr_ratio < floor:
+        return None
+
+    # Rule 2: 폴백 종목 — 정적 상한
+    if is_fallback:
+        return settings.ATR_CEIL_FALLBACK
+
+    # Rule 3: gap_open — HARD 절대 한계
+    if tier == "gap_open":
+        return hard
+
+    # Rule 4: prev_high / prev_close — 동적 상한 또는 HARD
+    if not settings.ATR_CALIBRATION_ENABLED or redis_client is None:
+        return hard
+
+    effective_now = now_kst if now_kst is not None else _now_kst()
+    today = effective_now.date().isoformat()
+    try:
+        cached = await redis_client.get(f"metrics:atr:ceil:{today}")
+    except Exception:  # noqa: BLE001
+        cached = None
+    if cached is None:
+        return hard
+    try:
+        dynamic = float(cached)
+    except (TypeError, ValueError):
+        return hard
+    return min(dynamic, hard)
+
 
 def _resolve_min_volume_floor(
     snapshot: "MarketSnapshot",
@@ -217,6 +286,33 @@ class MomentumBreakoutStrategy(Strategy):
             return snapshot.prev_high, "prev_high"
         return snapshot.prev_close, "prev_close"
 
+    async def _record_tier_shadow(
+        self,
+        tier: str,
+        passed: bool,
+        now_kst: datetime,
+    ) -> None:
+        """Phase 8.6 Sprint 2 — tier별 일별 shadow 카운터.
+
+        키: `shadow:tier:{tier}:{passed|failed}:{date}` (Redis INCR).
+        sim-vs-real-diff 메트릭의 shadow 입력으로 사용.
+        """
+        if self.redis_client is None:
+            return
+        bucket = "passed" if passed else "failed"
+        key = f"shadow:tier:{tier}:{bucket}:{now_kst.date().isoformat()}"
+        try:
+            await self.redis_client.incr(key)
+        except (AttributeError, NotImplementedError):
+            try:
+                cur = await self.redis_client.get(key)
+                new = (int(cur) if cur else 0) + 1
+                await self.redis_client.set(key, str(new))
+            except Exception:  # noqa: BLE001
+                pass
+        except Exception:  # noqa: BLE001
+            pass
+
     async def _shadow_evaluate(
         self, snapshot: MarketSnapshot, now_kst: datetime
     ) -> None:
@@ -236,6 +332,12 @@ class MomentumBreakoutStrategy(Strategy):
                 else 0.0
             )
             breakout_ref, tier = self._resolve_tier(snapshot, gap_rate)
+
+            # Phase 8.6 Sprint 2 — tier별 일별 shadow 카운터 (sim-vs-real-diff 입력)
+            tier_passed_breakout = (
+                breakout_ref > 0 and snapshot.current_price > breakout_ref
+            )
+            await self._record_tier_shadow(tier, tier_passed_breakout, now_kst)
 
             # 1. prev_close_time_guard — tier=="prev_close" + 13:00 이후면 fail
             guard_fail = (
@@ -380,12 +482,79 @@ class MomentumBreakoutStrategy(Strategy):
                 "shadow evaluate failed", exc_info=True
             )
 
+    async def _check_prev_close_volume_confirm(self, snapshot: MarketSnapshot) -> bool:
+        """Phase 8.6 Sprint 2 — prev_close tier 5분봉 거래량 컨펌.
+
+        Redis `vol_5m:{stock_code}` JSON 배열(최신 5개 5분봉, 각 {volume,is_bullish})에서
+        - 양봉 2연속 OR
+        - 최신 vol_5m ≥ 직전 4봉 평균 ×2
+        둘 중 하나 만족 시 True. 데이터 부재 시 fail-safe(False).
+        """
+        if self.redis_client is None:
+            return False
+        try:
+            raw = await self.redis_client.get(f"vol_5m:{snapshot.stock_code}")
+        except Exception:  # noqa: BLE001
+            return False
+        if not raw:
+            return False
+        try:
+            import json as _json
+            data = _json.loads(raw)
+        except (TypeError, ValueError):
+            return False
+        if not isinstance(data, list) or len(data) < 5:
+            return False
+        # 양봉 2연속 (최신 2봉)
+        try:
+            recent = data[-2:]
+            if all(bool(b.get("is_bullish")) for b in recent):
+                return True
+            # vol_5m ≥ 직전 4봉 평균 ×2
+            prev4 = data[-5:-1]
+            avg4 = sum(float(b.get("volume", 0)) for b in prev4) / max(len(prev4), 1)
+            latest = float(data[-1].get("volume", 0))
+            if avg4 > 0 and latest >= avg4 * 2.0:
+                return True
+        except (TypeError, ValueError, AttributeError):
+            return False
+        return False
+
+    async def _evaluate_atr_gate(
+        self,
+        snapshot: MarketSnapshot,
+        tier: str,
+        is_fallback: bool,
+        now_kst: datetime,
+    ) -> tuple[bool, dict]:
+        """Phase 8.6 Sprint 2 — `_resolve_atr_ceil`로 tier별 ATR 게이트 평가."""
+        atr_ceil = await _resolve_atr_ceil(
+            snapshot, tier, self.redis_client, is_fallback, now_kst=now_kst
+        )
+        if atr_ceil is None:
+            return False, {
+                "stage": "atr_floor",
+                "atr_floor": settings.ATR_FLOOR,
+            }
+        if snapshot.current_price <= 0:
+            return False, {"stage": "atr_filter", "current_price": snapshot.current_price}
+        atr = calc_volatility_factor(
+            snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
+        )
+        atr_ratio = atr / snapshot.current_price
+        if atr_ratio > atr_ceil:
+            return False, {
+                "stage": "atr_ceil",
+                "atr_ratio": round(atr_ratio, 4),
+                "atr_ceil": round(atr_ceil, 4),
+                "tier": tier,
+            }
+        return True, {"atr_ratio": round(atr_ratio, 4), "atr_ceil": round(atr_ceil, 4)}
+
     async def generate_signal(
         self, snapshot: MarketSnapshot
     ) -> TradeSignalData | RejectedSignal:
         # Phase 8.5 Sprint 1.5 — shadow 평가(관측 전용, 주문 경로 불변)
-        # 호출 자체를 try/except로 감싸 _shadow_evaluate 내부 try 실패 시에도
-        # 주문 경로가 영향을 받지 않도록 이중 방어.
         try:
             await self._shadow_evaluate(snapshot, _now_kst())
         except Exception:  # noqa: BLE001
@@ -394,6 +563,23 @@ class MomentumBreakoutStrategy(Strategy):
             logging.getLogger(__name__).warning(
                 "shadow evaluate call failed", exc_info=True
             )
+
+        now_kst = _now_kst()
+
+        # Phase 8.6 Sprint 2 — 임시 시간가드 (09:00~09:10 / 14:30+ 차단)
+        if settings.TEMP_TIME_GUARD_SPRINT2:
+            cur_t = now_kst.time()
+            if (MARKET_OPEN <= cur_t < TEMP_GUARD_MORNING_END) or (
+                cur_t >= TEMP_GUARD_AFTERNOON_START
+            ):
+                return await self._reject(
+                    snapshot,
+                    "temp_time_guard",
+                    {
+                        "now": cur_t.isoformat(),
+                        "block_window": "09:00-09:10 or >=14:30",
+                    },
+                )
 
         # 갭 비율 결정
         gap_rate = (
@@ -404,6 +590,34 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 3단계 tier 결정 (gap_open / prev_high / prev_close)
         breakout_ref, breakout_tier = self._resolve_tier(snapshot, gap_rate)
+
+        # Phase 8.6 Sprint 2 — gap_open 시초가 컷 (시초가 ≥ 현재가 시 매물 흡수 실패)
+        if (
+            settings.PARALLEL_OR_TIER_ENABLED
+            and breakout_tier == "gap_open"
+            and snapshot.open_price >= snapshot.current_price
+        ):
+            return await self._reject(
+                snapshot,
+                "gap_open_absorb",
+                {
+                    "open_price": snapshot.open_price,
+                    "current_price": snapshot.current_price,
+                    "breakout_tier": breakout_tier,
+                },
+            )
+
+        # Phase 8.6 Sprint 2 — prev_close tier 5분봉 거래량 컨펌
+        if settings.PARALLEL_OR_TIER_ENABLED and breakout_tier == "prev_close":
+            if not await self._check_prev_close_volume_confirm(snapshot):
+                return await self._reject(
+                    snapshot,
+                    "prev_close_volume_confirm",
+                    {
+                        "breakout_tier": breakout_tier,
+                        "reason": "5분봉 양봉 2연속/vol_5m×2 미달",
+                    },
+                )
 
         # prev_close tier는 13:00 이후 비활성 — 오후 추격매수 리스크 억제
         if (
@@ -504,21 +718,38 @@ class MomentumBreakoutStrategy(Strategy):
                 },
             )
 
-        # ATR 필터
+        # ATR 필터 — Phase 8.6 Sprint 2: PARALLEL_OR_TIER_ENABLED 시 _resolve_atr_ceil
+        # (tier별 동적 상한 + ATR_CEIL_HARD 절대 한계 + ATR_FLOOR 하한). 토글 OFF 시 정적 0.05.
         atr = calc_volatility_factor(
             snapshot.recent_highs, snapshot.recent_lows, snapshot.recent_closes
         )
-        if snapshot.current_price > 0 and atr / snapshot.current_price > ATR_FILTER_PCT:
-            return await self._reject(
-                snapshot,
-                "atr_filter",
-                {
-                    "atr": round(atr, 2),
-                    "current_price": snapshot.current_price,
-                    "atr_ratio": round(atr / snapshot.current_price, 4),
-                    "limit_ratio": ATR_FILTER_PCT,
-                },
+        if settings.PARALLEL_OR_TIER_ENABLED:
+            is_fallback = bool(getattr(snapshot, "is_fallback", False))
+            atr_ok, atr_detail = await self._evaluate_atr_gate(
+                snapshot, breakout_tier, is_fallback, now_kst
             )
+            if not atr_ok:
+                return await self._reject(
+                    snapshot,
+                    "atr_filter",
+                    {
+                        "atr": round(atr, 2),
+                        "current_price": snapshot.current_price,
+                        **atr_detail,
+                    },
+                )
+        else:
+            if snapshot.current_price > 0 and atr / snapshot.current_price > ATR_FILTER_PCT:
+                return await self._reject(
+                    snapshot,
+                    "atr_filter",
+                    {
+                        "atr": round(atr, 2),
+                        "current_price": snapshot.current_price,
+                        "atr_ratio": round(atr / snapshot.current_price, 4),
+                        "limit_ratio": ATR_FILTER_PCT,
+                    },
+                )
 
         # 신뢰도 계산 — tier별 momentum_score 가중
         if breakout_tier == "prev_close":
@@ -577,6 +808,19 @@ class MomentumBreakoutStrategy(Strategy):
 
         await record_stage(self.redis_client, "pass", now_kst=_now_kst())
 
+        # Phase 8.6 Sprint 2 — matched_tiers (병렬 OR 통과 tier 목록).
+        # 토글 OFF 시 NULL (Kill-switch — Sprint 1 동작 보존).
+        matched: list[str] | None = None
+        if settings.PARALLEL_OR_TIER_ENABLED:
+            matched = [breakout_tier]
+            # gap_open이 우선 매칭됐어도 prev_high 기준(전일 고가 돌파)도 동시 충족이면 함께 기록
+            if (
+                breakout_tier == "gap_open"
+                and snapshot.prev_high > 0
+                and snapshot.current_price > snapshot.prev_high * 1.001
+            ):
+                matched.append("prev_high")
+
         return TradeSignalData(
             stock_code=snapshot.stock_code,
             signal_type="buy",
@@ -597,8 +841,10 @@ class MomentumBreakoutStrategy(Strategy):
                 "market_progress": round(progress, 4),
                 "atr": round(atr, 2),
                 "is_leverage": is_leverage,
+                "matched_tiers": matched,
             },
             entry_price=entry_price,
             stop_loss=stop_loss,
             take_profit=take_profit,
+            matched_tiers=matched,
         )

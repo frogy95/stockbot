@@ -28,6 +28,8 @@ from core.models.metrics import (
 )
 from core.models.trading import TradeSignal
 from core.redis import RedisClient
+from modules.screening.sim_vs_real_diff import compute_sim_vs_real_diff
+from modules.screening.tier_correlation import evaluate_correlation_window
 
 router = APIRouter(
     prefix="/metrics",
@@ -505,3 +507,114 @@ async def virtual_signals(
         for r in rows
     ]
     return VirtualSignalsResponse(items=items)
+
+
+# === Phase 8.6 Sprint 2 — tier 상관 / pass rate / 시뮬-실측 절대차 ===
+
+
+class TierCorrelationResponse(BaseModel):
+    window_days: int
+    phi: dict[str, float]
+    cond_prob: dict[str, float]
+    max_phi: float
+    max_cond: float
+    phi_threshold: float
+    cond_threshold: float
+    ok: bool
+
+
+@router.get("/tier-correlation", response_model=TierCorrelationResponse)
+async def get_tier_correlation(
+    days: int = Query(7, ge=1, le=30),
+    session: AsyncSession = Depends(get_db),
+) -> TierCorrelationResponse:
+    """병렬 OR tier 발생 상관(phi + 조건부 P(B|A)) 7일 윈도우."""
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    today = datetime.now(tz).date()
+    start = today - timedelta(days=days - 1)
+    rows = (
+        await session.execute(
+            select(TradeSignal.created_at, TradeSignal.matched_tiers)
+            .where(TradeSignal.created_at >= datetime.combine(start, datetime.min.time()))
+            .where(TradeSignal.matched_tiers.is_not(None))
+        )
+    ).all()
+    daily: dict = {}
+    for created_at, matched in rows:
+        d = created_at.astimezone(tz).date()
+        s = daily.setdefault(d, set())
+        if isinstance(matched, list):
+            s.update(matched)
+    out = evaluate_correlation_window(daily)
+    return TierCorrelationResponse(**out)
+
+
+class TierPassRateBucket(BaseModel):
+    date: str
+    gap_open: int
+    prev_high: int
+    prev_close: int
+
+
+class TierPassRateResponse(BaseModel):
+    window_days: int
+    buckets: list[TierPassRateBucket]
+
+
+@router.get("/tier-pass-rate", response_model=TierPassRateResponse)
+async def get_tier_pass_rate(
+    days: int = Query(7, ge=1, le=30),
+    redis: RedisClient = Depends(get_redis),
+) -> TierPassRateResponse:
+    """tier별 일별 shadow pass 카운트 (Sprint 2 신규 카운터)."""
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    today = datetime.now(tz).date()
+    buckets = []
+    for i in range(days - 1, -1, -1):
+        d = today - timedelta(days=i)
+        iso = d.isoformat()
+        gap = await redis.get(f"shadow:tier:gap_open:passed:{iso}")
+        ph = await redis.get(f"shadow:tier:prev_high:passed:{iso}")
+        pc = await redis.get(f"shadow:tier:prev_close:passed:{iso}")
+        buckets.append(TierPassRateBucket(
+            date=iso,
+            gap_open=int(gap) if gap else 0,
+            prev_high=int(ph) if ph else 0,
+            prev_close=int(pc) if pc else 0,
+        ))
+    return TierPassRateResponse(window_days=days, buckets=buckets)
+
+
+class SimVsRealDiffBucket(BaseModel):
+    date: str
+    diff: float
+
+
+class SimVsRealDiffResponse(BaseModel):
+    window_days: int
+    threshold: float
+    buckets: list[SimVsRealDiffBucket]
+    ok: bool
+
+
+@router.get("/sim-vs-real-diff", response_model=SimVsRealDiffResponse)
+async def get_sim_vs_real_diff(
+    days: int = Query(7, ge=1, le=30),
+    redis: RedisClient = Depends(get_redis),
+) -> SimVsRealDiffResponse:
+    """시뮬-실측 통과율 절대차 7일 추이 (Phase 8.6 Sprint 2)."""
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    today = datetime.now(tz).date()
+    threshold = 0.15
+    buckets: list[SimVsRealDiffBucket] = []
+    ok = True
+    for i in range(days - 1, -1, -1):
+        d = today - timedelta(days=i)
+        v = await redis.get(f"metrics:quant:sim_vs_real_diff:{d.isoformat()}")
+        diff = float(v) if v else 0.0
+        if diff >= threshold:
+            ok = False
+        buckets.append(SimVsRealDiffBucket(date=d.isoformat(), diff=round(diff, 4)))
+    return SimVsRealDiffResponse(
+        window_days=days, threshold=threshold, buckets=buckets, ok=ok
+    )

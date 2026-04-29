@@ -16,7 +16,15 @@ KST = ZoneInfo("Asia/Seoul")
 def _make_engine(notifier_manager=None):
     """테스트용 엔진 생성 헬퍼."""
     mock_redis = AsyncMock()
-    mock_redis.get = AsyncMock(return_value="true")  # pipeline_healthy 가드 통과
+
+    async def _redis_get(key):  # Phase 8.6 Sprint 2 — key-aware mock
+        if key == "scheduler:pipeline_healthy":
+            return "true"
+        if key == "safe_mode:active":
+            return None
+        return None
+
+    mock_redis.get = AsyncMock(side_effect=_redis_get)
     engine = TradingEngine(
         signal_generator=AsyncMock(),
         order_manager=AsyncMock(),

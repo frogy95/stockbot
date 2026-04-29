@@ -17,8 +17,14 @@ _AFTER_1300 = datetime(2026, 4, 22, 13, 30, tzinfo=_KST)
 
 @pytest.fixture(autouse=True)
 def _freeze_morning_kst():
-    """prev_close tier 13:00 가드가 전 테스트에 랜덤하게 영향주지 않도록 오전(10:00)으로 고정."""
-    with patch(_PATCH_NOW_KST, return_value=_MORNING):
+    """prev_close tier 13:00 가드가 전 테스트에 랜덤하게 영향주지 않도록 오전(10:00)으로 고정.
+
+    Phase 8.6 Sprint 2: 기존 Sprint 1 단위 테스트는 PARALLEL_OR_TIER_ENABLED=false
+    (Kill-switch 동작 = 100% 복원) 모드에서 회귀 0건이어야 한다.
+    """
+    with patch(_PATCH_NOW_KST, return_value=_MORNING), \
+         patch("modules.trading.strategies.momentum_breakout.settings.PARALLEL_OR_TIER_ENABLED", False), \
+         patch("modules.trading.strategies.momentum_breakout.settings.TEMP_TIME_GUARD_SPRINT2", False):
         yield
 
 

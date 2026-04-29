@@ -4,7 +4,11 @@ from unittest.mock import AsyncMock, MagicMock
 from modules.trading.engine import TradingEngine
 
 def _make_engine(redis_return_value):
-    """TradingEngine mock 생성."""
+    """TradingEngine mock 생성.
+
+    redis_return_value: pipeline_healthy 키에 대한 반환값.
+    safe_mode:active 키는 항상 None 반환 (safe_mode 게이트 차단 방지).
+    """
     signal_generator = AsyncMock()
     signal_generator.generate_signals = AsyncMock(return_value=[])
 
@@ -21,7 +25,14 @@ def _make_engine(redis_return_value):
     eod_liquidator.is_entry_blocked = MagicMock(return_value=False)
 
     redis_client = AsyncMock()
-    redis_client.get = AsyncMock(return_value=redis_return_value)
+
+    async def _redis_get(key: str):
+        # safe_mode:active 는 None 반환 — safe_mode 게이트 통과 허용
+        if key == "safe_mode:active":
+            return None
+        return redis_return_value
+
+    redis_client.get = _redis_get
 
     return TradingEngine(
         signal_generator=signal_generator,

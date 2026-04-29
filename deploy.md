@@ -7,31 +7,80 @@
 
 ---
 
-### 프로덕션 배포 - v2.7.0 (2026-04-29)
+### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
 
-포함 스프린트: Phase 8.6 Sprint 1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
-PR: https://github.com/frogy95/stockbot/pull/182 (develop → main)
+브랜치: `phase8.6-sprint2` → develop
+PR: https://github.com/frogy95/stockbot/pull/184
 
-- ✅ Vercel 프론트엔드 자동 배포
-- ✅ Railway 백엔드 자동 배포
+- ✅ 코드 리뷰 완료 (2026-04-29, Critical/High/Medium 0건 — 977aa05 재리뷰 통과)
+- ✅ 자동 검증 완료 (2026-04-29, pytest **1056 passed**, tsc 0건, API 3종 200, Playwright 정상)
 
-#### 자동 검증 결과 (배포 완료 후)
+배포 대상 변경 요약: Sprint 1 직렬 AND tier가 병렬 OR + tier별 독립 sub-게이트로 분리. ATR 5% 고정 상한이 KOSPI200 분위수 동적 상한(P80×1.2, HARD 0.08 캡)으로 전환. 시뮬-실측 통과율 절대차 메트릭(`metrics:quant:sim_vs_real_diff`) 도입.
 
-- ✅ 백엔드 헬스체크 (Railway): `{"status":"healthy","database":"connected","redis":"connected"}`
-- ✅ 프론트엔드 접속 (Vercel): HTTP 200 (https://stockbot.choiji.kr)
-- ✅ Alembic 마이그레이션: `upgrade a430a1c931b2 -> b8f1c2a30201, Phase 8.6 Sprint 1 — fallback 컬럼 추가 (TradeSignal·Order)` 성공
-- ✅ 서버 기동: KIS 클라이언트, APScheduler, WS 연결 20개 정상 (Railway 로그 확인)
-- ✅ 로그인 페이지 렌더 (Playwright): 정상 표시
-- ✅ Playwright `/diagnostics` 페이지 (수동 로그인 후 확인) — `FallbackSignalRateCard`, `AutoRollbackMultiTrigger`(R1~R4+G3), 자동 롤백 배너 모두 정상 렌더 (스크린샷: `docs/phase/phase8.6/sprint1/diagnostics-prod-2026-04-29.png`)
-  - 자동 롤백 배너 표시: `auto_rollback_2d_zero_signals` (2026-04-28 16:10 KST 발동 = Phase 8.5 분기 D 기존 발동, Sprint 1 가드레일이 정확히 시각화 중)
-  - R3은 `AUTO_ROLLBACK_R3_ENABLED=False` 정상 표시 (Sprint 2까지 의도된 비활성)
+#### Railway 환경변수 추가 확인 (10종)
 
-#### 수동 검증 필요 항목
+- ⬜ `PARALLEL_OR_TIER_ENABLED=true` — Kill-switch 마스터 토글
+- ⬜ `ATR_CALIBRATION_ENABLED=true` — 08:35 캘리브레이션 잡 활성화
+- ⬜ `ATR_CALIBRATION_METHOD=sma` — `sma`(20일) 또는 `ewma`(λ=0.94)
+- ⬜ `ATR_FLOOR=0.025` — ATR 하한 (모든 tier 공통)
+- ⬜ `ATR_CEIL_HARD=0.08` — ATR 상한 절대 한계 (gap_open 우회 X)
+- ⬜ `ATR_CEIL_FALLBACK=0.05` — 폴백 종목 정적 상한
+- ⬜ `ATR_CEIL_MULT=1.2` — P80×mult 계수 (shadow grid 1.0/1.1/1.2/1.3 중 실 진입값)
+- ⬜ `ATR_CALIBRATION_WINDOW_DAYS=20`
+- ⬜ `TEMP_TIME_GUARD_SPRINT2=true` — 09:00~09:10 / 14:30+ 차단 (Sprint 3에서 본 가드 도입 후 제거)
+- ⬜ `SAFE_MODE_TIMEOUT_MIN=120` — 폴백 3단 안전모드 신호 중단(분)
 
-- ⬜ Paper 모드 1거래일 회귀: `signals.fallback=true` 1건 이상 DB 기록 + M-F2 API 응답 정상 (다음 거래일 2026-04-30 장 마감 후 확인 — 단, 현재 자동 롤백 발동 중이므로 폴백 비활성 상태. 수동으로 Redis override 해제 후 검증 필요)
-- ⬜ G2/G3 가드레일 실 동작 확인: 16:10 자동 롤백 잡 + 회로차단기 counter 정상 적재 (다음 거래일 장 후 Railway 로그 확인)
+#### Alembic 마이그레이션 적용 (2종)
 
-배포 모드: Paper/dry_run — LIVE 전환은 Sprint 2 DoR 4종 통과 후
+- ⬜ `c1f2a30b8201` — `stocks.is_kospi200 BOOLEAN NOT NULL DEFAULT FALSE` + `ix_stocks_is_kospi200`
+- ⬜ `d2a30b8201ef` — `trade_signals.matched_tiers JSONB NULL` (Kill-switch 시 NULL 안전)
+
+#### Kill-switch 런북 (Phase 8.6 Sprint 2)
+
+##### 즉시 원복 (1줄)
+
+Railway 환경변수 `PARALLEL_OR_TIER_ENABLED=false` 설정 후 backend 재배포. Sprint 1 직렬 동작 100% 복원.
+
+##### 검증 (3단)
+
+1. `curl https://api.stockbot.choiji.kr/api/v1/diagnostics | jq .parallel_or_enabled` → `false` 확인 (또는 `/api/v1/metrics/phase86-status` 응답 확인)
+2. PostgreSQL: `SELECT COUNT(*) FROM trade_signals WHERE matched_tiers IS NULL AND created_at >= NOW() - INTERVAL '1 hour';` → 신규 신호 NULL 안전 확인 (Kill-switch 모드에서는 모두 NULL)
+3. 텔레그램 신호 발행 확인 — Sprint 1 직렬 동작과 동일한 reject stage 패턴
+
+##### 안전모드 해제 (수동)
+
+```
+docker compose exec redis redis-cli DEL safe_mode:active
+```
+
+또는 Railway Redis CLI에서 동일 명령. 자동 해제는 `SAFE_MODE_TIMEOUT_MIN=120`분 TTL.
+
+##### 캘리브레이션만 비활성
+
+`ATR_CALIBRATION_ENABLED=false` → 동적 P80 캐싱 무시, 모든 tier에서 정적 `ATR_CEIL_HARD=0.08` 사용. `ATR_FLOOR`/`gap_open HARD`는 그대로 유지.
+
+#### 자동 검증 결과 (2026-04-29 sprint-review 실측)
+
+- ✅ pytest — **1056 passed, 0 failed** (977aa05에서 M1/M2/M3 8건 모두 수정)
+  - M1: `test_momentum_breakout_metrics.py` 6건 — prev_close_volume_confirm 게이트 순서 반영하여 stage 기대값 업데이트
+  - M2: `test_pipeline_health.py` 1건 — redis mock을 키별 분기로 수정하여 safe_mode:active가 signal_generator를 차단하지 않도록 조정
+  - M3: `test_ws_stability.py` 1건 — max_subscriptions 기대값 25 → 20 (PAPER 실제값 일치)
+- ✅ `npx tsc --noEmit` 에러 0건
+- ✅ tier 카드 2종 (`/diagnostics`) Playwright 시각 검증 — `tier 상관(phi + 조건부 P(B|A))` + `tier pass rate · 시뮬-실측 절대차` 정상 렌더링 확인 (스크린샷: `docs/phase/phase8.6/sprint2/diagnostics-tier-cards.png`)
+- ✅ `/api/v1/metrics/tier-correlation` / `tier-pass-rate` / `sim-vs-real-diff` 200 응답 (인증 후 모두 정상)
+
+#### 코드 리뷰 결과 (2026-04-29)
+
+- Critical/High/Medium 이슈: **0건** (977aa05 재리뷰 통과 — sprint-pr-fix로 M1/M2/M3 8건 모두 수정됨)
+
+#### 관찰 항목 (Sprint 3 착수 게이트, 종료 조건 X)
+
+- ⬜ Paper 1거래일 (2026-04-30) ATR 캘리브레이션 잡 → Redis 4종 키(`metrics:atr:ceil`/`dist`/`ceil_grid`/`fallback_count`) 적재
+- ⬜ 병렬 OR tier 신호 1건 이상 + `matched_tiers` 메타데이터 JSON 기록
+- ⬜ 시뮬-실측 절대차 ≤0.15 유지 (≥0.15 시 텔레그램 알림 + 분기 D 회귀 의심)
+- ⬜ L5 사전 시뮬: `docs/phase/phase8.6/sprint2/atr_floor_simulation.md` (fail율 추정 35~45% < 60% → ATR_FLOOR=0.025 시작값 유지)
+
+배포 모드: Paper — Sprint 3에서 시간 필터 본 가드 + volume_surge tier 도입 후 LIVE 전환 검토
 
 ---
 
