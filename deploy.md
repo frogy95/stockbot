@@ -7,24 +7,21 @@
 
 ---
 
-### Hotfix: observation-daily-api (2026-04-27)
+### Hotfix: observation-daily-api — 분기 D 확정 (2026-04-27 ~ 2026-04-29)
 
-PR: https://github.com/frogy95/stockbot/pull/175 (hotfix/observation-daily-api → main, 머지 완료)
+PR (코드): https://github.com/frogy95/stockbot/pull/175 (2026-04-27 머지)
+PR (문서): https://github.com/frogy95/stockbot/pull/177 (2026-04-29 머지)
 
-- ✅ 자동 검증 완료 항목:
-  - pytest: 963 passed, 1 failed (test_ws_stability — 본 변경과 무관한 사전 존재 이슈)
-  - 타겟 API 검증: `GET /api/v1/health/observation-daily` (today) → 200 정상
-  - 타겟 API 검증: `GET /api/v1/health/observation-daily?date=2026-04-23` → 200 정상
+- ✅ 자동 검증 완료:
+  - pytest: 963 passed, 1 failed (test_ws_stability — 무관)
+  - 타겟 API 검증: `GET /api/v1/health/observation-daily` → 200 정상
+  - Phase 8.5 5거래일 관찰 완료: **분기 D 확정** (M-R true, 2026-04-28T16:10 자동 롤백 발동)
 
 - ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영) — Railway 자동 배포 후 헬스체크로 대체 가능
   - Railway 배포 완료 후 실 API 호출 확인: `curl -s "https://api.stockbot.choiji.kr/api/v1/health/observation-daily"`
-  - `.claude/settings.local.json`에 다음 두 줄 수동 추가:
+  - `.claude/settings.local.json`에 수동 추가 (allowlist 확장):
     - `"Bash(curl -s https://api.stockbot.choiji.kr/api/v1/health/observation-daily)"`
     - `"Bash(curl -s https://api.stockbot.choiji.kr/api/v1/health/observation-daily?date=*)"`
-
-- 코드 리뷰 이슈:
-  - Medium: `date` 파라미터 잘못된 형식 입력 시 500 반환 (내부/디버그 API — 허용 범위)
 
 ---
 
