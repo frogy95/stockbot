@@ -7,83 +7,31 @@
 
 ---
 
-### Sprint: phase8.6/sprint1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
+### 프로덕션 배포 - v2.7.0 (2026-04-29)
 
-브랜치: `phase8-sprint1` (develop 머지 예정)
-PR: https://github.com/frogy95/stockbot/pull/181
+포함 스프린트: Phase 8.6 Sprint 1 — LIVE 보호 가드레일 (G1+G2+G3 + Phase 7.0 잠금)
+PR: https://github.com/frogy95/stockbot/pull/182 (develop → main)
 
-#### sprint-review 상태 (2026-04-29 완료)
+- ✅ Vercel 프론트엔드 자동 배포
+- ✅ Railway 백엔드 자동 배포
 
-**코드 리뷰 결과**: Critical/High 이슈 없음 — 코드 리뷰 통과
+#### 자동 검증 결과 (배포 완료 후)
 
-- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용, `router.dependencies=[Depends(get_current_user)]` 인증 적용
-- ✅ 성능: N+1 없음, Redis counter 패턴 적절, DB 인덱스 추가 (`ix_trade_signals_fallback_created`)
-- ✅ 코드 품질: TypeScript `any` 사용 없음, 에러 핸들링 적절 (`except Exception: logger.exception`)
-- ✅ 테스트: 신규 기능 pytest 전체 추가 (G1 6종 + G2 13종 + G3 9종 + Task1 5종 = 33종), 회귀 없음
-- ✅ 패턴: `modules/safety/` 신규 디렉토리, 프로젝트 컨벤션 준수
+- ✅ 백엔드 헬스체크 (Railway): `{"status":"healthy","database":"connected","redis":"connected"}`
+- ✅ 프론트엔드 접속 (Vercel): HTTP 200 (https://stockbot.choiji.kr)
+- ✅ Alembic 마이그레이션: `upgrade a430a1c931b2 -> b8f1c2a30201, Phase 8.6 Sprint 1 — fallback 컬럼 추가 (TradeSignal·Order)` 성공
+- ✅ 서버 기동: KIS 클라이언트, APScheduler, WS 연결 20개 정상 (Railway 로그 확인)
+- ✅ 로그인 페이지 렌더 (Playwright): 정상 표시
+- ✅ Playwright `/diagnostics` 페이지 (수동 로그인 후 확인) — `FallbackSignalRateCard`, `AutoRollbackMultiTrigger`(R1~R4+G3), 자동 롤백 배너 모두 정상 렌더 (스크린샷: `docs/phase/phase8.6/sprint1/diagnostics-prod-2026-04-29.png`)
+  - 자동 롤백 배너 표시: `auto_rollback_2d_zero_signals` (2026-04-28 16:10 KST 발동 = Phase 8.5 분기 D 기존 발동, Sprint 1 가드레일이 정확히 시각화 중)
+  - R3은 `AUTO_ROLLBACK_R3_ENABLED=False` 정상 표시 (Sprint 2까지 의도된 비활성)
 
-Medium 이슈 (기능 영향 없음, Sprint 2에서 개선 권장):
-- M1: `_prev_days` 함수 독스트링 "오늘 포함 직전 count일"과 모듈 독스트링 "직전 3거래일" 표현 불일치 (문서 혼란 소지, 기능 의도적)
-- M2: `phase86-status` API의 rollback_active/circuit_active 판정이 `is not None` (key 존재 확인) 방식 사용 — `circuit_breaker.is_active()`는 값 체크. 실제 쓰기가 항상 "true"여서 동작은 동일하나 일관성 결여
+#### 수동 검증 필요 항목
 
-**자동 검증 결과**:
+- ⬜ Paper 모드 1거래일 회귀: `signals.fallback=true` 1건 이상 DB 기록 + M-F2 API 응답 정상 (다음 거래일 2026-04-30 장 마감 후 확인 — 단, 현재 자동 롤백 발동 중이므로 폴백 비활성 상태. 수동으로 Redis override 해제 후 검증 필요)
+- ⬜ G2/G3 가드레일 실 동작 확인: 16:10 자동 롤백 잡 + 회로차단기 counter 정상 적재 (다음 거래일 장 후 Railway 로그 확인)
 
-- ✅ pytest 변경 파일 대상 (tests/safety/ + tests/core/ + test_g1* + test_momentum_breakout + test_realtime_screener): **102 passed, 0 failed**
-- ✅ 프론트엔드 `npx tsc --noEmit`: 0 errors
-- ✅ Phase 7.0 CI grep 가드 (`max_position|position_size|daily_max_loss|emergency_stop` in order_manager/executor): **0줄 (통과)**
-- ✅ 백엔드 health check: `http://localhost:8000/docs` → 200 OK
-- ✅ 프론트엔드 health check: `http://localhost:3000` → 200 OK
-- ⬜ Playwright `/diagnostics` 페이지 렌더 확인 — Docker 내 Playwright 미설치, 수동 확인 필요
-
-**Phase 문서 반영**: ✅ `docs/phase/phase8.6/phase8.6.md` Sprint 1 완료 마킹 + DoR 4종 ✅ 업데이트
-
-**LIVE 게이트 합의**: 본 Sprint는 **LIVE 전환 아님** — Paper 모드에서 R1~R4/G3 가드레일 검증. LIVE 전환은 Sprint 2 병렬 OR 완료 + DoR 4종 모두 통과 후.
-
-#### Railway 환경변수 추가 확인 (10종 — 신규/조정)
-
-- ✅ `SECONDARY_POOL_FALLBACK_THRESHOLD=5`  # Phase 8.6 Sprint 1 — 분기 D 풀 협소 대응 (3→5)
-- ✅ `SECONDARY_POOL_FALLBACK_BACKFILL_HARD_CAP=5`
-- ✅ `AUTO_ROLLBACK_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R1_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R2_ENABLED=true`
-- ✅ `AUTO_ROLLBACK_R3_ENABLED=false`  # Sprint 2 tier 분리 후 true 전환
-- ✅ `AUTO_ROLLBACK_R4_ENABLED=true`
-- ✅ `CIRCUIT_BREAKER_ENABLED=true`
-- ✅ `CIRCUIT_BREAKER_PASS_RATE_THRESHOLD=0.10`
-- ✅ `CIRCUIT_BREAKER_CONSECUTIVE_DAYS=3`
-
-#### 자동 검증 (Sprint 1 — develop PR 시점)
-
-- ✅ pytest 전체: **1001 passed, 1 failed (test_ws_stability — Sprint 무관, 기존 환경 문제 / Sprint 1 변경분 64 PASS)**
-- ✅ 신규 테스트 PASS:
-  - G1 메타데이터 전파: 6 PASS (`tests/test_g1_fallback_metadata_propagation.py`)
-  - G2 자동 롤백 R1~R4: 13 PASS (`tests/safety/test_auto_rollback.py`)
-  - G3 회로차단기: 9 PASS (`tests/safety/test_circuit_breaker.py`)
-- ✅ Alembic 왕복 테스트 (PR 머지 게이트): `upgrade head → downgrade -1 → upgrade head` 3단계 모두 성공 (Task 3 시점)
-- ✅ frontend `npx tsc --noEmit`: 0 errors
-
-#### DoR 4종 + P0 보강 5건 (반영 결과)
-
-- ✅ **DoR §3 G1**: `is_fallback` candidate→signal→order 메타데이터 전파 + DB 컬럼 + M-F2 API
-- ✅ **DoR §3 G2**: R1~R4 OR 자동 롤백 + 16:10 평가 + Phase 8.5 폴백 격리
-- ✅ **DoR §3 G3**: 1차→2차 통과율 회로차단기 + counter pair + Phase 8.5 폴백 동시 차단
-- ✅ **Phase 7.0 LIVE 잠금**: `Final` 상수 + 런타임 assert 이중 가드 (Task 1)
-
-P0 보강 5건:
-
-- ✅ **#1 (Daytrader Critical)** G3 분모 부재 — counter pair 동시 적재 + 분모=0 fail-safe 강제 ON (`test_zero_denominator_fails_safe_to_circuit_on`)
-- ✅ **#2** R4 분모 baseline — `screener:candidates:primary:{date}` Redis counter 일별 적재 (TTL 30d)
-- ✅ **#3 (Daytrader Critical)** G3 청산 신호 보존 — `signal.action in (exit/stop_loss/take_profit)` 또는 `signal_type=='sell'` 통과 (`test_circuit_breaker_does_not_block_exit_signals`, `test_circuit_breaker_blocks_only_entry_signals`)
-- ✅ **#4 (Risk Critical)** dry_run 우회 방지 — `Final` 상수 + 런타임 assert + `test_phase7_constants_immutable_at_runtime`
-- ✅ **#5** Alembic 왕복 회귀 — `upgrade head → downgrade -1 → upgrade head` 3단계 PASS
-
-#### 수동 검증 필요 항목 (Railway 프로덕션 배포 후 — 본 Sprint는 LIVE 아니지만 Paper 회귀 + env 등록 확인 필요)
-
-- ⬜ `docker compose up --build` 빌드 검증 (DB 컬럼 추가 — `trade_signals.fallback`, `orders.fallback`)
-- ⬜ Paper 모드 1거래일 회귀: `signals.fallback=true` 1건 이상 DB 기록 + M-F2 API 응답 정상
-- ⬜ Playwright `/diagnostics` 페이지 접속 — `FallbackSignalRateCard` + `AutoRollbackMultiTrigger` 정상 렌더
-- ⬜ CI grep 가드 (주문 실행 경로 git diff 0줄) — Sprint 1은 `core/clients/kis_rest.py` / `modules/trading/order_manager.py` 변경분에 LIVE 토글/하드코딩 시도 없음 확인 (sprint-review에서 재확인)
-
+배포 모드: Paper/dry_run — LIVE 전환은 Sprint 2 DoR 4종 통과 후
 
 ---
 
