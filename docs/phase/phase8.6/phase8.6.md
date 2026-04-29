@@ -1,6 +1,6 @@
 # Phase 8.6: 신호 생성 로직 구조 재설계 — 실행 계획
 
-> **Status**: 계획 수립 완료 (2026-04-28, 사용자 승인 대기)
+> **Status**: Sprint 1 완료 (2026-04-29, PR #181 develop 머지 예정)
 > **ROADMAP 참조**: ROADMAP.md `Phase 8.6` 절 — 본 문서 승인 시 "누적 백로그 통합" → "신호 생성 로직 구조 재설계 (분기 D 트리거 선제 착수)"로 재정의되며, 기존 백로그(피라미딩 / 2차 하이브리드)는 Phase 10.1로 분리한다.
 > **트리거**: Phase 8.5 v2.6.1 5거래일 관찰 결과 분기 D 확정 (2026-04-28 16:10 `auto_rollback_2d_zero_signals` 발동, 4거래일 본 신호 1건 / 폴백 605회).
 > **검토 리포트** (분기 D 4명 재리뷰가 1차 입력 — 본 Phase 결정 추적성 확보):
@@ -108,12 +108,14 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 
 ### DoR 체크리스트
 
-- ⬜ G1 구현 완료 + Paper 1거래일 메타데이터 전파 확인
-- ⬜ G2 R1~R4 4종 트리거 단위 테스트 통과 + env 토글 검증
-- ⬜ G3 회로차단기 단위 테스트 통과 + 임계 10% env 변수화
-- ⬜ Phase 7.0 LIVE 파라미터 코드 레벨 잠금 (`Final[int]` 상수 + 변경 시 빌드 실패 테스트)
+- ✅ G1 구현 완료 — is_fallback 신호→주문→DB 전파 + M-F2 API (Sprint 1 Task 3, 2026-04-29)
+- ✅ G2 R1~R4 4종 트리거 단위 테스트 통과 + env 토글 검증 (Sprint 1 Task 4, 13 tests PASS, 2026-04-29)
+- ✅ G3 회로차단기 단위 테스트 통과 + 임계 10% env 변수화 (Sprint 1 Task 5, 9 tests PASS, 2026-04-29)
+- ✅ Phase 7.0 LIVE 파라미터 코드 레벨 잠금 (`Final[int]` 상수 + 변경 시 빌드 실패 테스트, Sprint 1 Task 1, 5 tests PASS, 2026-04-29)
 
-위 4개 모두 ✅ 후에만 Sprint 2 착수 가능.
+위 4개 모두 ✅ 후에만 Sprint 2 착수 가능. — **Sprint 1 완료로 DoR 4종 충족 (2026-04-29)**
+
+> Paper 1거래일 메타데이터 전파 확인 (`signals.fallback=true` 1건 이상)은 수동 검증 필요 (deploy.md ⬜)
 
 ---
 
@@ -121,7 +123,7 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 
 | Sprint | 주제 | 주요 작업 | 의존성 | 예상 소요 |
 |--------|------|----------|--------|----------|
-| **1** | **선행 패치 + 가드레일** (PO Sprint 2.6 안 흡수 + 리스크 G1~G3) | M-F2 산출, 자동 롤백 사유 다변화(R1~R4), 회로차단기, 폴백 5종 확장, min_volume_floor 시간대 슬라이딩(0.3 09~11시 / 0.5 그 외), Phase 7.0 LIVE 파라미터 잠금 | 없음 (분기 D 직후 즉시) | 4~6일 |
+| **1** ✅ | **선행 패치 + 가드레일** (PO Sprint 2.6 안 흡수 + 리스크 G1~G3) | M-F2 산출, 자동 롤백 사유 다변화(R1~R4), 회로차단기, 폴백 5종 확장, min_volume_floor 시간대 슬라이딩(0.3 09~11시 / 0.5 그 외), Phase 7.0 LIVE 파라미터 잠금 | 없음 (분기 D 직후 즉시) | ~~4~6일~~ **완료 (2026-04-29, PR #181)** |
 | **2** | **병렬 OR tier 분리 + ATR 분위수 캘리브레이션** | tier별 sub-게이트 분리(gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 상한 동적(`min(0.08, 80퍼센타일×1.2)`), 09:00 KOSPI 200 분위수 잡 | Sprint 1 완료 + DoR 통과 | 5~7일 |
 | **3** | **`volume_surge` tier 신설 + 시간대 필터** | 5분봉 거래량 ≥ 직전 20분 평균 ×5 + 호가창 매수/매도 잔량 ≥ 2배, 가격 조건 약하게(전일 종가 +0.5%↑), 09:00~09:10 진입 금지·14:30+ 신규 진입 금지·점심 floor 0.7, dry_run=True 기본값 | Sprint 2 + KIS WS 호가 스트림(Phase 6 인프라 재사용) | 6~9일 |
 | **4** | **Walk-forward 백테스트 + 시뮬↔실측 자동 감지** | 60거래일+ 백테스트(박스권/추세장 각 20일+), TimeSeriesSplit(40일 학습 / 20일 검증 슬라이딩), 매주 KS 검정 자동 트리거(p<0.05 시 시뮬 재구축 알림), Bootstrap CI 하한 ≥1 통과 시 LIVE 토글 허용 | Sprint 2~3 코드 + KIS 분봉 백필(Phase 9 Sprint 0과 동일 메커니즘) | 5~8일 |
@@ -267,12 +269,13 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 
 #### 종료 조건 (DoR 체크)
 
-- ⬜ G1 (M-F2 산출) ✅
-- ⬜ G2 (R1~R4 트리거) ✅
-- ⬜ G3 (회로차단기) ✅
-- ⬜ Phase 7.0 LIVE 파라미터 잠금 ✅
+- ✅ G1 (M-F2 산출) — is_fallback 전파 + fallback-signal-rate API (2026-04-29, PR #181)
+- ✅ G2 (R1~R4 트리거) — AutoRollbackEvaluator 13 tests PASS (2026-04-29, PR #181)
+- ✅ G3 (회로차단기) — CircuitBreaker 9 tests PASS (2026-04-29, PR #181)
+- ✅ Phase 7.0 LIVE 파라미터 잠금 — Final 상수 + assert + 5 regression tests (2026-04-29, PR #181)
 
-위 4개 모두 충족 시 Sprint 2 착수 게이트 해제.
+위 4개 모두 충족 — **Sprint 2 착수 게이트 해제 (2026-04-29)**
+> 단, Paper 1거래일 메타데이터 전파 확인은 수동 검증 필요 (deploy.md ⬜)
 
 ---
 
@@ -510,6 +513,13 @@ LIVE 활성화는 다음 모두 충족 시에만:
 - **2차 pass_threshold 75 추가 완화** — PO §2 + Sprint 2.5 검증 결과 임계 자체는 무결, 직렬 AND 구조 변경이 우선
 - **Phase 8.5 폴백 전면 폐기** — PO §2 거부, 폴백 자체는 정상 작동했음
 - **prev_close 13:00 → 14:00 연장** — 분기 D 원인 분석 우선순위 낮음 (Phase 8.5 사전 거부 결정 유지)
+
+### Sprint 1 코드 리뷰 발견 Medium 이슈 (Sprint 2에서 개선 권장)
+
+| # | 파일 | 내용 | Severity | Sprint 2 조치 |
+|---|------|------|----------|--------------|
+| M1 | `modules/safety/auto_rollback.py` | `_prev_days` 함수 독스트링 "오늘 포함 직전 count일"과 모듈 독스트링 "직전 3거래일" 표현 불일치 (기능은 정상, 문서 혼란 소지) | Medium | 모듈 독스트링을 "오늘 포함 직전 N일" 또는 "N일 (오늘부터 역산)"으로 통일 |
+| M2 | `api/routes/metrics.py` | `phase86-status` API rollback_active/circuit_active 판정이 `is not None` (key 존재 확인) — `circuit_breaker.is_active()`는 값 비교("true","1","yes"). 실제 쓰기가 항상 "true"여서 동작 동일하나 일관성 결여 | Medium | `is not None` → 값 비교 방식으로 통일 |
 
 ### 🤔 사용자 최종 결정 필요 항목
 

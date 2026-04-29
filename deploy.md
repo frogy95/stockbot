@@ -12,10 +12,30 @@
 브랜치: `phase8-sprint1` (develop 머지 예정)
 PR: https://github.com/frogy95/stockbot/pull/181
 
-#### sprint-review 상태
+#### sprint-review 상태 (2026-04-29 완료)
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+**코드 리뷰 결과**: Critical/High 이슈 없음 — 코드 리뷰 통과
+
+- ✅ 보안: 하드코딩 시크릿 없음, ORM 파라미터 바인딩 사용, `router.dependencies=[Depends(get_current_user)]` 인증 적용
+- ✅ 성능: N+1 없음, Redis counter 패턴 적절, DB 인덱스 추가 (`ix_trade_signals_fallback_created`)
+- ✅ 코드 품질: TypeScript `any` 사용 없음, 에러 핸들링 적절 (`except Exception: logger.exception`)
+- ✅ 테스트: 신규 기능 pytest 전체 추가 (G1 6종 + G2 13종 + G3 9종 + Task1 5종 = 33종), 회귀 없음
+- ✅ 패턴: `modules/safety/` 신규 디렉토리, 프로젝트 컨벤션 준수
+
+Medium 이슈 (기능 영향 없음, Sprint 2에서 개선 권장):
+- M1: `_prev_days` 함수 독스트링 "오늘 포함 직전 count일"과 모듈 독스트링 "직전 3거래일" 표현 불일치 (문서 혼란 소지, 기능 의도적)
+- M2: `phase86-status` API의 rollback_active/circuit_active 판정이 `is not None` (key 존재 확인) 방식 사용 — `circuit_breaker.is_active()`는 값 체크. 실제 쓰기가 항상 "true"여서 동작은 동일하나 일관성 결여
+
+**자동 검증 결과**:
+
+- ✅ pytest 변경 파일 대상 (tests/safety/ + tests/core/ + test_g1* + test_momentum_breakout + test_realtime_screener): **102 passed, 0 failed**
+- ✅ 프론트엔드 `npx tsc --noEmit`: 0 errors
+- ✅ Phase 7.0 CI grep 가드 (`max_position|position_size|daily_max_loss|emergency_stop` in order_manager/executor): **0줄 (통과)**
+- ✅ 백엔드 health check: `http://localhost:8000/docs` → 200 OK
+- ✅ 프론트엔드 health check: `http://localhost:3000` → 200 OK
+- ⬜ Playwright `/diagnostics` 페이지 렌더 확인 — Docker 내 Playwright 미설치, 수동 확인 필요
+
+**Phase 문서 반영**: ✅ `docs/phase/phase8.6/phase8.6.md` Sprint 1 완료 마킹 + DoR 4종 ✅ 업데이트
 
 **LIVE 게이트 합의**: 본 Sprint는 **LIVE 전환 아님** — Paper 모드에서 R1~R4/G3 가드레일 검증. LIVE 전환은 Sprint 2 병렬 OR 완료 + DoR 4종 모두 통과 후.
 
