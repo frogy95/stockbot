@@ -351,14 +351,14 @@ class CollectorScheduler:
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
         # 08:35 Phase 8.6 Sprint 2 — KOSPI200 ATR 분위수 캘리브레이션
-        if settings.ATR_CALIBRATION_ENABLED:
-            self._scheduler.add_job(
-                self._atr_calibration_job,
-                CronTrigger(hour=8, minute=35, timezone=tz),
-                id="atr_calibration",
-                replace_existing=True,
-                misfire_grace_time=MISFIRE_GRACE_TIME,
-            )
+        # (잡 자체에서 ATR_CALIBRATION_ENABLED 토글 검사 → 비활성 시 no-op)
+        self._scheduler.add_job(
+            self._atr_calibration_job,
+            CronTrigger(hour=8, minute=35, timezone=tz),
+            id="atr_calibration",
+            replace_existing=True,
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 16:00 포털 보조 수집: market_cap/listed_shares 갱신 (장전 파이프라인과 독립)
         self._scheduler.add_job(
             self._portal_supplement_collect,
