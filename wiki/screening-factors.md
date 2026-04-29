@@ -23,7 +23,7 @@ ATR = mean(TR for last N days)
 ```
 
 - 데이터 2일 미만 시 0.0 반환
-- [[momentum-breakout-strategy]]에서 ATR 5% 초과 종목 제외 (과도한 변동성 필터)
+- Phase 8.6 Sprint 2부터 [[momentum-breakout-strategy]]는 ATR 정적 5% 상한 → **`[ATR_FLOOR=0.025, ATR_CEIL_DYNAMIC=min(0.08, P80×1.2)]`** 동적 캘리브레이션 (08:35 KOSPI200 분위수 잡). gap_open tier도 `ATR_CEIL_HARD=0.08` 절대 한계 적용. 폴백 종목은 `ATR_CEIL_FALLBACK=0.05` 고정. [[tier-architecture]] 참조.
 
 ### 3. 모멘텀 팩터 (Momentum Factor)
 

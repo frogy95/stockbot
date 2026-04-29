@@ -43,3 +43,9 @@ Cloudflare (DNS/CDN)
 ## 환경 전환
 
 `TRADING_ENV=paper|live` 플래그 하나로 모의/실전 전환. [[paper-vs-live]] 참조.
+
+## 신호 생성 구조 (Phase 8.6)
+
+Phase 8.6 Sprint 2(2026-04-29, v2.8.0 prod)부터 신호 생성은 직렬 AND → 병렬 OR 다중 진입 경로로 재설계되었다. 3개 tier(`gap_open`/`prev_high`/`prev_close`)가 독립 sub-게이트로 평가되며 하나라도 통과하면 신호 발행. ATR 임계는 08:35 KOSPI200 분위수 잡으로 매일 동적 캘리브레이션. 상세: [[tier-architecture]].
+
+LIVE 자금 보호 가드레일(G1~G3 + Phase 7.0 코드 잠금)은 Phase 8.6 Sprint 1로 도입되어 분기 D 같은 사고 시 자동 롤백 R1~R4 + 회로차단기로 차단된다. 상세: [[risk-management]].
