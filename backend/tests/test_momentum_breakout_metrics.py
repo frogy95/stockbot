@@ -103,14 +103,14 @@ async def test_virtual_signal_recorded_within_13_14_window():
     """13:30 KST prev_close tier → virtual_signals 1건 INSERT + RejectedSignal 반환."""
     import json as _json
     redis = FakeRedis()
-    # Sprint 2 — prev_close_volume_confirm 게이트 통과를 위해 양봉 2연속 데이터 주입
-    redis.store["vol_5m:005930"] = _json.dumps([
-        {"volume": 100_000, "is_bullish": True},
-        {"volume": 110_000, "is_bullish": True},
-        {"volume": 120_000, "is_bullish": True},
-        {"volume": 130_000, "is_bullish": True},
-        {"volume": 140_000, "is_bullish": True},
-    ])
+    # Sprint 2 hotfix — vol5m 슬롯 키(collector 형식)로 양봉 2연속 데이터 주입 (13:30 KST → slot 54)
+    for offset, slot in enumerate(range(50, 55)):
+        redis.store[f"vol5m:005930:20260422:{slot}"] = _json.dumps({
+            "buy_vol": 70_000 + offset * 1_000,
+            "sell_vol": 30_000,
+            "total_vol": 100_000 + offset * 10_000,
+            "trade_count": 10,
+        })
     store: list = []
     strategy = MomentumBreakoutStrategy(
         redis_client=redis, session_factory=make_session_factory(store)
@@ -161,14 +161,14 @@ async def test_no_virtual_signal_after_1400():
     """
     import json as _json
     redis = FakeRedis()
-    # Sprint 2 — prev_close_volume_confirm 게이트 통과를 위해 양봉 2연속 데이터 주입
-    redis.store["vol_5m:005930"] = _json.dumps([
-        {"volume": 100_000, "is_bullish": True},
-        {"volume": 110_000, "is_bullish": True},
-        {"volume": 120_000, "is_bullish": True},
-        {"volume": 130_000, "is_bullish": True},
-        {"volume": 140_000, "is_bullish": True},
-    ])
+    # Sprint 2 hotfix — vol5m 슬롯 키(collector 형식)로 양봉 2연속 데이터 주입 (14:10 KST → slot 62)
+    for offset, slot in enumerate(range(58, 63)):
+        redis.store[f"vol5m:005930:20260422:{slot}"] = _json.dumps({
+            "buy_vol": 70_000 + offset * 1_000,
+            "sell_vol": 30_000,
+            "total_vol": 100_000 + offset * 10_000,
+            "trade_count": 10,
+        })
     store: list = []
     strategy = MomentumBreakoutStrategy(
         redis_client=redis, session_factory=make_session_factory(store)

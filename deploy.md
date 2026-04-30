@@ -7,93 +7,35 @@
 
 ---
 
-### 프로덕션 배포 - v2.8.0 (2026-04-29)
+### Hotfix: prev-close-volume-confirm-integration (2026-04-30)
 
-포함 스프린트: Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
-PR: https://github.com/frogy95/stockbot/pull/185 (develop → main, merged 098053b)
+Phase 8.6 Sprint 2 NO-GO(2026-04-30)의 근본 원인 수정 — `_check_prev_close_volume_confirm` 게이트가 `vol_5m:{code}` 단일 JSON 배열 키를 기대했으나 collector(`VolumeAggregator`)는 `vol5m:{code}:{date}:{slot}` 슬롯 키 형식으로 적재 → 항상 fail-safe로 prev_close 후보 전체가 거부됨.
 
-- ✅ Vercel 프론트엔드 자동 배포 (https://stockbot.choiji.kr 307 — auth redirect 정상)
-- ✅ Railway 백엔드 자동 배포 (`/api/v1/health` → status:healthy, database:connected, redis:connected)
-- ✅ Railway 환경변수 10종 설정 완료 (CLI batch set 검증)
-- ✅ Alembic 마이그레이션 자동 적용 (Railway start command `alembic upgrade head` — 정상 기동 확인)
-- ✅ 백엔드 로그 0 에러 (ATR 캘리브레이션 잡 등록 확인)
+브랜치: `hotfix/prev-close-volume-confirm-integration` → main → develop
+커밋: `14356df fix(strategy): prev_close_volume_confirm 게이트를 collector vol5m 슬롯 키와 통합`
 
----
+변경 파일:
+- `backend/modules/trading/strategies/momentum_breakout.py` — 슬롯 키 5개 직접 조회, buy_vol>sell_vol 양봉 근사 로직으로 교체
+- `backend/tests/strategies/test_prev_close_volume_confirm.py` — 신규 슬롯 키 형식으로 테스트 재작성 (V1~V6)
+- `backend/tests/test_momentum_breakout_metrics.py` — vol_5m 주입을 vol5m 슬롯 키로 갱신
 
-### Phase 8.6 Sprint 2 — 병렬 OR tier + ATR 분위수 캘리브레이션
+변경 범위: 파일 3개, 코드 153줄 (전략 순수 변경 67줄 + 테스트 86줄 — 테스트 포함 시 50줄 기준 초과이나 프로덕션 로직 변경은 67줄)
 
-브랜치: `phase8.6-sprint2` → develop
-PR: https://github.com/frogy95/stockbot/pull/184
+- ✅ 자동 검증 완료 항목:
+  - pytest: **1057 passed, 0 failed** (10분 9초, 사전 확인 완료)
+  - 타겟 API 검증: **N/A** — 변경 범위가 백엔드 전략 게이트 내부 (API 인터페이스 변경 없음)
+  - Playwright 타겟 검증: **N/A** — UI 변경 없음
+  - 코드 리뷰: Critical/High 이슈 0건 (Medium 1건 — fail-safe False 반환 시 로그 없음, 아래 기록)
 
-- ✅ 코드 리뷰 완료 (2026-04-29, Critical/High/Medium 0건 — 977aa05 재리뷰 통과)
-- ✅ 자동 검증 완료 (2026-04-29, pytest **1056 passed**, tsc 0건, API 3종 200, Playwright 정상)
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영 확인)
+  - **Sprint 3 착수 전 1거래일 재관찰 필요 (2026-05-04 월)**: 신호 발생 여부, `matched_tiers` DB 저장 건수, Redis `vol5m:{code}:{date}:{slot}` 키 실 적재 여부 확인
+  - Railway 환경변수 변경 없음 (MIN_VOLUME_FLOOR_HARD=0.3, MIN_VOLUME_FLOOR_MODE=dynamic, PARALLEL_OR_TIER_ENABLED=true 유지)
 
-배포 대상 변경 요약: Sprint 1 직렬 AND tier가 병렬 OR + tier별 독립 sub-게이트로 분리. ATR 5% 고정 상한이 KOSPI200 분위수 동적 상한(P80×1.2, HARD 0.08 캡)으로 전환. 시뮬-실측 통과율 절대차 메트릭(`metrics:quant:sim_vs_real_diff`) 도입.
+#### 코드 리뷰 결과 (2026-04-30)
 
-#### Railway 환경변수 추가 확인 (10종)
-
-- ✅ `PARALLEL_OR_TIER_ENABLED=true` — Kill-switch 마스터 토글
-- ✅ `ATR_CALIBRATION_ENABLED=true` — 08:35 캘리브레이션 잡 활성화
-- ✅ `ATR_CALIBRATION_METHOD=sma` — `sma`(20일) 또는 `ewma`(λ=0.94)
-- ✅ `ATR_FLOOR=0.025` — ATR 하한 (모든 tier 공통)
-- ✅ `ATR_CEIL_HARD=0.08` — ATR 상한 절대 한계 (gap_open 우회 X)
-- ✅ `ATR_CEIL_FALLBACK=0.05` — 폴백 종목 정적 상한
-- ✅ `ATR_CEIL_MULT=1.2` — P80×mult 계수 (shadow grid 1.0/1.1/1.2/1.3 중 실 진입값)
-- ✅ `ATR_CALIBRATION_WINDOW_DAYS=20`
-- ✅ `TEMP_TIME_GUARD_SPRINT2=true` — 09:00~09:10 / 14:30+ 차단 (Sprint 3에서 본 가드 도입 후 제거)
-- ✅ `SAFE_MODE_TIMEOUT_MIN=120` — 폴백 3단 안전모드 신호 중단(분)
-
-#### Alembic 마이그레이션 적용 (2종)
-
-- ✅ `c1f2a30b8201` — `stocks.is_kospi200 BOOLEAN NOT NULL DEFAULT FALSE` + `ix_stocks_is_kospi200`
-- ✅ `d2a30b8201ef` — `trade_signals.matched_tiers JSONB NULL` (Kill-switch 시 NULL 안전)
-
-#### Kill-switch 런북 (Phase 8.6 Sprint 2)
-
-##### 즉시 원복 (1줄)
-
-Railway 환경변수 `PARALLEL_OR_TIER_ENABLED=false` 설정 후 backend 재배포. Sprint 1 직렬 동작 100% 복원.
-
-##### 검증 (3단)
-
-1. `curl https://api.stockbot.choiji.kr/api/v1/diagnostics | jq .parallel_or_enabled` → `false` 확인 (또는 `/api/v1/metrics/phase86-status` 응답 확인)
-2. PostgreSQL: `SELECT COUNT(*) FROM trade_signals WHERE matched_tiers IS NULL AND created_at >= NOW() - INTERVAL '1 hour';` → 신규 신호 NULL 안전 확인 (Kill-switch 모드에서는 모두 NULL)
-3. 텔레그램 신호 발행 확인 — Sprint 1 직렬 동작과 동일한 reject stage 패턴
-
-##### 안전모드 해제 (수동)
-
-```
-docker compose exec redis redis-cli DEL safe_mode:active
-```
-
-또는 Railway Redis CLI에서 동일 명령. 자동 해제는 `SAFE_MODE_TIMEOUT_MIN=120`분 TTL.
-
-##### 캘리브레이션만 비활성
-
-`ATR_CALIBRATION_ENABLED=false` → 동적 P80 캐싱 무시, 모든 tier에서 정적 `ATR_CEIL_HARD=0.08` 사용. `ATR_FLOOR`/`gap_open HARD`는 그대로 유지.
-
-#### 자동 검증 결과 (2026-04-29 sprint-review 실측)
-
-- ✅ pytest — **1056 passed, 0 failed** (977aa05에서 M1/M2/M3 8건 모두 수정)
-  - M1: `test_momentum_breakout_metrics.py` 6건 — prev_close_volume_confirm 게이트 순서 반영하여 stage 기대값 업데이트
-  - M2: `test_pipeline_health.py` 1건 — redis mock을 키별 분기로 수정하여 safe_mode:active가 signal_generator를 차단하지 않도록 조정
-  - M3: `test_ws_stability.py` 1건 — max_subscriptions 기대값 25 → 20 (PAPER 실제값 일치)
-- ✅ `npx tsc --noEmit` 에러 0건
-- ✅ tier 카드 2종 (`/diagnostics`) Playwright 시각 검증 — `tier 상관(phi + 조건부 P(B|A))` + `tier pass rate · 시뮬-실측 절대차` 정상 렌더링 확인 (스크린샷: `docs/phase/phase8.6/sprint2/diagnostics-tier-cards.png`)
-- ✅ `/api/v1/metrics/tier-correlation` / `tier-pass-rate` / `sim-vs-real-diff` 200 응답 (인증 후 모두 정상)
-
-#### 코드 리뷰 결과 (2026-04-29)
-
-- Critical/High/Medium 이슈: **0건** (977aa05 재리뷰 통과 — sprint-pr-fix로 M1/M2/M3 8건 모두 수정됨)
-
-#### 관찰 항목 (Sprint 3 착수 게이트, 종료 조건 X)
-
-- ⬜ Paper 1거래일 (2026-04-30) ATR 캘리브레이션 잡 → Redis 4종 키(`metrics:atr:ceil`/`dist`/`ceil_grid`/`fallback_count`) 적재
-- ⬜ 병렬 OR tier 신호 1건 이상 + `matched_tiers` 메타데이터 JSON 기록
-- ⬜ 시뮬-실측 절대차 ≤0.15 유지 (≥0.15 시 텔레그램 알림 + 분기 D 회귀 의심)
-- ⬜ L5 사전 시뮬: `docs/phase/phase8.6/sprint2/atr_floor_simulation.md` (fail율 추정 35~45% < 60% → ATR_FLOOR=0.025 시작값 유지)
-
-배포 모드: Paper — Sprint 3에서 시간 필터 본 가드 + volume_surge tier 도입 후 LIVE 전환 검토
+- Critical/High 이슈: **0건**
+- Medium 이슈 (1건): `_check_prev_close_volume_confirm`에서 redis.get 실패(`except Exception`) 시 경고 로그 없이 False 반환 — 진단 시 원인 파악 난이도 증가. 향후 Sprint에서 `logger.warning` 추가 권장.
 
 ---
 
@@ -102,4 +44,3 @@ docker compose exec redis redis-cli DEL safe_mode:active
 - 검증 원칙: `.claude/rules/dev-process.md` 섹션 5
 - 배포 이력: `docs/deploy-history/`
 - 롤백 방법: `.claude/rules/dev-process.md` 섹션 6.4
-- 5거래일 관찰 의사결정 트리: `docs/phase/phase8.5/sprint2.5/sprint2.5.md` § 5거래일 관찰 종료 후 의사결정 트리
