@@ -485,35 +485,54 @@ class MomentumBreakoutStrategy(Strategy):
     async def _check_prev_close_volume_confirm(self, snapshot: MarketSnapshot) -> bool:
         """Phase 8.6 Sprint 2 — prev_close tier 5분봉 거래량 컨펌.
 
-        Redis `vol_5m:{stock_code}` JSON 배열(최신 5개 5분봉, 각 {volume,is_bullish})에서
-        - 양봉 2연속 OR
-        - 최신 vol_5m ≥ 직전 4봉 평균 ×2
-        둘 중 하나 만족 시 True. 데이터 부재 시 fail-safe(False).
+        Collector(`VolumeAggregator`)가 적재한 `vol5m:{code}:{date}:{slot}` 슬롯 키
+        최신 5개를 조회한다. 각 슬롯 dict는 `{buy_vol, sell_vol, total_vol, trade_count}`.
+        - 양봉 근사: `buy_vol > sell_vol` (collector가 `is_bullish` 미저장)
+        - 양봉 2연속(최근 2슬롯) OR 최신 total_vol ≥ 직전 4슬롯 평균 ×2 → True
+        - 모든 슬롯이 비어 있으면(total_vol 합 0) fail-safe(False).
         """
         if self.redis_client is None:
             return False
+        import json as _json
+        from modules.collector.volume_aggregator import calc_5min_slot, make_redis_key
+
+        now = _now_kst()
+        date_str = now.strftime("%Y%m%d")
+        current_slot = calc_5min_slot(now.hour, now.minute)
+
+        bars: list[dict] = []
+        for offset in range(5):
+            slot = current_slot - 4 + offset
+            if slot < 0:
+                bars.append({"buy_vol": 0, "sell_vol": 0, "total_vol": 0})
+                continue
+            key = make_redis_key(snapshot.stock_code, date_str, slot)
+            try:
+                raw = await self.redis_client.get(key)
+            except Exception:  # noqa: BLE001
+                return False
+            if not raw:
+                bars.append({"buy_vol": 0, "sell_vol": 0, "total_vol": 0})
+                continue
+            try:
+                data = _json.loads(raw) if isinstance(raw, (str, bytes)) else raw
+            except (TypeError, ValueError):
+                return False
+            bars.append(data if isinstance(data, dict) else {"buy_vol": 0, "sell_vol": 0, "total_vol": 0})
+
+        # 데이터 부재 fail-safe (모든 슬롯 total_vol=0)
+        if sum(float(b.get("total_vol", 0)) for b in bars) <= 0:
+            return False
+
         try:
-            raw = await self.redis_client.get(f"vol_5m:{snapshot.stock_code}")
-        except Exception:  # noqa: BLE001
-            return False
-        if not raw:
-            return False
-        try:
-            import json as _json
-            data = _json.loads(raw)
-        except (TypeError, ValueError):
-            return False
-        if not isinstance(data, list) or len(data) < 5:
-            return False
-        # 양봉 2연속 (최신 2봉)
-        try:
-            recent = data[-2:]
-            if all(bool(b.get("is_bullish")) for b in recent):
+            # 양봉 2연속 (최근 2슬롯, buy_vol > sell_vol 근사)
+            recent = bars[-2:]
+            if all(float(b.get("buy_vol", 0)) > float(b.get("sell_vol", 0)) for b in recent):
                 return True
-            # vol_5m ≥ 직전 4봉 평균 ×2
-            prev4 = data[-5:-1]
-            avg4 = sum(float(b.get("volume", 0)) for b in prev4) / max(len(prev4), 1)
-            latest = float(data[-1].get("volume", 0))
+            # 최신 total_vol ≥ 직전 4슬롯 평균 ×2
+            prev4 = bars[:4]
+            avg4 = sum(float(b.get("total_vol", 0)) for b in prev4) / 4
+            latest = float(bars[-1].get("total_vol", 0))
             if avg4 > 0 and latest >= avg4 * 2.0:
                 return True
         except (TypeError, ValueError, AttributeError):
@@ -615,7 +634,7 @@ class MomentumBreakoutStrategy(Strategy):
                     "prev_close_volume_confirm",
                     {
                         "breakout_tier": breakout_tier,
-                        "reason": "5분봉 양봉 2연속/vol_5m×2 미달",
+                        "reason": "5분봉 양봉 2연속/total_vol×2 미달",
                     },
                 )
 
