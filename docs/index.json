@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-29T23:30:00+09:00",
+  "lastUpdated": "2026-04-30T17:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3650,6 +3650,23 @@
           "url": "https://github.com/frogy95/stockbot/pull/177",
           "purpose": "문서 변경 (분기 D 관찰 결과)",
           "mergedAt": "2026-04-29"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-prev-close-volume-confirm-integration",
+      "name": "prev_close_volume_confirm 게이트 collector vol5m 슬롯 키 통합",
+      "status": "deployed",
+      "path": "docs/hotfix/prev-close-volume-confirm-integration/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "deployedAt": "2026-04-30",
+      "description": "Phase 8.6 Sprint 2 NO-GO 근본 원인 수정. _check_prev_close_volume_confirm 게이트가 vol_5m:{code} 단일 JSON 배열 키를 기대했으나 collector(VolumeAggregator)는 vol5m:{code}:{date}:{slot} 슬롯 키 형식으로 적재 → 항상 fail-safe로 prev_close 후보 전체가 거부됨. 슬롯 키 5개 직접 조회 + buy_vol>sell_vol 양봉 근사 로직으로 교체. Sprint 3 착수 전 1거래일 재관찰 필요 (2026-05-04 월).",
+      "commits": [
+        {
+          "hash": "14356df",
+          "message": "fix(strategy): prev_close_volume_confirm 게이트를 collector vol5m 슬롯 키와 통합",
+          "date": "2026-04-30"
         }
       ]
     }
