@@ -34,6 +34,17 @@ _STOCK_CODE_RE = re.compile(r"^\d{6}$")
 SEC_TYPE_ETF = "EF"
 SEC_TYPE_ETN = "EN"
 
+# KOSPI200 멤버십 플래그 위치 — 핫픽스 kospi200-real-200-backfill 검증 결과:
+# Part2(line[-228:], CP949 디코딩 후) char position 162 = KOSPI200 멤버십 (Y/N)
+# field_specs idx 58 (정식 컬럼명은 KIS 공식 문서 미공개). 실증 spot-check 15/15 적중,
+# 비KOSPI200 0/4 false positive, 226종 (공식 200 + 추가 종목 ~26).
+_KOSPI200_FLAG_POS = 162
+_PART2_LEN = 228
+# Sanity 게이트: count out-of-range 또는 spot-check 누락 시 sync 차단 → 직전 상태 유지.
+_KOSPI200_SANITY_MIN = 150
+_KOSPI200_SANITY_MAX = 280
+_KOSPI200_SPOT_CHECK = frozenset({"005930", "000660", "005380", "035420", "035720"})
+
 
 class KISMasterCollector:
     """KIS 종목 마스터파일 기반 ETF/ETN 수집기.
@@ -48,7 +59,8 @@ class KISMasterCollector:
     async def collect(self) -> dict:
         """메인 오케스트레이션.
 
-        반환: {"etf_count": int, "etn_count": int, "source": str, "sanity_passed": bool}
+        반환: {"etf_count": int, "etn_count": int, "source": str, "sanity_passed": bool,
+              "kospi200_synced": int | None}  # KOSPI200_MST_SYNC_ENABLED=true 시에만 채움
         """
         try:
             kospi_raw, kosdaq_raw = await asyncio.gather(
@@ -65,7 +77,11 @@ class KISMasterCollector:
         prev_count = await self._get_existing_etf_count()
         if not self.sanity_check(etf_list, prev_count):
             logger.warning("sanity check 실패 — 기존 DB ETF 유지")
-            return await self._fallback_existing_db()
+            result = await self._fallback_existing_db()
+            # KOSPI200 sync는 ETF sanity 실패와 독립 — 가능하면 시도
+            kospi200_synced = await self._maybe_sync_kospi200(kospi_raw)
+            result["kospi200_synced"] = kospi200_synced
+            return result
 
         etf_count = etn_count = 0
         for r in etf_list:
@@ -75,8 +91,18 @@ class KISMasterCollector:
                 etn_count += 1
 
         await self.sync_to_db(etf_list)
-        logger.info("ETF 마스터 수집 완료: ETF=%d, ETN=%d", etf_count, etn_count)
-        return {"etf_count": etf_count, "etn_count": etn_count, "source": "mst", "sanity_passed": True}
+        kospi200_synced = await self._maybe_sync_kospi200(kospi_raw)
+        logger.info(
+            "ETF 마스터 수집 완료: ETF=%d, ETN=%d, KOSPI200 sync=%s",
+            etf_count, etn_count, kospi200_synced,
+        )
+        return {
+            "etf_count": etf_count,
+            "etn_count": etn_count,
+            "source": "mst",
+            "sanity_passed": True,
+            "kospi200_synced": kospi200_synced,
+        }
 
     async def download_mst(self, market: str, retry_delay: float = 10.0) -> bytes:
         """mst.zip 다운로드 후 압축 해제하여 mst 바이트 반환. 실패 시 3회 재시도."""
@@ -267,3 +293,83 @@ class KISMasterCollector:
     async def _fallback_existing_db(self) -> dict:
         count = await self._get_existing_etf_count() or 0
         return {"etf_count": count, "etn_count": 0, "source": "existing_db", "sanity_passed": False}
+
+    # ------------------------------------------------------------------
+    # KOSPI200 멤버십 sync (핫픽스 kospi200-real-200-backfill)
+    # ------------------------------------------------------------------
+
+    def parse_kospi200_codes(self, kospi_mst_raw: bytes) -> set[str]:
+        """KOSPI mst 데이터에서 Part2 pos 162 = 'Y' 인 종목 코드 집합 추출.
+
+        Part2(line[-228:], CP949 디코딩 후) char position 162 = KOSPI200 멤버십 플래그.
+        디코딩 실패 라인은 스킵 (production mst에선 0건 검증됨).
+        """
+        codes: set[str] = set()
+        for line_bytes in kospi_mst_raw.split(b"\n"):
+            line_bytes = line_bytes.rstrip(b"\r")
+            if len(line_bytes) < 50:
+                continue
+            try:
+                line = line_bytes.decode("cp949")
+            except UnicodeDecodeError:
+                continue
+            code = line[0:9].rstrip()
+            if not _STOCK_CODE_RE.match(code):
+                continue
+            if len(line) < (_PART2_LEN + 22):  # part2 + 최소 헤더(22)
+                continue
+            part2 = line[-_PART2_LEN:]
+            if len(part2) > _KOSPI200_FLAG_POS and part2[_KOSPI200_FLAG_POS] == "Y":
+                codes.add(code)
+        return codes
+
+    def kospi200_sanity_check(self, codes: set[str]) -> tuple[bool, str | None]:
+        """KOSPI200 코드 집합의 회귀 안전 게이트.
+
+        실패 시 (False, reason) 반환 → 호출자는 sync 차단 + 직전 상태 유지.
+        """
+        if not (_KOSPI200_SANITY_MIN <= len(codes) <= _KOSPI200_SANITY_MAX):
+            return False, f"count {len(codes)} out of range [{_KOSPI200_SANITY_MIN},{_KOSPI200_SANITY_MAX}]"
+        missing_spot = _KOSPI200_SPOT_CHECK - codes
+        if missing_spot:
+            return False, f"spot-check 누락: {sorted(missing_spot)}"
+        return True, None
+
+    async def sync_kospi200_membership(self, codes: set[str]) -> int:
+        """stocks.is_kospi200 sync — 전체 false 후 codes 집합만 true 마킹.
+
+        반환: true 마킹된 row 수. 트랜잭션 내 reset+update.
+        """
+        from sqlalchemy import bindparam, text
+
+        if not codes:
+            return 0
+        await self._db.execute(
+            text("UPDATE stocks SET is_kospi200 = FALSE WHERE is_kospi200 = TRUE")
+        )
+        stmt = text(
+            "UPDATE stocks SET is_kospi200 = TRUE WHERE stock_code IN :codes"
+        ).bindparams(bindparam("codes", expanding=True))
+        result = await self._db.execute(stmt, {"codes": list(codes)})
+        await self._db.commit()
+        return int(result.rowcount or 0)
+
+    async def _maybe_sync_kospi200(self, kospi_raw: bytes) -> int | None:
+        """settings.KOSPI200_MST_SYNC_ENABLED 게이트.
+
+        반환:
+          - None: 비활성 (kill switch off)
+          - -1: sanity 실패로 sync 차단 (직전 상태 유지)
+          - >=0: 마킹된 row 수
+        """
+        if not settings.KOSPI200_MST_SYNC_ENABLED:
+            logger.info("KOSPI200 mst sync 비활성 (KOSPI200_MST_SYNC_ENABLED=false) — no-op")
+            return None
+        codes = self.parse_kospi200_codes(kospi_raw)
+        passed, reason = self.kospi200_sanity_check(codes)
+        if not passed:
+            logger.warning("KOSPI200 sanity 실패 — sync 차단 (%s)", reason)
+            return -1
+        marked = await self.sync_kospi200_membership(codes)
+        logger.info("KOSPI200 sync 완료: codes=%d, marked=%d", len(codes), marked)
+        return marked

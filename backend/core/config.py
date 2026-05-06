@@ -102,6 +102,9 @@ class Settings(BaseSettings):
     # 정적 백업 200종 중 일봉 미적재 종목이 많은 환경에선 일시 상향(예: 200) 후
     # 일봉 백필 완료 시 원복.
     ATR_COVERAGE_GAP_MAX: int = Field(default=30, ge=1, le=500, description="ATR 캘리브레이션 OHLC 결측 허용 상한")
+    # KIS kospi_code.mst 기반 KOSPI200 마스터 자동 동기화. 핫픽스 kospi200-real-200-backfill 도입.
+    # default=False로 머지·배포 가능 (관찰 신호 보존). production에서 5/7 관찰 후 true 토글.
+    KOSPI200_MST_SYNC_ENABLED: bool = Field(default=False, description="KIS mst 기반 KOSPI200 멤버십 일일 동기화 활성화")
 
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
