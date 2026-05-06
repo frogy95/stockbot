@@ -49,7 +49,7 @@ SHADOW_GRID = (1.0, 1.1, 1.2, 1.3)
 DRIFT_THRESHOLD = 0.015
 DAILY_TTL_3D = 60 * 60 * 24 * 5  # 약 3거래일 (주말 포함 5일)
 KOSPI200_MIN_MASTER = 10
-MARKET_DATA_MIN_COVERAGE_GAP = 30
+# OHLC 결측 허용 상한은 settings.ATR_COVERAGE_GAP_MAX(기본 30)로 동적 조회 — 일봉 백필 잔존 시 임시 상향 운용.
 FALLBACK_TO_SAFE_MODE_THRESHOLD = 3
 
 
@@ -323,7 +323,7 @@ async def compute_kospi200_atr_p80(
     )
     info["coverage_gap"] = missing
     info["raw_sample_n"] = len(ratios)
-    if missing >= MARKET_DATA_MIN_COVERAGE_GAP:
+    if missing >= settings.ATR_COVERAGE_GAP_MAX:
         info["reason"] = "market_data_coverage_gap"
         return None, info
 
