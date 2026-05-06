@@ -357,3 +357,114 @@ async def test_collect_fallback_on_download_failure():
 
     assert result["source"] == "existing_db"
     assert result["sanity_passed"] is False
+
+
+# ── KOSPI200 mst sync (핫픽스 kospi200-real-200-backfill) ─────────────────────
+
+
+def _make_mst_line_with_kospi200(
+    stock_code: str, kospi200: bool, total_len: int = 288
+) -> bytes:
+    """Part2(last 228 bytes) char position 162에 KOSPI200 플래그 Y/N 세팅."""
+    line = bytearray(_make_mst_line(stock_code, "ASCIINAME", "ST", total_len))
+    # ASCII 라인이므로 byte length == char length. Part2 시작 byte = total_len - 228.
+    flag_pos = (total_len - 228) + 162
+    line[flag_pos] = ord("Y") if kospi200 else ord("N")
+    return bytes(line)
+
+
+def test_parse_kospi200_codes_extracts_only_y():
+    collector = _new_collector()
+    raw = _make_mst_bytes([
+        _make_mst_line_with_kospi200("005930", True),
+        _make_mst_line_with_kospi200("000660", True),
+        _make_mst_line_with_kospi200("001520", False),
+    ])
+    codes = collector.parse_kospi200_codes(raw)
+    assert codes == {"005930", "000660"}
+
+
+def test_parse_kospi200_codes_skips_short_or_invalid():
+    collector = _new_collector()
+    raw = _make_mst_bytes([
+        _make_mst_line_with_kospi200("005930", True),
+        b"X" * 30,  # short — 스킵
+        b"ABCDEF" + b" " * 290,  # 비숫자 코드 — 스킵
+    ])
+    codes = collector.parse_kospi200_codes(raw)
+    assert codes == {"005930"}
+
+
+def test_kospi200_sanity_pass():
+    collector = _new_collector()
+    spot = {"005930", "000660", "005380", "035420", "035720"}
+    codes = spot | {f"9{i:05d}" for i in range(150)}  # 155 total
+    passed, reason = collector.kospi200_sanity_check(codes)
+    assert passed
+    assert reason is None
+
+
+def test_kospi200_sanity_fail_count_too_low():
+    collector = _new_collector()
+    codes = {"005930", "000660"}
+    passed, reason = collector.kospi200_sanity_check(codes)
+    assert not passed
+    assert "out of range" in reason
+
+
+def test_kospi200_sanity_fail_count_too_high():
+    collector = _new_collector()
+    codes = {f"{i:06d}" for i in range(300)}
+    passed, reason = collector.kospi200_sanity_check(codes)
+    assert not passed
+    assert "out of range" in reason
+
+
+def test_kospi200_sanity_fail_spot_check():
+    collector = _new_collector()
+    # 200종이지만 spot check(005930) 누락
+    codes = {f"9{i:05d}" for i in range(200)}
+    codes.update({"000660", "005380", "035420", "035720"})  # 4개만
+    passed, reason = collector.kospi200_sanity_check(codes)
+    assert not passed
+    assert "spot-check" in reason
+
+
+@pytest.mark.asyncio
+async def test_maybe_sync_disabled_by_default(monkeypatch):
+    from core.config import settings
+    monkeypatch.setattr(settings, "KOSPI200_MST_SYNC_ENABLED", False)
+    collector = _new_collector()
+    result = await collector._maybe_sync_kospi200(b"")
+    assert result is None  # no-op
+
+
+@pytest.mark.asyncio
+async def test_maybe_sync_blocks_on_sanity_fail(monkeypatch):
+    from core.config import settings
+    monkeypatch.setattr(settings, "KOSPI200_MST_SYNC_ENABLED", True)
+    collector = _new_collector()
+    # 1종만 (sanity 하한 150 미달)
+    raw = _make_mst_line_with_kospi200("005930", True)
+    result = await collector._maybe_sync_kospi200(raw)
+    assert result == -1  # 차단됨
+
+
+@pytest.mark.asyncio
+async def test_maybe_sync_enabled_returns_marked_count(monkeypatch):
+    from core.config import settings
+    monkeypatch.setattr(settings, "KOSPI200_MST_SYNC_ENABLED", True)
+    collector = _new_collector()
+    spot = ["005930", "000660", "005380", "035420", "035720"]
+    lines = [_make_mst_line_with_kospi200(c, True) for c in spot]
+    lines += [_make_mst_line_with_kospi200(f"9{i:05d}", True) for i in range(150)]
+    raw = _make_mst_bytes(lines)
+    # session.execute는 _new_collector에서 mock_result(scalar=None)로 세팅
+    # sync_kospi200_membership의 두 번째 execute(UPDATE WHERE IN)의 rowcount를 모킹
+    mock_update_result = MagicMock()
+    mock_update_result.rowcount = 155
+    collector._db.execute = AsyncMock(return_value=mock_update_result)
+    collector._db.commit = AsyncMock()
+    result = await collector._maybe_sync_kospi200(raw)
+    assert result == 155
+    collector._db.commit.assert_called_once()
