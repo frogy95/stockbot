@@ -3686,6 +3686,17 @@
           "date": "2026-05-06"
         }
       ]
+    },
+    {
+      "id": "hotfix-kospi200-real-200-backfill",
+      "name": "정적 백업 KRX 실제 200종 갱신 + 누락 일봉 백필 + ATR_COVERAGE_GAP_MAX 원복",
+      "status": "planned",
+      "path": "docs/hotfix/kospi200-real-200-backfill/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "registeredAt": "2026-05-06",
+      "description": "선행 핫픽스 hotfix-kospi200-master-backfill의 미해결 부채 해소. (1) backend/data/kospi200_static_backup.json이 sample top 50 + placeholder pad 150으로 구성 → production 매칭 52종 그침. KRX KOSPI200 실제 200종 코드로 갱신 + 신규 마이그레이션으로 is_kospi200 재백필. (2) 매칭 200종 중 market_data 부재 종목의 일봉 30일 백필 스크립트 추가. (3) Railway 환경변수 ATR_COVERAGE_GAP_MAX 200 → 30 원복. 착수 게이트: 5/7 ATR 잡 G1 PARTIAL 지속 또는 Sprint 3 착수 직전.",
+      "commits": []
     }
   ],
   "deployHistory": [
