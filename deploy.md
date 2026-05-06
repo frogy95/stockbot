@@ -7,35 +7,46 @@
 
 ---
 
-### Hotfix: prev-close-volume-confirm-integration (2026-04-30)
+### Hotfix: kospi200-master-backfill (2026-05-06)
 
-Phase 8.6 Sprint 2 NO-GO(2026-04-30)의 근본 원인 수정 — `_check_prev_close_volume_confirm` 게이트가 `vol_5m:{code}` 단일 JSON 배열 키를 기대했으나 collector(`VolumeAggregator`)는 `vol5m:{code}:{date}:{slot}` 슬롯 키 형식으로 적재 → 항상 fail-safe로 prev_close 후보 전체가 거부됨.
+Phase 8.6 Sprint 2 ATR 캘리브레이션 잡이 3거래일 연속(4/30·5/4·5/6) 폴백 → safe_mode 발동으로 신호 발행 전면 차단된 근본 원인 수정.
 
-브랜치: `hotfix/prev-close-volume-confirm-integration` → main → develop
-커밋: `14356df fix(strategy): prev_close_volume_confirm 게이트를 collector vol5m 슬롯 키와 통합`
+**원인 (2단)**:
+1. 마이그레이션 `c1f2a30b8201`이 `stocks.is_kospi200` 컬럼만 추가, 모든 row server_default=`false`. 200종을 `true`로 마킹하는 production 코드/잡 부재 → ATR 잡 DB 조회 0종 → 정적 백업 JSON(200종) 폴백.
+2. 정적 백업 200종 중 148종은 `market_data` 일봉 미적재 → `coverage_gap=148 ≥ MARKET_DATA_MIN_COVERAGE_GAP(30)` → 데이터 부족 판정 → fallback_count INCR → 3회 누적 → safe_mode.
 
-변경 파일:
-- `backend/modules/trading/strategies/momentum_breakout.py` — 슬롯 키 5개 직접 조회, buy_vol>sell_vol 양봉 근사 로직으로 교체
-- `backend/tests/strategies/test_prev_close_volume_confirm.py` — 신규 슬롯 키 형식으로 테스트 재작성 (V1~V6)
-- `backend/tests/test_momentum_breakout_metrics.py` — vol_5m 주입을 vol5m 슬롯 키로 갱신
+**브랜치**: `hotfix/kospi200-master-backfill` → main → develop
 
-변경 범위: 파일 3개, 코드 153줄 (전략 순수 변경 67줄 + 테스트 86줄 — 테스트 포함 시 50줄 기준 초과이나 프로덕션 로직 변경은 67줄)
+**변경 파일**:
+- `backend/alembic/versions/e5a7c91d4f08_kospi200_master_backfill.py` — 정적 백업 JSON 200종 `is_kospi200=true` UPDATE
+- `backend/core/config.py` — `ATR_COVERAGE_GAP_MAX` 환경변수 추가 (default 30, 운영 일시 상향 가능)
+- `backend/modules/screening/atr_calibration.py` — `MARKET_DATA_MIN_COVERAGE_GAP` 상수 → `settings.ATR_COVERAGE_GAP_MAX` 동적 조회
+- `backend/scripts/diagnose_pipeline.py` — scheduler 네임스페이스 read-only 진단 스크립트 (배포 후 `railway run`/`railway ssh`로 실행 가능)
+- `backend/tests/test_kospi200_backfill_migration.py` — 마이그레이션 검증 (revision 체인, 200종 백필 적용)
+- `.env.example` — `ATR_COVERAGE_GAP_MAX=30` 문서화
 
 - ✅ 자동 검증 완료 항목:
-  - pytest: **1057 passed, 0 failed** (10분 9초, 사전 확인 완료)
-  - 타겟 API 검증: **N/A** — 변경 범위가 백엔드 전략 게이트 내부 (API 인터페이스 변경 없음)
+  - pytest: **1060 passed, 0 failed** (10분 18초)
+  - 타겟 API 검증: **N/A** — DB 데이터 백필 + 환경변수 외부화 (API 인터페이스 변경 없음)
   - Playwright 타겟 검증: **N/A** — UI 변경 없음
-  - 코드 리뷰: Critical/High 이슈 0건 (Medium 1건 — fail-safe False 반환 시 로그 없음, 아래 기록)
 
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영 확인)
-  - **Sprint 3 착수 전 1거래일 재관찰 필요 (2026-05-04 월)**: 신호 발생 여부, `matched_tiers` DB 저장 건수, Redis `vol5m:{code}:{date}:{slot}` 키 실 적재 여부 확인
-  - Railway 환경변수 변경 없음 (MIN_VOLUME_FLOOR_HARD=0.3, MIN_VOLUME_FLOOR_MODE=dynamic, PARALLEL_OR_TIER_ENABLED=true 유지)
+- ⬜ 수동 검증 필요 항목 (배포 직후 순서대로):
+  1. **Railway 배포 → alembic upgrade 자동 실행** → `stocks` 테이블 `is_kospi200=true` 200건 확인
+     ```
+     railway ssh --service stockbot
+     python -c "from sqlalchemy import create_engine, text; import os; e=create_engine(os.environ['DATABASE_URL'].replace('+asyncpg','')); print(e.execute(text('SELECT COUNT(*) FROM stocks WHERE is_kospi200=TRUE')).scalar())"
+     ```
+  2. **Railway 환경변수 추가 확인: `ATR_COVERAGE_GAP_MAX=200`** (일시 상향, 일봉 백필 완료 후 30 원복)
+  3. **safe_mode:active Redis 키 삭제** (또는 자연 TTL 만료 대기 ~120분)
+     ```
+     railway ssh --service stockbot
+     python -c "import redis,os; r=redis.from_url(os.environ['REDIS_URL']); print('deleted:', r.delete('safe_mode:active'))"
+     ```
+  4. **2026-05-07 거래일 ATR 잡(KST 08:35) 결과 관찰**: `metrics:atr:ceil:{date}` 동적 값 적재 + `fallback_count=0` 리셋 확인. signals.total ≥ 1 시 Sprint 1 baseline 정상 복원 확인.
+  5. **후속 작업 (별도 Hotfix/Sprint)**: 정적 백업 200종 중 일봉 미적재 148종 백필 잡 (KIS API rate limit 고려 ~수 시간). 백필 완료 후 `ATR_COVERAGE_GAP_MAX=30` 원복.
 
-#### 코드 리뷰 결과 (2026-04-30)
-
-- Critical/High 이슈: **0건**
-- Medium 이슈 (1건): `_check_prev_close_volume_confirm`에서 redis.get 실패(`except Exception`) 시 경고 로그 없이 False 반환 — 진단 시 원인 파악 난이도 증가. 향후 Sprint에서 `logger.warning` 추가 권장.
+- ⬜ Phase 8.6 Sprint 3 착수 전 추가 관찰 (R1 자동 롤백 해제 별도 결정):
+  - 5/7 baseline signals ≥ 1 확인 후 `parallel_or_tier:rollback_active` Redis override 해제 → 5/8 거래일 Sprint 2 병렬 OR tier 재시험 → 결과 확인 후 Sprint 3 GO/NO-GO 판정.
 
 ---
 

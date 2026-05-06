@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-04-30T17:00:00+09:00",
+  "lastUpdated": "2026-05-06T10:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3667,6 +3667,23 @@
           "hash": "14356df",
           "message": "fix(strategy): prev_close_volume_confirm 게이트를 collector vol5m 슬롯 키와 통합",
           "date": "2026-04-30"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-kospi200-master-backfill",
+      "name": "kospi200 마스터 백필 + coverage_gap 임계 외부화로 ATR safe_mode 해소",
+      "status": "deployed",
+      "path": "docs/hotfix/kospi200-master-backfill/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "deployedAt": "2026-05-06",
+      "description": "Phase 8.6 Sprint 2 ATR 캘리브레이션 잡 3거래일 연속(4/30·5/4·5/6) 폴백 → safe_mode 발동으로 신호 발행 전면 차단. 원인: (1) stocks.is_kospi200 200종 마킹 production 코드 부재 → DB 조회 0종 → 정적 백업 200종 폴백. (2) 정적 백업 200종 중 148종 일봉 미적재 → coverage_gap=148 ≥ 30 → fallback 누적 3회. Alembic 마이그레이션으로 정적 백업 200종 is_kospi200=true 백필 + ATR_COVERAGE_GAP_MAX 환경변수 외부화.",
+      "commits": [
+        {
+          "hash": "44fd1c4",
+          "message": "fix(atr): kospi200 마스터 백필 + coverage_gap 임계 외부화로 safe_mode 해소",
+          "date": "2026-05-06"
         }
       ]
     }
