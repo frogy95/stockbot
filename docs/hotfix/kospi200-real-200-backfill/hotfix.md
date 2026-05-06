@@ -3,8 +3,9 @@
 **브랜치:** `hotfix/kospi200-real-200-backfill`
 **담당자:** ChoiJiSeon
 **리뷰어:** hotfix-close agent
-**상태:** 🟡 구현 완료, 머지·배포 대기 (Kill switch 기본 비활성)
+**상태:** 🟢 main 머지 완료 (PR #196), develop 역머지 완료. Kill switch off — 5/7 16:00 ATR 잡 관찰 후 활성화 예정
 **등재일:** 2026-05-06
+**배포일:** 2026-05-06
 
 ---
 
@@ -100,6 +101,6 @@ railway variables set ATR_COVERAGE_GAP_MAX=30 --service stockbot  # 임시 상�
 ---
 
 ## PR
-- **URL:** (push 후 업데이트)
+- **URL:** https://github.com/frogy95/stockbot/pull/196
 - **대상:** main
-- **역머지:** ⬜ develop 역머지 필요
+- **역머지:** ✅ develop 역머지 완료

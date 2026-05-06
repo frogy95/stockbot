@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-06T10:00:00+09:00",
+  "lastUpdated": "2026-05-06T06:30:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3690,13 +3690,26 @@
     {
       "id": "hotfix-kospi200-real-200-backfill",
       "name": "KIS mst Part2 pos 162 기반 KOSPI200 자동 동기화 (kill switch off 머지)",
-      "status": "implemented",
+      "status": "deployed",
       "path": "docs/hotfix/kospi200-real-200-backfill/hotfix.md",
       "assignee": "ChoiJiSeon",
       "reviewer": "hotfix-close agent",
       "registeredAt": "2026-05-06",
       "description": "선행 핫픽스 hotfix-kospi200-master-backfill의 잔존 부채 해소. 당초 B안(한투 ETF 구성종목 API)은 1회 30종 한계로 부적합 판정. D안(KIS kospi_code.mst Part2 char position 162 = KOSPI200 멤버십 'Y'/'N') 채택. production mst 검증: 226종, spot-check 15/15 적중, false positive 0/4, stocks 매칭 226/226=100% (일봉 백필 불필요). KOSPI200_MST_SYNC_ENABLED=false default로 머지·배포 — 5/7 ATR 잡 관찰 신호 보존 후 토글 활성화.",
-      "commits": []
+      "commits": [
+        {
+          "hash": "7796219",
+          "message": "fix(collector): KIS mst 기반 KOSPI200 자동 동기화 (kill switch off)",
+          "date": "2026-05-06"
+        },
+        {
+          "hash": "3956f97",
+          "message": "fix(collector): sync_kospi200_membership 트랜잭션 안전성 + deploy.md 형식 정정",
+          "date": "2026-05-06"
+        }
+      ],
+      "deployedAt": "2026-05-06",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/196"
     }
   ],
   "deployHistory": [
