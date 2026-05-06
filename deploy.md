@@ -50,45 +50,6 @@ Phase 8.6 Sprint 2 ATR 캘리브레이션 잡이 3거래일 연속(4/30·5/4·5/
 
 ---
 
-### Hotfix: prev-close-volume-confirm-integration (2026-04-30)
-
-Phase 8.6 Sprint 2 NO-GO(2026-04-30)의 근본 원인 수정 — `_check_prev_close_volume_confirm` 게이트가 `vol_5m:{code}` 단일 JSON 배열 키를 기대했으나 collector(`VolumeAggregator`)는 `vol5m:{code}:{date}:{slot}` 슬롯 키 형식으로 적재 → 항상 fail-safe로 prev_close 후보 전체가 거부됨.
-
-브랜치: `hotfix/prev-close-volume-confirm-integration` → main → develop
-커밋: `14356df fix(strategy): prev_close_volume_confirm 게이트를 collector vol5m 슬롯 키와 통합`
-
-변경 파일:
-- `backend/modules/trading/strategies/momentum_breakout.py` — 슬롯 키 5개 직접 조회, buy_vol>sell_vol 양봉 근사 로직으로 교체
-- `backend/tests/strategies/test_prev_close_volume_confirm.py` — 신규 슬롯 키 형식으로 테스트 재작성 (V1~V6)
-- `backend/tests/test_momentum_breakout_metrics.py` — vol_5m 주입을 vol5m 슬롯 키로 갱신
-
-변경 범위: 파일 3개, 코드 153줄 (전략 순수 변경 67줄 + 테스트 86줄 — 테스트 포함 시 50줄 기준 초과이나 프로덕션 로직 변경은 67줄)
-
-- ✅ 자동 검증 완료 항목:
-  - pytest: **1057 passed, 0 failed** (10분 9초, 사전 확인 완료)
-  - 타겟 API 검증: **N/A** — 변경 범위가 백엔드 전략 게이트 내부 (API 인터페이스 변경 없음)
-  - Playwright 타겟 검증: **N/A** — UI 변경 없음
-  - 코드 리뷰: Critical/High 이슈 0건 (Medium 1건 — fail-safe False 반환 시 로그 없음, 아래 기록)
-
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영 확인)
-  - **Sprint 3 착수 전 1거래일 재관찰 필요 (2026-05-06 화, 재설정)**: 신호 발생 여부, `matched_tiers` DB 저장 건수 확인
-    - 5/4 관찰 결과: NO-GO 지속 — pipeline_unhealthy 장중 전면 차단 + G2 자동 롤백 R1 발동 (3거래일 연속 신호 0건: 4/30, 5/1, 5/4)
-    - pipeline_unhealthy 원인: TTL 만료 또는 premarket_pipeline 실패로 `scheduler:pipeline_healthy` 키 미갱신 추정
-    - **5/6 거래일에 재관찰 후 GO/NO-GO 최종 결정 필요**
-  - Railway 환경변수 변경 없음 (MIN_VOLUME_FLOOR_HARD=0.3, MIN_VOLUME_FLOOR_MODE=dynamic, PARALLEL_OR_TIER_ENABLED=true 유지)
-  - **pipeline_unhealthy 원인 진단** (사용자 수동 실행 권고):
-    ```
-    railway run --service stockbot python -c "import redis,os; r=redis.from_url(os.environ['REDIS_URL']); print('healthy:', r.get('scheduler:pipeline_healthy'), '/ TTL:', r.ttl('scheduler:pipeline_healthy'))"
-    ```
-
-#### 코드 리뷰 결과 (2026-04-30)
-
-- Critical/High 이슈: **0건**
-- Medium 이슈 (1건): `_check_prev_close_volume_confirm`에서 redis.get 실패(`except Exception`) 시 경고 로그 없이 False 반환 — 진단 시 원인 파악 난이도 증가. 향후 Sprint에서 `logger.warning` 추가 권장.
-
----
-
 ## 참고
 
 - 검증 원칙: `.claude/rules/dev-process.md` 섹션 5
