@@ -70,7 +70,7 @@ Phase 8.6 Sprint 2 ATR 캘리브레이션 잡이 3거래일 연속(4/30·5/4·5/
   - Playwright 타겟 검증: N/A — UI 변경 없음
 
 - ⬜ 수동 검증 (5/7 16:00 ATR 잡 관찰 종료 후 활성화 시):
-  1. **Railway 환경변수 추가**: `KOSPI200_MST_SYNC_ENABLED=true` (관찰 신호 보존을 위해 5/7 16:00 이후로 토글 지연)
+  1. **Railway 환경변수 추가 확인: KOSPI200_MST_SYNC_ENABLED=true** (관찰 신호 보존을 위해 5/7 16:00 이후로 토글 지연)
   2. 다음 영업일 08:10 ETF mst 잡 로그: `KOSPI200 sync 완료: codes=226, marked=226`
   3. production DB: `SELECT COUNT(*) FROM stocks WHERE is_kospi200` ≈ 226
   4. 후속 ATR 잡(08:35) 결과: `metrics:atr:dist:{date}.sample_n ≈ 200+`, `safe_mode:active = None`

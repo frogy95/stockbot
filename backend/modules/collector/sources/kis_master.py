@@ -338,21 +338,26 @@ class KISMasterCollector:
     async def sync_kospi200_membership(self, codes: set[str]) -> int:
         """stocks.is_kospi200 sync — 전체 false 후 codes 집합만 true 마킹.
 
-        반환: true 마킹된 row 수. 트랜잭션 내 reset+update.
+        반환: true 마킹된 row 수. 단일 트랜잭션 내 reset+update, 중간 예외 시
+        rollback으로 세션 오염 방지(후속 ETF mst 잡 연쇄 실패 차단).
         """
         from sqlalchemy import bindparam, text
 
         if not codes:
             return 0
-        await self._db.execute(
-            text("UPDATE stocks SET is_kospi200 = FALSE WHERE is_kospi200 = TRUE")
-        )
-        stmt = text(
-            "UPDATE stocks SET is_kospi200 = TRUE WHERE stock_code IN :codes"
-        ).bindparams(bindparam("codes", expanding=True))
-        result = await self._db.execute(stmt, {"codes": list(codes)})
-        await self._db.commit()
-        return int(result.rowcount or 0)
+        try:
+            await self._db.execute(
+                text("UPDATE stocks SET is_kospi200 = FALSE WHERE is_kospi200 = TRUE")
+            )
+            stmt = text(
+                "UPDATE stocks SET is_kospi200 = TRUE WHERE stock_code IN :codes"
+            ).bindparams(bindparam("codes", expanding=True))
+            result = await self._db.execute(stmt, {"codes": list(codes)})
+            await self._db.commit()
+            return int(result.rowcount or 0)
+        except Exception:
+            await self._db.rollback()
+            raise
 
     async def _maybe_sync_kospi200(self, kospi_raw: bytes) -> int | None:
         """settings.KOSPI200_MST_SYNC_ENABLED 게이트.
