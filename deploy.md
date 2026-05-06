@@ -7,43 +7,35 @@
 
 ---
 
-### Hotfix: kospi200-master-backfill (2026-05-06)
+### Hotfix: kospi200-real-200-backfill (2026-05-06, PR #196·#197 머지 + 배포 헬스 검증 완료)
 
-Phase 8.6 Sprint 2 ATR 캘리브레이션 잡이 3거래일 연속(4/30·5/4·5/6) 폴백 → safe_mode 발동으로 신호 발행 전면 차단된 근본 원인 수정.
+선행 핫픽스 `kospi200-master-backfill`의 잔존 부채(정적 백업 placeholder 200종 중 production 매칭 52종 그침, ATR_COVERAGE_GAP_MAX=200 원복 작업 미등재) 해소. KIS `kospi_code.mst` Part2 char position 162 = KOSPI200 멤버십 플래그 검증 후 자동 동기화 잡 신설.
 
-**원인 (2단)**:
-1. 마이그레이션 `c1f2a30b8201`이 `stocks.is_kospi200` 컬럼만 추가, 모든 row server_default=`false`. 200종을 `true`로 마킹하는 production 코드/잡 부재 → ATR 잡 DB 조회 0종 → 정적 백업 JSON(200종) 폴백.
-2. 정적 백업 200종 중 148종은 `market_data` 일봉 미적재 → `coverage_gap=148 ≥ MARKET_DATA_MIN_COVERAGE_GAP(30)` → 데이터 부족 판정 → fallback_count INCR → 3회 누적 → safe_mode.
+**브랜치**: `hotfix/kospi200-real-200-backfill` → main → develop
 
-**브랜치**: `hotfix/kospi200-master-backfill` → main → develop
+> 선행 핫픽스 `kospi200-master-backfill`의 검증 기록은 `docs/deploy-history/2026-05-06.md`로 아카이빙됨.
 
-**변경 파일**:
-- `backend/alembic/versions/e5a7c91d4f08_kospi200_master_backfill.py` — 정적 백업 JSON 200종 `is_kospi200=true` UPDATE
-- `backend/core/config.py` — `ATR_COVERAGE_GAP_MAX` 환경변수 추가 (default 30, 운영 일시 상향 가능)
-- `backend/modules/screening/atr_calibration.py` — `MARKET_DATA_MIN_COVERAGE_GAP` 상수 → `settings.ATR_COVERAGE_GAP_MAX` 동적 조회
-- `backend/scripts/diagnose_pipeline.py` — scheduler 네임스페이스 read-only 진단 스크립트 (배포 후 `railway run`/`railway ssh`로 실행 가능)
-- `backend/tests/test_kospi200_backfill_migration.py` — 마이그레이션 검증 (revision 체인, 200종 백필 적용)
-- `.env.example` — `ATR_COVERAGE_GAP_MAX=30` 문서화
+- ✅ 자동 검증 완료:
+  - pytest tests/test_kis_master.py: 39 passed (10 신규, 0.13초)
+  - pytest 전체 회귀: **1069 passed, 0 failed** (10분 49초)
+  - 코드 리뷰: 75점 항목 2건(트랜잭션 안전성, deploy.md 형식)을 보강 커밋 `3956f97`로 해소
+  - 타겟 API 검증: N/A — 백엔드 비활성 잡 추가
+  - Playwright 타겟 검증: N/A — UI 변경 없음
 
-- ✅ 자동 검증 완료 항목:
-  - pytest: **1060 passed, 0 failed** (10분 18초)
-  - 타겟 API 검증: **N/A** — DB 데이터 백필 + 환경변수 외부화 (API 인터페이스 변경 없음)
-  - Playwright 타겟 검증: **N/A** — UI 변경 없음
+- ✅ 배포 헬스 검증 완료 (2026-05-06 KST 15:30 이후, kill switch off 상태):
+  - Railway 자동 배포 성공 — `Application startup complete.` 로그 정상
+  - 백엔드 health: `https://api.stockbot.choiji.kr/api/v1/health` → 200, status=healthy, database/redis connected
+  - 백엔드 readiness: `/api/v1/health/readiness` → 200, scheduler=running, pipeline=healthy
+  - Railway 환경변수 `KOSPI200_MST_SYNC_ENABLED` 미설정 → default `False` → kill switch off (잡 no-op 보장)
+  - `ATR_COVERAGE_GAP_MAX=200` 유지 (선행 핫픽스 일시 상향 — KOSPI200 sync 활성화 후 30 원복)
+  - Application 부팅 import/config 오류 없음
 
-- ⬜ 수동 검증 필요 항목 (배포 직후 순서대로):
-  1. **Railway 배포 → alembic upgrade 자동 실행** → `stocks` 테이블 `is_kospi200=true` 200건 확인
-     ```
-     railway ssh --service stockbot
-     python -c "from sqlalchemy import create_engine, text; import os; e=create_engine(os.environ['DATABASE_URL'].replace('+asyncpg','')); print(e.execute(text('SELECT COUNT(*) FROM stocks WHERE is_kospi200=TRUE')).scalar())"
-     ```
-  2. **Railway 환경변수 추가 확인: `ATR_COVERAGE_GAP_MAX=200`** (일시 상향, 일봉 백필 완료 후 30 원복)
-  3. **safe_mode:active Redis 키 삭제** (또는 자연 TTL 만료 대기 ~120분)
-     ```
-     railway ssh --service stockbot
-     python -c "import redis,os; r=redis.from_url(os.environ['REDIS_URL']); print('deleted:', r.delete('safe_mode:active'))"
-     ```
-  4. **2026-05-07 거래일 ATR 잡(KST 08:35) 결과 관찰**: `metrics:atr:ceil:{date}` 동적 값 적재 + `fallback_count=0` 리셋 확인. signals.total ≥ 1 시 Sprint 1 baseline 정상 복원 확인.
-  5. **후속 작업 (별도 Hotfix/Sprint)**: 정적 백업 200종 중 일봉 미적재 148종 백필 잡 (KIS API rate limit 고려 ~수 시간). 백필 완료 후 `ATR_COVERAGE_GAP_MAX=30` 원복.
+- ⬜ 기능 활성화 검증 (5/7 16:00 ATR 잡 관찰 종료 후, 별도 트리거):
+  1. **Railway 환경변수 추가 확인: KOSPI200_MST_SYNC_ENABLED=true** (관찰 신호 보존을 위해 5/7 16:00 이후로 토글 지연)
+  2. 다음 영업일 08:10 ETF mst 잡 로그: `KOSPI200 sync 완료: codes=226, marked=226`
+  3. production DB: `SELECT COUNT(*) FROM stocks WHERE is_kospi200` ≈ 226
+  4. 후속 ATR 잡(08:35) 결과: `metrics:atr:dist:{date}.sample_n ≈ 200+`, `safe_mode:active = None`
+  5. 1~2영업일 정상 동작 후 `ATR_COVERAGE_GAP_MAX=30` 원복
 
 - ⬜ Phase 8.6 Sprint 3 착수 전 추가 관찰 (R1 자동 롤백 해제 별도 결정):
   - 5/7 baseline signals ≥ 1 확인 후 `parallel_or_tier:rollback_active` Redis override 해제 → 5/8 거래일 Sprint 2 병렬 OR tier 재시험 → 결과 확인 후 Sprint 3 GO/NO-GO 판정.
