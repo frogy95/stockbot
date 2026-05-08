@@ -9,7 +9,7 @@
 
 ### Phase 8.6 Sprint 4 — Walk-forward 백테스트 + 임계 재조정 진단
 
-**브랜치**: `phase8.6-sprint4` → develop (PR 번호: sprint-close 완료 후 기록)
+**브랜치**: `phase8.6-sprint4` → develop (PR #208)
 **완료 날짜**: 2026-05-08
 
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)

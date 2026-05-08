@@ -10,7 +10,7 @@
 **완료 날짜:** 2026-05-08
 **이전 스프린트:** Sprint 3 (1116 PASS, PR #200 develop 머지 대기, 2026-05-08 hotfix `time-filter-block-counter` 포함)
 **브랜치명:** `phase8.6-sprint4`
-**PR:** (sprint-close 완료 후 기록)
+**PR:** https://github.com/frogy95/stockbot/pull/208
 
 ---
 
