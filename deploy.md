@@ -7,50 +7,40 @@
 
 ---
 
-### 프로덕션 배포 - v2.10.0 (2026-05-08)
+### 프로덕션 배포 v2.10.0 — Phase 8.6 Sprint 4 (2026-05-08)
 
-포함 스프린트: Phase 8.6 Sprint 4
-PR: #209 (develop → main, 머지 커밋 0a3b5948)
-머지 시각: 2026-05-08 21:57 KST
+**PR**: #209 (develop → main, 머지 커밋 `0a3b594`, 21:57 KST)
+**태그**: `v2.10.0`
+**S4-M1/M2 sprint-pr-fix 반영**: PR #208 (run_id API↔DB 일치 + G-Bt1 underspecified 보수적 차단)
 
-**주요 변경**:
-- Walk-forward 백테스트 엔진 (60일 일봉, 박스권/추세장 분류)
-- KS 검정 + 카이제곱 + Bootstrap CI 통계 검증
-- LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 잡
-- `/admin/backtest` 페이지 + backtest API 6종 (admin 가드)
-- S4-M1 run_id 일치 수정 + S4-M2 G-Bt1 underspecified 보수적 차단 반영
-- pytest: **1174 PASS**
-
-**DB 마이그레이션 (Railway Start Command에 alembic upgrade head 포함 — 배포 시 자동 실행)**:
-- `backtest_runs` 테이블 신규
-- `backtest_signal_metrics` 테이블 신규
-- `live_gate_statuses` 테이블 신규
-
-**Railway 환경변수 5종 추가 필요 (수동 설정)**:
-- `BACKTEST_ENABLED=True`
-- `LIVE_GATE_AUTO_EVAL_ENABLED=True`
-- `BACKTEST_REBUILD_REQUIRED=False`
-- `BACKTEST_ADMIN_USER_ID=1`
-- `BACKTEST_DEFAULT_N_DAYS=60`
-
-자동 검증 결과 (2026-05-08 21:57 KST):
-- ✅ Railway 백엔드 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}`
-- ✅ Vercel 프론트엔드 접속: 307 (도메인 redirect, 정상)
-- ✅ Vercel `/admin/backtest` 접속: 307 (auth redirect, 정상)
+**프로덕션 자동 검증 결과 (2026-05-08 22:00~ KST):**
+- ✅ Backend 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}`
+- ✅ Alembic 자동 마이그레이션: `f3b1c4d5e201 → d5d5cc2b391e` (3테이블 신규: `backtest_runs`, `backtest_signal_metrics`, `live_gate_statuses`)
+- ✅ Backtest API 6종 라우팅 등록 (openapi.json 확인): `/run`, `/runs`, `/runs/{run_id}`, `/distribution-check`, `/live-gate-status`, `/backfill-daily`
+- ✅ Admin 가드 정상 동작: 6종 모두 401 Unauthorized (no auth)
+- ✅ APScheduler 잡 등록: `weekly_backtest_gate` — 매주 월요일 00:00 KST (`run_weekly_backtest_and_gate_assess`)
+- ✅ Vercel 프론트엔드 접속: 307 (도메인 redirect 정상), `/admin/backtest` 307 (auth redirect 정상)
 - ✅ Backend Swagger `/docs`: 200
-- ✅ Alembic 마이그레이션 자동 실행 확인 (Railway 로그):
-  - `Running upgrade f3b1c4d5e201 -> d5d5cc2b391e, add backtest tables for phase8.6 sprint4`
-  - 3테이블 신규: `backtest_runs`, `backtest_signal_metrics`, `live_gate_statuses`
-- ✅ Backtest API 6종 라우팅 등록 확인 (openapi.json):
-  - `/api/v1/backtest/run`, `/runs`, `/runs/{run_id}`, `/distribution-check`, `/live-gate-status`, `/backfill-daily`
-- ✅ Backtest API 인증 가드: `GET /api/v1/backtest/live-gate-status` 401 (admin 가드 정상)
+- ✅ Railway 백엔드 로그: 신규 ERROR/Traceback 없음
+- ✅ pytest 회귀 (sprint-review 단계): 1174 passed, 0 failed
 
-수동 검증 필요 항목:
-1. ⬜ Railway 환경변수 5종 추가 설정 (`BACKTEST_ENABLED`, `LIVE_GATE_AUTO_EVAL_ENABLED`, `BACKTEST_REBUILD_REQUIRED`, `BACKTEST_ADMIN_USER_ID`, `BACKTEST_DEFAULT_N_DAYS`)
-2. ⬜ admin 로그인 후 `/admin/backtest` 페이지 4종 카드 렌더링 확인
-3. ⬜ G-Bt1/G-Bt2/G-Bt3 게이트 평가 잡 스케줄 등록 확인 (Railway 스케줄러)
-4. ⬜ 실제 백테스트 1회 실행 → 결과 카드 렌더 확인
-5. ⬜ UI 디자인/시각적 품질 판단
+**Railway 환경변수 추가 필요 (사용자 직접 설정 — 자동 거부됨):**
+```bash
+railway variables --service stockbot \
+  --set "BACKTEST_ENABLED=true" \
+  --set "LIVE_GATE_AUTO_EVAL_ENABLED=true" \
+  --set "BACKTEST_REBUILD_REQUIRED=false" \
+  --set "BACKTEST_ADMIN_USER_ID=<실제 admin user.id>" \
+  --set "BACKTEST_DEFAULT_N_DAYS=60"
+```
+- `BACKTEST_ADMIN_USER_ID`는 DB의 실제 admin 계정 id로 교체 필요 (1로 추정되나 미검증)
+
+**남은 사용자 직접 검증 항목 (UI/실행):**
+- ⬜ admin 로그인 후 `/admin/backtest` 4종 카드 시각 렌더 확인 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
+- ⬜ 실제 백테스트 1회 실행 → 결과 카드 렌더 확인 (run_id 응답 ↔ GET /runs/{id} 일치 확인 — S4-M1 검증)
+- ⬜ UI 디자인/시각적 품질 판단
+- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+- ⬜ Notion 업데이트 (§8.5 트리거 — 릴리즈 노트 v2.10.0, 데이터 모델 3테이블, API 명세 6종, 기능 명세 Walk-forward + 통계 검증 + LIVE 토글 게이트)
 
 ---
 
