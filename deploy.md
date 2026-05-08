@@ -83,9 +83,30 @@ railway variables --set "SIGNAL_PRIORITY_QUEUE_ENABLED=false"
 - ⬜ `volume_surge` dry_run 신호 1건 이상: `SELECT COUNT(*) FROM trade_signals WHERE strategy_name='volume_surge' AND dry_run=true AND created_at::date = current_date`
 - ⬜ 호가창 Redis 키 적재: `redis-cli SCAN 0 MATCH "realtime:*:orderbook" COUNT 50` 결과 ≥10종
 - ⬜ 5분봉 vol5m 적재: `redis-cli SCAN 0 MATCH "vol5m:*:$(date +%Y%m%d):*" COUNT 100` 결과 ≥10종
-- ⬜ 시간 필터 차단 카운터: `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 — **단, time_filter incr 적재 코드는 Sprint 3 미포함, Sprint 4 또는 hotfix 추가 필요**
+- ⬜ 시간 필터 차단 카운터: `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 — hotfix `time-filter-block-counter` (2026-05-07) 에서 `record_block` 추가 완료, 검증 가능
 - ⬜ R3 자동 롤백 미발동: `redis-cli GET "auto_rollback:active"` 결과 None 또는 R3 미포함
 - ⬜ portal_supplement / metrics_rollup 잡 키 16:10 시점 적재: `redis-cli GET "scheduler:last_portal_supplement"`, `redis-cli GET "scheduler:last_metrics_rollup"` 모두 ISO timestamp
+
+---
+
+---
+
+### Hotfix: time-filter-block-counter (2026-05-07)
+
+브랜치: `hotfix/time-filter-block-counter`
+커밋: `6d5a502 fix(time-filter): 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)`
+
+Sprint 3 v2.9.0 배포 직후 잔존 부채 해소. `should_block_entry` 차단 시 Redis INCR 카운터 적재 코드 미구현 → `record_block` 신규 추가.
+
+- ✅ 자동 검증 완료 항목:
+  - pytest (타겟 3파일): 66 passed, 0 failed
+  - 타겟 API 검증: N/A (API 인터페이스 변경 없음)
+  - Playwright 타겟 검증: N/A (UI 변경 없음)
+  - 코드 리뷰: Critical/High 이슈 0건
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영) — Railway 자동 배포로 대체 가능
+  - 장중 첫 차단 발생 후 `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 확인
 
 ---
 
