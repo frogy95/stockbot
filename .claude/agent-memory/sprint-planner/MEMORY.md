@@ -79,6 +79,12 @@
 - Phase 8.6 Sprint 2 완료: env 10종 Railway 수동 설정 필요 (PARALLEL_OR_TIER_ENABLED, ATR_CALIBRATION_ENABLED, ATR_CALIBRATION_METHOD, ATR_FLOOR, ATR_CEIL_HARD, ATR_CEIL_FALLBACK, ATR_CEIL_MULT, ATR_CALIBRATION_WINDOW_DAYS, TEMP_TIME_GUARD_SPRINT2, SAFE_MODE_TIMEOUT_MIN)
 - Phase 8.6 Sprint 2 완료: G3 회로차단기는 OR 모드 통과율 N배 증가 시 오발동 위험 — G3_OR_MODE_MULT 보정 계수 적용됨. Sprint 3에서 지속 모니터링
 - Phase 8.6 Sprint 3 착수 게이트: Paper 1거래일(2026-04-30) ATR 캘리브레이션 잡 Redis 4종 키 적재 + matched_tiers 메타데이터 1건 이상 기록 확인 권장
+- Phase 8.6 Sprint 4 착수 사유: §4 예외 조항 발동 (5/7+5/8 G2 신호 0건 누적, 근본 원인 Sprint 3 변경분 외 — volume_threshold 2.0 vs 측정 1.26). 5거래일 관찰 우회 후 Sprint 4 walk-forward 결과로 임계 재조정 후보 산출 → hotfix 적용 → Paper 관찰 재시작
+- Phase 8.6 Sprint 4: scipy 의존성 신규 추가 (~50MB) — Railway 빌드 시간 영향. 대안: numpy 직접 KS 구현 (사용자 결정 필요)
+- Phase 8.6 Sprint 4: backtest 테이블 3종(BacktestRun / BacktestSignalMetric / LiveGateStatus) 신규 + Alembic 마이그레이션 1건. Railway 배포 전 alembic upgrade head 필수
+- Phase 8.6 Sprint 4: env 5종 Railway 수동 설정 (BACKTEST_ENABLED, LIVE_GATE_AUTO_EVAL_ENABLED, BACKTEST_REBUILD_REQUIRED, BACKTEST_ADMIN_USER_ID, BACKTEST_DEFAULT_N_DAYS)
+- Phase 8.6 Sprint 4: kis_daily_collector 인프라 재사용 (배치 50건 + 지수 백오프 2-4-8 + source="kis_daily"). 5분봉 백필은 Phase 9 Sprint 0으로 분리 — Sprint 4는 일봉 60일만 사용
+- Phase 8.6 Sprint 4: BACKTEST_ADMIN_USER_ID 단일 ID 방식은 임시 해법 — Phase 8.7 인증 강화에서 role 시스템 정립 필요
 - Phase 1 Sprint 1에서 확인: SQLAlchemy async 모델에서 UniqueConstraint는 `__table_args__`로 명시 필요
 - redis[hiredis] 패키지명으로 설치 시 redis.asyncio 임포트 정상 동작 확인
 - pytest-asyncio는 `asyncio_mode = "auto"` 설정 필수 (pytest.ini 또는 pyproject.toml)

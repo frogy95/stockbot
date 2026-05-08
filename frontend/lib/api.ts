@@ -259,3 +259,106 @@ export async function resetRiskCounters(): Promise<Record<string, unknown>> {
     {}
   );
 }
+
+// === Phase 8.6 Sprint 4: Walk-forward 백테스트 API ===
+
+export interface BacktestRunSummary {
+  run_id: string;
+  period_start: string;
+  period_end: string;
+  n_trading_days: number;
+  status: "running" | "completed" | "failed";
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface TierMetric {
+  tier: string;
+  pass_rate_simulated: number;
+  pass_rate_actual: number | null;
+  ks_statistic: number | null;
+  ks_pvalue: number | null;
+  bootstrap_ci_lower: number | null;
+  bootstrap_ci_upper: number | null;
+}
+
+export interface BacktestRunDetail extends BacktestRunSummary {
+  metrics: TierMetric[];
+  regime_box_days: number;
+  regime_trend_days: number;
+}
+
+export interface KSTrendPoint {
+  recorded_at: string;
+  ks_pvalue: number;
+  tier: string;
+}
+
+export interface LiveGateStatus {
+  g_bt1_passed: boolean;
+  g_bt2_passed: boolean;
+  g_bt3_passed: boolean;
+  all_passed: boolean;
+  details: Record<string, unknown> | null;
+  evaluated_at: string | null;
+}
+
+/**
+ * Walk-forward 백테스트 실행 요청.
+ */
+export async function runBacktest(params: {
+  period_end: string;
+  n_days?: number;
+}): Promise<{ run_id: string; status: string }> {
+  return apiPost<{ run_id: string; status: string }>(
+    "/api/v1/backtest/run",
+    params
+  );
+}
+
+/**
+ * 최근 백테스트 실행 목록 조회.
+ */
+export async function getBacktestRuns(
+  limit = 10
+): Promise<BacktestRunSummary[]> {
+  return apiGet<BacktestRunSummary[]>(
+    `/api/v1/backtest/runs?limit=${limit}`
+  );
+}
+
+/**
+ * 특정 백테스트 실행 상세 조회.
+ */
+export async function getBacktestRun(
+  runId: string
+): Promise<BacktestRunDetail> {
+  return apiGet<BacktestRunDetail>(`/api/v1/backtest/runs/${runId}`);
+}
+
+/**
+ * KS 검정 7주 시계열 조회 (분포 드리프트 체크).
+ */
+export async function getBacktestDistributionCheck(): Promise<KSTrendPoint[]> {
+  return apiGet<KSTrendPoint[]>("/api/v1/backtest/distribution-check");
+}
+
+/**
+ * LIVE 토글 게이트 상태 조회.
+ */
+export async function getLiveGateStatus(): Promise<LiveGateStatus> {
+  return apiGet<LiveGateStatus>("/api/v1/backtest/live-gate-status");
+}
+
+/**
+ * 일봉 데이터 백필 (admin 전용).
+ */
+export async function backfillDaily(params: {
+  start_date: string;
+  end_date: string;
+}): Promise<{ status: string }> {
+  return apiPost<{ status: string }>(
+    "/api/v1/backtest/backfill-daily",
+    params
+  );
+}
