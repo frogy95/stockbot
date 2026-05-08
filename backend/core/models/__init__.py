@@ -19,3 +19,8 @@ from core.models.metrics import (  # noqa: E402, F401
     StrategyMetricsDaily,
     VirtualSignal,
 )
+from core.models.backtest import (  # noqa: E402, F401
+    BacktestRun,
+    BacktestSignalMetric,
+    LiveGateStatus,
+)
