@@ -19,6 +19,9 @@ from zoneinfo import ZoneInfo
 
 from core.config import settings
 from modules.collector.volume_aggregator import calc_5min_slot, make_redis_key
+from modules.trading.strategies._time_filter import (
+    record_block as record_time_filter_block,
+)
 from modules.trading.strategies._time_filter import should_block_entry
 
 logger = logging.getLogger(__name__)
@@ -133,6 +136,7 @@ class VolumeSurgeStrategy:
         # 2. Sprint 3 시간 필터 본 가드 위임
         blocked, block_reason = should_block_entry(now, TIER_NAME)
         if blocked:
+            await record_time_filter_block(self.redis_client, block_reason, now)
             return self._reject("time_filter", block_reason=block_reason)
 
         # 3. 활성 시간대 (09:30 ≤ t < 14:00)

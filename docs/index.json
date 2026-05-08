@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-07T09:00:00+09:00",
+  "lastUpdated": "2026-05-07T00:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3765,6 +3765,23 @@
       "registeredAt": "2026-05-06",
       "description": "선행 핫픽스 hotfix-kospi200-master-backfill의 잔존 부채 해소. 당초 B안(한투 ETF 구성종목 API)은 1회 30종 한계로 부적합 판정. D안(KIS kospi_code.mst Part2 char position 162 = KOSPI200 멤버십 'Y'/'N') 채택. production mst 검증: 226종, spot-check 15/15 적중, false positive 0/4, stocks 매칭 226/226=100% (일봉 백필 불필요). KOSPI200_MST_SYNC_ENABLED=false default로 머지·배포 — 5/7 ATR 잡 관찰 신호 보존 후 토글 활성화.",
       "commits": []
+    },
+    {
+      "id": "hotfix-time-filter-block-counter",
+      "name": "시간 필터 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)",
+      "status": "deployed",
+      "path": "docs/hotfix/time-filter-block-counter/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "deployedAt": "2026-05-07",
+      "description": "Phase 8.6 Sprint 3 v2.9.0 배포 직후 잔존 부채 해소. should_block_entry가 차단 판정을 반환하지만 Redis 카운터 적재 코드 누락. record_block(redis_client, reason, now_kst) 신규 추가: 키 metrics:time_filter:{reason}:{YYYY-MM-DD}, INCR + EXPIRE 7일, graceful. momentum_breakout.py, volume_surge.py 차단 분기에 호출 추가.",
+      "commits": [
+        {
+          "hash": "6d5a502",
+          "message": "fix(time-filter): 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)",
+          "date": "2026-05-07"
+        }
+      ]
     }
   ],
   "deployHistory": [
