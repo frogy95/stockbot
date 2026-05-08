@@ -3244,6 +3244,74 @@
           ],
           "prUrl": "https://github.com/frogy95/stockbot/pull/184",
           "lastUpdated": "2026-04-29T00:00:00+09:00"
+        },
+        {
+          "id": "sprint3",
+          "title": "volume_surge tier 신설 + 시간 필터 본 가드 + Sprint 2 잔존 부채 정리",
+          "status": "planned",
+          "branch": "phase8.6-sprint3",
+          "sprintDoc": "docs/phase/phase8.6/sprint3/sprint3.md",
+          "progress": {
+            "total": 6,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "env 8종 추가/변경/제거 + _time_filter.py 본 가드 모듈 + TEMP_TIME_GUARD_SPRINT2 호출부 교체",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-1-env-8종-추가변경제거--시간-필터-모듈--temp_time_guard_sprint2-교체",
+              "testPlan": "pytest tests/strategies/test_time_filter.py tests/strategies/test_momentum_breakout.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "VolumeSurgeStrategy 신규 클래스 + 호가창/vol5m Redis 조회 + signals.dry_run Alembic 컬럼",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-2-volumesurgestrategy-신규-클래스--dry_run-모드",
+              "testPlan": "pytest tests/strategies/test_volume_surge.py -v + alembic upgrade head",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "TradingEngine volume_surge 통합 + 신호 우선순위 큐 + 일일 한도 dry_run 제외 회귀",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-3-tradingengine-통합--신호-우선순위-큐",
+              "testPlan": "pytest tests/trading/test_engine_volume_surge_integration.py tests/trading/test_signal_priority_queue.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "Sprint 2 잔존 부채 — R3 활성화 검증 + portal_supplement/metrics_rollup 잡 키 점검 + ATR_COVERAGE_GAP_MAX 30 원복",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-4-sprint-2-잔존-부채-정리--r3-활성화--scheduler-잡-점검--atr_coverage_gap_max-원복",
+              "testPlan": "pytest tests/safety/test_auto_rollback_r3.py tests/collector/test_scheduler_portal_metrics_jobs.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "volume-surge-card + time-filter-card UI + metrics API 2종 (volume-surge-stats, time-filter-stats)",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-5-프론트엔드--volume-surge-card-ui--time-filter-card-ui",
+              "testPlan": "pytest tests/api/test_metrics_volume_surge.py tests/api/test_metrics_time_filter.py -v + cd frontend && npx tsc --noEmit",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "통합 회귀 + Kill-switch 런북 4종 + deploy.md env 8종 검증 항목 + Paper 1거래일 관찰",
+              "path": "docs/phase/phase8.6/sprint3/sprint3.md#task-6-통합-회귀--kill-switch-런북--paper-1거래일-관찰",
+              "testPlan": "pytest -v 전체 + npx tsc --noEmit + Playwright /diagnostics 4종 카드 + Kill-switch 런북 4종 검증",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            }
+          ],
+          "lastUpdated": "2026-05-07T00:00:00+09:00"
         }
       ]
     },

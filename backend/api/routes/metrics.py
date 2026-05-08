@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import Date, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import UserInfo, get_current_user, get_db, get_redis
@@ -617,4 +617,130 @@ async def get_sim_vs_real_diff(
         buckets.append(SimVsRealDiffBucket(date=d.isoformat(), diff=round(diff, 4)))
     return SimVsRealDiffResponse(
         window_days=days, threshold=threshold, buckets=buckets, ok=ok
+    )
+
+
+# === Phase 8.6 Sprint 3 — volume-surge-stats / time-filter-stats ===
+
+
+class VolumeSurgeStatsResponse(BaseModel):
+    date: str
+    dry_run_count: int
+    real_count: int
+    ma7_dry_run: float
+
+
+@router.get("/volume-surge-stats", response_model=VolumeSurgeStatsResponse)
+async def get_volume_surge_stats(
+    date_param: str | None = Query(None, alias="date"),
+    session: AsyncSession = Depends(get_db),
+) -> VolumeSurgeStatsResponse:
+    """Phase 8.6 Sprint 3 — volume_surge 신호 dry_run 통계.
+
+    데이터 소스: trade_signals (strategy_name='volume_surge')
+    - dry_run_count: 오늘 dry_run=True 신호 수
+    - real_count: 오늘 dry_run=False(LIVE) 신호 수
+    - ma7_dry_run: 최근 7일 dry_run 신호 수 평균
+    """
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    today = _today_kst()
+    target_s = date_param if date_param not in (None, "today") else today.isoformat()
+    target = date.fromisoformat(target_s)
+
+    start = datetime.combine(target, datetime.min.time(), tzinfo=tz)
+    end = start + timedelta(days=1)
+
+    # 오늘 dry_run=True 신호 수
+    dry_run_count = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.strategy_name == "volume_surge",
+                    TradeSignal.dry_run.is_(True),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+
+    # 오늘 dry_run=False(LIVE) 신호 수
+    real_count = int(
+        (
+            await session.execute(
+                select(func.count(TradeSignal.id)).where(
+                    TradeSignal.strategy_name == "volume_surge",
+                    TradeSignal.dry_run.is_(False),
+                    TradeSignal.created_at >= start,
+                    TradeSignal.created_at < end,
+                )
+            )
+        ).scalar()
+        or 0
+    )
+
+    # 최근 7일 dry_run 신호 수 평균 (오늘 제외, 최대 7일)
+    # NOTE: func.date_trunc("day", col) 사용 시 asyncpg가 "day" 리터럴을 bind
+    # 파라미터로 처리하여 SELECT/GROUP BY 표현식이 다르게 인식됨(GroupingError).
+    # func.cast(..., Date)는 파라미터 없이 CAST(col AS DATE)로 컴파일되어 안전.
+    window_start = datetime.combine(today - timedelta(days=7), datetime.min.time(), tzinfo=tz)
+    window_end = datetime.combine(today, datetime.min.time(), tzinfo=tz)
+    _day_expr = func.cast(TradeSignal.created_at, Date)
+    rows = (
+        await session.execute(
+            select(
+                _day_expr.label("day"),
+                func.count(TradeSignal.id).label("cnt"),
+            )
+            .where(
+                TradeSignal.strategy_name == "volume_surge",
+                TradeSignal.dry_run.is_(True),
+                TradeSignal.created_at >= window_start,
+                TradeSignal.created_at < window_end,
+            )
+            .group_by(_day_expr)
+        )
+    ).all()
+    ma7_dry_run = round(sum(int(r.cnt) for r in rows) / 7.0, 2)
+
+    return VolumeSurgeStatsResponse(
+        date=target_s,
+        dry_run_count=dry_run_count,
+        real_count=real_count,
+        ma7_dry_run=ma7_dry_run,
+    )
+
+
+class TimeFilterStatsResponse(BaseModel):
+    date: str
+    morning_lockout: int
+    afternoon_lockout: int
+    gap_open_morning_exception: int
+
+
+@router.get("/time-filter-stats", response_model=TimeFilterStatsResponse)
+async def get_time_filter_stats(
+    date_param: str | None = Query(None, alias="date"),
+    redis: RedisClient = Depends(get_redis),
+) -> TimeFilterStatsResponse:
+    """Phase 8.6 Sprint 3 — 시간대별 time_filter 차단 횟수.
+
+    데이터 소스: Redis 카운터 `metrics:time_filter:{reason}:{date}`
+    키 부재 시 0 반환 (키 적재는 Task 6에서 통합 예정).
+    """
+    today = _today_kst()
+    target_s = date_param if date_param not in (None, "today") else today.isoformat()
+
+    reasons = ["morning_lockout", "afternoon_lockout", "gap_open_morning_exception"]
+    counts: dict[str, int] = {}
+    for reason in reasons:
+        raw = await redis.get(f"metrics:time_filter:{reason}:{target_s}")
+        counts[reason] = int(raw) if raw else 0
+
+    return TimeFilterStatsResponse(
+        date=target_s,
+        morning_lockout=counts["morning_lockout"],
+        afternoon_lockout=counts["afternoon_lockout"],
+        gap_open_morning_exception=counts["gap_open_morning_exception"],
     )

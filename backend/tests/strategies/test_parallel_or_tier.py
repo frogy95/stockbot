@@ -174,7 +174,7 @@ async def test_c7_atr_below_floor_rejects(_patch_progress):
 
 @pytest.mark.asyncio
 async def test_c10_temp_time_guard_blocks_at_0905(_patch_progress):
-    """C10: TEMP_TIME_GUARD_SPRINT2=true + 09:05 → 모든 tier 차단."""
+    """C10: TIME_FILTER_ENABLED=true + 09:05 → 모든 tier 차단 (본 가드로 교체)."""
     from modules.trading.strategies.momentum_breakout import MomentumBreakoutStrategy
 
     strat = MomentumBreakoutStrategy()
@@ -184,7 +184,7 @@ async def test_c10_temp_time_guard_blocks_at_0905(_patch_progress):
     with patch(_PATCH_NOW_KST, return_value=_BLOCK_MORNING):
         result = await strat.generate_signal(snap)
     assert isinstance(result, RejectedSignal)
-    assert result.stage == "temp_time_guard"
+    assert result.stage == "time_filter"
 
 
 @pytest.mark.asyncio

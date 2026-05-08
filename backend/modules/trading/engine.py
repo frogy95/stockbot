@@ -12,7 +12,7 @@ from sqlalchemy import select
 from core.clients.kis_rest import KISRestClient, OrderRequest
 from core.config import settings
 from core.models.settings import SystemSetting
-from core.models.trading import PositionRecord
+from core.models.trading import PositionRecord, TradeSignal
 from core.redis import RedisClient
 from modules.trading.eod_liquidator import EodLiquidator
 from modules.trading.order_manager import OrderManager, _MARKET_ORDER_DIVISION
@@ -20,6 +20,7 @@ from modules.trading.position_manager import PositionManager
 from modules.trading.position_sizer import PositionSizer
 from modules.trading.risk_manager import RiskManager
 from modules.trading.signal_generator import SignalGenerator
+from modules.trading.strategies.volume_surge import VolumeSurgeStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,9 @@ _INFLIGHT_TTL_SEC = 30  # 청산 폴링 최대 6초(3회x2초)보다 넉넉, 비
 _ALERT_BLOCK_REASONS = {"pipeline_unhealthy", "risk_blocked"}
 # 동일 (stock_code, reason) 알림 스팸 방지 TTL (초)
 _BLOCK_ALERT_DEDUP_TTL = 300
+
+# Phase 8.6 Sprint 3 — 신호 우선순위 (낮은 인덱스가 우선)
+_SIGNAL_PRIORITY = ["volume_surge", "prev_high", "gap_open", "prev_close"]
 
 
 class TradingEngine:
@@ -50,6 +54,7 @@ class TradingEngine:
         notifier_manager=None,
         session_factory=None,
         rest_client: KISRestClient | None = None,
+        volume_surge_strategy: VolumeSurgeStrategy | None = None,
     ):
         self._signal_generator = signal_generator
         self._order_manager = order_manager
@@ -61,6 +66,7 @@ class TradingEngine:
         self._notifier = notifier_manager
         self._session_factory = session_factory
         self._rest_client = rest_client
+        self._volume_surge_strategy = volume_surge_strategy
         self._running = False
         self._monitor_task: asyncio.Task | None = None
 
@@ -182,17 +188,94 @@ class TradingEngine:
         # 매매 모드 조회
         mode = await self._get_trading_mode()
 
-        # 신호 생성
+        # 신호 생성 (momentum_breakout 계열)
         signals = await self._signal_generator.generate_signals(screened_candidates)
-        if not signals:
-            return
 
         # stock_code → 후보 dict 매핑 (플래그 조회용)
         candidate_map: dict[str, dict] = {
             c["stock_code"]: c for c in screened_candidates if "stock_code" in c
         }
 
-        for signal in signals:
+        # Phase 8.6 Sprint 3 — VolumeSurgeStrategy 병행 평가 (각 candidate별)
+        # 결과는 stock_code → dict (signal payload)
+        volume_surge_results: dict[str, dict] = {}
+        if self._volume_surge_strategy is not None:
+            now_kst = datetime.now(KST)
+            for candidate in screened_candidates:
+                stock_code = candidate.get("stock_code")
+                if not stock_code:
+                    continue
+                try:
+                    vs = await self._volume_surge_strategy.evaluate(candidate, now_kst)
+                except Exception:
+                    logger.exception(
+                        "VolumeSurgeStrategy.evaluate 실패: %s", stock_code
+                    )
+                    continue
+                # evaluate는 통과 시 dict, reject 시 dict({rejected:True}) 또는 None
+                if vs is None or vs.get("rejected"):
+                    continue
+                if vs.get("tier") == "volume_surge":
+                    # entry_price 보강 — candidate.current_price를 LIVE 진입가로 사용
+                    if "entry_price" not in vs:
+                        vs = {**vs, "entry_price": int(candidate.get("current_price") or 0)}
+                    volume_surge_results[stock_code] = vs
+
+        # 우선순위 큐 적용 — stock_code별로 momentum/volume_surge 후보를 합쳐 1건 선택
+        # signals (TradeSignalData) + volume_surge_results (dict)를 stock_code 기준 그룹화
+        signals_by_code: dict[str, TradeSignalData] = {s.stock_code: s for s in signals}
+        all_codes = set(signals_by_code.keys()) | set(volume_surge_results.keys())
+
+        chosen_signals: list[TradeSignalData] = []
+        chosen_volume_surge: list[dict] = []
+
+        for code in all_codes:
+            momentum_sig = signals_by_code.get(code)
+            vs_sig = volume_surge_results.get(code)
+
+            momentum_tier = (
+                momentum_sig.reason.get("breakout_tier", "prev_high")
+                if momentum_sig is not None
+                else None
+            )
+            matched_tiers: list[str] = []
+            if vs_sig is not None:
+                matched_tiers.append("volume_surge")
+            if momentum_tier is not None:
+                matched_tiers.append(momentum_tier)
+
+            if settings.SIGNAL_PRIORITY_QUEUE_ENABLED and len(matched_tiers) > 1:
+                # 우선순위 정렬 후 1건 선택
+                ordered = sorted(
+                    matched_tiers,
+                    key=lambda t: (
+                        _SIGNAL_PRIORITY.index(t)
+                        if t in _SIGNAL_PRIORITY
+                        else len(_SIGNAL_PRIORITY)
+                    ),
+                )
+                winner = ordered[0]
+                if winner == "volume_surge" and vs_sig is not None:
+                    vs_sig = {**vs_sig, "matched_tiers": matched_tiers}
+                    chosen_volume_surge.append(vs_sig)
+                else:
+                    if momentum_sig is not None:
+                        chosen_signals.append(momentum_sig)
+            else:
+                # 큐 비활성 또는 단일 매칭 → 모두 발행
+                if momentum_sig is not None:
+                    chosen_signals.append(momentum_sig)
+                if vs_sig is not None:
+                    chosen_volume_surge.append(vs_sig)
+
+        # 1) volume_surge 신호 처리 (dry_run 분기 포함)
+        for vs_payload in chosen_volume_surge:
+            await self._handle_volume_surge_signal(vs_payload, mode)
+
+        if not chosen_signals:
+            return
+
+        for signal in chosen_signals:
             # manual 모드: 신호 생성(DB 저장)만, 주문/승인 모두 스킵
             if mode == "manual":
                 await self._log_block(signal.stock_code, "manual_mode_skip", mode=mode)
@@ -316,6 +399,136 @@ class TradingEngine:
                         position_size.quantity,
                         signal.entry_price,
                     )
+
+    async def _handle_volume_surge_signal(self, payload: dict, mode: str) -> None:
+        """volume_surge 신호 처리 — dry_run이면 DB 기록 + 텔레그램만, LIVE면 주문.
+
+        Sprint 4 LIVE 토글 시 안전성 확보를 위해 명확하게 메서드 분기.
+        """
+        stock_code = payload.get("stock_code", "")
+        dry_run = bool(payload.get("dry_run", True))
+
+        if dry_run:
+            await self._record_volume_surge_signal(payload)
+
+            if self._notifier is not None:
+                try:
+                    text = (
+                        f"[DRY-RUN][volume_surge] {stock_code} "
+                        f"vol_ratio={payload.get('vol_ratio')} "
+                        f"bid_ask={payload.get('bid_ask_ratio')} "
+                        f"price_change={payload.get('price_change')} "
+                        f"matched={payload.get('matched_tiers')}"
+                    )
+                    await self._notifier.send_notification(text)
+                except Exception:
+                    logger.exception(
+                        "volume_surge dry_run 알림 전송 실패: %s", stock_code
+                    )
+
+            # OrderExecutor.place_order 호출 스킵 — Sprint 4 LIVE 토글 시 안전 보장
+            logger.info("volume_surge dry_run 신호: %s — 주문 차단", stock_code)
+            return
+
+        # LIVE volume_surge — Sprint 4에서 활성화. 일일 한도 사전 체크.
+        if mode == "manual":
+            await self._log_block(stock_code, "manual_mode_skip", mode=mode)
+            return
+
+        risk_result = await self._risk_manager.can_trade(is_leverage=False)
+        if not risk_result.allowed:
+            await self._log_block(
+                stock_code,
+                "risk_blocked",
+                mode=mode,
+                breakout_tier="volume_surge",
+                extra={"reason": risk_result.reason, "risk_level": risk_result.risk_level},
+            )
+            return
+
+        # 사이즈 비율: VOLUME_SURGE_POSITION_SIZE 적용
+        size_ratio = float(settings.VOLUME_SURGE_POSITION_SIZE)
+        balance_amount = 0
+        if self._rest_client is not None:
+            try:
+                balance = await self._rest_client.get_balance()
+                balance_amount = balance.available_cash
+            except Exception:
+                logger.exception("잔고 조회 실패: %s", stock_code)
+                return
+
+        entry_price = int(payload.get("entry_price") or 0)
+        if entry_price <= 0:
+            logger.warning(
+                "volume_surge LIVE entry_price 미상정 — 발행 건너뜀: %s", stock_code
+            )
+            return
+
+        position_size = await self._position_sizer.calculate(
+            stock_code, entry_price, balance_amount, size_ratio=size_ratio
+        )
+        if position_size.quantity == 0:
+            await self._log_block(
+                stock_code, "quantity_zero", mode=mode, breakout_tier="volume_surge"
+            )
+            return
+
+        # LIVE 신호 — TradeSignalData 변환 후 submit_order
+        from modules.trading.strategy import TradeSignalData
+
+        signal = TradeSignalData(
+            stock_code=stock_code,
+            signal_type="buy",
+            strategy_name="volume_surge",
+            confidence=float(payload.get("confidence", 0.7)),
+            reason={
+                "breakout_tier": "volume_surge",
+                "vol_ratio": payload.get("vol_ratio"),
+                "bid_ask_ratio": payload.get("bid_ask_ratio"),
+                "price_change": payload.get("price_change"),
+            },
+            entry_price=entry_price,
+            stop_loss=int(entry_price * 0.98),
+            take_profit=int(entry_price * 1.04),
+            matched_tiers=payload.get("matched_tiers"),
+        )
+        await self._order_manager.submit_order(signal, position_size)
+        logger.info(
+            "volume_surge LIVE 주문 제출: %s %d주 @%d",
+            stock_code, position_size.quantity, entry_price,
+        )
+
+    async def _record_volume_surge_signal(self, payload: dict) -> None:
+        """volume_surge dry_run 신호를 trade_signals 테이블에 기록 (dry_run=True)."""
+        if self._session_factory is None:
+            return
+        try:
+            async with self._session_factory() as session:
+                record = TradeSignal(
+                    stock_code=payload.get("stock_code"),
+                    signal_type="buy",
+                    strategy_name="volume_surge",
+                    confidence=float(payload.get("confidence", 0.0)),
+                    reason={
+                        "vol_ratio": payload.get("vol_ratio"),
+                        "bid_ask_ratio": payload.get("bid_ask_ratio"),
+                        "price_change": payload.get("price_change"),
+                    },
+                    entry_price=int(payload.get("entry_price") or 0),
+                    stop_loss=0,
+                    take_profit=0,
+                    status="pending",
+                    fallback=False,
+                    matched_tiers=payload.get("matched_tiers"),
+                    dry_run=True,
+                )
+                session.add(record)
+                await session.commit()
+        except Exception:
+            logger.exception(
+                "volume_surge dry_run 신호 DB 기록 실패: %s",
+                payload.get("stock_code"),
+            )
 
     async def monitor_positions(self) -> list[dict]:
         """포지션 모니터링: 청산 조건 확인 및 처리."""

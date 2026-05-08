@@ -201,6 +201,22 @@ export interface SimVsRealDiffResponse {
   ok: boolean;
 }
 
+// === Phase 8.6 Sprint 3: volume-surge-stats / time-filter-stats ===
+
+export interface VolumeSurgeStatsResponse {
+  date: string;
+  dry_run_count: number;
+  real_count: number;
+  ma7_dry_run: number;
+}
+
+export interface TimeFilterStatsResponse {
+  date: string;
+  morning_lockout: number;
+  afternoon_lockout: number;
+  gap_open_morning_exception: number;
+}
+
 export const metricsPaths = {
   scoreHistogram: (days = 7) => `/api/v1/metrics/score-histogram?days=${days}`,
   stageHeatmap: (date = "today") =>
@@ -219,6 +235,10 @@ export const metricsPaths = {
     `/api/v1/metrics/tier-correlation?days=${days}`,
   tierPassRate: (days = 7) => `/api/v1/metrics/tier-pass-rate?days=${days}`,
   simVsRealDiff: (days = 7) => `/api/v1/metrics/sim-vs-real-diff?days=${days}`,
+  volumeSurgeStats: (date = "today") =>
+    `/api/v1/metrics/volume-surge-stats?date=${encodeURIComponent(date)}`,
+  timeFilterStats: (date = "today") =>
+    `/api/v1/metrics/time-filter-stats?date=${encodeURIComponent(date)}`,
 };
 
 /**
