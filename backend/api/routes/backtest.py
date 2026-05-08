@@ -147,8 +147,7 @@ async def _run_walkforward(run_id: str, period_end: date, n_days: int) -> None:
 
     session_factory = get_session_factory()
     async with session_factory() as session:
-        runner = WalkForwardRunner()
-        runner.session = session
+        runner = WalkForwardRunner(session=session)
         await runner.run(run_id=run_id, period_end=period_end, n_days=n_days)
 
 
