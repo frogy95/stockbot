@@ -542,3 +542,35 @@ git commit -m "docs(phase8.6-sprint3): task6 — 통합 회귀 + Kill-switch 런
 
 docs/phase/phase8.6/sprint3/sprint3.md를 검토하시고, 게이트 충족 후 진행하세요.
 ```
+
+---
+
+## 구현 완료 기록
+
+**구현 기간**: 2026-05-08
+**브랜치**: `phase8.6-sprint3`
+
+### Task 커밋 SHA
+
+| Task | 커밋 SHA | 설명 |
+|------|----------|------|
+| Task 1 | `294d4bb` | env 8종 + 시간 필터 본 가드 + TEMP_TIME_GUARD_SPRINT2 제거 |
+| Task 2 | `47157de` | VolumeSurgeStrategy + signals.dry_run 컬럼 |
+| Task 3 | `1c58fe3` | TradingEngine volume_surge 통합 + 우선순위 큐 |
+| Task 4 | `f8c422d` | R3 활성화 검증 + portal/metrics 잡 점검 + ATR coverage gap 30 원복 |
+| Task 5 | `bb9f3f9` | volume-surge-card + time-filter-card UI + 신규 metrics API 2종 |
+| Task 6 | (본 커밋) | 통합 회귀 + Kill-switch 런북 + 환경변수 8종 검증 항목 |
+
+### 풀 회귀 결과
+
+- **pytest 전체**: 1116 passed, 0 failed (640초)
+- **Sprint 3 신규 테스트**: 43 PASS
+  - `tests/strategies/test_time_filter.py`: 8
+  - `tests/strategies/test_volume_surge.py`: 12
+  - `tests/test_engine_volume_surge_integration.py`: 4
+  - `tests/test_signal_priority_queue.py`: 4
+  - `tests/safety/test_auto_rollback_r3.py`: 4
+  - `tests/api/test_metrics_volume_surge.py`: 3
+  - `tests/api/test_metrics_time_filter.py`: 3 (+ scheduler 잡 테스트 별도 집계)
+- **tsc**: 0 에러
+- **Playwright /diagnostics**: 4종 카드(volume-surge-card, time-filter-card, tier-pass-rate-card, tier-correlation-card) 렌더링 확인 (접근성 스냅샷 기반)
