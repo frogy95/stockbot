@@ -382,6 +382,17 @@ class CollectorScheduler:
             replace_existing=True,
             misfire_grace_time=MISFIRE_GRACE_TIME,
         )
+        # 매주 월요일 00:00 KST — Phase 8.6 Sprint 4 walk-forward + LIVE 게이트 평가
+        # 잡 자체에서 BACKTEST_ENABLED / LIVE_GATE_AUTO_EVAL_ENABLED 토글 검사
+        from modules.backtest.live_gate import run_weekly_backtest_and_gate_assess
+        self._scheduler.add_job(
+            run_weekly_backtest_and_gate_assess,
+            CronTrigger(day_of_week="mon", hour=0, minute=0, timezone=tz),
+            args=[self._session_factory, self._notifier_manager],
+            id="weekly_backtest_gate",
+            replace_existing=True,
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+        )
         # 2차 스크리닝: 09:30~15:30 30초 주기
         if self._realtime_screener:
             self._scheduler.add_job(

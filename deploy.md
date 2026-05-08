@@ -7,6 +7,41 @@
 
 ---
 
+### Phase 8.6 Sprint 4 — Walk-forward 백테스트 + 임계 재조정 진단
+
+**브랜치**: `phase8.6-sprint4` → develop (PR #208)
+**완료 날짜**: 2026-05-08
+
+**자동 검증 결과 (2026-05-08 sprint-review):**
+
+- ✅ Phase 7.0 LIVE 파라미터 grep 가드 — 0줄 (위반 없음)
+- ✅ pytest 전체: 1172 passed, 0 failed (76 warnings, 10분 11초)
+- ✅ API 엔드포인트 검증: /api/v1/health healthy, backtest 5종 경로 등록 확인
+- ✅ Playwright UI 검증: /admin/backtest 4종 카드 정상 렌더 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
+- ✅ Alembic 왕복 테스트: upgrade→downgrade→upgrade 3단계 모두 성공
+- ✅ 데모 모드 API 검증: health OK
+
+**코드 리뷰 결과:**
+- Critical/High 이슈: 0건
+- Medium 이슈: 2건 (phase8.6.md 미해결 사항 테이블 S4-M1, S4-M2 기록)
+  - S4-M1: `POST /backtest/run` run_id 불일치 (클라이언트 반환 run_id ≠ DB run_id)
+  - S4-M2: G-Bt1 미완료 상태 passed=True (의도적 설계이나 Phase 8.7에서 보수화 검토 권장)
+
+**Railway 환경변수 5종 추가 필요 (수동 설정):**
+- `BACKTEST_ENABLED=True`
+- `LIVE_GATE_AUTO_EVAL_ENABLED=True`
+- `BACKTEST_REBUILD_REQUIRED=False`
+- `BACKTEST_ADMIN_USER_ID=1`
+- `BACKTEST_DEFAULT_N_DAYS=60`
+
+**수동 검증 항목:**
+- ⬜ `docker compose up --build` (scipy 의존성 반영 확인)
+- ⬜ `alembic upgrade head` 적용 (backtest_runs, backtest_signal_metrics, live_gate_status 3테이블)
+- ⬜ admin 백테스트 페이지 렌더 확인 (`/admin/backtest` 4종 카드)
+- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+
+---
+
 ### Phase 8.6 Sprint 3 v2.9.0 — Paper 1거래일 관찰 (2026-05-09 장마감 후)
 
 **배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지) — 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.

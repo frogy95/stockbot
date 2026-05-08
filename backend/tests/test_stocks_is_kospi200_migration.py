@@ -26,9 +26,9 @@ async def test_is_kospi200_column_exists():
     # server_default=False 확인
     default = cols["is_kospi200"].get("default")
     assert default is not None and "false" in str(default).lower()
-    # 인덱스
-    index_names = {ix["name"] for ix in indexes}
-    assert "ix_stocks_is_kospi200" in index_names
+    # Phase 8.6 Sprint 4 autogenerate 정리: ix_stocks_is_kospi200 인덱스는
+    # Stock 모델에 index=True 미선언 → Sprint 4 마이그레이션에서 제거됨.
+    # 인덱스 단언 제거 (stale 테스트 정리).
 
 
 def test_static_backup_json_contains_200_codes():

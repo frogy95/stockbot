@@ -1,6 +1,6 @@
 # Phase 8.6: 신호 생성 로직 구조 재설계 — 실행 계획
 
-> **Status**: Sprint 3 완료 (2026-05-08, PR #200 develop 머지 대기)
+> **Status**: Sprint 4 완료 (2026-05-08, PR #208 develop 머지 대기)
 > **ROADMAP 참조**: ROADMAP.md `Phase 8.6` 절 — 본 문서 승인 시 "누적 백로그 통합" → "신호 생성 로직 구조 재설계 (분기 D 트리거 선제 착수)"로 재정의되며, 기존 백로그(피라미딩 / 2차 하이브리드)는 Phase 10.1로 분리한다.
 > **트리거**: Phase 8.5 v2.6.1 5거래일 관찰 결과 분기 D 확정 (2026-04-28 16:10 `auto_rollback_2d_zero_signals` 발동, 4거래일 본 신호 1건 / 폴백 605회).
 > **검토 리포트** (분기 D 4명 재리뷰가 1차 입력 — 본 Phase 결정 추적성 확보):
@@ -126,7 +126,7 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 | **1** ✅ | **선행 패치 + 가드레일** (PO Sprint 2.6 안 흡수 + 리스크 G1~G3) | M-F2 산출, 자동 롤백 사유 다변화(R1~R4), 회로차단기, 폴백 5종 확장, min_volume_floor 시간대 슬라이딩(0.3 09~11시 / 0.5 그 외), Phase 7.0 LIVE 파라미터 잠금 | 없음 (분기 D 직후 즉시) | ~~4~6일~~ **완료 (2026-04-29, PR #181)** |
 | **2** ✅ | **병렬 OR tier 분리 + ATR 분위수 캘리브레이션** | tier별 sub-게이트 분리(gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 상한 동적(`min(0.08, 80퍼센타일×1.2)`), 09:00 KOSPI 200 분위수 잡 | Sprint 1 완료 + DoR 통과 | ~~5~7일~~ **완료 (2026-04-22, PR #186)** |
 | **3** ✅ | **`volume_surge` tier 신설 + 시간대 필터** | 5분봉 거래량 ≥ 직전 20분 평균 ×5 + 호가창 매수/매도 잔량 ≥ 2배, 가격 조건 약하게(전일 종가 +0.5%↑), 09:00~09:10 진입 금지·14:30+ 신규 진입 금지·점심 floor 0.7, dry_run=True 기본값 | Sprint 2 + KIS WS 호가 스트림(Phase 6 인프라 재사용) | ~~6~9일~~ **완료 (2026-05-08, PR #200)** |
-| **4** | **Walk-forward 백테스트 + 시뮬↔실측 자동 감지** | 60거래일+ 백테스트(박스권/추세장 각 20일+), TimeSeriesSplit(40일 학습 / 20일 검증 슬라이딩), 매주 KS 검정 자동 트리거(p<0.05 시 시뮬 재구축 알림), Bootstrap CI 하한 ≥1 통과 시 LIVE 토글 허용 | Sprint 2~3 코드 + KIS 분봉 백필(Phase 9 Sprint 0과 동일 메커니즘) | 5~8일 |
+| **4** ✅ | **Walk-forward 백테스트 + 시뮬↔실측 자동 감지** | 60거래일+ 백테스트(박스권/추세장 각 20일+), TimeSeriesSplit(40일 학습 / 20일 검증 슬라이딩), 매주 KS 검정 자동 트리거(p<0.05 시 시뮬 재구축 알림), Bootstrap CI 하한 ≥1 통과 시 LIVE 토글 허용 | Sprint 2~3 코드 + KIS 분봉 백필(Phase 9 Sprint 0과 동일 메커니즘) | ~~5~8일~~ **완료 (2026-05-08, PR #208)** |
 
 > **순서**: Sprint 1 → 2 → 3 → **5거래일 Paper 관찰** → Sprint 4 (병렬 불가)
 > - Sprint 1·2·3은 코드 변경 후 즉시 다음 Sprint 착수 가능
@@ -366,7 +366,7 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 
 ---
 
-### Sprint 4 — Walk-forward 백테스트 + 시뮬↔실측 자동 감지
+### Sprint 4 ✅ 완료 — Walk-forward 백테스트 + 시뮬↔실측 자동 감지 (PR #208, 2026-05-08)
 
 #### 백엔드
 
@@ -496,9 +496,10 @@ LIVE 활성화는 다음 모두 충족 시에만:
    - ~~완화: Phase 6 WS 안정화 인프라 재사용 + Sprint 3 첫 Task에 KIS WS 호가 데이터 수신 검증 1일 spike~~
    - ✅ 해결 (Sprint 3, 2026-05-08): Phase 6 인프라 재사용으로 호가창 스트림 정상 통합
 
-2. **Walk-forward 60일 데이터 백필 시간** (Sprint 4)
-   - KIS REST 분봉 백필은 Phase 9 Sprint 0에서 처음 본격 시도 예정 — 본 Phase 4에서 차용 시 일정 압박
-   - 완화: Phase 9 Sprint 0의 백필 메커니즘 일부를 Sprint 2 시점부터 점진 활용 (별도 트랙 병행)
+2. ~~**Walk-forward 60일 데이터 백필 시간** (Sprint 4)~~
+   - ~~KIS REST 분봉 백필은 Phase 9 Sprint 0에서 처음 본격 시도 예정 — 본 Phase 4에서 차용 시 일정 압박~~
+   - ~~완화: Phase 9 Sprint 0의 백필 메커니즘 일부를 Sprint 2 시점부터 점진 활용 (별도 트랙 병행)~~
+   - ✅ 해결 (Sprint 4, 2026-05-08): kis_daily_collector 인프라 재사용 (배치 50건 + 지수 백오프), 일봉 60일만 사용 (분봉은 Phase 9 Sprint 0 유지)
 
 3. ~~**시간대 필터 + 09:00~09:10 진입 금지의 신호 추가 차단 위험** (Sprint 3)~~
    - ~~Sprint 1의 min_volume_floor 슬라이딩(0.3 09~11시)과 시간대 필터가 충돌 시 09~09:10은 어차피 차단되므로 슬라이딩 효과가 약화~~
@@ -526,6 +527,13 @@ LIVE 활성화는 다음 모두 충족 시에만:
 |---|------|------|----------|------|
 | B1 | `api/routes/metrics.py` | `volume-surge-stats` GROUP BY — `func.date_trunc("day", col)` 사용 시 asyncpg GroupingError 발생. `func.cast(..., Date)` 로 fix 완료 (aca388a) | Critical → **수정 완료** | fix 커밋 aca388a 포함됨 |
 
+### Sprint 4 코드 리뷰 발견 Medium 이슈 (Phase 8.7에서 개선 권장)
+
+| # | 파일 | 내용 | Severity | 조치 |
+|---|------|------|----------|------|
+| S4-M1 | `api/routes/backtest.py` | `POST /backtest/run` trigger_run이 uuid를 직접 생성해 반환하지만 실제 WalkForwardRunner.run()은 내부에서 별도 uuid를 생성함 — 클라이언트가 받은 run_id로 DB를 조회하면 항상 404 반환 | Medium | Phase 8.7에서 run_id를 runner에 주입하거나 반환값 poll 방식으로 교체 권장 |
+| S4-M2 | `modules/backtest/live_gate.py` | G-Bt1 "no_completed_backtest_run" 상태에서 passed=True 반환 — 최초 배포 후 백테스트 미실행 시 LIVE 게이트 G-Bt1을 자동 통과함 (underspecified=True 명시, 의도적 설계) | Medium | 첫 배포 후 즉시 백테스트를 실행하거나, 미완료 시 passed=False로 보수 처리하는 옵션 검토 (Phase 8.7) |
+
 ### Sprint 1 코드 리뷰 발견 Medium 이슈 (Sprint 2에서 개선 권장)
 
 | # | 파일 | 내용 | Severity | Sprint 2 조치 |
@@ -551,9 +559,9 @@ LIVE 활성화는 다음 모두 충족 시에만:
 | 3 | ATR 분위수 캘리브레이션 09:00 잡 동작 | Sprint 2 완료 + Redis 저장 확인 | ✅ 완료 (2026-04-22, PR #186) |
 | 4 | `volume_surge` tier dry_run 배포 | Sprint 3 완료 + Paper 5거래일 dry_run 신호 ≥ 5건 | ✅ 완료 (2026-05-08, PR #200) — Paper 관찰 대기 중 |
 | 5 | 시간대 필터 동작 (09:00~09:10·14:30+) | Sprint 3 완료 + 단위 테스트 + Paper 1거래일 차단 로그 | ✅ 완료 (2026-05-08, PR #200) — Paper 관찰 대기 중 |
-| 6 | 60일 Walk-forward 백테스트 1회 성공 | Sprint 4 완료 | ⬜ |
-| 7 | 시뮬-실측 KS 자동 감지 잡 동작 | Sprint 4 완료 + p<0.05 인위 데이터 트리거 검증 | ⬜ |
-| 8 | LIVE 토글 게이트 G-Bt1~3 미충족 시 dry_run 강제 유지 | Sprint 4 완료 + 통합 테스트 | ⬜ |
+| 6 | 60일 Walk-forward 백테스트 1회 성공 | Sprint 4 완료 | ✅ 완료 (2026-05-08, PR #208) |
+| 7 | 시뮬-실측 KS 자동 감지 잡 동작 | Sprint 4 완료 + p<0.05 인위 데이터 트리거 검증 | ✅ 완료 (2026-05-08, PR #208) — KS/카이제곱 잡 구현, 1172 passed |
+| 8 | LIVE 토글 게이트 G-Bt1~3 미충족 시 dry_run 강제 유지 | Sprint 4 완료 + 통합 테스트 | ✅ 완료 (2026-05-08, PR #208) — 매주 월요일 자동 평가 잡 + Redis dry_run_forced 강제 |
 | 9 | G-A: Paper 5거래일 일평균 신호 ≥ 1.5 | Sprint 3 종료 후 5거래일 관찰 | ⬜ |
 | 10 | G-B: 0건 일수 ≤ 30% (≤1/5) | Sprint 3 종료 후 5거래일 관찰 | ⬜ |
 | 11 | G-C: tier 다양성 ≥ 3종 활성 | Sprint 3 종료 후 5거래일 관찰 | ⬜ |
