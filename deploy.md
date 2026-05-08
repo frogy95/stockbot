@@ -12,8 +12,20 @@
 **브랜치**: `phase8.6-sprint4` → develop (PR #208)
 **완료 날짜**: 2026-05-08
 
-- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
-- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+**자동 검증 결과 (2026-05-08 sprint-review):**
+
+- ✅ Phase 7.0 LIVE 파라미터 grep 가드 — 0줄 (위반 없음)
+- ✅ pytest 전체: 1172 passed, 0 failed (76 warnings, 10분 11초)
+- ✅ API 엔드포인트 검증: /api/v1/health healthy, backtest 5종 경로 등록 확인
+- ✅ Playwright UI 검증: /admin/backtest 4종 카드 정상 렌더 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
+- ✅ Alembic 왕복 테스트: upgrade→downgrade→upgrade 3단계 모두 성공
+- ✅ 데모 모드 API 검증: health OK
+
+**코드 리뷰 결과:**
+- Critical/High 이슈: 0건
+- Medium 이슈: 2건 (phase8.6.md 미해결 사항 테이블 S4-M1, S4-M2 기록)
+  - S4-M1: `POST /backtest/run` run_id 불일치 (클라이언트 반환 run_id ≠ DB run_id)
+  - S4-M2: G-Bt1 미완료 상태 passed=True (의도적 설계이나 Phase 8.7에서 보수화 검토 권장)
 
 **Railway 환경변수 5종 추가 필요 (수동 설정):**
 - `BACKTEST_ENABLED=True`
