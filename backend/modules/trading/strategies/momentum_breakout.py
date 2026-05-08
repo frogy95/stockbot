@@ -17,6 +17,9 @@ from modules.trading.strategies._time_filter import (
     lunch_floor_adjustment,
     should_block_entry,
 )
+from modules.trading.strategies._time_filter import (
+    record_block as record_time_filter_block,
+)
 from modules.trading.strategy import (
     MarketSnapshot,
     RejectedSignal,
@@ -603,6 +606,7 @@ class MomentumBreakoutStrategy(Strategy):
         # Phase 8.6 Sprint 3 — 시간대 본 가드 (tier 결정 후 호출)
         blocked, block_reason = should_block_entry(now_kst, breakout_tier)
         if blocked:
+            await record_time_filter_block(self.redis_client, block_reason, now_kst)
             return await self._reject(
                 snapshot,
                 "time_filter",
