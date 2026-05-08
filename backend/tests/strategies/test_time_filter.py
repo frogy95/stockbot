@@ -102,3 +102,65 @@ def test_lunch_floor_adjustment_prev_high_at_1200():
 
     result = lunch_floor_adjustment(_dt(12, 0), "prev_high")
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# record_block 테스트 (Phase 8.6 Sprint 3 hotfix — time_filter incr)
+# ---------------------------------------------------------------------------
+
+class _FakeRedis:
+    """incr/expire 호출을 기록하는 mock."""
+    def __init__(self) -> None:
+        self.incr_calls: list[str] = []
+        self.expire_calls: list[tuple[str, int]] = []
+        self.fail = False
+
+    async def incr(self, key: str) -> int:
+        if self.fail:
+            raise RuntimeError("redis down")
+        self.incr_calls.append(key)
+        return 1
+
+    async def expire(self, key: str, ttl: int) -> bool:
+        self.expire_calls.append((key, ttl))
+        return True
+
+
+@pytest.mark.asyncio
+async def test_record_block_increments_counter_with_ttl():
+    """차단 사유 + 날짜로 키 생성 후 INCR + EXPIRE(7d) 호출."""
+    from modules.trading.strategies._time_filter import record_block
+
+    redis = _FakeRedis()
+    await record_block(redis, "morning_lockout", _dt(9, 5))
+
+    assert redis.incr_calls == ["metrics:time_filter:morning_lockout:2026-05-07"]
+    assert redis.expire_calls == [("metrics:time_filter:morning_lockout:2026-05-07", 7 * 24 * 3600)]
+
+
+@pytest.mark.asyncio
+async def test_record_block_skips_when_redis_none():
+    """redis_client=None이면 graceful skip."""
+    from modules.trading.strategies._time_filter import record_block
+
+    await record_block(None, "morning_lockout", _dt(9, 5))  # 예외 미전파
+
+
+@pytest.mark.asyncio
+async def test_record_block_skips_empty_reason():
+    """빈 reason이면 스킵 (정상 통과 경로 보호)."""
+    from modules.trading.strategies._time_filter import record_block
+
+    redis = _FakeRedis()
+    await record_block(redis, "", _dt(9, 5))
+    assert redis.incr_calls == []
+
+
+@pytest.mark.asyncio
+async def test_record_block_swallows_redis_errors():
+    """Redis incr 예외는 graceful (호출자에게 전파 금지)."""
+    from modules.trading.strategies._time_filter import record_block
+
+    redis = _FakeRedis()
+    redis.fail = True
+    await record_block(redis, "afternoon_lockout", _dt(14, 30))  # 예외 미전파
