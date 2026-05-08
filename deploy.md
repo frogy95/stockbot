@@ -80,7 +80,66 @@ railway variables --service stockbot --set "BACKTEST_ADMIN_USERNAME=admin"
 - volume_surge 폭증: `railway variables --service stockbot --set "VOLUME_SURGE_ENABLED=false"`
 - 시간 필터 오작동: `railway variables --service stockbot --set "TIME_FILTER_ENABLED=false"`
 - 우선순위 큐: `railway variables --service stockbot --set "SIGNAL_PRIORITY_QUEUE_ENABLED=false"`
-- dry_run → LIVE: `VOLUME_SURGE_DRY_RUN=false`는 **G-Bt1~3 통과 전 절대 금지**
+- ⚠️ dry_run → LIVE: `VOLUME_SURGE_DRY_RUN=false`는 **Sprint 4 G-Bt1~3 통과 전 절대 금지**
+
+---
+
+### Notion 업데이트 권고 (사용자 수동)
+
+Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
+- **DB 스키마**: `trade_signals.dry_run BOOLEAN` 컬럼 추가 (Alembic `f3b1c4d5e201`)
+- **API 명세**: `/api/v1/metrics/volume-surge-stats`, `/api/v1/metrics/time-filter-stats` 신규
+- **기능 명세**: volume_surge tier (4번째 진입 tier, dry_run 기본), 시간 필터 본 가드, 신호 우선순위 큐, R3 자동 롤백 활성화, 시간 필터 차단 카운터 적재 (hotfix `time-filter-block-counter`)
+- **릴리즈 노트**: v2.9.0 — Phase 8.6 Sprint 3 (2026-05-08 배포)
+
+---
+
+---
+
+### Hotfix: backtest-walkforward-session (2026-05-08)
+
+PR: https://github.com/frogy95/stockbot/pull/213 (MERGED — 머지 커밋 ebd1c1a)
+
+**원인**: `backend/api/routes/backtest.py:150` `WalkForwardRunner()` 무인자 호출 → `@dataclass` `session` required positional 누락 → TypeError → BackgroundTask 실패 → DB 미적재 → run_id 404
+**수정**: `WalkForwardRunner(session=session)` 1줄 수정 + 회귀 테스트 `test_run_walkforward_instantiates_runner_with_session` 추가
+
+**변경 파일 (2개)**:
+- `backend/api/routes/backtest.py` (1줄 수정)
+- `backend/tests/api/test_backtest_routes.py` (42줄 추가)
+
+**코드 리뷰 결과 (경량)**:
+- Critical/High 이슈: 0건
+- 수정 범위 최소 (파일 2개, 코드 43줄) — Hotfix 기준 충족
+- 회귀 테스트 stub 패턴 적절 (WalkForwardRunner 시그니처 검증)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest 전체: 11종 pytest 통과 (프로덕션 검증 포함)
+  - 프로덕션 S4-M1 검증: run_id `3a9aeb51-...` → GET /runs/{id} HTTP 200 정상
+  - DB INSERT 정상 동작 확인
+  - 타겟 API 검증: POST /backtest/run → run_id 반환 정상
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
+  - 실제 백테스트 결과는 KOSPI200 일봉 데이터 부족(56일/60일)으로 별도 backfill 필요
+
+---
+
+### Hotfix: time-filter-block-counter (2026-05-07)
+
+브랜치: `hotfix/time-filter-block-counter`
+커밋: `6d5a502 fix(time-filter): 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)`
+
+Sprint 3 v2.9.0 배포 직후 잔존 부채 해소. `should_block_entry` 차단 시 Redis INCR 카운터 적재 코드 미구현 → `record_block` 신규 추가.
+
+- ✅ 자동 검증 완료 항목:
+  - pytest (타겟 3파일): 66 passed, 0 failed
+  - 타겟 API 검증: N/A (API 인터페이스 변경 없음)
+  - Playwright 타겟 검증: N/A (UI 변경 없음)
+  - 코드 리뷰: Critical/High 이슈 0건
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영) — Railway 자동 배포로 대체 가능
+  - 장중 첫 차단 발생 후 `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 확인
 
 ---
 

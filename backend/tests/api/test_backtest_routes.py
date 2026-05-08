@@ -216,6 +216,48 @@ async def test_trigger_run_run_id_passed_to_background(mock_session):
     app.dependency_overrides.clear()
 
 
+@pytest.mark.asyncio
+async def test_run_walkforward_instantiates_runner_with_session():
+    """_run_walkforward 가 WalkForwardRunner(session=session) 시그니처로 호출되어야 한다.
+
+    회귀: S4-M1 수정 시 `WalkForwardRunner()` 무인자 호출로 인해
+    프로덕션에서 TypeError 발생 → backtest 결과 DB 미적재 → run_id 404.
+    """
+    from datetime import date as _date
+    from api.routes.backtest import _run_walkforward
+
+    captured = {}
+
+    class _RunnerStub:
+        def __init__(self, session):
+            captured["session"] = session
+
+        async def run(self, run_id, period_end, n_days):
+            captured["run_id"] = run_id
+            captured["period_end"] = period_end
+            captured["n_days"] = n_days
+
+    fake_session = AsyncMock()
+
+    class _SessionFactory:
+        def __call__(self):
+            return self
+
+        async def __aenter__(self):
+            return fake_session
+
+        async def __aexit__(self, *_):
+            return False
+
+    with patch("core.database.get_session_factory", return_value=_SessionFactory()), \
+         patch("modules.backtest.walkforward.WalkForwardRunner", _RunnerStub):
+        await _run_walkforward("rid-xyz", _date(2026, 5, 1), 60)
+
+    assert captured["session"] is fake_session
+    assert captured["run_id"] == "rid-xyz"
+    assert captured["n_days"] == 60
+
+
 # ---------------------------------------------------------------------------
 # 6. GET /runs → 최근 실행 목록
 # ---------------------------------------------------------------------------

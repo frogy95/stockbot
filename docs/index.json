@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-08T00:00:00+09:00",
+  "lastUpdated": "2026-05-08T23:07:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3866,6 +3866,24 @@
           "hash": "6d5a502",
           "message": "fix(time-filter): 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)",
           "date": "2026-05-07"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-backtest-walkforward-session",
+      "name": "WalkForwardRunner session 인자 전달 누락 수정 (backtest TypeError)",
+      "status": "deployed",
+      "path": "docs/hotfix/backtest-walkforward-session/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/213",
+      "deployedAt": "2026-05-08",
+      "description": "v2.10.0 프로덕션 검증 중 backtest 실행 실패 수정. backend/api/routes/backtest.py:150 WalkForwardRunner() 무인자 호출로 @dataclass session required positional 누락 → TypeError → BackgroundTask 실패 → DB 미적재 → run_id 404. WalkForwardRunner(session=session) 1줄 수정 + 회귀 테스트 추가. S4-M1 run_id 일치 프로덕션 검증 완료.",
+      "commits": [
+        {
+          "hash": "6ae23a5",
+          "message": "fix(backtest): WalkForwardRunner 생성자에 session 인자 전달",
+          "date": "2026-05-08"
         }
       ]
     }
