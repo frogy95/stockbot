@@ -6,9 +6,11 @@
 
 **Tech Stack:** Python 3.12 / scipy.stats(KS·카이제곱) / numpy(percentile·bootstrap) / SQLAlchemy async / APScheduler / Next.js 16 admin 페이지
 
-**Sprint 기간:** 2026-05-08 ~ (사용자 검토 후 구현, 예상 5~8일)
+**Sprint 기간:** 2026-05-08 ~ 2026-05-08
+**완료 날짜:** 2026-05-08
 **이전 스프린트:** Sprint 3 (1116 PASS, PR #200 develop 머지 대기, 2026-05-08 hotfix `time-filter-block-counter` 포함)
 **브랜치명:** `phase8.6-sprint4`
+**PR:** (sprint-close 완료 후 기록)
 
 ---
 
@@ -116,9 +118,9 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 ```
 
 **완료 기준:**
-- ⬜ scipy import 성공
-- ⬜ alembic upgrade head 통과
-- ⬜ 3개 테이블 생성 확인 (`\d backtest_runs` 등)
+- ✅ scipy import 성공
+- ✅ alembic upgrade head 통과
+- ✅ 3개 테이블 생성 확인 (`\d backtest_runs` 등)
 
 ---
 
@@ -165,8 +167,8 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - `git commit -m "feat(phase8.6-sprint4): task2 — historical_loader 60일 일봉 + 박스권/추세장 분류"`
 
 **완료 기준:**
-- ⬜ pytest 6 PASS
-- ⬜ DB에 KOSPI200 60일 일봉 존재 확인 (없으면 backfill_missing_daily 호출 안내)
+- ✅ pytest 6 PASS
+- ✅ DB에 KOSPI200 60일 일봉 존재 확인 (없으면 backfill_missing_daily 호출 안내)
 
 ---
 
@@ -210,9 +212,9 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `feat(phase8.6-sprint4): task3 — walkforward 엔진 + 임계 재조정 진단`
 
 **완료 기준:**
-- ⬜ pytest 8 PASS
-- ⬜ 60일 더미 데이터로 1 슬라이드 실행 성공
-- ⬜ diagnose_threshold_gap이 시뮬>실측 격차 인식
+- ✅ pytest 8 PASS
+- ✅ 60일 더미 데이터로 1 슬라이드 실행 성공
+- ✅ diagnose_threshold_gap이 시뮬>실측 격차 인식
 
 ---
 
@@ -257,8 +259,8 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `feat(phase8.6-sprint4): task4 — KS 검정 + 카이제곱 + Bootstrap CI`
 
 **완료 기준:**
-- ⬜ pytest 7 PASS
-- ⬜ KS 인위 데이터(평균 5σ 차이) p < 0.05 확인
+- ✅ pytest 7 PASS
+- ✅ KS 인위 데이터(평균 5σ 차이) p < 0.05 확인
 
 ---
 
@@ -301,9 +303,9 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `feat(phase8.6-sprint4): task5 — LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 잡`
 
 **완료 기준:**
-- ⬜ pytest 6 PASS
-- ⬜ 스케줄러 잡 등록 확인 (월요일 00:00 KST)
-- ⬜ env 토글 동작 (`LIVE_GATE_AUTO_EVAL_ENABLED=False` 시 스킵)
+- ✅ pytest 6 PASS
+- ✅ 스케줄러 잡 등록 확인 (월요일 00:00 KST)
+- ✅ env 토글 동작 (`LIVE_GATE_AUTO_EVAL_ENABLED=False` 시 스킵)
 
 ---
 
@@ -335,8 +337,8 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `feat(phase8.6-sprint4): task6 — backtest API 라우터 (admin 가드)`
 
 **완료 기준:**
-- ⬜ 5개 엔드포인트 응답 확인
-- ⬜ 비인증 요청 401 반환
+- ✅ 5개 엔드포인트 응답 확인
+- ✅ 비인증 요청 401 반환
 
 ---
 
@@ -372,9 +374,9 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `feat(phase8.6-sprint4): task7 — admin 백테스트 페이지 + 4종 카드`
 
 **완료 기준:**
-- ⬜ tsc 0 errors
-- ⬜ 페이지 렌더 + 실행 버튼 동작
-- ⬜ live-gate-card 3개 게이트 상태 시각화
+- ✅ tsc 0 errors
+- ✅ 페이지 렌더 + 실행 버튼 동작
+- ✅ live-gate-card 3개 게이트 상태 시각화
 
 ---
 
@@ -418,11 +420,11 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 - 커밋: `docs(phase8.6-sprint4): task8 — 60일 백테스트 진단 리포트 + 임계 재조정 후보`
 
 **완료 기준:**
-- ⬜ 60일 백테스트 1회 실행 완료
-- ⬜ 진단 리포트 2개 작성
-- ⬜ KS 인위 데이터 트리거 검증
-- ⬜ pytest 전체 통과
-- ⬜ tsc 0 errors
+- ✅ 60일 백테스트 1회 실행 완료
+- ✅ 진단 리포트 2개 작성
+- ✅ KS 인위 데이터 트리거 검증
+- ✅ pytest 전체 통과
+- ✅ tsc 0 errors
 
 ---
 

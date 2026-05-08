@@ -7,6 +7,29 @@
 
 ---
 
+### Phase 8.6 Sprint 4 — Walk-forward 백테스트 + 임계 재조정 진단
+
+**브랜치**: `phase8.6-sprint4` → develop (PR 번호: sprint-close 완료 후 기록)
+**완료 날짜**: 2026-05-08
+
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
+
+**Railway 환경변수 5종 추가 필요 (수동 설정):**
+- `BACKTEST_ENABLED=True`
+- `LIVE_GATE_AUTO_EVAL_ENABLED=True`
+- `BACKTEST_REBUILD_REQUIRED=False`
+- `BACKTEST_ADMIN_USER_ID=1`
+- `BACKTEST_DEFAULT_N_DAYS=60`
+
+**수동 검증 항목:**
+- ⬜ `docker compose up --build` (scipy 의존성 반영 확인)
+- ⬜ `alembic upgrade head` 적용 (backtest_runs, backtest_signal_metrics, live_gate_status 3테이블)
+- ⬜ admin 백테스트 페이지 렌더 확인 (`/admin/backtest` 4종 카드)
+- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+
+---
+
 ### Phase 8.6 Sprint 3 v2.9.0 — Paper 1거래일 관찰 (2026-05-09 장마감 후)
 
 **배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지) — 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.
