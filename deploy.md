@@ -94,6 +94,34 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: backtest-walkforward-session (2026-05-08)
+
+PR: https://github.com/frogy95/stockbot/pull/213 (MERGED — 머지 커밋 ebd1c1a)
+
+**원인**: `backend/api/routes/backtest.py:150` `WalkForwardRunner()` 무인자 호출 → `@dataclass` `session` required positional 누락 → TypeError → BackgroundTask 실패 → DB 미적재 → run_id 404
+**수정**: `WalkForwardRunner(session=session)` 1줄 수정 + 회귀 테스트 `test_run_walkforward_instantiates_runner_with_session` 추가
+
+**변경 파일 (2개)**:
+- `backend/api/routes/backtest.py` (1줄 수정)
+- `backend/tests/api/test_backtest_routes.py` (42줄 추가)
+
+**코드 리뷰 결과 (경량)**:
+- Critical/High 이슈: 0건
+- 수정 범위 최소 (파일 2개, 코드 43줄) — Hotfix 기준 충족
+- 회귀 테스트 stub 패턴 적절 (WalkForwardRunner 시그니처 검증)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest 전체: 11종 pytest 통과 (프로덕션 검증 포함)
+  - 프로덕션 S4-M1 검증: run_id `3a9aeb51-...` → GET /runs/{id} HTTP 200 정상
+  - DB INSERT 정상 동작 확인
+  - 타겟 API 검증: POST /backtest/run → run_id 반환 정상
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
+  - 실제 백테스트 결과는 KOSPI200 일봉 데이터 부족(56일/60일)으로 별도 backfill 필요
+
+---
+
 ### Hotfix: time-filter-block-counter (2026-05-07)
 
 브랜치: `hotfix/time-filter-block-counter`
