@@ -79,7 +79,7 @@ async def test_gbt1_fail_gap_exceeds_threshold():
 
 @pytest.mark.asyncio
 async def test_gbt1_underspecified_when_no_run():
-    """BacktestRun 없음 → underspecified=True, passed=True (차단 사유 없음)."""
+    """BacktestRun 없음 → underspecified=True, passed=False (보수적 차단)."""
     run_result = MagicMock()
     run_result.scalars.return_value.first.return_value = None
     session = _make_session()
@@ -87,8 +87,27 @@ async def test_gbt1_underspecified_when_no_run():
 
     gate = LiveGateEvaluator(session_factory=_make_session_factory(session))
     out = await gate._eval_gbt1(session)
-    assert out["passed"] is True
+    assert out["passed"] is False
     assert out["underspecified"] is True
+
+
+@pytest.mark.asyncio
+async def test_gbt1_underspecified_when_no_metrics():
+    """BacktestRun 있으나 메트릭 없음 → underspecified=True, passed=False (보수적 차단)."""
+    run = SimpleNamespace(run_id="rid-3", status="completed")
+    run_result = MagicMock()
+    run_result.scalars.return_value.first.return_value = run
+    metric_result = MagicMock()
+    metric_result.scalars.return_value.all.return_value = []
+
+    session = _make_session()
+    session.execute = AsyncMock(side_effect=[run_result, metric_result])
+
+    gate = LiveGateEvaluator(session_factory=_make_session_factory(session))
+    out = await gate._eval_gbt1(session)
+    assert out["passed"] is False
+    assert out["underspecified"] is True
+    assert out["reason"] == "no_metrics"
 
 
 # ---------- G-Bt2 ----------

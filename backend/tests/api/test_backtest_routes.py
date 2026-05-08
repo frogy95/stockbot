@@ -185,6 +185,37 @@ async def test_trigger_run_returns_run_id(mock_session):
     app.dependency_overrides.clear()
 
 
+@pytest.mark.asyncio
+async def test_trigger_run_run_id_passed_to_background(mock_session):
+    """POST /run 응답 run_id가 _run_walkforward 첫 번째 인자로 전달되어야 한다 (S4-M1 회귀)."""
+    app = _make_app_with_user(mock_session, username="admin")
+    captured_args = []
+
+    def capture_bg(*args, **kwargs):
+        captured_args.extend(args)
+        return None
+
+    with patch("core.config.settings.BACKTEST_ADMIN_USERNAME", "admin"), \
+         patch("api.routes.backtest._run_walkforward", side_effect=capture_bg):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.post(
+                "/api/v1/backtest/run",
+                json={"period_end": "2026-05-01", "n_days": 60},
+            )
+
+    assert resp.status_code == 202
+    returned_run_id = resp.json()["run_id"]
+    # BackgroundTasks.add_task(fn, run_id, period_end, n_days) 순서 검증
+    # captured_args[0] 이 add_task 로 전달된 첫 번째 위치 인자 (run_id)
+    assert len(captured_args) >= 1
+    assert captured_args[0] == returned_run_id, (
+        f"응답 run_id({returned_run_id})와 백그라운드 태스크에 전달된 run_id({captured_args[0]})가 불일치"
+    )
+    app.dependency_overrides.clear()
+
+
 # ---------------------------------------------------------------------------
 # 6. GET /runs → 최근 실행 목록
 # ---------------------------------------------------------------------------

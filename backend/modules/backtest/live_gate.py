@@ -114,7 +114,7 @@ class LiveGateEvaluator:
         run = result.scalars().first()
         if run is None:
             return {
-                "passed": True,
+                "passed": False,
                 "mode": "proxy_simulated_vs_actual",
                 "underspecified": True,
                 "reason": "no_completed_backtest_run",
@@ -129,7 +129,7 @@ class LiveGateEvaluator:
         metrics = list(metrics_result.scalars().all())
         if not metrics:
             return {
-                "passed": True,
+                "passed": False,
                 "mode": "proxy_simulated_vs_actual",
                 "underspecified": True,
                 "reason": "no_metrics",

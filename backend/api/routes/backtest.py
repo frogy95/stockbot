@@ -140,7 +140,7 @@ def _to_run_response(run: BacktestRun) -> BacktestRunResponse:
     )
 
 
-async def _run_walkforward(period_end: date, n_days: int) -> None:
+async def _run_walkforward(run_id: str, period_end: date, n_days: int) -> None:
     """BackgroundTasks 콜백 — WalkForwardRunner.run 실행."""
     from core.database import get_session_factory
     from modules.backtest.walkforward import WalkForwardRunner
@@ -149,7 +149,7 @@ async def _run_walkforward(period_end: date, n_days: int) -> None:
     async with session_factory() as session:
         runner = WalkForwardRunner()
         runner.session = session
-        await runner.run(period_end=period_end, n_days=n_days)
+        await runner.run(run_id=run_id, period_end=period_end, n_days=n_days)
 
 
 async def _run_backfill(start_date: date, end_date: date) -> None:
@@ -170,7 +170,7 @@ async def trigger_run(
 ) -> RunTriggerResponse:
     """walk-forward 백테스트 실행 트리거 (BackgroundTasks 비동기)."""
     run_id = str(uuid.uuid4())
-    background_tasks.add_task(_run_walkforward, body.period_end, body.n_days)
+    background_tasks.add_task(_run_walkforward, run_id, body.period_end, body.n_days)
     return RunTriggerResponse(run_id=run_id, status="running")
 
 

@@ -253,8 +253,8 @@ class WalkForwardRunner:
 
     session: "AsyncSession"
 
-    async def run(self, period_end: date, n_days: int = 60) -> BacktestResult:
-        run_id = str(uuid4())
+    async def run(self, period_end: date, n_days: int = 60, run_id: str | None = None) -> BacktestResult:
+        run_id = run_id if run_id is not None else str(uuid4())
         started_at = datetime.now(timezone.utc)
         period_start = period_end  # placeholder, 아래에서 series 로 갱신
 
