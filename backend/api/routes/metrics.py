@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import Date, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import UserInfo, get_current_user, get_db, get_redis
@@ -681,12 +681,16 @@ async def get_volume_surge_stats(
     )
 
     # 최근 7일 dry_run 신호 수 평균 (오늘 제외, 최대 7일)
+    # NOTE: func.date_trunc("day", col) 사용 시 asyncpg가 "day" 리터럴을 bind
+    # 파라미터로 처리하여 SELECT/GROUP BY 표현식이 다르게 인식됨(GroupingError).
+    # func.cast(..., Date)는 파라미터 없이 CAST(col AS DATE)로 컴파일되어 안전.
     window_start = datetime.combine(today - timedelta(days=7), datetime.min.time(), tzinfo=tz)
     window_end = datetime.combine(today, datetime.min.time(), tzinfo=tz)
+    _day_expr = func.cast(TradeSignal.created_at, Date)
     rows = (
         await session.execute(
             select(
-                func.date_trunc("day", TradeSignal.created_at).label("day"),
+                _day_expr.label("day"),
                 func.count(TradeSignal.id).label("cnt"),
             )
             .where(
@@ -695,7 +699,7 @@ async def get_volume_surge_stats(
                 TradeSignal.created_at >= window_start,
                 TradeSignal.created_at < window_end,
             )
-            .group_by(func.date_trunc("day", TradeSignal.created_at))
+            .group_by(_day_expr)
         )
     ).all()
     ma7_dry_run = round(sum(int(r.cnt) for r in rows) / 7.0, 2)
