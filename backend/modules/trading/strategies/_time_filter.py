@@ -1,8 +1,15 @@
 """시간대 본 가드 + 점심 거래량 하한 조정 (Phase 8.6 Sprint 3)."""
 
+import logging
 from datetime import datetime, time
+from typing import Any
 
 from core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Phase 8.6 Sprint 3 hotfix — 차단 카운터 TTL 7일 (Paper 1거래일 관찰 + 일별 추이용)
+_BLOCK_COUNTER_TTL_SEC = 7 * 24 * 3600
 
 # 시간 경계 상수 (KST)
 _MORNING_GAP_EXCEPTION_END = time(9, 5)   # gap_open 예외 허용 구간 종료 (09:05 이후 차단)
@@ -46,6 +53,24 @@ def should_block_entry(now_kst: datetime, tier: str) -> tuple[bool, str]:
         return (True, "afternoon_lockout")
 
     return (False, "")
+
+
+async def record_block(redis_client: Any, reason: str, now_kst: datetime) -> None:
+    """시간 필터 차단 카운터를 Redis에 적재한다 (graceful — 예외 미전파).
+
+    키: ``metrics:time_filter:{reason}:{YYYY-MM-DD}`` (KST 날짜)
+    TTL: 7일.
+
+    redis_client가 None이거나 incr 실패 시 조용히 스킵한다.
+    """
+    if redis_client is None or not reason:
+        return
+    key = f"metrics:time_filter:{reason}:{now_kst.date().isoformat()}"
+    try:
+        await redis_client.incr(key)
+        await redis_client.expire(key, _BLOCK_COUNTER_TTL_SEC)
+    except Exception as exc:  # pragma: no cover — graceful
+        logger.warning("time_filter record_block 실패: key=%s err=%s", key, exc)
 
 
 def lunch_floor_adjustment(now_kst: datetime, tier: str) -> float | None:
