@@ -39,8 +39,8 @@
   - dry_run 신호: OrderExecutor.place_order 호출 차단 확인 (_handle_volume_surge_signal 메서드 분기)
   - 일일 한도: dry_run 경로에서 incr_daily_trade_count 미호출 확인 (체결 콜백에서만 증가)
   - 우선순위 큐 토글: SIGNAL_PRIORITY_QUEUE_ENABLED=false 시 병렬 OR 동작 복원 확인
-- ⬜ Alembic 왕복 테스트 (`f3b1c4d5e201` head): 배포 후 수동 확인 (upgrade → downgrade -1 → upgrade)
-- ⬜ tsc 타입 체크: CI에서 자동 확인 (로컬 미실행)
+- ✅ Alembic 왕복 테스트 (`f3b1c4d5e201` head): downgrade -1 → upgrade head 성공 (로컬 docker 검증 완료)
+- ✅ tsc 타입 체크: 0 에러 (로컬 docker frontend 검증 완료)
 
 **Kill-switch 런북**:
 
