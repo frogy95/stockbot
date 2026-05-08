@@ -94,6 +94,29 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: backtest-backfill-rest-client (2026-05-08)
+
+PR: https://github.com/frogy95/stockbot/pull/217 (MERGED — 머지 커밋 9d1e704)
+
+**원인**: `backend/modules/backtest/historical_loader.py:185` `KISRestClient()` 무인자 호출 → required 의존성(env/token_manager/throttler) 누락 → TypeError → 백필 실패
+**수정**: `backfill_missing_daily(rest_client=...)` 인자 추가 + `backfill_daily` 라우트에서 `app.state.kis_inquiry` 주입 + 부재 시 503 반환 + 회귀 테스트 2종 추가
+
+**변경 파일 (3개)**:
+- `backend/modules/backtest/historical_loader.py` (rest_client 인자 추가, None → ValueError)
+- `backend/api/routes/backtest.py` (Request 인자 추가, kis_inquiry 주입, 503 가드)
+- `backend/tests/api/test_backtest_routes.py` (회귀 테스트 2종 추가)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/api/test_backtest_routes.py`: 12종 통과 (0 failed)
+  - pytest backfill/historical_loader 관련 14종 전체 통과
+  - 헬스체크: healthy (database + redis connected)
+  - 프로덕션: POST /backfill-daily 202 응답 정상, 백그라운드 백필 작동 확인
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
+
+---
+
 ### Hotfix: backtest-walkforward-session (2026-05-08)
 
 PR: https://github.com/frogy95/stockbot/pull/213 (MERGED — 머지 커밋 ebd1c1a)
