@@ -689,6 +689,8 @@ class CollectorScheduler:
             async with self._session_factory() as db_session:
                 collector = DataGoKrCollector(db_session)
                 result = await collector.collect_all()
+            now = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("portal_supplement", now)
             if result.collected > 0:
                 logger.info("16:00 포털 보조 수집 완료: collected=%d", result.collected)
             else:
@@ -1224,6 +1226,8 @@ class CollectorScheduler:
                     await session.execute(stmt)
                 await session.commit()
 
+            now = datetime.now(ZoneInfo(settings.MARKET_TIMEZONE))
+            await self._save_last_timestamp("metrics_rollup", now)
             logger.info(
                 "metrics_rollup 완료: score_rows=%d stage_rows=%d date=%s",
                 len(score_rows),
