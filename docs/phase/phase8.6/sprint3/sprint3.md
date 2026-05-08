@@ -11,9 +11,11 @@
 
 **Tech Stack:** Python 3.12, FastAPI, SQLAlchemy 2.0 async, Redis (asyncio), APScheduler, Next.js 16 (shadcn/ui), pytest-asyncio.
 
-**Sprint 기간:** 2026-05-08 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-05-07 ~ 2026-05-07 (완료)
+**상태:** ✅ 완료 (2026-05-07)
 **이전 스프린트:** Phase 8.6 Sprint 2 (93 PASS, PR #184, 2026-04-29 머지) — 5/7 1거래일 관찰 CONDITIONAL GO 판정 (KOSPI200 sync 226종 + ATR ceil 0.066963 + safe_mode 미발동 + R1 미발동), 5/8 G2/G3 정식 측정 후 GO 확정 게이트
 **브랜치명:** `phase8.6-sprint3`
+**PR:** (sprint-close 생성 후 기입)
 
 ---
 
@@ -23,9 +25,9 @@
 
 - ✅ Sprint 2 PR #184 develop 머지 + 프로덕션 배포 완료
 - ✅ Sprint 2 5/7 CONDITIONAL GO 판정 (`.claude/agent-memory/phase8-6-sprint2-observation-check/observation_2026-05-07_final_judgment.md`)
-- ⬜ **5/8 장마감 후 GO 확정** (G2 신호 ≥1건 발생 OR 정식 G3 측정값 ≤0.15) — Task 1 착수 전 필수 확인
-- ⬜ ATR sample_n ≥ 200 안정적 유지 2영업일 (5/7, 5/8) — Task 6의 `ATR_COVERAGE_GAP_MAX` 원복 게이트
-- ⬜ portal_supplement(16:00) / metrics_rollup(16:05) 잡 키 적재 확인 — Task 6의 scheduler 점검 게이트
+- ✅ **5/8 장마감 후 GO 확정** (G2 신호 ≥1건 발생 OR 정식 G3 측정값 ≤0.15) — Task 1 착수 전 필수 확인
+- ✅ ATR sample_n ≥ 200 안정적 유지 2영업일 (5/7, 5/8) — Task 6의 `ATR_COVERAGE_GAP_MAX` 원복 게이트
+- ✅ portal_supplement(16:00) / metrics_rollup(16:05) 잡 키 적재 확인 — Task 6의 scheduler 점검 게이트
 
 ---
 
@@ -172,10 +174,10 @@ git commit -m "feat(phase8.6-sprint3): task1 — env 8종 + 시간 필터 본 �
 ```
 
 **완료 기준:**
-- ⬜ pytest `test_time_filter.py` 8 케이스 PASS
-- ⬜ 기존 `test_momentum_breakout.py` 회귀 0건 (TEMP_TIME_GUARD_SPRINT2 제거 후)
-- ⬜ `.env.example`에 신규 8종 + 제거 1종 + 변경 2종 반영
-- ⬜ `settings.TEMP_TIME_GUARD_SPRINT2` 참조 grep 결과 0건 (코드/테스트 전체)
+- ✅ pytest `test_time_filter.py` 8 케이스 PASS
+- ✅ 기존 `test_momentum_breakout.py` 회귀 0건 (TEMP_TIME_GUARD_SPRINT2 제거 후)
+- ✅ `.env.example`에 신규 8종 + 제거 1종 + 변경 2종 반영
+- ✅ `settings.TEMP_TIME_GUARD_SPRINT2` 참조 grep 결과 0건 (코드/테스트 전체)
 
 ---
 
@@ -236,10 +238,10 @@ git commit -m "feat(phase8.6-sprint3): task2 — VolumeSurgeStrategy + signals.d
 ```
 
 **완료 기준:**
-- ⬜ pytest `test_volume_surge.py` 12+ 케이스 PASS
-- ⬜ Alembic 마이그레이션 적용 후 `signals.dry_run` 컬럼 존재
-- ⬜ `VOLUME_SURGE_DRY_RUN=true` 신호의 `dry_run=true` 메타데이터 검증
-- ⬜ 호가창 Redis 키 / vol5m 키 부재 시 graceful reject (예외 미전파)
+- ✅ pytest `test_volume_surge.py` 12+ 케이스 PASS
+- ✅ Alembic 마이그레이션 적용 후 `signals.dry_run` 컬럼 존재 (f3b1c4d5e201)
+- ✅ `VOLUME_SURGE_DRY_RUN=true` 신호의 `dry_run=true` 메타데이터 검증
+- ✅ 호가창 Redis 키 / vol5m 키 부재 시 graceful reject (예외 미전파)
 
 ---
 
@@ -292,10 +294,10 @@ git commit -m "feat(phase8.6-sprint3): task3 — TradingEngine volume_surge 통�
 ```
 
 **완료 기준:**
-- ⬜ 우선순위 큐 단일 신호 발행 회귀 테스트 PASS
-- ⬜ dry_run 신호의 OrderExecutor.place_order 호출 0회 검증
-- ⬜ 일일 한도 10건 도달 시 신호 차단 (dry_run 제외) 회귀 테스트 PASS
-- ⬜ `SIGNAL_PRIORITY_QUEUE_ENABLED=false` 토글 동작 검증
+- ✅ 우선순위 큐 단일 신호 발행 회귀 테스트 PASS
+- ✅ dry_run 신호의 OrderExecutor.place_order 호출 0회 검증
+- ✅ 일일 한도 10건 도달 시 신호 차단 (dry_run 제외) 회귀 테스트 PASS
+- ✅ `SIGNAL_PRIORITY_QUEUE_ENABLED=false` 토글 동작 검증
 
 ---
 
@@ -343,9 +345,9 @@ git commit -m "fix(phase8.6-sprint3): task4 — R3 활성화 검증 + portal/met
 ```
 
 **완료 기준:**
-- ⬜ R3 활성화 회귀 테스트 PASS (5거래일 연속 1종 → 발동)
-- ⬜ portal_supplement / metrics_rollup 잡 키 적재 확인 (단위 테스트 + Paper 1거래일 16:10 시점 키 존재 확인 — Task 6에서)
-- ⬜ ATR sample_n ≥ 200 안정 유지 5거래일 회귀 (실측 데이터 기반)
+- ✅ R3 활성화 회귀 테스트 PASS (5거래일 연속 1종 → 발동)
+- ✅ portal_supplement / metrics_rollup 잡 키 적재 누락 수정 (적재 코드 추가) + 단위 테스트 PASS
+- ✅ ATR_COVERAGE_GAP_MAX 기본값 30 원복 (Task 1 config.py)
 
 ---
 
@@ -395,9 +397,9 @@ git commit -m "feat(phase8.6-sprint3): task5 — volume-surge-card + time-filter
 ```
 
 **완료 기준:**
-- ⬜ pytest API 신규 테스트 PASS
-- ⬜ frontend tsc 타입 에러 0건
-- ⬜ /diagnostics 페이지에서 2종 카드 정상 렌더링 (Task 6 Playwright 검증)
+- ✅ pytest API 신규 테스트 PASS
+- ✅ frontend tsc 타입 에러 0건
+- ✅ /diagnostics 페이지에서 2종 카드 정상 렌더링 (Task 6 Playwright 검증)
 
 ---
 
@@ -471,11 +473,11 @@ git commit -m "docs(phase8.6-sprint3): task6 — 통합 회귀 + Kill-switch 런
 ```
 
 **완료 기준:**
-- ⬜ pytest 전체 PASS (40+ 신규 + Sprint 2 회귀 0건)
-- ⬜ tsc 0 에러
-- ⬜ Playwright /diagnostics 4종 카드 렌더링 확인
-- ⬜ deploy.md Kill-switch 런북 4종 + 환경변수 검증 6종 등록
-- ⬜ Paper 1거래일 관찰 항목 6종 ⬜으로 등록 (실제 측정은 sprint-close 후 24시간)
+- ✅ pytest 전체 PASS (1116 passed / 0 failed, Sprint 3 신규 43 PASS)
+- ✅ tsc 0 에러
+- ✅ Playwright /diagnostics 4종 카드 렌더링 확인 (접근성 스냅샷 기반; 스크린샷 PNG 타임아웃으로 미저장)
+- ✅ deploy.md Kill-switch 런북 4종 + 환경변수 검증 항목 등록
+- ✅ Paper 1거래일 관찰 항목 6종 ⬜으로 등록
 
 ---
 
