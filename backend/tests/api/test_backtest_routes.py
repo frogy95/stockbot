@@ -383,6 +383,7 @@ async def test_live_gate_status_default_when_no_row(mock_session):
 async def test_backfill_daily_returns_running(mock_session):
     """POST /backfill-daily 는 202 + status=running 반환."""
     app = _make_app_with_user(mock_session, username="admin")
+    app.state.kis_inquiry = MagicMock()  # 운영 시 lifespan 에서 주입되는 KIS 클라이언트
 
     with patch("core.config.settings.BACKTEST_ADMIN_USERNAME", "admin"), \
          patch("api.routes.backtest._run_backfill") as mock_bg:
@@ -397,4 +398,27 @@ async def test_backfill_daily_returns_running(mock_session):
 
     assert resp.status_code == 202
     assert resp.json()["status"] == "running"
+    # _run_backfill 이 (rest_client, start, end) 시그니처로 호출되었는지 검증
+    mock_bg.assert_called_once()
+    args = mock_bg.call_args.args
+    assert args[0] is app.state.kis_inquiry
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_backfill_daily_503_when_kis_inquiry_missing(mock_session):
+    """app.state.kis_inquiry 부재 시 503 반환 (KIS 클라이언트 미초기화)."""
+    app = _make_app_with_user(mock_session, username="admin")
+    # app.state.kis_inquiry 미설정
+
+    with patch("core.config.settings.BACKTEST_ADMIN_USERNAME", "admin"):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.post(
+                "/api/v1/backtest/backfill-daily",
+                json={"start_date": "2026-03-01", "end_date": "2026-05-01"},
+            )
+
+    assert resp.status_code == 503
     app.dependency_overrides.clear()
