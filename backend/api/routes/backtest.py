@@ -5,7 +5,7 @@ import uuid
 from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -151,14 +151,16 @@ async def _run_walkforward(run_id: str, period_end: date, n_days: int) -> None:
         await runner.run(run_id=run_id, period_end=period_end, n_days=n_days)
 
 
-async def _run_backfill(start_date: date, end_date: date) -> None:
+async def _run_backfill(rest_client, start_date: date, end_date: date) -> None:
     """BackgroundTasks 콜백 — historical_loader.backfill_missing_daily 실행."""
     from core.database import get_session_factory
     from modules.backtest.historical_loader import backfill_missing_daily
 
     session_factory = get_session_factory()
     async with session_factory() as session:
-        await backfill_missing_daily(session, start_date=start_date, end_date=end_date)
+        await backfill_missing_daily(
+            session, start_date=start_date, end_date=end_date, rest_client=rest_client
+        )
 
 
 @router.post("/run", response_model=RunTriggerResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -299,8 +301,15 @@ async def get_live_gate_status(
 async def backfill_daily(
     body: _BackfillBody,
     background_tasks: BackgroundTasks,
+    request: Request,
     _: UserInfo = Depends(require_backtest_admin),
 ) -> BackfillResponse:
     """historical_loader.backfill_missing_daily 트리거 (BackgroundTasks 비동기)."""
-    background_tasks.add_task(_run_backfill, body.start_date, body.end_date)
+    rest_client = getattr(request.app.state, "kis_inquiry", None)
+    if rest_client is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="KIS 조회 클라이언트 미초기화 (app.state.kis_inquiry 부재)",
+        )
+    background_tasks.add_task(_run_backfill, rest_client, body.start_date, body.end_date)
     return BackfillResponse(status="running")
