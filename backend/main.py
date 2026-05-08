@@ -172,6 +172,14 @@ async def lifespan(app: FastAPI):
     order_manager = OrderManager(session_factory, rest_client, redis_client, throttler)
     position_manager = PositionManager(session_factory, redis_client, risk_manager)
     await position_manager.load_trailing_highs()
+    # Phase 8.6 Sprint 3 Task 3 — VolumeSurgeStrategy 주입
+    from modules.trading.strategies.volume_surge import VolumeSurgeStrategy
+    volume_surge_strategy = VolumeSurgeStrategy(
+        redis_client=redis_client,
+        session_factory=session_factory,
+        telegram_bot=app.state.telegram_bot if hasattr(app.state, "telegram_bot") else None,
+    )
+    app.state.volume_surge_strategy = volume_surge_strategy
     trading_engine = TradingEngine(
         signal_generator=signal_generator,
         order_manager=order_manager,
@@ -183,6 +191,7 @@ async def lifespan(app: FastAPI):
         notifier_manager=notifier_manager,
         session_factory=session_factory,
         rest_client=rest_client,
+        volume_surge_strategy=volume_surge_strategy,
     )
     order_manager.set_filled_callback(trading_engine.on_order_filled)
     await trading_engine.start()
