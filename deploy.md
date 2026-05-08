@@ -27,11 +27,20 @@
 - ⬜ 변경: `ATR_COVERAGE_GAP_MAX=30` 원복 (Sprint 2 hotfix에서 200으로 임시 상향한 것 — 5/7~5/8 sample_n ≥200 안정 확인 완료)
 - ⬜ 제거: `TEMP_TIME_GUARD_SPRINT2` (코드 삭제됨)
 
-**자동 검증 결과**:
-- ✅ pytest 전체: **1116 passed, 0 failed** (640초, Sprint 3 신규 43 PASS)
-- ✅ tsc: 0 에러
-- ✅ Playwright /diagnostics 4종 카드: volume-surge-card + time-filter-card + tier-pass-rate-card + tier-correlation-card 렌더링 확인 (접근성 스냅샷 기반; 스크린샷 타임아웃으로 PNG 미저장 — 수동 캡처 권장)
-- ⬜ Alembic 적용 (`f3b1c4d5e201` head): 배포 후 수동 확인
+**자동 검증 결과** (sprint-review 2026-05-08):
+- ✅ pytest 전체: **1116 passed, 0 failed** (635초, sprint-review 재실행 완료)
+  - 이전 세션 GroupingError 발견(metrics volume-surge-stats GROUP BY) → fix 커밋 aca388a 적용 후 재검증
+  - Sprint 3 신규 43개 테스트 PASS 포함
+- ✅ Phase 7.0 CI grep 가드: 0줄 (LIVE 파라미터 우회 없음)
+- ✅ TEMP_TIME_GUARD_SPRINT2 잔재 grep: 0건 (완전 제거 확인)
+- ✅ API 검증: `/api/v1/metrics/volume-surge-stats` + `/api/v1/metrics/time-filter-stats` 정상 응답 (인증 포함)
+- ✅ Playwright /diagnostics 4종 카드: volume-surge-card + time-filter-card 렌더링 확인 (접근성 스냅샷 기반; 스크린샷 타임아웃으로 PNG 미저장 — 수동 캡처 권장)
+- ✅ 코드 리뷰 (섹션 7 체크리스트): 이슈 없음 — 보안/성능/품질/테스트/패턴 모두 통과
+  - dry_run 신호: OrderExecutor.place_order 호출 차단 확인 (_handle_volume_surge_signal 메서드 분기)
+  - 일일 한도: dry_run 경로에서 incr_daily_trade_count 미호출 확인 (체결 콜백에서만 증가)
+  - 우선순위 큐 토글: SIGNAL_PRIORITY_QUEUE_ENABLED=false 시 병렬 OR 동작 복원 확인
+- ⬜ Alembic 왕복 테스트 (`f3b1c4d5e201` head): 배포 후 수동 확인 (upgrade → downgrade -1 → upgrade)
+- ⬜ tsc 타입 체크: CI에서 자동 확인 (로컬 미실행)
 
 **Kill-switch 런북**:
 
