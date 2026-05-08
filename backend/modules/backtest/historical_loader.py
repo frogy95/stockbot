@@ -26,6 +26,8 @@ from core.trading_calendar import is_trading_day
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from core.clients.kis_rest import KISRestClient
+
 logger = logging.getLogger(__name__)
 
 _KOSPI_DAILY_SOURCES = ("data_go_kr", "kis_daily")
@@ -171,18 +173,26 @@ async def backfill_missing_daily(
     session: "AsyncSession",
     start_date: date,
     end_date: date,
+    rest_client: "KISRestClient | None" = None,
 ) -> int:
     """[start_date, end_date] 범위 거래일별 KISDailyCollector.collect_all 순차 호출.
 
     Returns: 호출된 거래일 수.
 
     KIS Rate Limit 보호를 위해 거래일 간 1초 sleep.
+
+    rest_client 가 None 이면 호출자가 KIS 인프라에 접근할 수 없는 컨텍스트이므로
+    ValueError 를 발생시켜 잘못된 사용을 조기에 차단한다 (운영 시 app.state.kis_inquiry 주입 필수).
     """
     # 지연 import — KIS 클라이언트는 helper 사용 시점에만 필요.
-    from core.clients.kis_rest import KISRestClient
     from modules.collector.sources.kis_daily_collector import KISDailyCollector
 
-    rest_client = KISRestClient()
+    if rest_client is None:
+        raise ValueError(
+            "backfill_missing_daily 는 rest_client (KISRestClient) 주입을 요구합니다. "
+            "FastAPI 라우트에서는 request.app.state.kis_inquiry 를 전달하세요."
+        )
+
     collector = KISDailyCollector(rest_client, session)
 
     days_called = 0
