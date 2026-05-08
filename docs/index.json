@@ -3312,6 +3312,91 @@
             }
           ],
           "lastUpdated": "2026-05-07T09:00:00+09:00"
+        },
+        {
+          "id": "sprint4",
+          "title": "Walk-forward 백테스트 + 시뮬-실측 자동 감지 + 임계 재조정 진단",
+          "status": "planned",
+          "branch": "phase8.6-sprint4",
+          "sprintDoc": "docs/phase/phase8.6/sprint4/sprint4.md",
+          "progress": {
+            "total": 8,
+            "completed": 0
+          },
+          "tasks": [
+            {
+              "id": "task1",
+              "title": "scipy 의존성 + backtest 패키지 스캐폴드 + Alembic 마이그레이션",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-1-",
+              "testPlan": "alembic upgrade head + scipy import",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task2",
+              "title": "historical_loader 60일 일봉 + 박스권/추세장 분류기",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-2-",
+              "testPlan": "pytest tests/backtest/test_historical_loader.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task3",
+              "title": "walkforward 엔진 TimeSeriesSplit 40/20 + 시뮬-실측 격차 진단",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-3-",
+              "testPlan": "pytest tests/backtest/test_walkforward.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task4",
+              "title": "KS 2-sample + 카이제곱 + Bootstrap 95% CI",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-4-",
+              "testPlan": "pytest tests/backtest/test_distribution_check.py tests/backtest/test_bootstrap_ci.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task5",
+              "title": "LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 잡 + 월요일 00:00 KST 트리거",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-5-",
+              "testPlan": "pytest tests/backtest/test_live_gate.py tests/scheduler/test_scheduler_backtest_job.py -v",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task6",
+              "title": "API 라우터 + admin 가드",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-6-",
+              "testPlan": "curl /api/v1/backtest/run + /live-gate-status",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task7",
+              "title": "admin 백테스트 페이지 (실행 + 결과 + KS 추이 + LIVE 게이트 카드)",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-7-",
+              "testPlan": "cd frontend && npx tsc --noEmit + 브라우저 렌더",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            },
+            {
+              "id": "task8",
+              "title": "60일 백테스트 1회 실행 + 임계 재조정 후보 리포트 작성",
+              "path": "docs/phase/phase8.6/sprint4/sprint4.md#task-8-",
+              "testPlan": "pytest 전체 + backtest_diagnostic_report.md + threshold_recalibration_candidates.md",
+              "testResult": "pending",
+              "status": "planned",
+              "commits": []
+            }
+          ]
         }
       ]
     },
