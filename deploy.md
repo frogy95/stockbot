@@ -25,15 +25,16 @@
 - ✅ pytest 회귀 (sprint-review 단계): 1174 passed, 0 failed
 
 **Railway 환경변수 추가 필요 (사용자 직접 설정 — 자동 거부됨):**
+
+실제 backend/core/config.py:115-123 정의 기준 — `BACKTEST_ENABLED`, `LIVE_GATE_AUTO_EVAL_ENABLED`, `BACKTEST_DEFAULT_N_DAYS`는 디폴트(true/true/60)로 동작하므로 **실설정이 필요한 건 `BACKTEST_ADMIN_USERNAME` 1개**.
+
 ```bash
-railway variables --service stockbot \
-  --set "BACKTEST_ENABLED=true" \
-  --set "LIVE_GATE_AUTO_EVAL_ENABLED=true" \
-  --set "BACKTEST_REBUILD_REQUIRED=false" \
-  --set "BACKTEST_ADMIN_USER_ID=<실제 admin user.id>" \
-  --set "BACKTEST_DEFAULT_N_DAYS=60"
+railway variables --service stockbot --set "BACKTEST_ADMIN_USERNAME=admin"
 ```
-- `BACKTEST_ADMIN_USER_ID`는 DB의 실제 admin 계정 id로 교체 필요 (1로 추정되나 미검증)
+
+- 디폴트가 `None`이면 인증된 모든 사용자도 차단됨 (임시 lockdown).
+- JWT subject가 `"admin"`으로 하드코딩되어 있으므로 (auth.py:34), 값은 `admin` 고정.
+- 이전 배포 가이드의 `BACKTEST_ADMIN_USER_ID`/`BACKTEST_REBUILD_REQUIRED`는 코드에 존재하지 않음 (deploy-prod agent 환각).
 
 **남은 사용자 직접 검증 항목 (UI/실행):**
 - ⬜ admin 로그인 후 `/admin/backtest` 4종 카드 시각 렌더 확인 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
