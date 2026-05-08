@@ -117,6 +117,10 @@ class Settings(BaseSettings):
     BACKTEST_ENABLED: bool = Field(default=True, description="walk-forward 백테스트 잡 마스터 토글")
     LIVE_GATE_AUTO_EVAL_ENABLED: bool = Field(default=True, description="LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 활성화")
     BACKTEST_DEFAULT_N_DAYS: int = Field(default=60, ge=30, le=120, description="walk-forward 기본 기간(일)")
+    BACKTEST_ADMIN_USERNAME: str | None = Field(
+        default=None,
+        description="backtest API 호출 허용 사용자명. None이면 인증된 모든 사용자 차단(임시 lockdown)",
+    )
 
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
