@@ -7,44 +7,56 @@
 
 ---
 
-### Phase 8.6 Sprint 4 — Walk-forward 백테스트 + 임계 재조정 진단
+### 프로덕션 배포 - v2.10.0 (2026-05-08)
 
-**브랜치**: `phase8.6-sprint4` → develop (PR #208)
-**완료 날짜**: 2026-05-08
+포함 스프린트: Phase 8.6 Sprint 4
+PR: #209 (develop → main, 머지 커밋 0a3b5948)
+머지 시각: 2026-05-08 21:57 KST
 
-**자동 검증 결과 (2026-05-08 sprint-review):**
+**주요 변경**:
+- Walk-forward 백테스트 엔진 (60일 일봉, 박스권/추세장 분류)
+- KS 검정 + 카이제곱 + Bootstrap CI 통계 검증
+- LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 잡
+- `/admin/backtest` 페이지 + backtest API 6종 (admin 가드)
+- S4-M1 run_id 일치 수정 + S4-M2 G-Bt1 underspecified 보수적 차단 반영
+- pytest: **1174 PASS**
 
-- ✅ Phase 7.0 LIVE 파라미터 grep 가드 — 0줄 (위반 없음)
-- ✅ pytest 전체: 1172 passed, 0 failed (76 warnings, 10분 11초)
-- ✅ API 엔드포인트 검증: /api/v1/health healthy, backtest 5종 경로 등록 확인
-- ✅ Playwright UI 검증: /admin/backtest 4종 카드 정상 렌더 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
-- ✅ Alembic 왕복 테스트: upgrade→downgrade→upgrade 3단계 모두 성공
-- ✅ 데모 모드 API 검증: health OK
+**DB 마이그레이션 (Railway Start Command에 alembic upgrade head 포함 — 배포 시 자동 실행)**:
+- `backtest_runs` 테이블 신규
+- `backtest_signal_metrics` 테이블 신규
+- `live_gate_statuses` 테이블 신규
 
-**코드 리뷰 결과:**
-- Critical/High 이슈: 0건
-- Medium 이슈: 2건 (phase8.6.md 미해결 사항 테이블 S4-M1, S4-M2 기록)
-  - S4-M1: `POST /backtest/run` run_id 불일치 (클라이언트 반환 run_id ≠ DB run_id)
-  - S4-M2: G-Bt1 미완료 상태 passed=True (의도적 설계이나 Phase 8.7에서 보수화 검토 권장)
-
-**Railway 환경변수 5종 추가 필요 (수동 설정):**
+**Railway 환경변수 5종 추가 필요 (수동 설정)**:
 - `BACKTEST_ENABLED=True`
 - `LIVE_GATE_AUTO_EVAL_ENABLED=True`
 - `BACKTEST_REBUILD_REQUIRED=False`
 - `BACKTEST_ADMIN_USER_ID=1`
 - `BACKTEST_DEFAULT_N_DAYS=60`
 
-**수동 검증 항목:**
-- ⬜ `docker compose up --build` (scipy 의존성 반영 확인)
-- ⬜ `alembic upgrade head` 적용 (backtest_runs, backtest_signal_metrics, live_gate_status 3테이블)
-- ⬜ admin 백테스트 페이지 렌더 확인 (`/admin/backtest` 4종 카드)
-- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+자동 검증 결과 (2026-05-08 21:57 KST):
+- ✅ Railway 백엔드 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}`
+- ✅ Vercel 프론트엔드 접속: 307 (도메인 redirect, 정상)
+- ✅ Vercel `/admin/backtest` 접속: 307 (auth redirect, 정상)
+- ✅ Backend Swagger `/docs`: 200
+- ✅ Alembic 마이그레이션 자동 실행 확인 (Railway 로그):
+  - `Running upgrade f3b1c4d5e201 -> d5d5cc2b391e, add backtest tables for phase8.6 sprint4`
+  - 3테이블 신규: `backtest_runs`, `backtest_signal_metrics`, `live_gate_statuses`
+- ✅ Backtest API 6종 라우팅 등록 확인 (openapi.json):
+  - `/api/v1/backtest/run`, `/runs`, `/runs/{run_id}`, `/distribution-check`, `/live-gate-status`, `/backfill-daily`
+- ✅ Backtest API 인증 가드: `GET /api/v1/backtest/live-gate-status` 401 (admin 가드 정상)
+
+수동 검증 필요 항목:
+1. ⬜ Railway 환경변수 5종 추가 설정 (`BACKTEST_ENABLED`, `LIVE_GATE_AUTO_EVAL_ENABLED`, `BACKTEST_REBUILD_REQUIRED`, `BACKTEST_ADMIN_USER_ID`, `BACKTEST_DEFAULT_N_DAYS`)
+2. ⬜ admin 로그인 후 `/admin/backtest` 페이지 4종 카드 렌더링 확인
+3. ⬜ G-Bt1/G-Bt2/G-Bt3 게이트 평가 잡 스케줄 등록 확인 (Railway 스케줄러)
+4. ⬜ 실제 백테스트 1회 실행 → 결과 카드 렌더 확인
+5. ⬜ UI 디자인/시각적 품질 판단
 
 ---
 
 ### Phase 8.6 Sprint 3 v2.9.0 — Paper 1거래일 관찰 (2026-05-09 장마감 후)
 
-**배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지) — 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.
+**배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지)
 
 **Paper 1거래일 관찰 항목** (2026-05-09 장마감 후 16:30 KST):
 
@@ -64,7 +76,6 @@
   ```bash
   railway ssh --service stockbot "redis-cli GET 'metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)'"
   ```
-  ✅ Sprint 3 미포함이었던 `record_block` 적재 코드는 hotfix `time-filter-block-counter` (PR #204, 2026-05-08)로 추가 완료 — 정상 적재 기대
 - ⬜ R3 자동 롤백 미발동:
   ```bash
   railway ssh --service stockbot "redis-cli GET 'auto_rollback:active'"
@@ -78,38 +89,7 @@
 - volume_surge 폭증: `railway variables --service stockbot --set "VOLUME_SURGE_ENABLED=false"`
 - 시간 필터 오작동: `railway variables --service stockbot --set "TIME_FILTER_ENABLED=false"`
 - 우선순위 큐: `railway variables --service stockbot --set "SIGNAL_PRIORITY_QUEUE_ENABLED=false"`
-- ⚠️ dry_run → LIVE: `VOLUME_SURGE_DRY_RUN=false`는 **Sprint 4 G-Bt1~3 통과 전 절대 금지**
-
----
-
-### Notion 업데이트 권고 (사용자 수동)
-
-Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
-- **DB 스키마**: `trade_signals.dry_run BOOLEAN` 컬럼 추가 (Alembic `f3b1c4d5e201`)
-- **API 명세**: `/api/v1/metrics/volume-surge-stats`, `/api/v1/metrics/time-filter-stats` 신규
-- **기능 명세**: volume_surge tier (4번째 진입 tier, dry_run 기본), 시간 필터 본 가드, 신호 우선순위 큐, R3 자동 롤백 활성화, 시간 필터 차단 카운터 적재 (hotfix `time-filter-block-counter`)
-- **릴리즈 노트**: v2.9.0 — Phase 8.6 Sprint 3 (2026-05-08 배포)
-
----
-
----
-
-### Hotfix: time-filter-block-counter (2026-05-07)
-
-브랜치: `hotfix/time-filter-block-counter`
-커밋: `6d5a502 fix(time-filter): 차단 카운터 Redis incr 적재 (Sprint 3 잔존 부채)`
-
-Sprint 3 v2.9.0 배포 직후 잔존 부채 해소. `should_block_entry` 차단 시 Redis INCR 카운터 적재 코드 미구현 → `record_block` 신규 추가.
-
-- ✅ 자동 검증 완료 항목:
-  - pytest (타겟 3파일): 66 passed, 0 failed
-  - 타겟 API 검증: N/A (API 인터페이스 변경 없음)
-  - Playwright 타겟 검증: N/A (UI 변경 없음)
-  - 코드 리뷰: Critical/High 이슈 0건
-
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영) — Railway 자동 배포로 대체 가능
-  - 장중 첫 차단 발생 후 `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 확인
+- dry_run → LIVE: `VOLUME_SURGE_DRY_RUN=false`는 **G-Bt1~3 통과 전 절대 금지**
 
 ---
 
