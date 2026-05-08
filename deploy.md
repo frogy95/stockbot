@@ -7,6 +7,18 @@
 
 ---
 
+### 프로덕션 배포 - v2.9.0 (2026-05-07)
+
+포함 스프린트: Phase 8.6 Sprint 3
+PR: https://github.com/frogy95/stockbot/pull/201
+
+- ✅ Vercel 프론트엔드 자동 배포 (PR merge 후 자동 기동)
+- ✅ Railway 백엔드 자동 배포 (PR merge 후 자동 기동)
+
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
+
+---
+
 ### Phase 8.6 Sprint 3 — volume_surge tier + 시간 필터 본 가드 (배포 대기)
 
 **브랜치**: `phase8.6-sprint3` → develop → main
