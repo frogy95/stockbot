@@ -37,10 +37,18 @@ backend/
 ### screening
 수집된 데이터에서 거래 후보 종목을 선별.
 - `screener.py`: 1차 스크리닝 (장전, DB 기반 정적 필터)
-- `realtime_screener.py`: 2차 스크리닝 (장중, 실시간 동적 필터)
+- `realtime_screener.py`: 2차 스크리닝 (장중, 실시간 동적 필터, 폴백 보강 5종)
 - `factors.py`: 5팩터 계산 — [[screening-factors]]
 - `scorer.py`: 다팩터 스코어링 — [[scoring-system]]
 - `filters.py`: 필터 조건 체크
+- `atr_calibration.py`: 08:35 KOSPI200 ATR 분위수 동적 상한 산출 (Phase 8.6 Sprint 2) — [[tier-architecture]]
+- `tier_correlation.py`: tier 페어와이즈 phi + 조건부 P(B|A) (Phase 8.6 Sprint 2)
+- `sim_vs_real_diff.py`: shadow vs 실제 통과율 절대차 메트릭 (Phase 8.6 Sprint 2)
+
+### safety
+LIVE 자금 보호 가드레일 (Phase 8.6 Sprint 1).
+- `auto_rollback.py`: R1~R4 다중 트리거 OR 평가 (16:10 잡)
+- `circuit_breaker.py`: 1차→2차 통과율 회로차단기 (G3)
 
 ### trading
 신호 생성부터 주문 실행, 포지션 관리까지.

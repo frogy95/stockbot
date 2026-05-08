@@ -7,74 +7,85 @@
 
 ---
 
-### Hotfix: kospi200-master-backfill (2026-05-06)
+### 프로덕션 배포 - v2.9.0 (2026-05-07)
 
-Phase 8.6 Sprint 2 ATR 캘리브레이션 잡이 3거래일 연속(4/30·5/4·5/6) 폴백 → safe_mode 발동으로 신호 발행 전면 차단된 근본 원인 수정.
+포함 스프린트: Phase 8.6 Sprint 3
+PR: https://github.com/frogy95/stockbot/pull/201
 
-**원인 (2단)**:
-1. 마이그레이션 `c1f2a30b8201`이 `stocks.is_kospi200` 컬럼만 추가, 모든 row server_default=`false`. 200종을 `true`로 마킹하는 production 코드/잡 부재 → ATR 잡 DB 조회 0종 → 정적 백업 JSON(200종) 폴백.
-2. 정적 백업 200종 중 148종은 `market_data` 일봉 미적재 → `coverage_gap=148 ≥ MARKET_DATA_MIN_COVERAGE_GAP(30)` → 데이터 부족 판정 → fallback_count INCR → 3회 누적 → safe_mode.
+- ✅ Vercel 프론트엔드 자동 배포 (PR merge 후 자동 기동)
+- ✅ Railway 백엔드 자동 배포 (PR merge 후 자동 기동)
 
-**브랜치**: `hotfix/kospi200-master-backfill` → main → develop
-
-**변경 파일**:
-- `backend/alembic/versions/e5a7c91d4f08_kospi200_master_backfill.py` — 정적 백업 JSON 200종 `is_kospi200=true` UPDATE
-- `backend/core/config.py` — `ATR_COVERAGE_GAP_MAX` 환경변수 추가 (default 30, 운영 일시 상향 가능)
-- `backend/modules/screening/atr_calibration.py` — `MARKET_DATA_MIN_COVERAGE_GAP` 상수 → `settings.ATR_COVERAGE_GAP_MAX` 동적 조회
-- `backend/scripts/diagnose_pipeline.py` — scheduler 네임스페이스 read-only 진단 스크립트 (배포 후 `railway run`/`railway ssh`로 실행 가능)
-- `backend/tests/test_kospi200_backfill_migration.py` — 마이그레이션 검증 (revision 체인, 200종 백필 적용)
-- `.env.example` — `ATR_COVERAGE_GAP_MAX=30` 문서화
-
-- ✅ 자동 검증 완료 항목:
-  - pytest: **1060 passed, 0 failed** (10분 18초)
-  - 타겟 API 검증: **N/A** — DB 데이터 백필 + 환경변수 외부화 (API 인터페이스 변경 없음)
-  - Playwright 타겟 검증: **N/A** — UI 변경 없음
-
-- ⬜ 수동 검증 필요 항목 (배포 직후 순서대로):
-  1. **Railway 배포 → alembic upgrade 자동 실행** → `stocks` 테이블 `is_kospi200=true` 200건 확인
-     ```
-     railway ssh --service stockbot
-     python -c "from sqlalchemy import create_engine, text; import os; e=create_engine(os.environ['DATABASE_URL'].replace('+asyncpg','')); print(e.execute(text('SELECT COUNT(*) FROM stocks WHERE is_kospi200=TRUE')).scalar())"
-     ```
-  2. **Railway 환경변수 추가 확인: `ATR_COVERAGE_GAP_MAX=200`** (일시 상향, 일봉 백필 완료 후 30 원복)
-  3. **safe_mode:active Redis 키 삭제** (또는 자연 TTL 만료 대기 ~120분)
-     ```
-     railway ssh --service stockbot
-     python -c "import redis,os; r=redis.from_url(os.environ['REDIS_URL']); print('deleted:', r.delete('safe_mode:active'))"
-     ```
-  4. **2026-05-07 거래일 ATR 잡(KST 08:35) 결과 관찰**: `metrics:atr:ceil:{date}` 동적 값 적재 + `fallback_count=0` 리셋 확인. signals.total ≥ 1 시 Sprint 1 baseline 정상 복원 확인.
-  5. **후속 작업 (별도 Hotfix/Sprint)**: 정적 백업 200종 중 일봉 미적재 148종 백필 잡 (KIS API rate limit 고려 ~수 시간). 백필 완료 후 `ATR_COVERAGE_GAP_MAX=30` 원복.
-
-- ⬜ Phase 8.6 Sprint 3 착수 전 추가 관찰 (R1 자동 롤백 해제 별도 결정):
-  - 5/7 baseline signals ≥ 1 확인 후 `parallel_or_tier:rollback_active` Redis override 해제 → 5/8 거래일 Sprint 2 병렬 OR tier 재시험 → 결과 확인 후 Sprint 3 GO/NO-GO 판정.
+자동 검증 및 수동 검증 필요 항목은 5단계 실행 후 업데이트합니다.
 
 ---
 
-### Hotfix: kospi200-real-200-backfill (2026-05-06 등재, kill switch off)
+### Phase 8.6 Sprint 3 — volume_surge tier + 시간 필터 본 가드 (배포 대기)
 
-선행 핫픽스 `kospi200-master-backfill`의 잔존 부채(정적 백업 placeholder 200종 중 production 매칭 52종 그침, ATR_COVERAGE_GAP_MAX=200 원복 작업 미등재) 해소. KIS `kospi_code.mst` Part2 char position 162 = KOSPI200 멤버십 플래그 검증 후 자동 동기화 잡 신설.
+**브랜치**: `phase8.6-sprint3` → develop → main
+**관련 PR**: #200 (develop)
 
-**브랜치**: `hotfix/kospi200-real-200-backfill` → main → develop
+> 선행 Hotfix `kospi200-real-200-backfill` 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.
 
-**변경 파일**:
-- `backend/core/config.py` — `KOSPI200_MST_SYNC_ENABLED: bool = False` (kill switch, default OFF)
-- `backend/modules/collector/sources/kis_master.py` — `parse_kospi200_codes()` / `kospi200_sanity_check()` / `sync_kospi200_membership()` / `_maybe_sync_kospi200()`. ETF mst 다운로드 1회로 양 작업 처리
-- `backend/tests/test_kis_master.py` — KOSPI200 파싱 + sanity + 게이트 + 마킹 카운트 검증 10종 추가
-- `.env.example` — `KOSPI200_MST_SYNC_ENABLED=false` 문서화
-- `docs/hotfix/kospi200-real-200-backfill/hotfix.md` — D안 + kill switch 설계 기록
+**Railway 환경변수 (수동 추가/변경/제거 필요)**:
+- ⬜ 추가: `VOLUME_SURGE_ENABLED=true`
+- ⬜ 추가: `VOLUME_SURGE_DRY_RUN=true` (Sprint 4 G-Bt1~3 통과 전 false 금지)
+- ⬜ 추가: `VOLUME_SURGE_VOL_RATIO=5.0`
+- ⬜ 추가: `VOLUME_SURGE_BID_ASK_RATIO=2.0`
+- ⬜ 추가: `VOLUME_SURGE_PRICE_THRESHOLD=0.005`
+- ⬜ 추가: `VOLUME_SURGE_POSITION_SIZE=0.30`
+- ⬜ 추가: `TIME_FILTER_ENABLED=true`
+- ⬜ 추가: `SIGNAL_PRIORITY_QUEUE_ENABLED=true`
+- ⬜ 변경: `AUTO_ROLLBACK_R3_ENABLED=true` (코드 기본값 True로 변경됨, 환경변수도 일치 확인)
+- ⬜ 변경: `ATR_COVERAGE_GAP_MAX=30` 원복 (Sprint 2 hotfix에서 200으로 임시 상향한 것 — 5/7~5/8 sample_n ≥200 안정 확인 완료)
+- ⬜ 제거: `TEMP_TIME_GUARD_SPRINT2` (코드 삭제됨)
 
-- ✅ 자동 검증 완료:
-  - pytest tests/test_kis_master.py: 39 passed (10 신규, 0.13초)
-  - pytest 전체 회귀: **1069 passed, 0 failed** (10분 49초)
-  - 타겟 API 검증: N/A — 백엔드 비활성 잡 추가 (API 인터페이스 변경 없음)
-  - Playwright 타겟 검증: N/A — UI 변경 없음
+**자동 검증 결과** (sprint-review 2026-05-08):
+- ✅ pytest 전체: **1116 passed, 0 failed** (635초, sprint-review 재실행 완료)
+  - 이전 세션 GroupingError 발견(metrics volume-surge-stats GROUP BY) → fix 커밋 aca388a 적용 후 재검증
+  - Sprint 3 신규 43개 테스트 PASS 포함
+- ✅ Phase 7.0 CI grep 가드: 0줄 (LIVE 파라미터 우회 없음)
+- ✅ TEMP_TIME_GUARD_SPRINT2 잔재 grep: 0건 (완전 제거 확인)
+- ✅ API 검증: `/api/v1/metrics/volume-surge-stats` + `/api/v1/metrics/time-filter-stats` 정상 응답 (인증 포함)
+- ✅ Playwright /diagnostics 4종 카드: volume-surge-card + time-filter-card 렌더링 확인 (접근성 스냅샷 기반; 스크린샷 타임아웃으로 PNG 미저장 — 수동 캡처 권장)
+- ✅ 코드 리뷰 (섹션 7 체크리스트): 이슈 없음 — 보안/성능/품질/테스트/패턴 모두 통과
+  - dry_run 신호: OrderExecutor.place_order 호출 차단 확인 (_handle_volume_surge_signal 메서드 분기)
+  - 일일 한도: dry_run 경로에서 incr_daily_trade_count 미호출 확인 (체결 콜백에서만 증가)
+  - 우선순위 큐 토글: SIGNAL_PRIORITY_QUEUE_ENABLED=false 시 병렬 OR 동작 복원 확인
+- ✅ Alembic 왕복 테스트 (`f3b1c4d5e201` head): downgrade -1 → upgrade head 성공 (로컬 docker 검증 완료)
+- ✅ tsc 타입 체크: 0 에러 (로컬 docker frontend 검증 완료)
 
-- ⬜ 수동 검증 (5/7 16:00 ATR 잡 관찰 종료 후 활성화 시):
-  1. **Railway 환경변수 추가 확인: KOSPI200_MST_SYNC_ENABLED=true** (관찰 신호 보존을 위해 5/7 16:00 이후로 토글 지연)
-  2. 다음 영업일 08:10 ETF mst 잡 로그: `KOSPI200 sync 완료: codes=226, marked=226`
-  3. production DB: `SELECT COUNT(*) FROM stocks WHERE is_kospi200` ≈ 226
-  4. 후속 ATR 잡(08:35) 결과: `metrics:atr:dist:{date}.sample_n ≈ 200+`, `safe_mode:active = None`
-  5. 1~2영업일 정상 동작 후 `ATR_COVERAGE_GAP_MAX=30` 원복
+**Kill-switch 런북**:
+
+`volume_surge` 신호 폭증 시:
+```
+railway variables --set "VOLUME_SURGE_ENABLED=false"
+# 즉시 적용 — 신호 발행 차단
+```
+
+시간 필터 오작동 시:
+```
+railway variables --set "TIME_FILTER_ENABLED=false"
+# Sprint 2 동작과 동등 (시간대 차단 미적용)
+```
+
+dry_run → LIVE 토글 (⚠️ Sprint 4 G-Bt1~3 통과 후에만):
+```
+railway variables --set "VOLUME_SURGE_DRY_RUN=false"
+# Sprint 4 walk-forward + Bootstrap CI 하한 ≥1 + Paper 5거래일 G-A·G-B 충족 동시 확인 필수
+```
+
+우선순위 큐 비활성화 (병렬 OR 동작 복원):
+```
+railway variables --set "SIGNAL_PRIORITY_QUEUE_ENABLED=false"
+```
+
+**Paper 1거래일 관찰 항목** (배포 후 다음 영업일 16:30 KST):
+- ⬜ `volume_surge` dry_run 신호 1건 이상: `SELECT COUNT(*) FROM trade_signals WHERE strategy_name='volume_surge' AND dry_run=true AND created_at::date = current_date`
+- ⬜ 호가창 Redis 키 적재: `redis-cli SCAN 0 MATCH "realtime:*:orderbook" COUNT 50` 결과 ≥10종
+- ⬜ 5분봉 vol5m 적재: `redis-cli SCAN 0 MATCH "vol5m:*:$(date +%Y%m%d):*" COUNT 100` 결과 ≥10종
+- ⬜ 시간 필터 차단 카운터: `redis-cli GET "metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)"` ≥1 — **단, time_filter incr 적재 코드는 Sprint 3 미포함, Sprint 4 또는 hotfix 추가 필요**
+- ⬜ R3 자동 롤백 미발동: `redis-cli GET "auto_rollback:active"` 결과 None 또는 R3 미포함
+- ⬜ portal_supplement / metrics_rollup 잡 키 16:10 시점 적재: `redis-cli GET "scheduler:last_portal_supplement"`, `redis-cli GET "scheduler:last_metrics_rollup"` 모두 ISO timestamp
 
 ---
 

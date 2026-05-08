@@ -24,7 +24,8 @@ def _freeze_morning_kst():
     """
     with patch(_PATCH_NOW_KST, return_value=_MORNING), \
          patch("modules.trading.strategies.momentum_breakout.settings.PARALLEL_OR_TIER_ENABLED", False), \
-         patch("modules.trading.strategies.momentum_breakout.settings.TEMP_TIME_GUARD_SPRINT2", False):
+         patch("modules.trading.strategies._time_filter.settings") as mock_tf_settings:
+        mock_tf_settings.TIME_FILTER_ENABLED = False
         yield
 
 

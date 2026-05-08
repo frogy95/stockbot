@@ -13,6 +13,10 @@ from modules.trading.strategies._metrics import (
     record_stage,
     record_virtual_signal,
 )
+from modules.trading.strategies._time_filter import (
+    lunch_floor_adjustment,
+    should_block_entry,
+)
 from modules.trading.strategy import (
     MarketSnapshot,
     RejectedSignal,
@@ -50,10 +54,6 @@ PREV_CLOSE_CONFIDENCE_CAP = 0.75
 
 # gap_open tier momentum 가중 (Phase 8 확정 파라미터 #11)
 GAP_OPEN_MOMENTUM_MULTIPLIER = 0.85
-
-# Phase 8.6 Sprint 2 — 임시 시간가드 경계
-TEMP_GUARD_MORNING_END = time(9, 10)
-TEMP_GUARD_AFTERNOON_START = time(14, 30)
 
 
 async def _resolve_atr_ceil(
@@ -171,6 +171,11 @@ def _resolve_min_volume_floor(
         effective_now = now_kst if now_kst is not None else _now_kst()
         if 9 <= effective_now.hour < 11:
             result = min(result, 0.3)
+
+        # Phase 8.6 Sprint 3 — 점심 시간대 거래량 하한 조정
+        lunch_adj = lunch_floor_adjustment(effective_now, tier)
+        if lunch_adj is not None:
+            result = max(result, lunch_adj)
 
     if result < hard:
         logger.warning("resolved floor %.3f < HARD %.3f, forcing HARD", result, hard)
@@ -585,21 +590,6 @@ class MomentumBreakoutStrategy(Strategy):
 
         now_kst = _now_kst()
 
-        # Phase 8.6 Sprint 2 — 임시 시간가드 (09:00~09:10 / 14:30+ 차단)
-        if settings.TEMP_TIME_GUARD_SPRINT2:
-            cur_t = now_kst.time()
-            if (MARKET_OPEN <= cur_t < TEMP_GUARD_MORNING_END) or (
-                cur_t >= TEMP_GUARD_AFTERNOON_START
-            ):
-                return await self._reject(
-                    snapshot,
-                    "temp_time_guard",
-                    {
-                        "now": cur_t.isoformat(),
-                        "block_window": "09:00-09:10 or >=14:30",
-                    },
-                )
-
         # 갭 비율 결정
         gap_rate = (
             (snapshot.open_price - snapshot.prev_close) / snapshot.prev_close
@@ -609,6 +599,19 @@ class MomentumBreakoutStrategy(Strategy):
 
         # 3단계 tier 결정 (gap_open / prev_high / prev_close)
         breakout_ref, breakout_tier = self._resolve_tier(snapshot, gap_rate)
+
+        # Phase 8.6 Sprint 3 — 시간대 본 가드 (tier 결정 후 호출)
+        blocked, block_reason = should_block_entry(now_kst, breakout_tier)
+        if blocked:
+            return await self._reject(
+                snapshot,
+                "time_filter",
+                {
+                    "now": now_kst.time().isoformat(),
+                    "reason": block_reason,
+                    "breakout_tier": breakout_tier,
+                },
+            )
 
         # Phase 8.6 Sprint 2 — gap_open 시초가 컷 (시초가 ≥ 현재가 시 매물 흡수 실패)
         if (

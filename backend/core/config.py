@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     AUTO_ROLLBACK_ENABLED: bool = Field(default=True, description="G2 자동 롤백 마스터 토글")
     AUTO_ROLLBACK_R1_ENABLED: bool = Field(default=True, description="R1: 신호 0건 3거래일 연속")
     AUTO_ROLLBACK_R2_ENABLED: bool = Field(default=True, description="R2: 폴백 발동 3거래일 연속 (v0)")
-    AUTO_ROLLBACK_R3_ENABLED: bool = Field(default=False, description="R3: tier 종류 ≤1 5거래일 (Sprint 2 후 활성)")
+    AUTO_ROLLBACK_R3_ENABLED: bool = Field(default=True, description="R3: tier 종류 ≤1 5거래일")
     AUTO_ROLLBACK_R4_ENABLED: bool = Field(default=True, description="R4: 폴백 비중 ≥70% 1거래일")
 
     # --- Phase 8.6 Sprint 1: G3 1차→2차 통과율 회로차단기 ---
@@ -94,14 +94,21 @@ class Settings(BaseSettings):
     ATR_CEIL_MULT: float = Field(default=1.2, gt=0.0, le=3.0, description="동적 상한 곱계수 (P80×mult)")
     # KOSPI200 ATR 캘리브레이션 윈도우 (영업일 단위)
     ATR_CALIBRATION_WINDOW_DAYS: int = Field(default=20, ge=5, le=120, description="ATR 캘리브레이션 윈도우(일)")
-    # 임시 시간가드 (09:00~09:10 / 14:30+ 진입 차단), Sprint 3 본 가드 도입 시 제거
-    TEMP_TIME_GUARD_SPRINT2: bool = Field(default=True, description="임시 시간가드 (09:00~09:10 / 14:30+ 차단)")
+    # --- Phase 8.6 Sprint 3: 시간 필터 본 가드 ---
+    TIME_FILTER_ENABLED: bool = Field(default=True, description="시간대 진입 차단 마스터 토글 (false=전 시간대 허용)")
+    # --- Phase 8.6 Sprint 3: 거래량 급등 전략 (VolumeSurge) ---
+    VOLUME_SURGE_ENABLED: bool = Field(default=True, description="거래량 급등 전략 활성화 (false=비활성)")
+    VOLUME_SURGE_DRY_RUN: bool = Field(default=True, description="거래량 급등 전략 Dry-run 모드 (true=신호 발행 전용, 주문 없음)")
+    VOLUME_SURGE_VOL_RATIO: float = Field(default=5.0, gt=0, description="거래량 급등 판정 비율 (현재/평균 ≥ 이 값)")
+    VOLUME_SURGE_BID_ASK_RATIO: float = Field(default=2.0, gt=0, description="호가 매수/매도 잔량 비율 하한 (≥ 이 값)")
+    VOLUME_SURGE_PRICE_THRESHOLD: float = Field(default=0.005, ge=0, description="거래량 급등 진입 가격 상승률 하한 (예: 0.005=0.5%)")
+    VOLUME_SURGE_POSITION_SIZE: float = Field(default=0.30, gt=0, le=1.0, description="거래량 급등 전략 포지션 사이즈 비율 (0~1)")
+    # --- Phase 8.6 Sprint 3: 신호 우선순위 큐 ---
+    SIGNAL_PRIORITY_QUEUE_ENABLED: bool = Field(default=True, description="신호 우선순위 큐 활성화 (false=선입선출 복원)")
     # 폴백 3단 안전모드 신호 발행 중단 시간 (분)
     SAFE_MODE_TIMEOUT_MIN: int = Field(default=120, ge=1, le=720, description="안전모드 신호 발행 중단 시간(분)")
     # ATR 캘리브레이션 단면 OHLC 결측 허용 상한 — missing >= 임계 시 폴백 진입.
-    # 정적 백업 200종 중 일봉 미적재 종목이 많은 환경에선 일시 상향(예: 200) 후
-    # 일봉 백필 완료 시 원복.
-    ATR_COVERAGE_GAP_MAX: int = Field(default=30, ge=1, le=500, description="ATR 캘리브레이션 OHLC 결측 허용 상한")
+    ATR_COVERAGE_GAP_MAX: int = Field(default=30, ge=1, le=500, description="ATR 캘리브레이션 OHLC 결측 허용 상한 (기본 30)")
     # KIS kospi_code.mst 기반 KOSPI200 마스터 자동 동기화. 핫픽스 kospi200-real-200-backfill 도입.
     # default=False로 머지·배포 가능 (관찰 신호 보존). production에서 5/7 관찰 후 true 토글.
     KOSPI200_MST_SYNC_ENABLED: bool = Field(default=False, description="KIS mst 기반 KOSPI200 멤버십 일일 동기화 활성화")

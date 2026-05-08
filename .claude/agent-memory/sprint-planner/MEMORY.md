@@ -64,12 +64,12 @@
 - Phase 8.5 Sprint 2 — 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR (0.4/0.5/0.6 + HARD 0.3) + 자동 롤백 + Sprint 1 M1/M2, ✅ 완료 (2026-04-23) / PR: (develop)
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 - **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
-- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: https://github.com/frogy95/stockbot/pull/184
+- **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: https://github.com/frogy95/stockbot/pull/184. 5/7 1거래일 관찰 CONDITIONAL GO (KOSPI200 sync 226종 + ATR ceil 0.066963 + safe_mode 미발동)
+- **Phase 8.6 Sprint 3** — volume_surge tier 신설(5분봉 vol×5 + 호가창 매수/매도≥2 + 가격 +0.5%, 09:30~14:00, dry_run 기본) + 시간 필터 본 가드(09:00~09:10 차단 + gap_open 09:05까지 예외, 점심 floor 0.7, 14:30+ 신규 진입 금지, TEMP_TIME_GUARD_SPRINT2 제거) + 신호 우선순위 큐 + Sprint 2 잔존 부채(R3 활성화, ATR_COVERAGE_GAP_MAX 30 원복, portal/metrics 잡 키 점검), 🔄 계획 수립 완료 (2026-05-07), `docs/phase/phase8.6/sprint3/sprint3.md` (6 Task, env 8종 추가/변경/제거)
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.6 Sprint 3 — `volume_surge` tier 신설 + 시간대 본 가드 (TEMP_TIME_GUARD_SPRINT2 제거) (Sprint 2 후, Paper 1거래일 관찰 후 착수 권장)
-- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + KS 검정 + ATR 분포 카드(Sprint 2에서 이관) (Sprint 3 + Paper 5거래일 후)
+- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + KS 검정 + ATR 분포 카드(Sprint 2에서 이관) + LIVE 토글 게이트 G-Bt1·G-Bt2·G-Bt3 자동 평가 (Sprint 3 + Paper 5거래일 후)
 - Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.6 완료 후)
 
 ## 핵심 주의사항
