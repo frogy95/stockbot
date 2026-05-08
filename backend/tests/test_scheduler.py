@@ -49,7 +49,8 @@ async def test_scheduler_registers_jobs():
     status = scheduler.get_status()
     assert status["running"] is True
     # Phase 8.6 Sprint 2 — atr_calibration 잡 추가로 8 → 9
-    assert status["job_count"] == 9
+    # Phase 8.6 Sprint 4 — weekly_backtest_gate 잡 추가로 9 → 10
+    assert status["job_count"] == 10
     job_ids_assert = {j["id"] for j in status["next_jobs"]}
     assert "atr_calibration" in job_ids_assert
 
@@ -62,6 +63,7 @@ async def test_scheduler_registers_jobs():
     assert "portal_supplement" in job_ids
     assert "metrics_rollup" in job_ids
     assert "auto_rollback_check" in job_ids
+    assert "weekly_backtest_gate" in job_ids
     assert "premarket_collect" not in job_ids
     assert "etf_master_collect" not in job_ids
     assert "primary_screen" not in job_ids
