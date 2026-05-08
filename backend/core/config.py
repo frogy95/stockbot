@@ -113,6 +113,11 @@ class Settings(BaseSettings):
     # default=False로 머지·배포 가능 (관찰 신호 보존). production에서 5/7 관찰 후 true 토글.
     KOSPI200_MST_SYNC_ENABLED: bool = Field(default=False, description="KIS mst 기반 KOSPI200 멤버십 일일 동기화 활성화")
 
+    # --- Phase 8.6 Sprint 4: walk-forward 백테스트 + LIVE 토글 게이트 ---
+    BACKTEST_ENABLED: bool = Field(default=True, description="walk-forward 백테스트 잡 마스터 토글")
+    LIVE_GATE_AUTO_EVAL_ENABLED: bool = Field(default=True, description="LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 활성화")
+    BACKTEST_DEFAULT_N_DAYS: int = Field(default=60, ge=30, le=120, description="walk-forward 기본 기간(일)")
+
     # 한국투자증권 종목 마스터파일
     KIS_MST_BASE_URL: str = "https://new.real.download.dws.co.kr/common/master"
 
