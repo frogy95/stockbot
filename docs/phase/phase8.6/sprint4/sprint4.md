@@ -323,7 +323,7 @@ git commit -m "feat(phase8.6-sprint4): task1 — scipy 의존성 + backtest 모�
 
 **Step 2: 권한 가드**
 - 기존 `api/deps.py::get_current_user` 활용 + 사용자 role 검증
-- role 시스템이 없으면 환경변수 `BACKTEST_ADMIN_USER_ID` 단일 사용자 ID 매칭으로 단순화 (사용자 결정 필요)
+- role 시스템이 없으면 환경변수 `BACKTEST_ADMIN_USER_ID` 단일 사용자 ID 매칭으로 단순화 (**2026-05-08 사용자 결정: A안 채택** — 임시 해법, Phase 8.7 role 시스템에서 정립)
 
 **Step 3: 검증**
 - `curl -s -X POST http://localhost:8000/api/v1/backtest/run -H "Authorization: Bearer $TOKEN" -d '{"period_end":"2026-05-08","n_days":60}' | jq .`
@@ -459,9 +459,9 @@ deploy.md 수동 검증 항목에 위 5개 추가 필수.
 
 ## 리스크 / 미해결 사항
 
-1. **scipy 패키지 크기**: ~50MB 추가 → Railway 빌드 시간/이미지 크기 영향. 대안: `numpy.percentile` 기반 KS 직접 구현 (사용자 결정 필요)
+1. **scipy 패키지 크기**: ~50MB 추가 → Railway 빌드 시간/이미지 크기 영향. **2026-05-08 사용자 결정: scipy 채택 (A안)** — KS/카이제곱 정확성이 LIVE 토글 게이트 통과 판정에 직결되므로 표준 구현 사용
 2. **KOSPI 200 60일 일봉 데이터 충분성**: 운영 시작 시점 + 휴일에 따라 60일 미충족 가능. backfill-daily API로 보강 가능하나 KIS rate limit 주의
-3. **임계 재조정 적용 시점**: Sprint 4 진단 → hotfix 사이에 R1 자동 롤백 발동 가능 (5/11 1거래일 더 0건 시). 사용자가 Sprint 4 결과 보고 hotfix 우선순위 판단
+3. **임계 재조정 적용 시점**: Sprint 4 진단 → hotfix 사이에 R1 자동 롤백 발동 가능 (5/11 1거래일 더 0건 시). **2026-05-08 사용자 결정: A안 채택** — Sprint 4는 후보 산출까지, 적용은 별도 hotfix. R1 발동은 가드레일 정상 작동으로 수용 (phase8.6.md §4 예외 조항)
 4. **BACKTEST_ADMIN_USER_ID 단일 ID 방식의 한계**: role 시스템 부재 시 임시 해법. Phase 8.7 인증 강화에서 제대로 해결
 5. **LIVE 토글 게이트가 자동 평가 후 자동 LIVE 활성화는 하지 않음** (사용자 수동 확인 + 텔레그램 2단계). 본 Sprint는 평가까지만
 
