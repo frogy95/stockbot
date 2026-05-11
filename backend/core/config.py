@@ -105,6 +105,9 @@ class Settings(BaseSettings):
     VOLUME_SURGE_POSITION_SIZE: float = Field(default=0.30, gt=0, le=1.0, description="거래량 급등 전략 포지션 사이즈 비율 (0~1)")
     # --- Phase 8.6 Sprint 3: 신호 우선순위 큐 ---
     SIGNAL_PRIORITY_QUEUE_ENABLED: bool = Field(default=True, description="신호 우선순위 큐 활성화 (false=선입선출 복원)")
+    # Hotfix 2026-05-11 (dedup-time-window): 동일 종목 pending 신호 중복 판정 시간 윈도우.
+    # 토큰 만료 후 DB row가 영구 잔존하여 그 종목이 영구 차단되는 버그 방지.
+    SIGNAL_DEDUP_WINDOW_HOURS: int = Field(default=6, ge=1, le=72, description="동일 종목 pending 신호 중복 판정 윈도우 (시간)")
     # 폴백 3단 안전모드 신호 발행 중단 시간 (분)
     SAFE_MODE_TIMEOUT_MIN: int = Field(default=120, ge=1, le=720, description="안전모드 신호 발행 중단 시간(분)")
     # ATR 캘리브레이션 단면 OHLC 결측 허용 상한 — missing >= 임계 시 폴백 진입.
