@@ -7,66 +7,70 @@
 
 ---
 
-### Phase 8.6 Sprint 4 — Walk-forward 백테스트 + 임계 재조정 진단
+### 프로덕션 배포 v2.10.0 — Phase 8.6 Sprint 4 (2026-05-08)
 
-**브랜치**: `phase8.6-sprint4` → develop (PR #208)
-**완료 날짜**: 2026-05-08
+**PR**: #209 (develop → main, 머지 커밋 `0a3b594`, 21:57 KST)
+**태그**: `v2.10.0`
+**S4-M1/M2 sprint-pr-fix 반영**: PR #208 (run_id API↔DB 일치 + G-Bt1 underspecified 보수적 차단)
 
-**자동 검증 결과 (2026-05-08 sprint-review):**
+**프로덕션 자동 검증 결과 (2026-05-08 22:00~ KST):**
+- ✅ Backend 헬스체크: `{"status":"healthy","database":"connected","redis":"connected"}`
+- ✅ Alembic 자동 마이그레이션: `f3b1c4d5e201 → d5d5cc2b391e` (3테이블 신규: `backtest_runs`, `backtest_signal_metrics`, `live_gate_statuses`)
+- ✅ Backtest API 6종 라우팅 등록 (openapi.json 확인): `/run`, `/runs`, `/runs/{run_id}`, `/distribution-check`, `/live-gate-status`, `/backfill-daily`
+- ✅ Admin 가드 정상 동작: 6종 모두 401 Unauthorized (no auth)
+- ✅ APScheduler 잡 등록: `weekly_backtest_gate` — 매주 월요일 00:00 KST (`run_weekly_backtest_and_gate_assess`)
+- ✅ Vercel 프론트엔드 접속: 307 (도메인 redirect 정상), `/admin/backtest` 307 (auth redirect 정상)
+- ✅ Backend Swagger `/docs`: 200
+- ✅ Railway 백엔드 로그: 신규 ERROR/Traceback 없음
+- ✅ pytest 회귀 (sprint-review 단계): 1174 passed, 0 failed
 
-- ✅ Phase 7.0 LIVE 파라미터 grep 가드 — 0줄 (위반 없음)
-- ✅ pytest 전체: 1172 passed, 0 failed (76 warnings, 10분 11초)
-- ✅ API 엔드포인트 검증: /api/v1/health healthy, backtest 5종 경로 등록 확인
-- ✅ Playwright UI 검증: /admin/backtest 4종 카드 정상 렌더 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
-- ✅ Alembic 왕복 테스트: upgrade→downgrade→upgrade 3단계 모두 성공
-- ✅ 데모 모드 API 검증: health OK
+**Railway 환경변수 추가 필요 (사용자 직접 설정 — 자동 거부됨):**
 
-**코드 리뷰 결과:**
-- Critical/High 이슈: 0건
-- Medium 이슈: 2건 (phase8.6.md 미해결 사항 테이블 S4-M1, S4-M2 기록)
-  - S4-M1: `POST /backtest/run` run_id 불일치 (클라이언트 반환 run_id ≠ DB run_id)
-  - S4-M2: G-Bt1 미완료 상태 passed=True (의도적 설계이나 Phase 8.7에서 보수화 검토 권장)
+실제 backend/core/config.py:115-123 정의 기준 — `BACKTEST_ENABLED`, `LIVE_GATE_AUTO_EVAL_ENABLED`, `BACKTEST_DEFAULT_N_DAYS`는 디폴트(true/true/60)로 동작하므로 **실설정이 필요한 건 `BACKTEST_ADMIN_USERNAME` 1개**.
 
-**Railway 환경변수 5종 추가 필요 (수동 설정):**
-- `BACKTEST_ENABLED=True`
-- `LIVE_GATE_AUTO_EVAL_ENABLED=True`
-- `BACKTEST_REBUILD_REQUIRED=False`
-- `BACKTEST_ADMIN_USER_ID=1`
-- `BACKTEST_DEFAULT_N_DAYS=60`
+```bash
+railway variables --service stockbot --set "BACKTEST_ADMIN_USERNAME=admin"
+```
 
-**수동 검증 항목:**
-- ⬜ `docker compose up --build` (scipy 의존성 반영 확인)
-- ⬜ `alembic upgrade head` 적용 (backtest_runs, backtest_signal_metrics, live_gate_status 3테이블)
-- ⬜ admin 백테스트 페이지 렌더 확인 (`/admin/backtest` 4종 카드)
-- ✅ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 — `threshold_recalibration_hotfix_plan.md` (2026-05-11, 3단계 처리: 진단→백필→재조정)
+- 디폴트가 `None`이면 인증된 모든 사용자도 차단됨 (임시 lockdown).
+- JWT subject가 `"admin"`으로 하드코딩되어 있으므로 (auth.py:34), 값은 `admin` 고정.
+- 이전 배포 가이드의 `BACKTEST_ADMIN_USER_ID`/`BACKTEST_REBUILD_REQUIRED`는 코드에 존재하지 않음 (deploy-prod agent 환각).
+- **2026-05-11 추가 확인**: `BACKTEST_ADMIN_USERNAME`만 필수, 나머지 4종은 코드 default(`BACKTEST_DEFAULT_N_DAYS=60`) 또는 이미 설정됨.
 
-**Railway 환경변수 5종 추가 필요 (수동 설정) — 정정**: 실제 코드 확인 결과 `BACKTEST_ADMIN_USERNAME` 1종만 필수, 모두 설정 완료. 나머지 4종은 코드 default(`BACKTEST_DEFAULT_N_DAYS=60`) 또는 이미 설정됨. (2026-05-11 확인)
+**남은 사용자 직접 검증 항목 (UI/실행):**
+- ⬜ admin 로그인 후 `/admin/backtest` 4종 카드 시각 렌더 확인 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
+- ⬜ 실제 백테스트 1회 실행 → 결과 카드 렌더 확인 (run_id 응답 ↔ GET /runs/{id} 일치 확인 — S4-M1 검증)
+- ⬜ UI 디자인/시각적 품질 판단
+- ✅ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 — `threshold_recalibration_hotfix_plan.md` (2026-05-11, 3단계: 진단→백필→재조정)
+- ⬜ Notion 업데이트 (§8.5 트리거 — 릴리즈 노트 v2.10.0, 데이터 모델 3테이블, API 명세 6종, 기능 명세 Walk-forward + 통계 검증 + LIVE 토글 게이트)
 
 ---
 
 ### Phase 8.6 Sprint 3 v2.9.0 — Paper 1거래일 관찰 (2026-05-09 장마감 후)
 
-**배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지) — 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.
+**배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지)
 
 **Paper 1거래일 관찰 결과** (2026-05-11 12:00 KST 수집 — API 기반):
 
 | # | 항목 | 게이트 기준 | 측정값 | 결과 |
 |---|------|-----------|--------|------|
 | 1 | volume_surge dry_run 신호 (05-08, 05-11) | ≥1 | 0 / 0 | ❌ NO-GO |
-| 2 | 호가창 Redis 키 (realtime:*:orderbook) | ≥10종 | 미측정 (SSH redis-cli 미설치, 진단 API 부재) | ⚠️ |
-| 3 | 5분봉 vol5m 적재 | ≥10종 | 미측정 (동상) | ⚠️ |
+| 2 | 호가창 Redis 키 (realtime:*:orderbook) | ≥10종 | **18** | ✅ |
+| 3 | 5분봉 vol5m 적재 | ≥10종 | **1000** | ✅ |
 | 4 | 시간 필터 차단 카운터 (morning/afternoon/gap) | ≥1 | 0 / 0 / 0 | ❌ NO-GO |
 | 5 | **R3 자동 롤백 미발동** | is_active=false | **is_active=true** (2026-05-08 16:10 KST 발동, 사유: `auto_rollback_2d_zero_signals`) | 🚨 **이미 발동** |
-| 6 | portal_supplement / metrics_rollup 잡 | 16:10 적재 | 미측정 (동상) | ⚠️ |
+| 6 | scheduler.last_metrics_rollup | 16:10 적재 | 2026-05-10 16:05 KST | ✅ |
+| 6 | scheduler.last_portal_supplement | 16:10 적재 | `null` | ⚠️ 미적재 (별도 조사) |
 
-**측정 출처**: `GET /api/v1/health/observation-daily`, `GET /api/v1/metrics/volume-surge-stats`, `GET /api/v1/metrics/time-filter-stats`
+**측정 출처**: `GET /api/v1/health/observation-daily`, `GET /api/v1/metrics/volume-surge-stats`, `GET /api/v1/metrics/time-filter-stats`, **`GET /api/v1/health/sprint3-keys` (hotfix PR #219)**
 
 **판정**: **NO-GO** — Paper 관찰 게이트 미통과 + R3 자동 롤백 이미 발동.
+**핵심 발견**: 데이터 파이프라인(orderbook 18 / vol5m 1000)은 **정상**. 문제는 signal 생성 경로(volume_surge 0 / time_filter 차단 0)에 국한 — 임계값/스크리닝 이슈 가설 강화.
 **부수 영향**: R3 롤백이 `MIN_VOLUME_FLOOR_MODE=legacy` + `SECONDARY_POOL_FALLBACK_ENABLED=False`를 강제하여 Sprint 1~3 신규 로직이 차폐된 상태.
 
 **다음 액션** (`docs/phase/phase8.6/sprint4/threshold_recalibration_hotfix_plan.md` 3단계):
+- ✅ 단계 A 진단 hotfix 배포 완료 (`hotfix/zero-signal-diagnosis-api`, PR #219, 2026-05-11)
 - ⏳ 단계 B 백필 트리거됨 (2026-05-11, `POST /backtest/backfill-daily` start=2026-02-10 end=2026-05-11)
-- ⬜ 단계 A 진단 hotfix (`hotfix/zero-signal-diagnosis-api`)
 - ⬜ 단계 C grid search + 임계 재조정 hotfix (단계 B 완료 후)
 
 **Kill-switch 런북** (긴급 시):
