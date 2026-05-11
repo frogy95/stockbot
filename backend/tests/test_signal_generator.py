@@ -191,6 +191,32 @@ async def test_duplicate_signal_prevented(
 
 
 @pytest.mark.asyncio
+async def test_dedup_query_uses_time_window(
+    mock_session_factory, mock_redis, mock_strategy
+):
+    """Hotfix 2026-05-11: dedup 쿼리에 created_at 시간 윈도우가 포함됨을 검증."""
+    from modules.trading.signal_generator import SignalGenerator
+
+    factory, session = mock_session_factory
+
+    # 중복 신호 없음 → 정상 진행 가정
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    session.execute = AsyncMock(return_value=mock_result)
+
+    gen = SignalGenerator(factory, mock_redis, mock_strategy)
+    await gen.generate_signals([_make_candidate()])
+
+    # 첫 번째 execute 호출의 select(TradeSignal) 쿼리 검사
+    first_call = session.execute.call_args_list[0]
+    dup_stmt = first_call.args[0]
+    compiled_sql = str(dup_stmt.compile(compile_kwargs={"literal_binds": False})).lower()
+    assert "created_at" in compiled_sql, (
+        f"dedup 쿼리에 created_at 시간 윈도우가 없습니다. compiled SQL:\n{compiled_sql}"
+    )
+
+
+@pytest.mark.asyncio
 async def test_build_snapshot_assembly(
     mock_session_factory, mock_redis, mock_strategy
 ):

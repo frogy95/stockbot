@@ -1,10 +1,10 @@
 """매매 관련 API 라우터 — 리스크 상태, 포지션, 매매 이력, 신호, 주문, 엔진 상태 조회."""
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_db, get_current_user
@@ -175,6 +175,36 @@ async def get_orders(
         }
         for o in orders
     ]
+
+
+@router.post("/signals/expire-stale")
+async def expire_stale_pending_signals(
+    session: AsyncSession = Depends(get_db),
+    older_than_hours: int = Query(default=24, ge=1, le=720),
+):
+    """Hotfix 2026-05-11 — 일정 시간 초과 pending 신호를 expired로 일괄 전환.
+
+    텔레그램 토큰이 만료된 뒤에도 DB row가 status='pending'으로 잔존하여
+    동일 종목이 영구 차단되는 문제를 해소하기 위해 admin이 호출.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
+    stmt = (
+        update(TradeSignal)
+        .where(
+            TradeSignal.status == "pending",
+            TradeSignal.created_at < cutoff,
+        )
+        .values(status="expired")
+        .returning(TradeSignal.id)
+    )
+    result = await session.execute(stmt)
+    expired_ids = [row[0] for row in result.all()]
+    await session.commit()
+    return {
+        "expired_count": len(expired_ids),
+        "expired_ids": expired_ids,
+        "older_than_hours": older_than_hours,
+    }
 
 
 @router.get("/signals/pending")

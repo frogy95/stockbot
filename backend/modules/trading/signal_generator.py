@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from core.config import settings
 from core.models.market_data import MarketData
 from core.models.trading import TradeSignal
 from core.redis import RedisClient
@@ -50,10 +52,17 @@ class SignalGenerator:
             for candidate in screened_candidates:
                 stock_code = candidate["stock_code"]
 
-                # 동일 종목 pending 신호 중복 체크
+                # 동일 종목 pending 신호 중복 체크 (시간 윈도우 적용)
+                # Hotfix 2026-05-11: 윈도우 없이 status='pending'만 검사하면
+                # 텔레그램 토큰 만료 후에도 DB row가 남아 영구 차단됨.
+                # SIGNAL_DEDUP_WINDOW_HOURS 윈도우 내 pending 신호만 중복으로 간주.
+                window_start = datetime.now(timezone.utc) - timedelta(
+                    hours=settings.SIGNAL_DEDUP_WINDOW_HOURS
+                )
                 dup_stmt = select(TradeSignal).where(
                     TradeSignal.stock_code == stock_code,
                     TradeSignal.status == "pending",
+                    TradeSignal.created_at >= window_start,
                 )
                 dup_result = await session.execute(dup_stmt)
                 if dup_result.scalars().first() is not None:

@@ -51,3 +51,22 @@ async def test_get_history(app, auth_headers):
             )
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+@pytest.mark.asyncio
+async def test_expire_stale_pending_signals_shape(app, auth_headers):
+    """Hotfix 2026-05-11: expire-stale 엔드포인트 응답 shape."""
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.post(
+                "/api/v1/trading/signals/expire-stale?older_than_hours=24",
+                headers=auth_headers,
+            )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert set(data.keys()) == {"expired_count", "expired_ids", "older_than_hours"}
+    assert data["older_than_hours"] == 24
+    assert isinstance(data["expired_count"], int)
+    assert isinstance(data["expired_ids"], list)
