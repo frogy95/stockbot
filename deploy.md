@@ -38,7 +38,9 @@
 - ⬜ `docker compose up --build` (scipy 의존성 반영 확인)
 - ⬜ `alembic upgrade head` 적용 (backtest_runs, backtest_signal_metrics, live_gate_status 3테이블)
 - ⬜ admin 백테스트 페이지 렌더 확인 (`/admin/backtest` 4종 카드)
-- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+- ✅ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 — `threshold_recalibration_hotfix_plan.md` (2026-05-11, 3단계 처리: 진단→백필→재조정)
+
+**Railway 환경변수 5종 추가 필요 (수동 설정) — 정정**: 실제 코드 확인 결과 `BACKTEST_ADMIN_USERNAME` 1종만 필수, 모두 설정 완료. 나머지 4종은 코드 default(`BACKTEST_DEFAULT_N_DAYS=60`) 또는 이미 설정됨. (2026-05-11 확인)
 
 ---
 
@@ -46,33 +48,26 @@
 
 **배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지) — 검증 기록은 `docs/deploy-history/2026-05-08.md`로 아카이빙됨.
 
-**Paper 1거래일 관찰 항목** (2026-05-09 장마감 후 16:30 KST):
+**Paper 1거래일 관찰 결과** (2026-05-11 12:00 KST 수집 — API 기반):
 
-- ⬜ `volume_surge` dry_run 신호 1건 이상:
-  ```sql
-  SELECT COUNT(*) FROM trade_signals WHERE strategy_name='volume_surge' AND dry_run=true AND created_at::date = current_date;
-  ```
-- ⬜ 호가창 Redis 키 적재 (≥10종):
-  ```bash
-  railway ssh --service stockbot "redis-cli SCAN 0 MATCH 'realtime:*:orderbook' COUNT 50"
-  ```
-- ⬜ 5분봉 vol5m 적재 (≥10종):
-  ```bash
-  railway ssh --service stockbot "redis-cli SCAN 0 MATCH 'vol5m:*:$(date +%Y%m%d):*' COUNT 100"
-  ```
-- ⬜ 시간 필터 차단 카운터 (≥1):
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)'"
-  ```
-  ✅ Sprint 3 미포함이었던 `record_block` 적재 코드는 hotfix `time-filter-block-counter` (PR #204, 2026-05-08)로 추가 완료 — 정상 적재 기대
-- ⬜ R3 자동 롤백 미발동:
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'auto_rollback:active'"
-  ```
-- ⬜ portal_supplement / metrics_rollup 잡 키 16:10 시점 적재:
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'scheduler:last_portal_supplement' && redis-cli GET 'scheduler:last_metrics_rollup'"
-  ```
+| # | 항목 | 게이트 기준 | 측정값 | 결과 |
+|---|------|-----------|--------|------|
+| 1 | volume_surge dry_run 신호 (05-08, 05-11) | ≥1 | 0 / 0 | ❌ NO-GO |
+| 2 | 호가창 Redis 키 (realtime:*:orderbook) | ≥10종 | 미측정 (SSH redis-cli 미설치, 진단 API 부재) | ⚠️ |
+| 3 | 5분봉 vol5m 적재 | ≥10종 | 미측정 (동상) | ⚠️ |
+| 4 | 시간 필터 차단 카운터 (morning/afternoon/gap) | ≥1 | 0 / 0 / 0 | ❌ NO-GO |
+| 5 | **R3 자동 롤백 미발동** | is_active=false | **is_active=true** (2026-05-08 16:10 KST 발동, 사유: `auto_rollback_2d_zero_signals`) | 🚨 **이미 발동** |
+| 6 | portal_supplement / metrics_rollup 잡 | 16:10 적재 | 미측정 (동상) | ⚠️ |
+
+**측정 출처**: `GET /api/v1/health/observation-daily`, `GET /api/v1/metrics/volume-surge-stats`, `GET /api/v1/metrics/time-filter-stats`
+
+**판정**: **NO-GO** — Paper 관찰 게이트 미통과 + R3 자동 롤백 이미 발동.
+**부수 영향**: R3 롤백이 `MIN_VOLUME_FLOOR_MODE=legacy` + `SECONDARY_POOL_FALLBACK_ENABLED=False`를 강제하여 Sprint 1~3 신규 로직이 차폐된 상태.
+
+**다음 액션** (`docs/phase/phase8.6/sprint4/threshold_recalibration_hotfix_plan.md` 3단계):
+- ⏳ 단계 B 백필 트리거됨 (2026-05-11, `POST /backtest/backfill-daily` start=2026-02-10 end=2026-05-11)
+- ⬜ 단계 A 진단 hotfix (`hotfix/zero-signal-diagnosis-api`)
+- ⬜ 단계 C grid search + 임계 재조정 hotfix (단계 B 완료 후)
 
 **Kill-switch 런북** (긴급 시):
 - volume_surge 폭증: `railway variables --service stockbot --set "VOLUME_SURGE_ENABLED=false"`
@@ -91,6 +86,29 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 - **릴리즈 노트**: v2.9.0 — Phase 8.6 Sprint 3 (2026-05-08 배포)
 
 ---
+
+---
+
+### Hotfix: backtest-backfill-rest-client (2026-05-08)
+
+PR: https://github.com/frogy95/stockbot/pull/217 (MERGED — 머지 커밋 9d1e704)
+
+**원인**: `backend/modules/backtest/historical_loader.py:185` `KISRestClient()` 무인자 호출 → required 의존성(env/token_manager/throttler) 누락 → TypeError → 백필 실패
+**수정**: `backfill_missing_daily(rest_client=...)` 인자 추가 + `backfill_daily` 라우트에서 `app.state.kis_inquiry` 주입 + 부재 시 503 반환 + 회귀 테스트 2종 추가
+
+**변경 파일 (3개)**:
+- `backend/modules/backtest/historical_loader.py` (rest_client 인자 추가, None → ValueError)
+- `backend/api/routes/backtest.py` (Request 인자 추가, kis_inquiry 주입, 503 가드)
+- `backend/tests/api/test_backtest_routes.py` (회귀 테스트 2종 추가)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/api/test_backtest_routes.py`: 12종 통과 (0 failed)
+  - pytest backfill/historical_loader 관련 14종 전체 통과
+  - 헬스체크: healthy (database + redis connected)
+  - 프로덕션: POST /backfill-daily 202 응답 정상, 백그라운드 백필 작동 확인
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
 
 ---
 
