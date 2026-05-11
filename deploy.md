@@ -35,12 +35,13 @@ railway variables --service stockbot --set "BACKTEST_ADMIN_USERNAME=admin"
 - 디폴트가 `None`이면 인증된 모든 사용자도 차단됨 (임시 lockdown).
 - JWT subject가 `"admin"`으로 하드코딩되어 있으므로 (auth.py:34), 값은 `admin` 고정.
 - 이전 배포 가이드의 `BACKTEST_ADMIN_USER_ID`/`BACKTEST_REBUILD_REQUIRED`는 코드에 존재하지 않음 (deploy-prod agent 환각).
+- **2026-05-11 추가 확인**: `BACKTEST_ADMIN_USERNAME`만 필수, 나머지 4종은 코드 default(`BACKTEST_DEFAULT_N_DAYS=60`) 또는 이미 설정됨.
 
 **남은 사용자 직접 검증 항목 (UI/실행):**
 - ⬜ admin 로그인 후 `/admin/backtest` 4종 카드 시각 렌더 확인 (Walk-forward 실행 / 최근 실행 결과 / KS 시계열+LIVE 게이트 / 60일 백필)
 - ⬜ 실제 백테스트 1회 실행 → 결과 카드 렌더 확인 (run_id 응답 ↔ GET /runs/{id} 일치 확인 — S4-M1 검증)
 - ⬜ UI 디자인/시각적 품질 판단
-- ⬜ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 (`threshold_recalibration_candidates.md` 참조)
+- ✅ 진단 리포트 기반 임계 재조정 hotfix 계획 수립 — `threshold_recalibration_hotfix_plan.md` (2026-05-11, 3단계: 진단→백필→재조정)
 - ⬜ Notion 업데이트 (§8.5 트리거 — 릴리즈 노트 v2.10.0, 데이터 모델 3테이블, API 명세 6종, 기능 명세 Walk-forward + 통계 검증 + LIVE 토글 게이트)
 
 ---
@@ -49,32 +50,28 @@ railway variables --service stockbot --set "BACKTEST_ADMIN_USERNAME=admin"
 
 **배포 완료**: 2026-05-08 KST 13:01 (PR #201 머지)
 
-**Paper 1거래일 관찰 항목** (2026-05-09 장마감 후 16:30 KST):
+**Paper 1거래일 관찰 결과** (2026-05-11 12:00 KST 수집 — API 기반):
 
-- ⬜ `volume_surge` dry_run 신호 1건 이상:
-  ```sql
-  SELECT COUNT(*) FROM trade_signals WHERE strategy_name='volume_surge' AND dry_run=true AND created_at::date = current_date;
-  ```
-- ⬜ 호가창 Redis 키 적재 (≥10종):
-  ```bash
-  railway ssh --service stockbot "redis-cli SCAN 0 MATCH 'realtime:*:orderbook' COUNT 50"
-  ```
-- ⬜ 5분봉 vol5m 적재 (≥10종):
-  ```bash
-  railway ssh --service stockbot "redis-cli SCAN 0 MATCH 'vol5m:*:$(date +%Y%m%d):*' COUNT 100"
-  ```
-- ⬜ 시간 필터 차단 카운터 (≥1):
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'metrics:time_filter:morning_lockout:$(date +%Y-%m-%d)'"
-  ```
-- ⬜ R3 자동 롤백 미발동:
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'auto_rollback:active'"
-  ```
-- ⬜ portal_supplement / metrics_rollup 잡 키 16:10 시점 적재:
-  ```bash
-  railway ssh --service stockbot "redis-cli GET 'scheduler:last_portal_supplement' && redis-cli GET 'scheduler:last_metrics_rollup'"
-  ```
+| # | 항목 | 게이트 기준 | 측정값 | 결과 |
+|---|------|-----------|--------|------|
+| 1 | volume_surge dry_run 신호 (05-08, 05-11) | ≥1 | 0 / 0 | ❌ NO-GO |
+| 2 | 호가창 Redis 키 (realtime:*:orderbook) | ≥10종 | **18** | ✅ |
+| 3 | 5분봉 vol5m 적재 | ≥10종 | **1000** | ✅ |
+| 4 | 시간 필터 차단 카운터 (morning/afternoon/gap) | ≥1 | 0 / 0 / 0 | ❌ NO-GO |
+| 5 | **R3 자동 롤백 미발동** | is_active=false | **is_active=true** (2026-05-08 16:10 KST 발동, 사유: `auto_rollback_2d_zero_signals`) | 🚨 **이미 발동** |
+| 6 | scheduler.last_metrics_rollup | 16:10 적재 | 2026-05-10 16:05 KST | ✅ |
+| 6 | scheduler.last_portal_supplement | 16:10 적재 | `null` | ⚠️ 미적재 (별도 조사) |
+
+**측정 출처**: `GET /api/v1/health/observation-daily`, `GET /api/v1/metrics/volume-surge-stats`, `GET /api/v1/metrics/time-filter-stats`, **`GET /api/v1/health/sprint3-keys` (hotfix PR #219)**
+
+**판정**: **NO-GO** — Paper 관찰 게이트 미통과 + R3 자동 롤백 이미 발동.
+**핵심 발견**: 데이터 파이프라인(orderbook 18 / vol5m 1000)은 **정상**. 문제는 signal 생성 경로(volume_surge 0 / time_filter 차단 0)에 국한 — 임계값/스크리닝 이슈 가설 강화.
+**부수 영향**: R3 롤백이 `MIN_VOLUME_FLOOR_MODE=legacy` + `SECONDARY_POOL_FALLBACK_ENABLED=False`를 강제하여 Sprint 1~3 신규 로직이 차폐된 상태.
+
+**다음 액션** (`docs/phase/phase8.6/sprint4/threshold_recalibration_hotfix_plan.md` 3단계):
+- ✅ 단계 A 진단 hotfix 배포 완료 (`hotfix/zero-signal-diagnosis-api`, PR #219, 2026-05-11)
+- ⏳ 단계 B 백필 트리거됨 (2026-05-11, `POST /backtest/backfill-daily` start=2026-02-10 end=2026-05-11)
+- ⬜ 단계 C grid search + 임계 재조정 hotfix (단계 B 완료 후)
 
 **Kill-switch 런북** (긴급 시):
 - volume_surge 폭증: `railway variables --service stockbot --set "VOLUME_SURGE_ENABLED=false"`
@@ -93,6 +90,29 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 - **릴리즈 노트**: v2.9.0 — Phase 8.6 Sprint 3 (2026-05-08 배포)
 
 ---
+
+---
+
+### Hotfix: backtest-backfill-rest-client (2026-05-08)
+
+PR: https://github.com/frogy95/stockbot/pull/217 (MERGED — 머지 커밋 9d1e704)
+
+**원인**: `backend/modules/backtest/historical_loader.py:185` `KISRestClient()` 무인자 호출 → required 의존성(env/token_manager/throttler) 누락 → TypeError → 백필 실패
+**수정**: `backfill_missing_daily(rest_client=...)` 인자 추가 + `backfill_daily` 라우트에서 `app.state.kis_inquiry` 주입 + 부재 시 503 반환 + 회귀 테스트 2종 추가
+
+**변경 파일 (3개)**:
+- `backend/modules/backtest/historical_loader.py` (rest_client 인자 추가, None → ValueError)
+- `backend/api/routes/backtest.py` (Request 인자 추가, kis_inquiry 주입, 503 가드)
+- `backend/tests/api/test_backtest_routes.py` (회귀 테스트 2종 추가)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/api/test_backtest_routes.py`: 12종 통과 (0 failed)
+  - pytest backfill/historical_loader 관련 14종 전체 통과
+  - 헬스체크: healthy (database + redis connected)
+  - 프로덕션: POST /backfill-daily 202 응답 정상, 백그라운드 백필 작동 확인
+
+- ⬜ 수동 검증 필요 항목:
+  - `docker compose up --build` (코드 반영)
 
 ---
 

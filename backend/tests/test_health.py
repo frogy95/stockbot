@@ -42,3 +42,26 @@ async def test_health_connected(app):
         data = resp.json()
         assert data["database"] == "connected"
         assert data["redis"] == "connected"
+
+
+@pytest.mark.asyncio
+async def test_health_sprint3_keys_shape(app):
+    """Phase 8.6 진단 hotfix — Sprint 3 Paper 관찰 키 카운트 API."""
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/api/v1/health/sprint3-keys")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "date" in data
+        assert "orderbook_count" in data
+        assert isinstance(data["orderbook_count"], int)
+        assert "vol5m_count" in data
+        assert isinstance(data["vol5m_count"], int)
+        assert "scheduler" in data
+        assert set(data["scheduler"].keys()) == {
+            "last_portal_supplement",
+            "last_metrics_rollup",
+            "last_auto_rollback_check",
+        }

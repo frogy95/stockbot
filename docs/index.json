@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-08T23:07:00+09:00",
+  "lastUpdated": "2026-05-08T23:21:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3883,6 +3883,24 @@
         {
           "hash": "6ae23a5",
           "message": "fix(backtest): WalkForwardRunner 생성자에 session 인자 전달",
+          "date": "2026-05-08"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-backtest-backfill-rest-client",
+      "name": "backfill-daily KISRestClient 주입 수정 (TypeError → 백필 실패)",
+      "status": "deployed",
+      "path": "docs/hotfix/backtest-backfill-rest-client/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "pr": "https://github.com/frogy95/stockbot/pull/217",
+      "deployedAt": "2026-05-08",
+      "description": "v2.10.0 검증 중 발견된 두 번째 backtest 버그. backend/modules/backtest/historical_loader.py:185 KISRestClient() 무인자 호출 → required 의존성(env/token_manager/throttler) 누락 → TypeError → 백필 실패. backfill_missing_daily(rest_client=...) 인자 추가, None 시 ValueError, 라우트에서 app.state.kis_inquiry 주입, 부재 시 503 반환. 회귀 테스트 2종 추가.",
+      "commits": [
+        {
+          "hash": "3422895",
+          "message": "fix(backtest): backfill-daily 가 app.state.kis_inquiry 주입받도록 수정",
           "date": "2026-05-08"
         }
       ]

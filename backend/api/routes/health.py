@@ -207,6 +207,35 @@ async def observation_daily(
     }
 
 
+@router.get("/health/sprint3-keys")
+async def sprint3_keys_diagnostic():
+    """Phase 8.6 Sprint 3 Paper 관찰용 진단 — Redis 키 적재 카운트.
+
+    SSH/redis-cli 접근이 차단된 환경에서 관찰 항목 #2/#3/#6을 API로 노출.
+    인증 없음 (집계 카운터만, 민감 정보 없음).
+    """
+    tz = ZoneInfo(settings.MARKET_TIMEZONE)
+    today = datetime.now(tz).date()
+    yyyymmdd = today.strftime("%Y%m%d")
+
+    orderbook_keys = await redis_client.scan_keys("realtime:*:orderbook")
+    vol5m_keys = await redis_client.scan_keys(f"vol5m:*:{yyyymmdd}:*")
+    last_portal = await redis_client.get("scheduler:last_portal_supplement")
+    last_rollup = await redis_client.get("scheduler:last_metrics_rollup")
+    last_auto_rollback = await redis_client.get("scheduler:last_auto_rollback_check")
+
+    return {
+        "date": today.isoformat(),
+        "orderbook_count": len(orderbook_keys),
+        "vol5m_count": len(vol5m_keys),
+        "scheduler": {
+            "last_portal_supplement": last_portal,
+            "last_metrics_rollup": last_rollup,
+            "last_auto_rollback_check": last_auto_rollback,
+        },
+    }
+
+
 @router.get("/health/ws-diag")
 async def ws_diagnostic(request: Request):
     """WS + 실시간 데이터 진단 — 스케줄러 WS 상태 및 Redis 캐시 확인."""
