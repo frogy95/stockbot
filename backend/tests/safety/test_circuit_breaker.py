@@ -188,9 +188,31 @@ async def test_master_disabled_does_not_trigger():
 
 
 @pytest.mark.asyncio
-async def test_execute_noop_when_should_not_trigger():
-    """should_trigger=False 시 Redis set 호출 없음."""
+async def test_execute_noop_when_should_not_trigger_and_no_existing():
+    """should_trigger=False + 기존 비활성 → set/delete 모두 호출 없음."""
     redis = AsyncMock()
+    redis.get = AsyncMock(return_value=None)
     cb = CircuitBreaker(redis_client=redis, settings=_Cfg())
     await cb.execute(CircuitEvaluation(should_trigger=False))
     redis.set.assert_not_called()
+    redis.delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_execute_self_clears_when_no_trigger_and_existing():
+    """2026-05-12 hotfix — should_trigger=False && 기존 활성 시 phase86 + phase85 둘 다 DEL."""
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value="true")
+    redis.delete = AsyncMock()
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    cb = CircuitBreaker(redis_client=redis, settings=_Cfg(), notifier=notifier)
+    await cb.execute(CircuitEvaluation(should_trigger=False))
+    deleted_keys = {call.args[0] for call in redis.delete.await_args_list}
+    assert CIRCUIT_BREAKER_KEY in deleted_keys
+    assert PHASE85_FALLBACK_OVERRIDE_KEY in deleted_keys
+    redis.set.assert_not_called()
+    notifier.send_system_alert.assert_awaited_once()
+    args = notifier.send_system_alert.call_args[0]
+    assert args[0] == "phase86_circuit_breaker"
+    assert "해제" in args[1]
