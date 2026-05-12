@@ -117,8 +117,30 @@ class CircuitBreaker:
 
         Phase 8.6 변경분(`phase86:circuit_breaker:active`) + Phase 8.5 폴백(`SECONDARY_POOL_FALLBACK_ENABLED`)
         을 동시 차단. DoR §3 G3 명시 사항.
+
+        2026-05-12 hotfix — 미발동(should_trigger=False) 시 기존 활성 상태이면 자동 해제.
+        자연 해제 메커니즘 부재로 TTL 24h까지 신호 차단 지속되던 문제 수정.
         """
         if not evaluation.should_trigger:
+            existing = await self._redis.get(CIRCUIT_BREAKER_KEY)
+            if existing is not None:
+                await self._redis.delete(CIRCUIT_BREAKER_KEY)
+                await self._redis.delete(PHASE85_FALLBACK_OVERRIDE_KEY)
+                logger.warning(
+                    "G3 회로차단기 해제: 트리거 조건 풀림 → "
+                    "phase86:circuit_breaker:active + SECONDARY_POOL_FALLBACK_ENABLED DEL"
+                )
+                if self._notifier is not None:
+                    msg = (
+                        "✅ Phase 8.6 G3 회로차단기 해제 — 트리거 조건 해소. "
+                        "phase86:circuit_breaker:active + SECONDARY_POOL_FALLBACK_ENABLED DEL."
+                    )
+                    try:
+                        await self._notifier.send_system_alert(
+                            "phase86_circuit_breaker", msg
+                        )
+                    except Exception:  # noqa: BLE001
+                        logger.exception("G3 해제 텔레그램 알림 실패")
             return
 
         await self._redis.set(

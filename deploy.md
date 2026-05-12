@@ -93,6 +93,32 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: phase86-g2g3-self-clear (2026-05-12)
+
+브랜치: `hotfix/phase86-g2g3-self-clear`
+**배경**: R3 unset hotfix(#226) 배포 후 신호 0건 진단 심화 결과, signal_generator.py:105 `G3 circuit_breaker.allow_signal()`이 모든 신규 진입 신호를 차단하는 HARD GATE임을 발견. `phase86:circuit_breaker:active=true` 활성 상태에서는 momentum_breakout이 통과해도 DB 저장 전 차단. G2(`phase86:rollback:active`)는 observability flag(consumer 없음) 이나 G2/G3 evaluator 모두 unset 분기 부재로 TTL 24h 만료까지 자동 해제 불가. 매일 16:10 KST 재평가 시 동일 조건이면 재SET되어 영구 차단.
+
+**수정 내용**:
+- `auto_rollback.py:execute_rollback` — `should_rollback=False` && 기존 활성 시 `phase86:rollback:active` DEL + 해제 알림
+- `circuit_breaker.py:execute` — `should_trigger=False` && 기존 활성 시 `phase86:circuit_breaker:active` + `SECONDARY_POOL_FALLBACK_ENABLED` 둘 다 DEL + 해제 알림
+- 회귀 테스트 4종 추가 (G2 self-clear/no-clear, G3 self-clear/no-clear)
+
+**변경 파일 (4개)**:
+- `backend/modules/safety/auto_rollback.py` (+22)
+- `backend/modules/safety/circuit_breaker.py` (+23)
+- `backend/tests/safety/test_auto_rollback.py` (+52)
+- `backend/tests/safety/test_circuit_breaker.py` (+22)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/safety/ + tests/test_scheduler.py`: 60 passed, 0 failed (신규 4종 포함)
+
+- ⬜ 수동 검증 필요 항목:
+  - Railway 자동 배포 후 헬스체크 healthy 확인
+  - `railway ssh` Redis manual DEL: `phase86:circuit_breaker:active` + `phase86:rollback:active` (배포만으로는 기존 active 키 자동 해제 안 됨 — 다음 16:10 KST 평가 시점에 자동 해제됨)
+  - 내일(2026-05-13) 09:30 KST `stage-heatmap` 재측정 — `prev_close_volume_confirm`/`gap_open_absorb` 0건 + 신호 ≥1건 발생 확인
+
+---
+
 ### Hotfix: auto-rollback-self-clear (2026-05-12)
 
 브랜치: `hotfix/auto-rollback-self-clear`
