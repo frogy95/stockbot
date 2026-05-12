@@ -264,3 +264,54 @@ async def test_execute_rollback_disables_phase86_only_not_phase85():
     for call in redis.set.await_args_list:
         args, _ = call
         assert "SECONDARY_POOL_FALLBACK_ENABLED" not in args[0]
+
+
+@pytest.mark.asyncio
+async def test_execute_rollback_self_clears_when_no_trigger():
+    """2026-05-12 hotfix — should_rollback=False && 기존 활성 시 자동 DEL."""
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value="true")  # 기존 활성
+    redis.delete = AsyncMock()
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    ev = AutoRollbackEvaluator(
+        redis_client=redis,
+        session_factory=AsyncMock(),
+        settings=_Cfg(),
+        signal_count_loader=AsyncMock(),
+        fallback_triggered_loader=AsyncMock(),
+        fallback_signal_count_loader=AsyncMock(),
+        primary_candidate_count_loader=AsyncMock(),
+        tier_count_loader=AsyncMock(),
+        notifier=notifier,
+    )
+    await ev.execute_rollback(RollbackEvaluation(should_rollback=False))
+    redis.delete.assert_any_await("phase86:rollback:active")
+    notifier.send_system_alert.assert_awaited_once()
+    args = notifier.send_system_alert.call_args[0]
+    assert args[0] == "phase86_auto_rollback"
+    assert "해제" in args[1]
+
+
+@pytest.mark.asyncio
+async def test_execute_rollback_no_clear_when_no_existing():
+    """should_rollback=False && 기존 비활성 → DEL/알림 모두 미발생."""
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value=None)
+    redis.delete = AsyncMock()
+    notifier = AsyncMock()
+    notifier.send_system_alert = AsyncMock()
+    ev = AutoRollbackEvaluator(
+        redis_client=redis,
+        session_factory=AsyncMock(),
+        settings=_Cfg(),
+        signal_count_loader=AsyncMock(),
+        fallback_triggered_loader=AsyncMock(),
+        fallback_signal_count_loader=AsyncMock(),
+        primary_candidate_count_loader=AsyncMock(),
+        tier_count_loader=AsyncMock(),
+        notifier=notifier,
+    )
+    await ev.execute_rollback(RollbackEvaluation(should_rollback=False))
+    redis.delete.assert_not_awaited()
+    notifier.send_system_alert.assert_not_awaited()

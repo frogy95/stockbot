@@ -135,8 +135,29 @@ class AutoRollbackEvaluator:
         return denom > 0 and share >= R4_FALLBACK_SHARE_THRESHOLD
 
     async def execute_rollback(self, evaluation: RollbackEvaluation) -> None:
-        """발동 시 Redis 일괄 비활성화 토글 + 텔레그램 알림."""
+        """발동 시 Redis 일괄 비활성화 토글 + 텔레그램 알림.
+
+        2026-05-12 hotfix — 미발동(should_rollback=False) 시 기존 활성 상태이면 자동 해제.
+        자연 해제 메커니즘 부재로 TTL 24h까지 차단 지속되던 문제 수정.
+        """
         if not evaluation.should_rollback:
+            existing = await self._redis.get(PHASE86_ROLLBACK_KEY)
+            if existing is not None:
+                await self._redis.delete(PHASE86_ROLLBACK_KEY)
+                logger.warning(
+                    "G2 자동 롤백 해제: 트리거 모두 풀림 → phase86:rollback:active DEL"
+                )
+                if self._notifier is not None:
+                    msg = (
+                        "✅ Phase 8.6 G2 자동 롤백 해제 — 트리거 조건 모두 해소. "
+                        "phase86:rollback:active DEL."
+                    )
+                    try:
+                        await self._notifier.send_system_alert(
+                            "phase86_auto_rollback", msg
+                        )
+                    except Exception:  # noqa: BLE001
+                        logger.exception("G2 해제 텔레그램 알림 실패")
             return
 
         await self._redis.set(
