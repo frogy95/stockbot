@@ -653,6 +653,55 @@ async def test_auto_rollback_not_triggered_if_any_signal_exists():
 
 
 @pytest.mark.asyncio
+async def test_auto_rollback_self_clears_when_signal_recovers():
+    """2026-05-12 hotfix — 기존 override 활성 상태에서 신호 ≥1건 발생 시 4개 키 자동 DEL."""
+    fake_redis = FakeRedis()
+    # 기존 R3 strict mode 활성 상태 모사
+    fake_redis._store["settings:override:MIN_VOLUME_FLOOR_MODE"] = "legacy"
+    fake_redis._store["settings:override:SECONDARY_POOL_FALLBACK_ENABLED"] = "False"
+    fake_redis._store["settings:override:triggered_at"] = "2026-05-08T16:10:01+09:00"
+    fake_redis._store["settings:override:reason"] = "auto_rollback_2d_zero_signals"
+
+    session_factory = _make_session_factory_with_counts(today_count=1, prev_count=0)
+    scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
+
+    mock_notifier = AsyncMock()
+    mock_notifier.send_system_alert = AsyncMock()
+    scheduler._notifier_manager = mock_notifier
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._evaluate_phase85_zero_signals()
+
+    # 4개 키 모두 삭제 확인
+    assert fake_redis._store.get("settings:override:MIN_VOLUME_FLOOR_MODE") is None
+    assert fake_redis._store.get("settings:override:SECONDARY_POOL_FALLBACK_ENABLED") is None
+    assert fake_redis._store.get("settings:override:triggered_at") is None
+    assert fake_redis._store.get("settings:override:reason") is None
+    # 해제 알림 발송 확인
+    mock_notifier.send_system_alert.assert_awaited_once()
+    call_args = mock_notifier.send_system_alert.call_args
+    assert call_args[0][0] == "auto_rollback"
+    assert "자동 롤백 해제" in call_args[0][1]
+
+
+@pytest.mark.asyncio
+async def test_auto_rollback_no_clear_when_no_existing_override():
+    """기존 override 없으면 DEL/알림 모두 미발생 (불필요 알림 방지)."""
+    fake_redis = FakeRedis()
+    session_factory = _make_session_factory_with_counts(today_count=1, prev_count=1)
+    scheduler = _make_scheduler_with_session(session_factory, redis=fake_redis)
+
+    mock_notifier = AsyncMock()
+    mock_notifier.send_system_alert = AsyncMock()
+    scheduler._notifier_manager = mock_notifier
+
+    with patch("modules.collector.scheduler.is_trading_day", return_value=True):
+        await scheduler._evaluate_phase85_zero_signals()
+
+    mock_notifier.send_system_alert.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_auto_rollback_skipped_on_non_trading_day():
     """비거래일에는 롤백 검사 자체를 스킵."""
     fake_redis = FakeRedis()
