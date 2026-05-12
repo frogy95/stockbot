@@ -93,6 +93,33 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: auto-rollback-self-clear (2026-05-12)
+
+브랜치: `hotfix/auto-rollback-self-clear`
+**배경**: 2026-05-11 dedup hotfix(PR #223)로 신호 1건 회복 후에도 R3 strict mode가 풀리지 않아 2026-05-12 신호 0건 지속. 코드 분석 결과 `_check_auto_rollback`(scheduler.py:1133-1148)은 SET 분기만 있고 unset 분기가 없어 한번 발동되면 7일 TTL 만료 또는 수동 DEL로만 해제됨. 추가로 매일 16:10 KST 재실행 시 0건 유지되면 재SET되는 악순환 위험.
+
+**즉시 조치 (2026-05-12 10:30 KST)**: `railway ssh`로 Redis override 4개 키 manual DEL — `is_active:false` 즉시 확인, fallback 풀 1건 즉시 작동.
+
+**수정 내용**:
+- `_check_auto_rollback`에 unset 분기 추가: `today_count>=1 OR prev_count>=1` && 기존 override 존재 시 4개 키 DEL + 해제 알림 발송
+- 회귀 테스트 2종 추가:
+  - `test_auto_rollback_self_clears_when_signal_recovers` — 활성 상태에서 신호 회복 시 자동 해제 검증
+  - `test_auto_rollback_no_clear_when_no_existing_override` — 기존 override 없을 때 불필요 알림 미발생 검증
+
+**변경 파일 (2개)**:
+- `backend/modules/collector/scheduler.py` (+24)
+- `backend/tests/test_scheduler.py` (+52)
+
+- ✅ 자동 검증 완료 항목:
+  - pytest `tests/test_scheduler.py`: 31 passed, 0 failed (신규 2종 포함)
+  - manual DEL 즉시 검증: `is_active:false`, `fallback.codes:["095610"]` (폴백 풀 즉시 작동)
+
+- ⬜ 수동 검증 필요 항목:
+  - Railway 자동 배포 후 헬스체크 healthy 확인
+  - 차후 R3 재발동 시 다음 날 신호 1건 발생하면 16:10 KST `_check_auto_rollback`이 자동 해제하는지 로그 확인
+
+---
+
 ### Hotfix: backtest-backfill-rest-client (2026-05-08)
 
 PR: https://github.com/frogy95/stockbot/pull/217 (MERGED — 머지 커밋 9d1e704)
