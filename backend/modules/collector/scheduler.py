@@ -1159,6 +1159,31 @@ class CollectorScheduler:
                     await self._notifier_manager.send_system_alert("auto_rollback", alert_msg)
                 elif self._telegram_bot is not None:
                     await self._telegram_bot.send_notification(alert_msg)
+            else:
+                # 2026-05-12 hotfix — 자동 해제 분기
+                # today_count>=1 또는 prev_count>=1 이고 기존 override가 있으면 자동 해제.
+                # 자연 해제 메커니즘 부재로 한번 발동되면 7일 TTL 만료까지 strict mode가 지속되던 문제 수정.
+                existing = await self._redis.get(f"{OVERRIDE_PREFIX}triggered_at")
+                if existing is not None:
+                    for suffix in (
+                        "MIN_VOLUME_FLOOR_MODE",
+                        "SECONDARY_POOL_FALLBACK_ENABLED",
+                        "triggered_at",
+                        "reason",
+                    ):
+                        await self._redis.delete(f"{OVERRIDE_PREFIX}{suffix}")
+                    logger.warning(
+                        "자동 롤백 해제: today=%d, prev=%d 신호 ≥1건 → Redis override 4키 DEL",
+                        today_count, prev_count,
+                    )
+                    clear_msg = (
+                        f"✅ 자동 롤백 해제 — 신호 발생 재개 (today={today_count}, prev={prev_count}). "
+                        "MIN_VOLUME_FLOOR_MODE/FALLBACK strict mode 복원."
+                    )
+                    if self._notifier_manager is not None:
+                        await self._notifier_manager.send_system_alert("auto_rollback", clear_msg)
+                    elif self._telegram_bot is not None:
+                        await self._telegram_bot.send_notification(clear_msg)
         except Exception:  # noqa: BLE001
             logger.exception("auto_rollback_check 실패 (스케줄러 계속 동작)")
 
