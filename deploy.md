@@ -93,6 +93,28 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: phase86-atr-volume-floor-relax (2026-05-13)
+
+브랜치: `hotfix/phase86-atr-volume-floor-relax`
+**배경**: 2026-05-13 장중 1차/2차 모니터링 결과 — PARALLEL OFF 정적 모드에서 `atr_filter` + `min_volume_floor`가 단일 압도 stage(min_volume_floor 72.4%)로 부상. 12:00 KST 시점 누적 reject 87건 중 min_volume_floor 63건, atr_filter 20건. 종목 009150(LG)이 거래량 825k/필요 869k(94.9%)에서 floor_ratio=0.4로 연속 reject, 322000(휴젤)이 atr_ratio=0.07로 atr_filter 정적 0.05 회귀 차단.
+
+**수정 내용**:
+- `momentum_breakout.py:33` `ATR_FILTER_PCT` 0.05 → 0.07 (정적 모드 ATR ceil 완화, ATR_CEIL_HARD=0.08 안쪽)
+- Railway 환경변수 추가 필요: **`MIN_VOLUME_FLOOR_HARD=0.25`** (코드 default 0.3 → 0.25 완화, dynamic 슬라이딩 하한 동조 인하)
+
+**변경 파일 (1개)**:
+- `backend/modules/trading/strategies/momentum_breakout.py` (+3 -1)
+
+**Railway 환경변수 추가 확인: MIN_VOLUME_FLOOR_HARD=0.25** (수동 설정 필요)
+
+```bash
+railway variables --service stockbot --set "MIN_VOLUME_FLOOR_HARD=0.25"
+```
+
+**검증 계획**: 14:30 KST 3차 모니터링에서 min_volume_floor 점유율 ≤ 50% + atr_filter 점유율 감소 + signals.total ≥ 1 확인.
+
+---
+
 ### Hotfix: phase86-g2g3-self-clear (2026-05-12)
 
 브랜치: `hotfix/phase86-g2g3-self-clear`
