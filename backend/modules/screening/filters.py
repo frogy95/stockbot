@@ -11,7 +11,10 @@ class PrimaryFilters:
     volume_min_etf: int = 10_000
     market_cap_min: int = 50_000_000_000
     change_rate_min: float = -2.0
-    change_rate_max: float = 7.0
+    # 2026-05-13 hotfix(real-momentum): 7.0 → 30.0
+    # 상한가/급등주(예: 한솔케미칼 +12%)가 1차 풀 진입 가능하도록 상한 해제.
+    # 단타 모멘텀 전략 정체성 부합 (상한가 30%까지 후보화).
+    change_rate_max: float = 30.0
     max_candidates: int = 20
 
 
@@ -20,7 +23,10 @@ class SecondaryFilters:
     """장중 2차 스크리닝 필터 (실시간 데이터 기반)."""
 
     # KIS CTTR(체결강도) 기준: 100=균형, >100=매수 우세, 120=중간 매수세
-    trade_strength_min: float = 100.0
+    # 2026-05-13 hotfix(real-momentum): 100.0 → 80.0
+    # 상한가 모멘텀은 매도 호가가 비어서 CTTR이 100 아래로 떨어지는 경우가 많음.
+    # 실측 사례: 014680 한솔케미칼 +12% 종목의 CTTR=50. 임계 80은 약한 매도 우세까지 허용.
+    trade_strength_min: float = 80.0
     orderbook_ratio_min: float = 1.2
     screening_interval: int = 30
     no_signal_before: str = "09:30"
