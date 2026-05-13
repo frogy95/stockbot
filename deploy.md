@@ -93,6 +93,25 @@ Sprint 3에서 다음이 변경됨 — dev-process.md §8.5 트리거 해당:
 
 ---
 
+### Hotfix: phase86-real-momentum-strategy (2026-05-13)
+
+브랜치: `hotfix/phase86-real-momentum-strategy`
+**배경**: 2026-05-13 14:30~16:10 KST 014680(한솔케미칼 +12%) trace 결과 — 한 달간 신호 0건의 진짜 본질은 임계가 아니라 **전략 설계 자체의 모순**. 1차 `change_rate_max=7.0`이 +7% 초과 모멘텀 종목을 자동 컷오프하고, 2차 `trade_strength_min=100.0`이 상한가 모멘텀 종목(CTTR<100)을 자동 배제. +12% 한솔케미칼은 1차 4위(score 90.6)로 진입했지만 2차에서 trade_strength=50으로 즉시 탈락. 즉 "단타 모멘텀 매매" 표방 시스템이 실제로는 "+0~+7% 안정 상승주" 전략으로 동작.
+
+**수정 내용**:
+- `filters.py:14` `PrimaryFilters.change_rate_max` 7.0 → 30.0 (상한가 30%까지 후보화)
+- `filters.py:23` `SecondaryFilters.trade_strength_min` 100.0 → 80.0 (상한가 모멘텀 CTTR<100 허용)
+
+**변경 파일 (1개)**:
+- `backend/modules/screening/filters.py` (+6 -2)
+
+**수동 작업**:
+- ⬜ R3 강제 활성 상태 해제: `scripts/ops/clear_phase86_keys.py` 실행 (또는 Redis 키 manual DEL)
+  - 16:10 자동 롤백 발동 상태에서는 MIN_VOLUME_FLOOR_MODE=legacy로 hotfix 효과 무효
+- ⬜ 2026-05-14 장 개장 후 9:30 1차 점검: 1차 풀에 +7% 이상 종목 진입 확인
+
+---
+
 ### Hotfix: phase86-atr-volume-floor-relax (2026-05-13)
 
 브랜치: `hotfix/phase86-atr-volume-floor-relax`
