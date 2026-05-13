@@ -30,7 +30,9 @@ from modules.trading.strategy import (
 logger = logging.getLogger(__name__)
 
 # ATR 필터: 현재가 대비 ATR 비율이 이 값을 초과하면 제외
-ATR_FILTER_PCT = 0.05
+# 2026-05-13 hotfix: PARALLEL_OR_TIER_ENABLED=false 정적 모드에서 변동성 큰 종목 차단 완화 (0.05 → 0.07).
+# ATR_CEIL_HARD=0.08 안쪽이며, 휴젤(322000) 등 atr_ratio 0.07 종목 통과 허용.
+ATR_FILTER_PCT = 0.07
 
 # 시장 시간 상수 (KST)
 MARKET_OPEN = time(9, 0)
