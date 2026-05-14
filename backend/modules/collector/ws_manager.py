@@ -1,13 +1,29 @@
 """WS 구독 매니저 — 동적 추가/제거, 35종목 상한, asyncio.Lock 동시성 제어."""
 
 import asyncio
+import json
 import logging
+import time
 
 from core.clients.kis_ws import KISWebSocketClient
+from core.config import settings
 
 logger = logging.getLogger(__name__)
+# Phase 8.6 Sprint 5 T3 — trace 전용 logger (기존 로그와 혼재 금지, WS_TRACE_ENABLED=true 시에만 출력)
+ws_trace_logger = logging.getLogger("ws_trace")
 
 DEFAULT_TR_IDS = ["H0STCNT0", "H0STASP0"]
+
+
+def _ws_trace(event: str, **fields) -> None:
+    """WS subscribe/응답/카운터 구조화 trace.
+
+    WS_TRACE_ENABLED=False면 즉시 return — 코드 경로 영향 0.
+    """
+    if not settings.WS_TRACE_ENABLED:
+        return
+    payload = {"event": event, "ts": time.time(), **fields}
+    ws_trace_logger.info("ws_trace %s", json.dumps(payload, ensure_ascii=False))
 
 
 class WSSubscriptionManager:
@@ -41,9 +57,18 @@ class WSSubscriptionManager:
     async def subscribe(self, stock_code: str, priority: float = 0.0) -> bool:
         """종목 구독. 성공 시 True, 실패 시 False."""
         async with self._lock:
+            _ws_trace(
+                "subscribe_request",
+                stock_code=stock_code,
+                priority=priority,
+                current_count=len(self._subscriptions),
+                max=self._max,
+                connected=bool(self._ws._ws is not None and self._ws.connected),
+            )
             # _ws None 가드 (Phase 6에서 and→or 수정)
             if self._ws._ws is None or not self._ws.connected:
                 logger.warning("WS 미연결 상태에서 구독 시도: %s", stock_code)
+                _ws_trace("subscribe_reject", stock_code=stock_code, reason="not_connected")
                 return False
 
             # 이미 구독 중이면 우선순위만 업데이트
@@ -51,11 +76,14 @@ class WSSubscriptionManager:
                 self._subscriptions[stock_code] = max(
                     self._subscriptions[stock_code], priority
                 )
+                _ws_trace("subscribe_already", stock_code=stock_code, priority=priority)
                 return True
 
             # 상한 미만이면 구독
             if len(self._subscriptions) < self._max:
-                return await self._do_subscribe(stock_code, priority)
+                ok = await self._do_subscribe(stock_code, priority)
+                _ws_trace("subscribe_result", stock_code=stock_code, ok=ok, path="under_limit")
+                return ok
 
             # 상한 도달: 가장 낮은 우선순위 종목과 비교
             min_code = min(self._subscriptions, key=self._subscriptions.get)
@@ -63,9 +91,25 @@ class WSSubscriptionManager:
 
             if priority > min_priority:
                 await self._do_unsubscribe(min_code)
-                return await self._do_subscribe(stock_code, priority)
+                ok = await self._do_subscribe(stock_code, priority)
+                _ws_trace(
+                    "subscribe_result",
+                    stock_code=stock_code,
+                    ok=ok,
+                    path="rotate",
+                    evicted=min_code,
+                    evicted_priority=min_priority,
+                )
+                return ok
 
             logger.info("구독 상한 도달, 우선순위 부족: %s (%.1f)", stock_code, priority)
+            _ws_trace(
+                "subscribe_reject",
+                stock_code=stock_code,
+                reason="over_limit_low_priority",
+                priority=priority,
+                min_priority=min_priority,
+            )
             return False
 
     async def unsubscribe(self, stock_code: str) -> bool:

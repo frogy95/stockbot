@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # 미설정 시 settings 테이블의 daily_max_trade_count 값을 따름
     DAILY_MAX_TRADE_COUNT_OVERRIDE: int | None = None
 
+    # --- Phase 8.6 Sprint 5 T3: KIS WS trace (#6 execution 35% 누락 진단) ---
+    # WS subscribe 요청/응답/MST sync/per-stock 수신 카운터 구조화 로깅 토글
+    # 기본 False — Paper 1주 라이브 trace 시에만 Railway env로 true 활성화
+    # 활성화해도 동작 변경 0건 (로깅 출력만)
+    WS_TRACE_ENABLED: bool = Field(default=False, description="WS subscribe/응답 trace 로깅 (Sprint 5 T3 진단용)")
+
     # --- Phase 8.5 Sprint 2: 풀 하한 폴백 + 동적 MIN_VOLUME_FLOOR ---
     # 거래량 하한 결정 방식 (legacy=0.5 고정 / dynamic=조건부)
     MIN_VOLUME_FLOOR_MODE: Literal["legacy", "dynamic"] = Field(default="dynamic", description="거래량 하한 결정 방식")
