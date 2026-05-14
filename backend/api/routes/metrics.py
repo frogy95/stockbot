@@ -412,18 +412,38 @@ class OverrideStatusResponse(BaseModel):
 async def get_override_status(
     redis: RedisClient = Depends(get_redis),
 ) -> OverrideStatusResponse:
-    """Phase 8.5 Sprint 2.5 — 자동 롤백 발동 상태 조회.
+    """Phase 8.5 Sprint 2.5 + Phase 8.6 Sprint 5 Hotfix A — 자동 롤백/회로차단기 발동 상태 조회.
 
-    Redis `settings:override:triggered_at`이 존재하면 is_active=True.
-    `settings:override:reason`은 발동 사유.
+    is_active 판정: R1(triggered_at) OR G3(circuit_breaker:active) OR R2(rollback:active)
+    어느 하나라도 활성이면 True. 2026-05-14 16:10 모니터링에서 G3 단독 발동 시
+    triggered_at=None이라 false로 표시되던 결함을 수정.
+
+    affected_keys는 실제 Redis에 SET된 settings:override:* 키만 반환.
     """
-    triggered_at = await resolve_override(redis, "triggered_at", default=None)
-    reason = await resolve_override(redis, "reason", default=None)
+    from core.override_keys import (
+        OVERRIDE_PREFIX,
+        PHASE86_CIRCUIT_BREAKER_KEY,
+        PHASE86_ROLLBACK_KEY,
+        SettingsOverrideKey,
+    )
+
+    triggered_at = await resolve_override(redis, SettingsOverrideKey.TRIGGERED_AT.value, default=None)
+    reason = await resolve_override(redis, SettingsOverrideKey.REASON.value, default=None)
+    circuit_active = (await redis.get(PHASE86_CIRCUIT_BREAKER_KEY)) is not None
+    rollback_active = (await redis.get(PHASE86_ROLLBACK_KEY)) is not None
+
+    affected: list[str] = []
+    for k in SettingsOverrideKey:
+        if k in (SettingsOverrideKey.TRIGGERED_AT, SettingsOverrideKey.REASON):
+            continue
+        if (await redis.get(k.redis_key)) is not None:
+            affected.append(k.value)
+
     return OverrideStatusResponse(
-        is_active=triggered_at is not None,
+        is_active=(triggered_at is not None) or circuit_active or rollback_active,
         triggered_at=triggered_at,
         reason=reason,
-        affected_keys=["MIN_VOLUME_FLOOR_MODE", "SECONDARY_POOL_FALLBACK_ENABLED"],
+        affected_keys=affected,
     )
 
 
