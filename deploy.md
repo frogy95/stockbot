@@ -7,51 +7,24 @@
 
 ---
 
-### Hotfix: virtual-signals-stock-code-filter (2026-05-14)
+### Phase 8.6 Sprint 5 (2026-05-15)
 
 PR: (생성 후 기입)
 
-**발견 경위**: 2026-05-14 09:30 Phase 8.6 A안(real-momentum) 첫 검증 모니터링 점검 trace 중 발견.
-**원인**: `/api/v1/metrics/virtual-signals` 핸들러가 `stock_code` Query 파라미터를 선언하지 않아 단일 종목 필터링 불가. 기존 파라미터 미지정 호출 동작에는 영향 없음.
+**Sprint 목표**: 진단·측정 Sprint — T1 코드 즉답 + T2 DB/백테스트 + T3 라이브 WS trace 인프라 구축. DoD 6/9 달성, 잔여 3건(T3 trace 1주 누적, G-Bt1/G-Bt2 백필) Sprint 6 대기.
 
-**변경 파일 (2개)**:
-- `backend/api/routes/metrics.py` — `stock_code: str | None = Query(None)` 파라미터 추가 + 조건부 `where` 필터
-- `backend/tests/test_metrics_routes.py` — stock_code 필터 동작 검증 테스트 1종 추가
+**신규 환경변수 (Railway 수동 설정)**:
+- ✅ `WS_TRACE_ENABLED=true` — Railway 설정 완료 (2026-05-15). Paper 1주 trace 수집용 (5/22까지).
+- ⬜ `WS_TRACE_ENABLED=false` 복귀 — 5/22 Paper 1주 trace 수집 완료 후 Railway에서 `false`로 변경 필요.
 
-- ✅ 자동 검증 완료 항목:
-  - pytest `tests/test_metrics_routes.py`: 7 passed, 0 failed (신규 1종 포함)
-  - pytest 전체 회귀: (검증 결과 기입 예정)
-  - 타겟 API 검증 `GET /virtual-signals?stock_code=...`: (결과 기입 예정)
-  - Playwright 타겟 검증: N/A (UI 변경 없음)
-  - 코드 리뷰: Critical/High 이슈 0건
+**검증 항목**:
+- ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
+- ⬜ 자동 검증 미수행 (sprint-review 에이전트로 실행 필요)
 
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영)
-  - Railway 자동 배포 후 헬스체크 healthy 확인
-
----
-
-### Hotfix: phase86-r3-unset-enum (2026-05-14)
-
-PR: (생성 후 기입)
-
-**발견 경위**: 2026-05-14 16:10 Phase 8.6 모니터링 발견 #7 결함.
-**원인**: G3 단독 발동 시 `/override-status` `is_active` 판정 로직에서 해당 키가 누락. `affected_keys` 정적 계산으로 실제 활성 키와 불일치.
-
-**변경 파일 (3개)**:
-- `backend/core/override_keys.py` — SettingsOverrideKey Enum 신설 (오버라이드 키 단일화)
-- `backend/api/routes/metrics.py` — `is_active` 판정 개선 + `affected_keys` 동적 계산
-- `backend/tests/test_metrics_routes.py` — 오버라이드 상태 회귀 테스트 1종 추가
-
-- ✅ 자동 검증 완료 항목:
-  - pytest `tests/test_metrics_routes.py`: 로컬 8/8 통과 (Docker 컨테이너 미반영 — 빌드 후 재확인 필요)
-  - 타겟 API `GET /override-status`: Docker 미빌드 상태로 미검증
-  - Playwright 타겟 검증: N/A (UI 변경 없음)
-  - 코드 리뷰: Critical/High 이슈 0건
-
-- ⬜ 수동 검증 필요 항목:
-  - `docker compose up --build` (코드 반영 — core.override_keys 모듈 인식 확인)
-  - Railway 자동 배포 후 `/api/v1/metrics/override-status` 응답 확인 (is_active 정확도)
+**후속 결정 필요 항목** (sprint-review 또는 사용자 직접):
+- ⬜ Sprint 6 신설 여부 결정 (우선순위 후보: KIS 일봉 60일 백필 + #16 fallback 0% + #11 stage OR 구조 + #14 hysteresis)
+- ⬜ T3 WS trace 1주(5/22) 후 #6 root cause 채택 + 후속 fix 결정
+- ⬜ Phase 8.7 entry gate 재평가 (백필 완료 + E1/G-Bt1/G-Bt2 측정 후)
 
 ---
 

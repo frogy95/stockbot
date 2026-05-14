@@ -52,14 +52,14 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 
 ## 프로젝트 현황 대시보드
 
-- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)** + **Phase 8.6 Sprint 1 완료 (2026-04-29)** + **Phase 8.6 Sprint 2 완료 (2026-04-29)** + **Phase 8.6 Sprint 3 완료 (2026-05-07)** + **Phase 8.6 Sprint 4 완료 (2026-05-08)**
-- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (Sprint 1·2·3·4 완료, Phase 완료)**
-- 현재 Sprint: **Phase 8.6 Sprint 4 — ✅ 완료 (2026-05-08)** — Walk-forward 60일 + KS 자동 감지 + Bootstrap CI + LIVE 토글 게이트 G-Bt1/G-Bt2/G-Bt3 자동 평가 + 임계 재조정 후보 진단
-- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), Phase 8.5 Sprint 2.5 (2026-04-23), Phase 8.6 Sprint 1 (2026-04-29), Phase 8.6 Sprint 2 (2026-04-29), Phase 8.6 Sprint 3 (2026-05-07), **Phase 8.6 Sprint 4 (2026-05-08)**
+- 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)** + **Phase 8.6 Sprint 1 완료 (2026-04-29)** + **Phase 8.6 Sprint 2 완료 (2026-04-29)** + **Phase 8.6 Sprint 3 완료 (2026-05-07)** + **Phase 8.6 Sprint 4 완료 (2026-05-08)** + **Phase 8.6 Sprint 5 완료 (2026-05-15, 진단 결과 일부 결함은 Sprint 6 후속 결정 대기)**
+- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (Sprint 1·2·3·4·5 완료, Sprint 6 신설 여부 사용자 결정 대기)**
+- 현재 Sprint: **Phase 8.6 Sprint 5 — ✅ 완료 (2026-05-15)** — 진단 결과: T1/T2/T3 인프라 완료, DoD 6/9 달성. 잔여 3건(T3 1주 trace 진행 중, G-Bt1/G-Bt2 백필 부족)은 Sprint 6 또는 후속 hotfix에서 결정. Phase 8.7 LIVE 토글 차단 유지.
+- 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), Phase 8.5 Sprint 2.5 (2026-04-23), Phase 8.6 Sprint 1 (2026-04-29), Phase 8.6 Sprint 2 (2026-04-29), Phase 8.6 Sprint 3 (2026-05-07), Phase 8.6 Sprint 4 (2026-05-08), **Phase 8.6 Sprint 5 (2026-05-15)**
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 완료, 착수 가능)
+- 다음 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 entry gate E1/E2/G-Bt1/G-Bt2 통과 후 착수 가능 — 현재 E1/G-Bt1/G-Bt2 미충족으로 LIVE 토글 차단 유지)
 - 후속 마일스톤: **Phase 8.7 Sprint 2** — 시스템 관리 UI
-- LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 완료 후 착수, DoD: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5, tier 다양성 ≥ 2종)
+- LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 entry gate 4종 통과 후 착수, DoD: 일평균 신호 ≥ 1, 0건 일수 ≤ 2/5, tier 다양성 ≥ 2종)
 - Phase 9 착수 조건: **Phase 8.7 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 (Z-score/VWAP/5분봉 가속도 통합 데이터 수집 인프라).
 - 이후 마일스톤: Phase 8.7 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 → Phase 10 (U자형, 2개월+ 축적) → Phase 10.1 (누적 백로그)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
@@ -1268,7 +1268,7 @@ Phase 8 Sprint 2 배포 후 프로덕션에서 **신호 0건 교차 단절 구�
 
 ---
 
-## Phase 8.6: 신호 생성 로직 구조 재설계 (Sprint 1~4) 🔄
+## Phase 8.6: 신호 생성 로직 구조 재설계 (Sprint 1~5) ✅
 
 ### 목표
 Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 노출한 직렬 AND 게이트 + 시뮬-실측 분포 괴리 + 단일 시각(가격 돌파) 한계를 해소. 분기 D 4명 재리뷰(PO/리스크/퀀트/단타) 권고를 통합하여 **병렬 OR 다중 진입 경로**로 신호 생성 로직을 구조 재설계한다.
@@ -1283,6 +1283,7 @@ Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 �
 - **Sprint 2** ✅ (2026-04-29 완료) — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡 — `docs/phase/phase8.6/sprint2/sprint2.md` v2 (6 Task, 93 PASS)
 - **Sprint 3** ✅ (2026-05-07 완료) — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 본 가드 (09:00~09:10 진입 금지 + gap_open 09:05까지 예외, 점심 floor 0.7, 14:30+ 신규 진입 금지), `TEMP_TIME_GUARD_SPRINT2` 제거, 신호 우선순위 큐, R3 활성화, `ATR_COVERAGE_GAP_MAX` 30 원복 — `docs/phase/phase8.6/sprint3/sprint3.md` (6 Task, 1116 PASS, tsc 0건)
 - **Sprint 4** ✅ (2026-05-08 완료) — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND) + 임계 재조정 후보 진단 — `docs/phase/phase8.6/sprint4/sprint4.md` (8 Task). §4 예외 조항 발동 사유: Sprint 3 배포 후 Paper 2거래일 G2 신호 0건 누적, 근본 원인 Sprint 3 변경분 외 (volume_threshold 2.0 vs 측정 1.26)
+- **Sprint 5** ✅ (2026-05-15 완료, 일부 결함 Sprint 6 후속 결정 대기) — 진단·측정 Sprint: T1 코드 즉답(#8 Hotfix C PR #240 머지 완료, #9 의도 일치, #11 직렬 AND 구조 결함 확인) + T2 DB/백테스트(#10 백필 부족으로 판정 보류, #13 메트릭 의미 분리로 결함 아님·#16 신규 발견, #14 hysteresis 부재 가설 지지) + T3 WS trace 인프라(commit ca01f75, Railway `WS_TRACE_ENABLED=true` 설정 완료, Paper 1주 자연 누적 대기). DoD 6/9 달성. Phase 8.7 entry gate 4종(E1 대기/E2 명목 통과·#16 무효화 의심/G-Bt1 대기/G-Bt2 대기) — Phase 8.7 LIVE 토글 차단 유지. Sprint 6 신설 여부 사용자 결정 대기. — `docs/phase/phase8.6/sprint5/sprint5.md` (5 Task)
 
 ### Definition of Ready (Sprint 2 착수 차단 해제 조건)
 - G1: 폴백 신호율(M-F2) 산출 가능화 — `signal.fallback=true` 메타데이터 신호→주문→체결 전파
