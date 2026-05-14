@@ -477,18 +477,20 @@ async def get_phase86_status(
 @router.get("/virtual-signals", response_model=VirtualSignalsResponse)
 async def virtual_signals(
     days: int = Query(7, ge=1, le=90),
+    stock_code: str | None = Query(None, description="종목코드 필터 (정확 매칭)"),
     session: AsyncSession = Depends(get_db),
 ) -> VirtualSignalsResponse:
     tz = ZoneInfo(settings.MARKET_TIMEZONE)
     cutoff = datetime.now(tz) - timedelta(days=days)
-    rows = (
-        await session.execute(
-            select(VirtualSignal)
-            .where(VirtualSignal.observed_at >= cutoff)
-            .order_by(VirtualSignal.observed_at.desc())
-            .limit(500)
-        )
-    ).scalars().all()
+    stmt = (
+        select(VirtualSignal)
+        .where(VirtualSignal.observed_at >= cutoff)
+        .order_by(VirtualSignal.observed_at.desc())
+        .limit(500)
+    )
+    if stock_code:
+        stmt = stmt.where(VirtualSignal.stock_code == stock_code)
+    rows = (await session.execute(stmt)).scalars().all()
 
     items = [
         VirtualSignalItem(
