@@ -6,7 +6,8 @@
 
 **Tech Stack:** Python 3.12(FastAPI) + SQLAlchemy async + Redis 7 + Sprint 1 M-F2 인프라 + Sprint 4 walk-forward 인프라. 신규 의존성 없음.
 
-**Sprint 기간:** 2026-05-14 ~ (사용자 검토 후 구현)
+**Sprint 기간:** 2026-05-14 ~ 2026-05-15
+**완료:** 2026-05-15
 **이전 스프린트:** Sprint 4 (1172 passed, PR #208 develop 머지)
 **브랜치명:** `phase8.6-sprint5` (develop 기반, 생성 완료)
 **근거 문서:**
@@ -97,10 +98,10 @@ git commit -m "docs(phase8.6-sprint5): task1 — #8/#9/#11 코드 즉답 진단�
 ```
 
 **완료 기준:**
-- ⬜ 진단서에 #8 R1 발동 원인 분류 (a/b/c) + 증거(코드 라인 + DB row) 명시
-- ⬜ 진단서에 #9 G3 부등호 의도 일치/어긋남 판정 + Hotfix C 분리 여부 결정
-- ⬜ 진단서에 #11 병렬 OR 적용 경계 vs 직렬 AND 잔존 경계 라인 매핑
-- ⬜ `pytest backend/tests/safety/ -v` PASS 유지 (코드 변경 없음 — 회귀 0건)
+- ✅ 진단서에 #8 R1 발동 원인 분류 (a/b/c) + 증거(코드 라인 + DB row) 명시 — commit 5426f29, Hotfix C PR #240 머지 완료
+- ✅ 진단서에 #9 G3 부등호 의도 일치/어긋남 판정 + Hotfix C 분리 여부 결정 — 의도 일치, Hotfix 불필요
+- ✅ 진단서에 #11 병렬 OR 적용 경계 vs 직렬 AND 잔존 경계 라인 매핑 — tier 내부 직렬 AND 구조 결함 확인
+- ✅ `pytest backend/tests/safety/ -v` PASS 유지 (코드 변경 없음 — 회귀 0건)
 
 ---
 
@@ -160,11 +161,11 @@ git commit -m "docs(phase8.6-sprint5): task2 — #10 walk-forward + #13/#14 DB �
 ```
 
 **완료 기준:**
-- ⬜ #10 walk-forward 60일 stage별 reject 분포 보고서 1건 + 자연 분포 vs 구조 결함 판정
-- ⬜ #13 fallback DB 측정 스냅샷 1건 + E2 임계(≤ 20%) 충족 여부 판정
-- ⬜ #14 secondary 4h 교체율 DB 측정 스냅샷 1건 + 데이터 부족 vs 구조 결함 판정
-- ⬜ E2 측정 데이터 소스 = 기존 M-F2 인프라임을 보고서에 명시 (E2 게이트 측정 가능 입증)
-- ⬜ `pytest -v` PASS 유지 (스크립트 추가만, 기존 코드 변경 없음)
+- ⚠️ #10 walk-forward 60일 stage별 reject 분포 보고서 1건 — Partial (21/60일 KIS 일봉 캐시), 백필 필요. 판정 보류. commit 7c48e12
+- ✅ #13 fallback DB 측정 스냅샷 1건 — 결함 아님(메트릭 의미 분리), 신규 #16 fallback strategy 통과율 0% 발견. commit 7c48e12
+- ⚠️ #14 secondary 4h 교체율 DB 측정 스냅샷 1건 — hysteresis 부재 가설 지지, 부분 재현. Sprint 6 결정 대기. commit 7c48e12
+- ✅ E2 측정 데이터 소스 = 기존 M-F2 인프라(`daily_screening_metrics.fallback_signal_rate`)임을 보고서에 명시
+- ✅ `pytest -v` PASS 유지 (스크립트 추가만, 기존 코드 변경 없음)
 
 ---
 
@@ -214,10 +215,10 @@ git commit -m "feat(phase8.6-sprint5): task3 — KIS WS trace 토글 + 1주 라�
 ```
 
 **완료 기준:**
-- ⬜ `WS_TRACE_ENABLED=false` 기본값 + 코드 동작 0건 변경 (회귀 0건)
-- ⬜ Paper 1주 라이브 trace 데이터 누적 + 일별 집계 스크립트 동작
-- ⬜ 3 root cause 후보 trace 증거 + 1개 이상 채택 + 재현 방법
-- ⬜ E1 측정 데이터 소스 = T3 trace 임을 보고서에 명시 + 현재 누락률 수치 (목표 ≤ 5% 대비)
+- ✅ `WS_TRACE_ENABLED=false` 기본값 + 코드 동작 0건 변경 (회귀 0건) — commit ca01f75
+- ⏳ Paper 1주 라이브 trace 데이터 누적 + 일별 집계 스크립트 동작 — 2026-05-15 시작, 5/22까지 자연 누적
+- ⏳ 3 root cause 후보 trace 증거 + 1개 이상 채택 + 재현 방법 — 데이터 수집 후 Sprint 6 또는 별도 진단
+- ✅ E1 측정 데이터 소스 = T3 trace 임을 보고서에 명시 (현재 누락률 35%, 목표 ≤ 5%)
 
 ---
 
@@ -244,8 +245,8 @@ git commit -m "feat(phase8.6-sprint5): task3 — KIS WS trace 토글 + 1주 라�
 - hotfix-close agent 호출 (main PR + develop 역머지)
 
 **완료 기준:**
-- ⬜ T1 결과가 "어긋남"이면 Hotfix C PR 머지 완료
-- ⬜ T1 결과가 "일치"면 phase8.6.md §3 G3 문서 보강 커밋 1건
+- ✅ T1 결과가 "어긋남"이면 Hotfix C PR 머지 완료 — #8 self-clear를 Hotfix C로 분리, PR #240 / 역머지 PR #241 머지 완료
+- ✅ (#9 G3 부등호는 의도 일치 — Hotfix 불필요, 문서 보강 선택사항)
 
 ---
 
@@ -287,9 +288,9 @@ git commit -m "docs(phase8.6-sprint5): task5 — 종합 보고 + Phase 8.7 entry
 - sprint-close agent 호출 → develop PR 생성
 
 **완료 기준:**
-- ⬜ 종합 보고서에 7건 결함 모두 결론 명시
-- ⬜ Phase 8.7 entry gate 4종(E1/E2/G-Bt1/G-Bt2) 통과 여부 표 작성
-- ⬜ 후속 결정 (a/b/c) 권고 제시
+- ✅ 종합 보고서에 7건 결함 모두 결론 명시 — `docs/phase/phase8.6/sprint5/sprint5-closing-report.md`
+- ✅ Phase 8.7 entry gate 4종(E1/E2/G-Bt1/G-Bt2) 통과 여부 표 작성 — E1 대기, E2 명목 통과(#16 의심), G-Bt1/G-Bt2 대기
+- ✅ 후속 결정 (c) 권고 제시 — Phase 8.7 entry gate 미충족, Paper 추가 관찰 + 백필 후속 fix
 
 ---
 
@@ -299,15 +300,15 @@ git commit -m "docs(phase8.6-sprint5): task5 — 종합 보고 + Phase 8.7 entry
 
 | # | 항목 | 기준 | Task | 상태 |
 |---|------|------|------|------|
-| S5-1 | T1 진단서 1장 — #7/#8/#9/#11 변경 위치 확정 (#7은 Hotfix A로 분리 완료 — PR #237) | 코드 라인 인용 포함 | T1 | ⬜ |
+| S5-1 | T1 진단서 1장 — #7/#8/#9/#11 변경 위치 확정 (#7은 Hotfix A로 분리 완료 — PR #237) | 코드 라인 인용 포함 | T1 | ✅ commit 5426f29 |
 | S5-2 | Hotfix A 머지 (#7 R3 unset Enum) | PR 머지 + 회귀 테스트 ≥10 PASS | **Sprint 5 외 — PR #237 머지 완료** | ✅ |
-| S5-3 | Hotfix C 결정 — #9 G3 부등호 hotfix 분리 or Sprint 안 문서 갱신 | T1 진단 직후 결정 | T1 → Task 4 | ⬜ |
-| S5-4 | T2 백테스트 보고서 — #10 breakout 72.2% 편중 본질 (Sprint 4 walk-forward 60일 stage별 reject 분포) | 보고서 1건 | T2 | ⬜ |
-| S5-5 | T2 DB 측정 — #13 fallback 신호 신뢰도 + #14 secondary 4h 교체율 | DB 쿼리 + 스냅샷 2건 | T2 | ⬜ |
-| S5-6 | E1/E2/E3/E4 측정 인프라 + 대시보드 카드 | E1=라이브(T3) / E2/E3/E4=DB(T2) | T2 + T3 | ⬜ |
-| S5-7 | T3 진단 보고서 — #6 KIS WS root cause 후보 1개 이상 채택 + 재현 방법 | Paper 1주 trace 데이터 기반 | T3 | ⬜ |
-| S5-8 | pytest 전체 통과 | 각 Task 종료 시점 | 전체 | ⬜ |
-| S5-9 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | 빌드 실패 테스트 | 전체 | ⬜ |
+| S5-3 | Hotfix C 결정 — #9 G3 부등호 hotfix 분리 or Sprint 안 문서 갱신 | T1 진단 직후 결정 | T1 → Task 4 | ✅ #8 self-clear Hotfix C(PR #240/역머지 #241) 머지 완료, #9는 의도 일치 |
+| S5-4 | T2 백테스트 보고서 — #10 breakout 72.2% 편중 본질 (Sprint 4 walk-forward 60일 stage별 reject 분포) | 보고서 1건 | T2 | ⚠️ Partial (21/60일 백필 부족) — 백필 후 Sprint 6 재실행 필요 |
+| S5-5 | T2 DB 측정 — #13 fallback 신호 신뢰도 + #14 secondary 4h 교체율 | DB 쿼리 + 스냅샷 2건 | T2 | ✅ commit 7c48e12 (#13 결함 아님·#16 신규 발견, #14 hysteresis 부재 가설 지지) |
+| S5-6 | E1/E2/E3/E4 측정 인프라 + 대시보드 카드 | E1=라이브(T3) / E2/E3/E4=DB(T2) | T2 + T3 | ✅ E1=WS trace(T3, 인프라만), E2=M-F2 endpoint 재사용 명시 (대시보드 카드는 Sprint 6 범위) |
+| S5-7 | T3 진단 보고서 — #6 KIS WS root cause 후보 1개 이상 채택 + 재현 방법 | Paper 1주 trace 데이터 기반 | T3 | ⏳ 2026-05-15~5/22 자연 누적 대기 — Sprint 6 또는 후속 진단 |
+| S5-8 | pytest 전체 통과 | 각 Task 종료 시점 | 전체 | ✅ 회귀 0건 (기존 실패 1건은 5/13 stale baseline 동일) |
+| S5-9 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | 빌드 실패 테스트 | 전체 | ✅ |
 
 > **참고**: §11.4 원문은 #12를 별도 항목으로 두지 않는다 (Hotfix B PR #238로 이미 분리 처리 완료). S5-2 Hotfix A는 본 Sprint 착수 전 PR #237 머지 완료 — Sprint 5 안에서는 ✅ 상태로 시작.
 

@@ -3,7 +3,7 @@
 이 파일은 sprint-planner 에이전트의 영구 메모리입니다.
 프로젝트 진행 상황, 기술 스택, 패턴 등을 기록합니다.
 
-## 스프린트 현황 (2026-04-29 업데이트 — Phase 8.6 Sprint 2 완료)
+## 스프린트 현황 (2026-05-15 업데이트 — Phase 8.6 Sprint 5 완료)
 
 - [Phase 0.5 Sprint 1](phase0.5-sprint1-status.md) — 외부 API 5종 탐색/검증, ✅ 완료 (2026-03-29)
 - [Phase 1 Sprint 1](phase1-sprint1-status.md) — Docker Compose + DB/Redis + 백엔드 스켈레톤, ✅ 완료 (2026-03-29) / PR: https://github.com/frogy95/stockbot/pull/2
@@ -65,21 +65,37 @@
 - Phase 8.5 Sprint 2.5 — 인프라 보강 + 관측성·문서 정합성 (resolve_override 통합 + 경고 배너 + env 동기화 스크립트 + DoD 재정의), ✅ 완료 (2026-04-23) / PR: https://github.com/frogy95/stockbot/pull/172
 - **Phase 8.6 Sprint 1** — 선행 패치 + DoR 가드레일 G1~G3 (PO Sprint 2.6 흡수, M-F2/자동롤백 R1~R4/회로차단기/Phase 7.0 코드 잠금/폴백 5종/min_volume_floor 0.3 09~11시), ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
 - **Phase 8.6 Sprint 2 v2** — 병렬 OR tier 분리(gap_open ATR_CEIL_HARD=0.08 절대상한 + 시초가≥현재가 컷 / prev_high ATR+breakout / prev_close 시간가드+5분봉 거래량 컨펌) + ATR 캘리브레이션 SMA/EWMA + IQR×1.5 트리밍 + 폴백 3단(직전일 캐시 TTL 3거래일 → HARD → 안전모드 2시간) + 시뮬-실측 절대차 메트릭 + R1~R4 격리 + 쿼터 캡 + Kill-switch 런북 + 임시 시간가드 env, ✅ 완료 (2026-04-29), `docs/phase/phase8.6/sprint2/sprint2.md` (6 Task, env 10종, 93 PASS, tsc 0건), PR: https://github.com/frogy95/stockbot/pull/184. 5/7 1거래일 관찰 CONDITIONAL GO (KOSPI200 sync 226종 + ATR ceil 0.066963 + safe_mode 미발동)
-- **Phase 8.6 Sprint 3** — volume_surge tier 신설(5분봉 vol×5 + 호가창 매수/매도≥2 + 가격 +0.5%, 09:30~14:00, dry_run 기본) + 시간 필터 본 가드(09:00~09:10 차단 + gap_open 09:05까지 예외, 점심 floor 0.7, 14:30+ 신규 진입 금지, TEMP_TIME_GUARD_SPRINT2 제거) + 신호 우선순위 큐 + Sprint 2 잔존 부채(R3 활성화, ATR_COVERAGE_GAP_MAX 30 원복, portal/metrics 잡 키 점검), 🔄 계획 수립 완료 (2026-05-07), `docs/phase/phase8.6/sprint3/sprint3.md` (6 Task, env 8종 추가/변경/제거)
+- **Phase 8.6 Sprint 3** — volume_surge tier 신설(5분봉 vol×5 + 호가창 매수/매도≥2 + 가격 +0.5%, 09:30~14:00, dry_run 기본) + 시간 필터 본 가드(09:00~09:10 차단 + gap_open 09:05까지 예외, 점심 floor 0.7, 14:30+ 신규 진입 금지, TEMP_TIME_GUARD_SPRINT2 제거) + 신호 우선순위 큐 + Sprint 2 잔존 부채(R3 활성화, ATR_COVERAGE_GAP_MAX 30 원복, portal/metrics 잡 키 점검), ✅ 완료 (2026-05-07), `docs/phase/phase8.6/sprint3/sprint3.md` (6 Task, env 8종 추가/변경/제거)
+- **Phase 8.6 Sprint 4** — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3) + 임계 재조정 후보 진단, ✅ 완료 (2026-05-08), PR #208 develop 머지
+- **Phase 8.6 Sprint 5** — 진단·측정 Sprint: T1 코드 즉답(#8 Hotfix C PR #240 완료, #9 의도 일치, #11 tier 내 직렬 AND 구조 결함 확인) + T2 DB/백테스트(#10 Partial-21일/60일 백필 부족·판정 보류, #13 메트릭 의미 분리·#16 신규 발견, #14 hysteresis 부재 가설 지지) + T3 WS trace 인프라(commit ca01f75, Railway WS_TRACE_ENABLED=true 설정 완료, Paper 1주 5/15~5/22 자연 누적). DoD 6/9 달성. Phase 8.7 entry gate 4종(E1 대기/E2 명목·#16 무효화 의심/G-Bt1 대기/G-Bt2 대기) — LIVE 토글 차단 유지. ✅ 완료 (2026-05-15)
 
 ## 다음 사용 가능한 스프린트
 
-- [Phase 8.6 Sprint 5](phase8.6-sprint5-status.md) 🔄 (2026-05-14 계획 수립) — 진단·측정 Sprint: 5 Task (T1 코드 + T2 DB/백테스트 + T3 라이브 WS trace 1주 병행 + Task4 조건부 Hotfix C + Task5 종합 보고). Hotfix A(PR #237)/B(PR #238) 머지 완료로 범위 제외. 임계 변경 0건 / dry_run 변경 0건 / LIVE_TRADING_ENABLED false 잠금. Phase 8.7 entry gate 3개(E1 WS≤5% / E2 fallback≤20% / G-Bt1+G-Bt2) 평가
-- Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (Phase 8.6 Sprint 5 entry gate 3개 통과 후)
+- Phase 8.6 Sprint 6 — Sprint 6 신설 여부 사용자 결정 대기 (후보: KIS 일봉 60일 백필 인프라 + #16 fallback 0% + #11 stage OR + #14 hysteresis. 사용자 판단 후 sprint-planner 호출)
+- Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (Phase 8.6 entry gate 4종 통과 후 — 현재 E1/G-Bt1/G-Bt2 미충족으로 차단 유지)
 
 ## 핵심 주의사항
 
+- **Phase 8.6 Sprint 5 진단 결과 요약** (2026-05-15):
+  - #8 self-clear → Hotfix C(PR #240/역머지 #241) 완료. 16:12 cron 자동 해제 효과 자연 검증 중
+  - #9 G3 부등호 → 의도 일치, 추가 조치 불필요
+  - #10 walk-forward → KIS 일봉 21일 캐시만 존재 (60일 부족). **Sprint 6 최우선: KIS 일봉 60일 백필**
+  - #11 stage 직렬 AND → tier 내부 직렬 AND 구조 결함 확인. Sprint 6에서 병렬 OR 또는 가중 평균 구조 결정
+  - #13 fallback 폭증 → 결함 아님(메트릭 의미 분리). 단, **#16 신규 발견: fallback strategy 통과율 0%** (폴백 후보 456회 평가 → 신호 0건)
+  - #14 secondary 4h 교체율 → hysteresis 부재 가설 지지 (부분 재현). Sprint 6에서 hysteresis 도입 검토
+  - #6 WS trace → Railway `WS_TRACE_ENABLED=true` 설정 완료(2026-05-15), **5/22까지 Paper 1주 자연 누적**. 이후 root cause 채택 및 `false` 복귀 필요
+- **Phase 8.6 Sprint 5 Phase 8.7 entry gate 현황**:
+  - E1(WS 누락률 ≤ 5%): 측정 진행 중 (T3 trace 1주 대기) — 차단
+  - E2(fallback 비중 ≤ 20%): 명목 통과(0%)이나 #16으로 의미 훼손 의심
+  - G-Bt1(walk-forward KS p≥0.05): 백필 부족으로 판정 불가 — 차단
+  - G-Bt2(Bootstrap 95% CI ≥1): 동일 사유 — 차단
+  - **결론: Phase 8.7 LIVE 토글 차단 유지. Sprint 6 신설 여부 사용자 결정 후 진행**
+- **Sprint 6 착수 시 선행 전제**: (a) 사용자 명시적 Sprint 6 승인, (b) Phase 8.6 Sprint 5 브랜치 develop 머지 확인
+- Phase 8.6 Sprint 4: scipy 의존성 신규 추가 (~50MB) — Railway 빌드 시간 영향. 대안: numpy 직접 KS 구현 (사용자 결정 필요)
 - Phase 8.6 Sprint 5는 **진단 Sprint** — 임계 변경 / dry_run 변경 / LIVE_TRADING_ENABLED 토글 / Phase 7.0 LIVE 파라미터 변경 / Sprint 1~4 본문 변경 / 5개 기존 hotfix 재처리 / 새 Sprint 신설 모두 **금지**. 코드 변경은 T3의 `WS_TRACE_ENABLED` env 토글 + 구조화 trace 로깅(기본 False 잠금)만 허용
-- Phase 8.6 Sprint 5 T3: `WS_TRACE_ENABLED=true` Railway 환경변수 수동 설정 필요. Paper 1주 누적 후 `false` 복귀. deploy.md 수동 기록 필수
-- Phase 8.6 Sprint 5 Task 4 (Hotfix C #9 G3 부등호)는 T1 Step 2 결과에 따라 조건부 — 어긋남 시 `hotfix/phase86-g3-comparator` 분리, 일치 시 phase8.6.md §3 G3 문서/주석 보강만
-- Phase 8.6 Sprint 5 §11 풀 스펙 출처: develop 브랜치 commit 5a162fa `docs/phase/phase8.6/phase8.6.md` §11.1~§11.7 + §12 14개 결함 추적표. sprint-planner가 작업한 docs/2026-05-13-monitoring-result 브랜치에는 §11 미반영 가능 — 항상 develop 기준 참조
+- Phase 8.6 Sprint 5 §11 풀 스펙 출처: develop 브랜치 commit 5a162fa `docs/phase/phase8.6/phase8.6.md` §11.1~§11.7 + §12 14개 결함 추적표
 - Phase 8.6 Sprint 5 Hotfix A(#7 SECONDARY_POOL_FALLBACK_ENABLED unset + SettingsOverrideKey Enum + /override-status is_active) = PR #237 머지 완료, Hotfix B(#12 /screening/primary,/secondary raw change_rate/trade_strength 노출) = PR #238 머지 완료 — Sprint 5 Task 범위에서 명시적 제외
-- Phase 8.6 Sprint 5 Phase 8.7 entry gate (3개, 직렬 AND): E1 WS execution 누락률 ≤ 5% (T3 라이브 산출) / E2 fallback 신호 비중 ≤ 20% (T2 M-F2 DB 산출) / G-Bt1+G-Bt2 (Sprint 4 산출 승계). §10 DoD #9~#11(5거래일 G-A/G-B/G-C) deprecated, §7.5 G-Bt3 = 본 3개 지표로 재정의
+- Phase 8.6 Sprint 5 Phase 8.7 entry gate (4개, 직렬 AND): E1 WS execution 누락률 ≤ 5% (T3 라이브 산출) / E2 fallback 신호 비중 ≤ 20% (T2 M-F2 DB 산출) / G-Bt1+G-Bt2 (Sprint 4 산출 승계). §10 DoD #9~#11(5거래일 G-A/G-B/G-C) deprecated, §7.5 G-Bt3 = 본 4개 지표로 재정의
 
 - Phase 8.6 Sprint 2 완료: 병렬 OR tier 분기 시 TEMP_TIME_GUARD_SPRINT2=true 로 09:00~09:10 / 14:30+ 임시 차단. Sprint 3에서 본 가드 도입 후 제거 필수
 - Phase 8.6 Sprint 2 완료: Alembic 마이그레이션 2종 적용 필요 — `stocks.is_kospi200`(c1f2a30b8201) + `trade_signals.matched_tiers`(d2a30b8201ef). Railway 프로덕션 배포 전 반드시 `alembic upgrade head` 실행 확인

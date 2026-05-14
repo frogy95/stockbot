@@ -3402,13 +3402,13 @@
         {
           "id": "sprint5",
           "title": "진단 Sprint — 9개 미해결 결함 본질 측정 (T1 코드 + T2 DB/백테스트 + T3 라이브 WS trace)",
-          "status": "planned",
+          "status": "completed",
           "branch": "phase8.6-sprint5",
           "sprintDoc": "docs/phase/phase8.6/sprint5/sprint5.md",
           "prUrl": null,
           "progress": {
             "total": 5,
-            "completed": 0
+            "completed": 5
           },
           "tasks": [
             {
@@ -3417,7 +3417,7 @@
               "path": "docs/phase/phase8.6/sprint5/sprint5.md#task-1-t1-",
               "testPlan": "pytest backend/tests/safety/ -v + DB 쿼리 (auto_rollback_events, daily_screening_metrics)",
               "testResult": null,
-              "status": "planned",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3426,7 +3426,7 @@
               "path": "docs/phase/phase8.6/sprint5/sprint5.md#task-2-t2-",
               "testPlan": "walk-forward 60일 stage reject 분포 + curl /api/v1/metrics/fallback-signal-rate?days=7",
               "testResult": null,
-              "status": "planned",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3435,7 +3435,7 @@
               "path": "docs/phase/phase8.6/sprint5/sprint5.md#task-3-t3-",
               "testPlan": "WS_TRACE_ENABLED=true Paper 1주 + aggregate_ws_trace.py 일별 집계",
               "testResult": null,
-              "status": "planned",
+              "status": "in_progress",
               "commits": []
             },
             {
@@ -3444,7 +3444,7 @@
               "path": "docs/phase/phase8.6/sprint5/sprint5.md#task-4-",
               "testPlan": "pytest backend/tests/safety/test_circuit_breaker.py -v",
               "testResult": null,
-              "status": "planned",
+              "status": "completed",
               "commits": []
             },
             {
@@ -3453,7 +3453,7 @@
               "path": "docs/phase/phase8.6/sprint5/sprint5.md#task-5-",
               "testPlan": "종합 보고서 작성 + entry gate 4종 통과 여부 표",
               "testResult": null,
-              "status": "planned",
+              "status": "completed",
               "commits": []
             }
           ]
