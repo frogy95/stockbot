@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-14T17:00:00+09:00",
+  "lastUpdated": "2026-05-15T18:10:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -4258,7 +4258,16 @@
       "version": "v2.9.0",
       "description": "Phase 8.6 Sprint 3 프로덕션 배포 — volume_surge tier 신설 + 시간 필터 본 가드 (VolumeSurgeStrategy dry_run, _time_filter.py 본 가드, TradingEngine 우선순위 큐, signals.dry_run Alembic 컬럼, R3 자동 롤백 활성화, portal_supplement/metrics_rollup 잡 키 fix, metrics API 2종, 프론트엔드 카드 2종)",
       "prUrl": "https://github.com/frogy95/stockbot/pull/201",
-      "status": "in_progress"
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-15",
+      "type": "sprint",
+      "ref": "phase8.6-sprint5",
+      "version": "v3.0.0",
+      "description": "Phase 8.6 Sprint 5 프로덕션 배포 — 진단·측정 Sprint (T1 코드 즉답 진단서, T2 DB/백테스트 측정 CLI 스크립트 2종, T3 WS trace 토글 인프라 ws_manager.py + WS_TRACE_ENABLED 환경변수)",
+      "prUrl": "https://github.com/frogy95/stockbot/pull/243",
+      "status": "completed"
     }
   ]
 }
