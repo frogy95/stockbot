@@ -1,6 +1,6 @@
 {
   "project": "stockbot",
-  "lastUpdated": "2026-05-08T23:21:00+09:00",
+  "lastUpdated": "2026-05-14T17:00:00+09:00",
   "phases": [
     {
       "id": "phase0.5",
@@ -3902,6 +3902,23 @@
           "hash": "3422895",
           "message": "fix(backtest): backfill-daily 가 app.state.kis_inquiry 주입받도록 수정",
           "date": "2026-05-08"
+        }
+      ]
+    },
+    {
+      "id": "hotfix-phase86-r3-unset-enum",
+      "name": "G3 단독 발동 시 /override-status is_active=false 오표시 수정 + SettingsOverrideKey Enum 신설",
+      "status": "deployed",
+      "path": "docs/hotfix/phase86-r3-unset-enum/hotfix.md",
+      "assignee": "ChoiJiSeon",
+      "reviewer": "hotfix-close agent",
+      "deployedAt": "2026-05-14",
+      "description": "2026-05-14 16:10 모니터링 발견 #7 결함. G3 단독 발동 시 /override-status is_active=false 표시 문제 수정. SettingsOverrideKey Enum 신설로 키 누락 위험 제거. affected_keys 동적 계산으로 교체. 기존 G1/G2 호출 동작 호환 유지.",
+      "commits": [
+        {
+          "hash": "32c349b",
+          "message": "fix(phase86): /override-status is_active 판정 + Enum 단일화 (Sprint 5 Hotfix A)",
+          "date": "2026-05-14"
         }
       ]
     }
