@@ -10,7 +10,7 @@
 
 | # | 결함 | T 산출 | 결론 | 후속 |
 |---|------|--------|------|------|
-| **#6** | KIS WS execution 35% 누락 (2차 통과 100% 영향) | T3 trace 토글 + 집계 스크립트 (commit ca01f75). Railway `WS_TRACE_ENABLED=true` 설정 완료 (2026-05-15). | ⏳ **Paper 5거래일 자연 누적 대기** — 보고서는 데이터 수집 후 별도. 채택될 root cause 후보(A 한도 / B 레이스 / C MST sync)는 trace 결과로 확정. | Sprint 6 또는 hotfix (5/22 이후) |
+| **#6** | KIS WS execution 35% 누락 (2차 통과 100% 영향) | T3 trace 토글 + 집계 스크립트 (commit ca01f75). Railway `WS_TRACE_ENABLED=true` 설정 완료 (2026-05-15). | ⏳ **Paper 1거래일 자연 누적 대기** — 보고서는 데이터 수집 후 별도. 채택될 root cause 후보(A 한도 / B 레이스 / C MST sync)는 trace 결과로 확정. | Sprint 6 또는 hotfix (2026-05-15 장 마감 후) |
 | **#8** | R1 자동 발동 (signals=2에서 active) | T1 진단서 §1. **결정적 결함**: scheduler가 `if should_*=True`일 때만 `execute_*`를 호출 → self-clear 분기 영원히 미도달. | ✅ **Hotfix C(PR #240) 머지로 해소**. 회귀 테스트 2건 추가. | 16:12 cron으로 자동 해제 효과 검증 예정 |
 | **#9** | G3 임계 부등호 | T1 진단서 §2. `r < threshold` (strict less than)가 phase8.6.md §3 정의("< 10%")와 일치. | ✅ **의도 일치 — Hotfix 불필요**. | 문서 보강만 (선택) |
 | **#10** | breakout 72.2% 단일 stage 편중 | T2 `t2-backtest-report.md` (commit 7c48e12). KIS 일봉 캐시 21거래일만 존재(60일 부족), trend=0일 → `DatasetInsufficientError`. Partial 21일 시뮬 결과: prev_high 0.90 (최고) → volume_surge 0.29 (최저). | ⚠️ **판정 보류** (백필 필요). | Sprint 6 또는 별도 hotfix — KIS 일봉 60일 백필 후 walk-forward 재실행 |
@@ -32,7 +32,7 @@
 
 | Gate | 임계 | 측정값 (현재) | 통과 여부 |
 |------|------|---------------|----------|
-| **E1** | WS execution 누락률 ≤ 5% | **측정 진행 중** (T3 trace 1주 누적, 5/15 시작 ~ 5/22) | ⏳ 대기 |
+| **E1** | WS execution 누락률 ≤ 5% | **측정 진행 중** (T3 trace 1거래일 누적, 2026-05-15 당일 (장 마감 후 aggregate)) | ⏳ 대기 |
 | **E2** | fallback 신호 비중 ≤ 20% (M-F2) | **0%** (어제 7일간 fallback_signals=0) | ✅ (단, #16 무효화 효과 의심) |
 | **G-Bt1** | walk-forward KS p ≥ 0.05 | **판정 불가** (KIS 일봉 60일 백필 부족) | ⏳ 대기 |
 | **G-Bt2** | Bootstrap 95% CI 하한 ≥ 1 | **판정 불가** (동일 사유) | ⏳ 대기 |
@@ -51,7 +51,7 @@
 | S5-4 | T2 백테스트 보고서 (#10) | ⚠️ Partial (21/60일) — 백필 필요 |
 | S5-5 | T2 DB 측정 (#13/#14) | ✅ commit 7c48e12 (단, #13은 의미 분리로 #16 신규 발견) |
 | S5-6 | E1/E2 측정 인프라 | ✅ E1=WS trace(T3), E2=M-F2 endpoint 재사용 명시 |
-| S5-7 | T3 진단 보고서 (#6 root cause) | ⏳ Paper 1주 누적 대기 (5/15~5/22) |
+| S5-7 | T3 진단 보고서 (#6 root cause) | ⏳ Paper 1거래일 누적 대기 (2026-05-15 당일) |
 | S5-8 | pytest 전체 통과 | ✅ 회귀 0건 (실패 1건은 baseline 동일, 5/13 stale) |
 | S5-9 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | ✅ |
 
@@ -74,9 +74,9 @@
 | 3 | #11 stage 직렬 AND → 병렬 OR 또는 가중 평균 구조 변경 | 임계 게임 패턴 본질 해소. T2 백필 결과 입력 후 결정 |
 | 4 | #14 secondary 풀 hysteresis 도입 | 4h 교체율 정량 → 진입 일관성 |
 
-### Paper 자연 누적 (5/22까지)
+### Paper 자연 누적 (2026-05-15 당일)
 
-- T3 WS trace 1주 (#6)
+- T3 WS trace 1거래일 (#6)
 - 그동안 Hotfix C 효과(#8 R1/G3 자동 해제) 자연 검증 — 16:12 cron 등록됨
 
 ### Phase 8.7 진입
@@ -95,7 +95,7 @@
 
 **다음 액션**:
 1. Sprint 6 sprint-planner 호출 (KIS 일봉 백필 인프라 + #11/#16 구조 결정)
-2. 또는 #6/#8 라이브 자연 누적(5/22) 대기 후 종합 재평가
+2. 또는 #6/#8 라이브 자연 누적(2026-05-15 장 마감 후) 대기 후 종합 재평가
 
 ---
 

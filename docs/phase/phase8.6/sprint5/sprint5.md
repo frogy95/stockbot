@@ -2,7 +2,7 @@
 
 **Goal:** 2026-05-13~14 모니터링에서 발견된 14개 결함 중 미해결 7건(#6 #8 #9 #10 #11 #13 #14)을 코드 리딩 / DB 쿼리 / Sprint 4 walk-forward 인프라 재활용 / 라이브 trace로 본질 측정한다. Hotfix A/B는 이미 분리 처리됨(PR #237, #238).
 
-**Architecture:** 진단·측정 Sprint — 코드 변경 최소화. T1(코드 즉답, 반나절~1일)·T2(DB/백테스트, 1~2일)는 영역 분리로 병렬, T3(라이브 WS trace)는 `WS_TRACE_ENABLED=true` 토글로 Paper 1주 시간축 분리 병행. 본 Sprint는 임계값 변경 0건 / dry_run 변경 0건 / `LIVE_TRADING_ENABLED=false` 잠금. 본질 결함 답이 나오면 후속 결정(추가 Sprint 신설 여부, 임계 재조정 hotfix 여부)을 사용자가 판단한다.
+**Architecture:** 진단·측정 Sprint — 코드 변경 최소화. T1(코드 즉답, 반나절~1일)·T2(DB/백테스트, 1~2일)는 영역 분리로 병렬, T3(라이브 WS trace)는 `WS_TRACE_ENABLED=true` 토글로 Paper 1거래일 시간축 분리 병행. 본 Sprint는 임계값 변경 0건 / dry_run 변경 0건 / `LIVE_TRADING_ENABLED=false` 잠금. 본질 결함 답이 나오면 후속 결정(추가 Sprint 신설 여부, 임계 재조정 hotfix 여부)을 사용자가 판단한다.
 
 **Tech Stack:** Python 3.12(FastAPI) + SQLAlchemy async + Redis 7 + Sprint 1 M-F2 인프라 + Sprint 4 walk-forward 인프라. 신규 의존성 없음.
 
@@ -42,7 +42,7 @@
 |------|------|------|-------|
 | Task 1 (T1) | 코드 즉답 — #8(R1 발동 원인) + #9(G3 부등호 의도) + #11(stage 직렬 AND 결합 위치). T1 첫날 결과로 Hotfix C(#9) 분리 결정 | 백엔드 (진단서) | `systematic-debugging` |
 | Task 2 (T2) | DB/백테스트 — #10(breakout 72.2% 편중, Sprint 4 walk-forward 60일 stage별 reject 분포) + #13(fallback 폭증, Sprint 1 M-F2 DB 쿼리) + #14(secondary 4h 100% 교체율, screening 이력 DB 쿼리) | 백엔드 (보고서) | `systematic-debugging` |
-| Task 3 (T3) | 라이브 trace — #6(KIS WS execution 35% 누락). A/B/C 3 root cause 후보(subscribe 한도 / 응답 레이스 / MST sync 타이밍) trace. `WS_TRACE_ENABLED=true` env 토글 + Paper 1주 KIS 응답 캡처 | 백엔드 (라이브, 시간축 분리) | `systematic-debugging` |
+| Task 3 (T3) | 라이브 trace — #6(KIS WS execution 35% 누락). A/B/C 3 root cause 후보(subscribe 한도 / 응답 레이스 / MST sync 타이밍) trace. `WS_TRACE_ENABLED=true` env 토글 + Paper 1거래일 KIS 응답 캡처 | 백엔드 (라이브, 시간축 분리) | `systematic-debugging` |
 
 ### Phase 2 (순차)
 | Task | 설명 | 대상 | skill |
@@ -192,9 +192,9 @@ git commit -m "docs(phase8.6-sprint5): task2 — #10 walk-forward + #13/#14 DB �
   docker compose exec backend python -c "from backend.app.core.config import settings; assert settings.WS_TRACE_ENABLED is False, 'default must be false'"
   ```
 
-**Step 2: Paper 1주 라이브 trace 수집**
+**Step 2: Paper 1거래일 라이브 trace 수집**
 - Railway 환경변수 `WS_TRACE_ENABLED=true` 설정 (수동, deploy.md 기록 필수)
-- Paper 1주(5거래일) 자연 누적 — Sprint 5 다른 Task와 시간축 분리
+- Paper 1거래일(5거래일) 자연 누적 — Sprint 5 다른 Task와 시간축 분리
 - 1일 1회 trace 로그 압축 백업 (`backend/scripts/diagnostic/aggregate_ws_trace.py --date YYYY-MM-DD`)
 
 **Step 3: 3 root cause 후보 trace 분석**
@@ -216,7 +216,7 @@ git commit -m "feat(phase8.6-sprint5): task3 — KIS WS trace 토글 + 1주 라�
 
 **완료 기준:**
 - ✅ `WS_TRACE_ENABLED=false` 기본값 + 코드 동작 0건 변경 (회귀 0건) — commit ca01f75
-- ⏳ Paper 1주 라이브 trace 데이터 누적 + 일별 집계 스크립트 동작 — 2026-05-15 시작, 5/22까지 자연 누적
+- ⏳ Paper 1거래일 라이브 trace 데이터 누적 + 일별 집계 스크립트 동작 — 2026-05-15 시작, 오늘 2026-05-15 장 마감(15:30)까지 자연 누적
 - ⏳ 3 root cause 후보 trace 증거 + 1개 이상 채택 + 재현 방법 — 데이터 수집 후 Sprint 6 또는 별도 진단
 - ✅ E1 측정 데이터 소스 = T3 trace 임을 보고서에 명시 (현재 누락률 35%, 목표 ≤ 5%)
 
@@ -306,7 +306,7 @@ git commit -m "docs(phase8.6-sprint5): task5 — 종합 보고 + Phase 8.7 entry
 | S5-4 | T2 백테스트 보고서 — #10 breakout 72.2% 편중 본질 (Sprint 4 walk-forward 60일 stage별 reject 분포) | 보고서 1건 | T2 | ⚠️ Partial (21/60일 백필 부족) — 백필 후 Sprint 6 재실행 필요 |
 | S5-5 | T2 DB 측정 — #13 fallback 신호 신뢰도 + #14 secondary 4h 교체율 | DB 쿼리 + 스냅샷 2건 | T2 | ✅ commit 7c48e12 (#13 결함 아님·#16 신규 발견, #14 hysteresis 부재 가설 지지) |
 | S5-6 | E1/E2/E3/E4 측정 인프라 + 대시보드 카드 | E1=라이브(T3) / E2/E3/E4=DB(T2) | T2 + T3 | ✅ E1=WS trace(T3, 인프라만), E2=M-F2 endpoint 재사용 명시 (대시보드 카드는 Sprint 6 범위) |
-| S5-7 | T3 진단 보고서 — #6 KIS WS root cause 후보 1개 이상 채택 + 재현 방법 | Paper 1주 trace 데이터 기반 | T3 | ⏳ 2026-05-15~5/22 자연 누적 대기 — Sprint 6 또는 후속 진단 |
+| S5-7 | T3 진단 보고서 — #6 KIS WS root cause 후보 1개 이상 채택 + 재현 방법 | Paper 1거래일 trace 데이터 기반 | T3 | ⏳ 2026-05-15 당일 trace, 장 마감 후 aggregate — Sprint 6 또는 후속 진단 |
 | S5-8 | pytest 전체 통과 | 각 Task 종료 시점 | 전체 | ✅ 회귀 0건 (기존 실패 1건은 5/13 stale baseline 동일) |
 | S5-9 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | 빌드 실패 테스트 | 전체 | ✅ |
 
@@ -349,7 +349,7 @@ git commit -m "docs(phase8.6-sprint5): task5 — 종합 보고 + Phase 8.7 entry
 
 ### 신규 환경변수 (deploy.md 기록 필수)
 
-- `WS_TRACE_ENABLED` — Paper 1주 동안만 `true`, 종료 후 `false` 복귀 (Railway 환경변수 수동 설정)
+- `WS_TRACE_ENABLED` — Paper 1거래일 동안만 `true`, 종료 후 `false` 복귀 (Railway 환경변수 수동 설정)
 
 ---
 
