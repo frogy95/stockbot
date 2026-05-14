@@ -970,8 +970,11 @@ class CollectorScheduler:
                 "phase86_g2: should_rollback=%s triggered=%s",
                 result.should_rollback, result.triggered,
             )
-            if result.should_rollback:
-                await evaluator.execute_rollback(result)
+            # Hotfix C (Sprint 5) — should_rollback=False 시에도 execute_rollback 호출.
+            # execute_rollback 내부에 self-clear 분기(2026-05-12 hotfix)가 있으나
+            # 직전 가드(`if result.should_rollback:`)로 인해 도달 불가능했음.
+            # 결과: 한 번 발동된 phase86:rollback:active가 24h TTL 만료까지 잔존하던 결함.
+            await evaluator.execute_rollback(result)
         except Exception:  # noqa: BLE001
             logger.exception("phase86_g2 평가 실패 (스케줄러 계속 동작)")
 
@@ -995,8 +998,11 @@ class CollectorScheduler:
                 "phase86_g3: should_trigger=%s reason=%s",
                 result.should_trigger, result.reason,
             )
-            if result.should_trigger:
-                await breaker.execute(result)
+            # Hotfix C (Sprint 5) — should_trigger=False 시에도 execute 호출.
+            # CircuitBreaker.execute 내부에 self-clear 분기가 있으나 직전 가드로 도달 불가였음.
+            # 결과: 한 번 발동된 phase86:circuit_breaker:active + SECONDARY_POOL_FALLBACK_ENABLED=False가
+            # 24h TTL 만료까지 잔존하던 결함.
+            await breaker.execute(result)
         except Exception:  # noqa: BLE001
             logger.exception("phase86_g3 평가 실패 (스케줄러 계속 동작)")
 
