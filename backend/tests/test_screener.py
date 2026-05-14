@@ -529,6 +529,34 @@ class TestSaveResults:
         assert session.add.call_count == 2
         session.commit.assert_awaited_once()
 
+    @pytest.mark.asyncio
+    async def test_save_results_factors_includes_raw_change_rate(self):
+        """Hotfix B — factors dict에 raw_change_rate / raw_volume_ratio 병기 확인."""
+        screener = PrimaryScreener()
+        session = AsyncMock()
+        session.commit = AsyncMock()
+        captured = []
+        session.add = MagicMock(side_effect=lambda obj: captured.append(obj))
+
+        results = [
+            {
+                "stock_code": "014680",
+                "score": Decimal("91.00"),
+                "rank": 1,
+                "factors": {"momentum_factor": 94.91},
+                "change_rate": 12.0,
+                "volume_ratio": 5.4,
+                "is_hot": True,
+            },
+        ]
+
+        await screener.save_results(session, results)
+        assert len(captured) == 1
+        saved = captured[0]
+        assert saved.factors["raw_change_rate"] == 12.0
+        assert saved.factors["raw_volume_ratio"] == 5.4
+        assert saved.factors["momentum_factor"] == 94.91
+
 
 # ---------------------------------------------------------------------------
 # 적응형 필터 테스트

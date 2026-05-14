@@ -469,15 +469,24 @@ class PrimaryScreener:
     async def save_results(
         self, session: AsyncSession, results: list[dict]
     ) -> int:
-        """screening_results 테이블에 결과 저장 (screening_type='primary')."""
+        """screening_results 테이블에 결과 저장 (screening_type='primary').
+
+        Phase 8.6 Sprint 5 Hotfix B — factors dict에 raw 값(change_rate, volume_ratio)
+        병기. /screening/primary API에서 점수 외에 원천값을 운영 진단에 직접 노출하기 위함.
+        """
         count = 0
         for item in results:
+            factors = dict(item.get("factors", {}))
+            if "change_rate" in item:
+                factors["raw_change_rate"] = float(item["change_rate"])
+            if "volume_ratio" in item:
+                factors["raw_volume_ratio"] = float(item["volume_ratio"])
             record = ScreeningResult(
                 stock_code=item["stock_code"],
                 screening_type="primary",
                 score=item.get("score"),
                 rank=item.get("rank"),
-                factors=item.get("factors", {}),
+                factors=factors,
                 is_hot=item.get("is_hot", False),
                 status="active",
             )

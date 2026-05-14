@@ -460,15 +460,26 @@ class RealtimeScreener:
     async def save_results(
         self, session: AsyncSession, results: list[dict]
     ) -> int:
-        """screening_results 테이블에 2차 스크리닝 결과 저장."""
+        """screening_results 테이블에 2차 스크리닝 결과 저장.
+
+        Phase 8.6 Sprint 5 Hotfix B — factors dict에 raw 값(change_rate, trade_strength,
+        orderbook_ratio) 병기. /screening/secondary API에서 운영 진단 시 원천값 직접 노출.
+        """
         count = 0
         for item in results:
+            factors = dict(item.get("factors", {}))
+            if "change_rate" in item:
+                factors["raw_change_rate"] = float(item["change_rate"])
+            if "trade_strength" in item:
+                factors["raw_trade_strength"] = float(item["trade_strength"])
+            if "orderbook_ratio" in item:
+                factors["raw_orderbook_ratio"] = float(item["orderbook_ratio"])
             record = ScreeningResult(
                 stock_code=item["stock_code"],
                 screening_type="secondary",
                 score=item.get("score"),
                 rank=item.get("rank"),
-                factors=item.get("factors", {}),
+                factors=factors,
                 is_hot=False,
                 status="active",
             )
