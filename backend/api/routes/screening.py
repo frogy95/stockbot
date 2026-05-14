@@ -167,6 +167,10 @@ async def _get_latest_results(
             "score": float(r.score) if r.score else None,
             "rank": r.rank,
             "factors": r.factors,
+            # Phase 8.6 Sprint 5 Hotfix B — raw 운영 지표를 최상위로 승격.
+            # 과거 레코드에는 키가 없을 수 있어 .get으로 안전 처리 (None 허용).
+            "change_rate": (r.factors or {}).get("raw_change_rate"),
+            "trade_strength": (r.factors or {}).get("raw_trade_strength"),
             "is_hot": r.is_hot,
             "status": r.status,
             "screened_at": r.screened_at.isoformat(),
