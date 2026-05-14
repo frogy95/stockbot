@@ -81,6 +81,19 @@ async def test_virtual_signals_200(app, auth_headers):
 
 
 @pytest.mark.asyncio
+async def test_virtual_signals_stock_code_filter(app, auth_headers):
+    """stock_code 쿼리 파라미터 적용 시 해당 종목 items만 반환되어야 한다."""
+    resp = await _call(
+        app, auth_headers, "/api/v1/metrics/virtual-signals?days=7&stock_code=187870"
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert isinstance(body["items"], list)
+    for item in body["items"]:
+        assert item["stock_code"] == "187870"
+
+
+@pytest.mark.asyncio
 async def test_shadow_heatmap_200(app, auth_headers):
     resp = await _call(app, auth_headers, "/api/v1/metrics/shadow-heatmap?date=today")
     assert resp.status_code == 200
