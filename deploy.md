@@ -11,7 +11,7 @@
 
 PR: https://github.com/frogy95/stockbot/pull/243 (머지 완료 2026-05-15 18:08 KST)
 
-**Sprint 목표**: 진단·측정 Sprint — T1 코드 즉답 + T2 DB/백테스트 + T3 라이브 WS trace 인프라 구축. DoD 6/9 달성, 잔여 3건(T3 trace 1주 누적, G-Bt1/G-Bt2 백필) Sprint 6 대기.
+**Sprint 목표**: 진단·측정 Sprint — T1 코드 즉답 + T2 DB/백테스트 + T3 라이브 WS trace 인프라 구축. DoD 6/9 달성, 잔여 3건(T3 trace 1거래일 누적, G-Bt1/G-Bt2 백필) Sprint 6 대기.
 
 **자동 검증 결과**:
 - ✅ Railway 자동 배포 완료 (2026-05-15 18:08 KST)
@@ -21,8 +21,8 @@ PR: https://github.com/frogy95/stockbot/pull/243 (머지 완료 2026-05-15 18:08
 - ⬜ WS trace 로그 확인 — 시장 시간 중 WS 메시지 수신 시점에 기록됨 (다음 장 개장 후 확인)
 
 **신규 환경변수 (Railway 수동 설정)**:
-- ✅ `WS_TRACE_ENABLED=true` — Railway 설정 완료 (2026-05-15). Paper 1주 trace 수집용 (5/22까지).
-- ⬜ `WS_TRACE_ENABLED=false` 복귀 — 5/22 Paper 1주 trace 수집 완료 후 Railway에서 `false`로 변경 필요.
+- ✅ `WS_TRACE_ENABLED=true` — Railway 설정 완료 (2026-05-15). Paper 1거래일 trace 수집용 (오늘 2026-05-15 장 마감(15:30)까지).
+- ⬜ `WS_TRACE_ENABLED=false` 복귀 — 2026-05-15 장 마감 후 aggregate 완료 시 Railway에서 `false`로 변경 필요.
 
 **검증 항목**:
 - ⬜ 코드 리뷰 미수행 (sprint-review 에이전트로 실행 필요)
@@ -30,7 +30,7 @@ PR: https://github.com/frogy95/stockbot/pull/243 (머지 완료 2026-05-15 18:08
 
 **후속 결정 필요 항목** (sprint-review 또는 사용자 직접):
 - ⬜ Sprint 6 신설 여부 결정 (우선순위 후보: KIS 일봉 60일 백필 + #16 fallback 0% + #11 stage OR 구조 + #14 hysteresis)
-- ⬜ T3 WS trace 1주(5/22) 후 #6 root cause 채택 + 후속 fix 결정
+- ⬜ T3 WS trace 1거래일(2026-05-15 장 마감 후) 후 #6 root cause 채택 + 후속 fix 결정
 - ⬜ Phase 8.7 entry gate 재평가 (백필 완료 + E1/G-Bt1/G-Bt2 측정 후)
 
 ---
