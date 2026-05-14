@@ -3094,10 +3094,14 @@
         "docs/phase/phase8.5/phase8.5-branch-d-po-review.md",
         "docs/phase/phase8.5/phase8.5-branch-d-risk-review.md",
         "docs/phase/phase8.5/phase8.5-branch-d-quant-review.md",
-        "docs/phase/phase8.5/phase8.5-branch-d-daytrader-review.md"
+        "docs/phase/phase8.5/phase8.5-branch-d-daytrader-review.md",
+        "docs/phase/phase8.6/phase8.6-sprint5-api-review.md",
+        "docs/phase/phase8.6/phase8.6-sprint5-quant-review.md",
+        "docs/phase/phase8.6/phase8.6-sprint5-risk-review.md",
+        "docs/phase/phase8.6/phase8.6-sprint5-po-review.md"
       ],
       "trigger": "Phase 8.5 v2.6.1 자동 롤백 발동 (2026-04-28 16:10 auto_rollback_2d_zero_signals — 4거래일 본 신호 1건 / 폴백 605회 / 시뮬-실측 pass율 10배 괴리)",
-      "note": "구 Phase 10.1(누적 백로그 통합) → Phase 10.2로 이관. 본 자리는 분기 D 구조 재설계로 재정의 (2026-04-28). 데이터 의존성 없음. 4 Sprint: 선행 패치+가드레일 / 병렬 OR+ATR 분위수 / volume_surge tier+시간 필터 / walk-forward 60일+KS 자동 감지. Phase 8.6 Sprint 1 선행 조건.",
+      "note": "구 Phase 10.1(누적 백로그 통합) → Phase 10.2로 이관. 본 자리는 분기 D 구조 재설계로 재정의 (2026-04-28). 데이터 의존성 없음. Sprint 1~4 완료 (2026-05-08). 2026-05-13~14 모니터링에서 14개 결함 발견 → Sprint 5(진단·측정) + Sprint 6(placeholder) 신설 (2026-05-14). Phase 8.7 entry gate 표면 카운트 게이트 폐기 후 §11.5 10개 지표 (WS execution 누락률 ≤5% / fallback 신호 비중 ≤20% / 단일 stage ≤50% / Secondary 4h 교체율 ≤30% / Paper PnL 양(+) / 손절 ≥1 / R1~R4 plan-code 일치 / R3 자가치유 전수 회귀 / G-Bt1 / G-Bt2) 로 재정의.",
       "sprints": [
         {
           "id": "sprint1",
@@ -3398,6 +3402,30 @@
             }
           ],
           "lastUpdated": "2026-05-08T00:00:00+09:00"
+        },
+        {
+          "id": "sprint5",
+          "title": "진단 + 측정 인프라 (KIS WS 35% 누락 root cause + stage shadow mode + 안전망 plan-code 일치 + M-F2 정량화 + Phase 8.7 entry gate dashboard)",
+          "status": "planned",
+          "branch": "phase8.6-sprint5",
+          "sprintDoc": "docs/phase/phase8.6/phase8.6.md#11-sprint-5-신설-진단-측정-인프라-2026-05-14",
+          "progress": {
+            "total": 8,
+            "completed": 0
+          },
+          "tasks": []
+        },
+        {
+          "id": "sprint6",
+          "title": "(placeholder) Sprint 5 진단 결과 기반 구조 변경",
+          "status": "planned",
+          "branch": "phase8.6-sprint6",
+          "sprintDoc": "docs/phase/phase8.6/phase8.6.md#12-sprint-6-placeholder-sprint-5-결과-의존",
+          "progress": {
+            "total": 0,
+            "completed": 0
+          },
+          "tasks": []
         }
       ]
     },
