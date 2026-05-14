@@ -151,12 +151,35 @@ all_below = all(r is not None and r < threshold for _, r in daily_rates)
 
 ---
 
+## §3.5. 신규 발견 — #16 fallback strategy 통과율 0%
+
+T2 진행 중 부산물로 발견. T1 범위는 아니나 #11과 동일 본질 영역이라 본 진단서에 추가 기록.
+
+### 결론
+
+- 어제(2026-05-14) 폴백 풀 후보 평가 456회 → strategy 통과해 신호 0건
+- 의미 분리: `metrics:fallback:triggered:{date}` (풀 진입 시도) vs `TradeSignal.fallback=True` (strategy 통과 신호)
+- 저장 경로(`signal_generator.py:120-133`)는 정상 — 결함은 폴백 종목이 `momentum_breakout.generate_signal()`에서 모두 `RejectedSignal` 반환
+
+### 증거
+
+- `backend/modules/screening/realtime_screener.py:241-326` `_apply_fallback`: `is_fallback=True` 마킹 + Redis counter incr
+- `backend/modules/trading/signal_generator.py:79-87` candidate `is_fallback` 읽기 → strategy 평가 → `RejectedSignal`이면 즉시 `continue` (DB 미저장)
+- T2 측정: 7일간 prod `fallback_signals=0`, `triggered_codes=19`
+
+### 권고
+
+Sprint 6 또는 별도 진단 — fallback candidate의 momentum_breakout stage별 reject 분포 측정. 폴백 메커니즘 무력화는 E2 게이트 의미 자체를 무효화.
+
+---
+
 ## §4. 후속 액션 요약
 
 | 결함 | 판정 | 액션 |
 |------|------|------|
-| #8 R1 발동 (self-clear 미호출) | 본질 결함 확정 | **Hotfix C 즉시 분리** (scheduler.py 2줄) |
+| #8 R1 발동 (self-clear 미호출) | 본질 결함 확정 | ✅ **Hotfix C 분리 완료 (PR #240/#241)** |
 | #9 G3 부등호 | 의도 일치 | 변경 없음, 문서 보강만(선택) |
-| #11 stage 직렬 AND | tier OR + stage AND 혼합 구조 확인 | T2 walk-forward 후 Sprint 5 종합 보고에서 본격 결정 |
+| #11 stage 직렬 AND | tier OR + stage AND 혼합 구조 확인 | T2 walk-forward 백필 부족 — Sprint 6 후속 결정 |
+| #16 (신규) fallback strategy 통과율 0% | 폴백 메커니즘 무력화 | Sprint 6 또는 별도 진단 — momentum_breakout stage별 reject 분포 측정 |
 
 `pytest backend/tests/safety/ -v` PASS 유지 — 본 진단서는 코드 변경 없음.
