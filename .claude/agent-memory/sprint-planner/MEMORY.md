@@ -69,10 +69,17 @@
 
 ## 다음 사용 가능한 스프린트
 
-- Phase 8.6 Sprint 4 — Walk-forward 60일 백테스트 + KS 검정 + ATR 분포 카드(Sprint 2에서 이관) + LIVE 토글 게이트 G-Bt1·G-Bt2·G-Bt3 자동 평가 (Sprint 3 + Paper 5거래일 후)
-- Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (구 Phase 8 Sprint 3, Phase 8.6 완료 후)
+- [Phase 8.6 Sprint 5](phase8.6-sprint5-status.md) 🔄 (2026-05-14 계획 수립) — 진단·측정 Sprint: 5 Task (T1 코드 + T2 DB/백테스트 + T3 라이브 WS trace 1주 병행 + Task4 조건부 Hotfix C + Task5 종합 보고). Hotfix A(PR #237)/B(PR #238) 머지 완료로 범위 제외. 임계 변경 0건 / dry_run 변경 0건 / LIVE_TRADING_ENABLED false 잠금. Phase 8.7 entry gate 3개(E1 WS≤5% / E2 fallback≤20% / G-Bt1+G-Bt2) 평가
+- Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트 (Phase 8.6 Sprint 5 entry gate 3개 통과 후)
 
 ## 핵심 주의사항
+
+- Phase 8.6 Sprint 5는 **진단 Sprint** — 임계 변경 / dry_run 변경 / LIVE_TRADING_ENABLED 토글 / Phase 7.0 LIVE 파라미터 변경 / Sprint 1~4 본문 변경 / 5개 기존 hotfix 재처리 / 새 Sprint 신설 모두 **금지**. 코드 변경은 T3의 `WS_TRACE_ENABLED` env 토글 + 구조화 trace 로깅(기본 False 잠금)만 허용
+- Phase 8.6 Sprint 5 T3: `WS_TRACE_ENABLED=true` Railway 환경변수 수동 설정 필요. Paper 1주 누적 후 `false` 복귀. deploy.md 수동 기록 필수
+- Phase 8.6 Sprint 5 Task 4 (Hotfix C #9 G3 부등호)는 T1 Step 2 결과에 따라 조건부 — 어긋남 시 `hotfix/phase86-g3-comparator` 분리, 일치 시 phase8.6.md §3 G3 문서/주석 보강만
+- Phase 8.6 Sprint 5 §11 풀 스펙 출처: develop 브랜치 commit 5a162fa `docs/phase/phase8.6/phase8.6.md` §11.1~§11.7 + §12 14개 결함 추적표. sprint-planner가 작업한 docs/2026-05-13-monitoring-result 브랜치에는 §11 미반영 가능 — 항상 develop 기준 참조
+- Phase 8.6 Sprint 5 Hotfix A(#7 SECONDARY_POOL_FALLBACK_ENABLED unset + SettingsOverrideKey Enum + /override-status is_active) = PR #237 머지 완료, Hotfix B(#12 /screening/primary,/secondary raw change_rate/trade_strength 노출) = PR #238 머지 완료 — Sprint 5 Task 범위에서 명시적 제외
+- Phase 8.6 Sprint 5 Phase 8.7 entry gate (3개, 직렬 AND): E1 WS execution 누락률 ≤ 5% (T3 라이브 산출) / E2 fallback 신호 비중 ≤ 20% (T2 M-F2 DB 산출) / G-Bt1+G-Bt2 (Sprint 4 산출 승계). §10 DoD #9~#11(5거래일 G-A/G-B/G-C) deprecated, §7.5 G-Bt3 = 본 3개 지표로 재정의
 
 - Phase 8.6 Sprint 2 완료: 병렬 OR tier 분기 시 TEMP_TIME_GUARD_SPRINT2=true 로 09:00~09:10 / 14:30+ 임시 차단. Sprint 3에서 본 가드 도입 후 제거 필수
 - Phase 8.6 Sprint 2 완료: Alembic 마이그레이션 2종 적용 필요 — `stocks.is_kospi200`(c1f2a30b8201) + `trade_signals.matched_tiers`(d2a30b8201ef). Railway 프로덕션 배포 전 반드시 `alembic upgrade head` 실행 확인
