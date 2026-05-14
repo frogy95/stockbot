@@ -583,170 +583,112 @@ LIVE 활성화는 다음 모두 충족 시에만:
 
 ---
 
-## 11. Sprint 5 신설 — 진단 + 측정 인프라 (2026-05-14)
+## 11. Sprint 5 — 진단 Sprint (2026-05-14 축소 재설계)
 
 > **Status**: 계획 수립 완료, 사용자 승인 대기
 > **트리거**: 2026-05-13~14 Phase 8.6 신호 발생 모니터링에서 14개 결함 발견 (5건 hotfix 처리 / 9건 미해결)
 > **모니터링 근거**: `docs/phase/phase8.6/sprint4/2026-05-13-monitoring-result.md` + `docs/phase/phase8.6/sprint4/2026-05-14-monitoring-result.md`
-> **검토 4명**: 윤에이피(API) + 박퀀트(퀀트) + 최리스크(리스크) + 정프로(PO) — Sprint 5 신설 리포트 참조
-> **메타**: 본 신설 계획의 4명 전문가 검토는 Agent 서브에이전트 도구가 본 환경에서 제공되지 않아 phase-planner 내부에서 각 페르소나(`docs/experts/*.md`) + 모니터링 결과 2건을 입력으로 합성 작성됨. 추적성 확보를 위해 4 리뷰 파일은 동일 디렉토리에 별도 산출물로 보존.
+> **검토 4명**: 윤에이피(API) + 박퀀트(퀀트) + 최리스크(리스크) + 정프로(PO) — `phase8.6-sprint5-{api,quant,risk,po}-review.md` 유지 (본질 합의 끝남, 재호출 X)
+> **축소 재설계 메타 (2026-05-14)**: 직전 plan(8 Task / 1.5~2주 / entry gate 10지표)을 사용자가 명시 거부 — "과거 데이터로 답 가능한 항목을 미래 관찰로 미루지 말 것". 9개 미해결 결함 중 #6 KIS WS execution 35% 누락만 라이브 필수, 나머지 8개는 코드 리딩 / DB 쿼리 / Sprint 4 walk-forward 인프라 재활용으로 2~3일 내 답 도출 가능함을 재분류로 확인. **3 Task / 3~5일 / entry gate 3개** 로 축소.
 
-### 11.1 14개 결함 분류 + 처리 경로
+### 11.1 축소 재설계 원칙 (2026-05-14 사용자 명시)
 
-> 사용자 명시: "기존 5개 hotfix는 Sprint 5에서 추가 완화/되돌리기 안 함, 단 구조 변경 후 재평가 가능"
+> **사용자 명시 인용**: "과거의 데이터를 기반으로 측정가능한 항목은 없는거야? 우리가 저장하지 않은 데이터라도 kis api를 통해 과거를 소급 확인가능하잖아? 왜이렇게 검증하고 가고 싶은게 많은거야?"
 
-#### 이미 처리한 5건 — 모두 유지 (Sprint 5 동안 unchanged)
+직전 plan(8 Task / 1.5~2주 / entry gate 10지표)을 다음 5원칙으로 축소했다:
 
-| # | 결함 | 처리 | PR |
-|---|------|------|-----|
-| 1 | `change_rate_max 7→30` (A안 1차 모멘텀 차단 해제) | hotfix | PR #233 |
-| 2 | `trade_strength_min 100→80` (A안 2차 모멘텀 차단 해제) | hotfix | PR #233 |
-| 3 | `ATR_FILTER_PCT 0.05→0.07` | hotfix | PR #231 |
-| 4 | `MIN_VOLUME_FLOOR_HARD 0.3→0.25` | hotfix | PR #231 |
-| 5 | `/virtual-signals?stock_code=` 필터 추가 | hotfix | PR #236 |
+1. **과거 데이터로 답 나오는 것을 미래 관찰로 미루지 말 것** — 코드 리딩 / DB 쿼리 / Sprint 4 walk-forward 인프라 재활용으로 8개 결함은 2~3일 내 답.
+2. **entry gate는 "라이브로만 입증 가능한 지표"로 한정** — 표면 카운트 게이트 X. 측정 가능한 사실은 게이트가 아니라 Task 종료 조건으로 흡수.
+3. **즉시 hotfix 가능한 결함은 Sprint 안에 묶지 말 것** — #7 (R3 unset Enum) + #12 (/screening/primary change_rate) 즉시 분리. #9 (G3 부등호) 는 T1 첫날 코드 진단 후 결정.
+4. **Sprint 6 placeholder 삭제** — T2/T3 결과로 본질 진단되면 추가 Sprint 자체가 불필요할 수 있음. 진짜 구조 재설계가 필요한지는 Sprint 5 종료 후 판단.
+5. **5거래일 Paper 윈도우는 T3 라이브 1주에 자연 흡수** — 별도 게이트로 두지 않음.
 
-#### 미해결 9건 — Sprint 5/hotfix/Sprint 6 분류
+### 11.2 9개 미해결 결함 재분류 (사용자 합의)
 
-| # | 결함 | 본질도 | 처리 경로 | 의사결정 근거 |
-|---|------|--------|----------|--------------|
-| 6 | **KIS WS execution 35% 누락** (2차 통과 100% 영향, fallback 강제 발동의 root cause 후보) | 최본질 | **Sprint 5 T1 진단** | 윤에이피 §1 인과 사슬 / 최리스크 §2 P0 / advisor §2 |
-| 7 | `SECONDARY_POOL_FALLBACK_ENABLED` unset 분기 누락 | 작음 | **즉시 hotfix (Sprint 5 외)** + SettingsOverrideKey Enum 단일 진실 소스 묶음 | 윤에이피/최리스크/PO 만장일치 |
-| 8 | R1 자동 발동 원인 의문 (signals=2 임에도 active) | 본질 | **Sprint 5 T3 진단** | plan-code 일치 검증 |
-| 9 | G3 임계 부등호 (`≤10%` vs `≥10% 미발동`) | 단발 | **Sprint 5 T4 진단 후 hotfix 여부 결정** | advisor §4 — 코드 의도 확인 없이 hotfix 위험 |
-| 10 | breakout 72.2% 단일 stage 편중 | 본질 | **Sprint 5 T2 shadow mode 측정 → Sprint 6 결정** | #6 종속 가능성 + baseline 부재 |
-| 11 | **임계 게임 패턴 (#11 사용자 최본질 지목)** — 진짜 본체는 stage 직렬 AND 결합 (Sprint 2의 tier 병렬 OR가 한 층 아래 stage에는 미적용) | 최본질 | **Sprint 5 T2 shadow mode → Sprint 6 stage 결합 정책 변경** | 박퀀트 §1 / advisor §2 |
-| 12 | `/screening/primary` 응답 스키마에 `change_rate` 필드 없음 (운영 진단 불가) | 작음 | **즉시 hotfix (Sprint 5 외)** | response_model 단순 확장 |
-| 13 | fallback 폭증 (오늘 456건) — 신호 신뢰도 미입증 | 본질 | **Sprint 5 T5 M-F2 정량화** | #6 종속 |
-| 14 | secondary 통과 종목 4h 100% 교체 | 본질 | **Sprint 5 T1/T5 (#6 종속 진단)** | #6 root cause면 자연 해소 |
+| # | 결함 | 답 얻는 법 | 소요 | Sprint 5 매핑 |
+|---|------|-----------|------|--------------|
+| 6 | KIS WS execution 35% 누락 | **라이브** (subscribe 한도 / 레이스 / MST sync 3후보 trace) | 1주 | **T3 (병행)** |
+| 7 | `SECONDARY_POOL_FALLBACK_ENABLED` unset 누락 | 코드 1파일 (`settings_override.py`) | 30분 | **Hotfix A 즉시 분리** |
+| 8 | R1 발동 (signals=2에서 active) | 코드 + DB (auto_rollback 트리거 + 이벤트 로그) | 1~2시간 | **T1** |
+| 9 | G3 임계 부등호 | 코드 1줄 (`circuit_breaker` 비교) | 5분 | **T1** (의도 확정 시 Hotfix C) |
+| 10 | breakout 72.2% 편중 | walk-forward 백테스트 (Sprint 4 인프라 재활용, 과거 60일) | 1일 | **T2** |
+| 11 | 임계 게임 (`momentum_breakout` 직렬 AND) | 코드 리딩 + 백테스트 stage별 reject 분포 | 1일 | **T1 + T2** |
+| 13 | fallback 폭증 신호 신뢰도 | DB 쿼리 (Sprint 1 M-F2 인프라가 fallback flag 저장 중) | 2시간 | **T2** |
+| 14 | secondary 4h 교체율 | DB 쿼리 (screening 결과 이력) | 1시간 | **T2** |
 
-**미검증 trace 3건** (Sprint 5 T7 sub-체크리스트):
-- momentum_breakout 평가 경로에 +7% 종목 도달 여부
-- `_get_realtime_data` 폴백 로직 (execution null 시 처리)
-- R3 자동 SET 로직 (정확한 발동 시각/조건 미관찰)
+**기존 5개 hotfix (#1~#5)** 는 모두 유지 — Sprint 5 동안 unchanged.
 
-### 11.2 Sprint 5 핵심 원칙 (전문가 4명 합의)
+### 11.3 Sprint 5 Task 구성 (3 Task, 3~5일)
 
-1. **진단 + 측정 인프라 Sprint** — 임계 변경 0건, dry_run 변경 0건, LIVE_TRADING_ENABLED false 잠금
-2. **기존 5개 hotfix 유지** (사용자 명시) — Sprint 5 동안 측정 노이즈 회피
-3. **shadow mode 도입** — `momentum_breakout` 4 stage 모두 평가 (reject 차단 X, 평가 결과만 로깅) — 박퀀트 권고
-4. **#6 root cause 진단 1순위** — 윤에이피/최리스크 P0
-5. **#11 (임계 게임) 진짜 본체는 stage 직렬 AND 결합** — 박퀀트 진단 (tier는 Sprint 2에서 이미 OR)
-6. **hotfix 2건 즉시 분리** (#7, #12), #9는 Sprint 5 T4 진단 후 결정
-7. **Phase 7.0 LIVE 파라미터 영구 잠금 유지** (최리스크 G9)
+| Task | 내용 | 산출물 | 기간 | 비고 |
+|------|------|--------|------|------|
+| **T1 — 코드 즉답** | #7 #8 #9 #11 코드 리딩 진단. R1 auto_rollback 트리거 코드/이벤트 로그 추적. G3 부등호 의도 확정. `momentum_breakout` stage 직렬 AND 결합 위치 확정. #7은 30분 안에 Hotfix A로 분리, #9는 진단 후 의도 어긋남이면 Hotfix C 분리, 의도와 일치하면 Sprint 5 안 문서 갱신. | 진단서 1장 (#7/#8/#9/#11 변경 위치 확정) + Hotfix A PR + (필요 시) Hotfix C PR | **반나절~1일** | 윤에이피 + 최리스크 |
+| **T2 — DB / 백테스트** | #10 #13 #14 답 도출. (1) breakout 편중 — Sprint 4 walk-forward 인프라로 과거 60일 stage별 reject 분포 1회 실행. (2) fallback 신호 신뢰도 — Sprint 1 M-F2 인프라가 저장 중인 fallback flag 기반 DB 쿼리. (3) secondary 4h 교체율 — screening 결과 이력 DB 쿼리. 본질 결함 정량화. | 백테스트 보고서 1건 + DB 측정 쿼리/스냅샷 2건 + E2/E3/E4 측정 인프라 (대시보드 카드 포함) | **1~2일** | 박퀀트 |
+| **T3 — 라이브 trace (병행)** | #6 KIS WS execution 35% 누락 root cause trace. A(KIS subscribe 한도) / B(subscribe 응답 레이스) / C(MST sync 타이밍) 3후보 trace. `WS_TRACE_ENABLED=true` env 토글 + Paper 1주 KIS 응답 코드 캡처. T1/T2와 시간축 분리 (반드시 직렬 X). | 진단 보고서 + root cause 후보 채택 + E1 측정 인프라 | **병행 1주** | 윤에이피 |
 
-### 11.3 Sprint 5 Task 구성 (8 Task, 1.5~2주)
-
-| Task | 내용 | 산출물 | 기간 | 담당 영역 |
-|------|------|--------|------|----------|
-| **T1** | **#6 KIS WS execution 35% 누락 root cause trace** — A(KIS 한도) / B(subscribe 레이스) / C(MST sync) 3개 후보 trace. `WS_TRACE_ENABLED=true` env 토글 + 1~2 거래일 KIS 응답 코드 캡처 | 진단 보고서 + root cause 후보 채택 | 3~5일 | 윤에이피 |
-| **T2** | **stage shadow mode 도입** — `momentum_breakout` 4 stage 모두 평가 (reject 없이 점수만 기록, Redis stream + 일별 stage 통과 패턴 집계 API) | shadow mode 모듈 + `/metrics/stage-shadow` API + dashboard 카드 | 5~7일 | 박퀀트 |
-| **T3** | **#8 R1 자동 발동 원인 진단** — `AutoRollbackEvaluator` 코드 vs phase8.6 §5.5 1:1 대조 + 05-15 자동 해제 분기 관찰 + R1~R4 trigger snapshot Telegram 알림 | 진단 보고 + plan-code 불일치 리스트 + Telegram payload 확장 | 2~3일 | 최리스크 |
-| **T4** | **#9 G3 부등호 코드 의도 확인** — `pass_rate < 0.10` vs `≤ 0.10` 확인 + 안전망 임계 부등호 전수 검사 (R1~R4 + G3 + 기타) + 의도 어긋남 시 hotfix 분리 | 부등호 audit 결과 + (필요 시) hotfix PR | 1일 | 박퀀트 |
-| **T5** | **fallback 신호 비중 (M-F2) 정량화 + 신호 신뢰도 분리** — fallback 발동 종목 신호 vs 정상 종목 신호 일별 분리 집계 + Phase 8.7 entry gate "fallback 신호 비중 ≤ 20%" 측정 인프라 | M-F2 신호 비중 API + 일별 분리 대시보드 카드 | 3~4일 | 박퀀트/윤에이피 |
-| **T6** | **R3 자동 SET/UNSET audit log + 자가치유 전수 회귀** — `SettingsOverrideKey` Enum (단일 진실 소스) + 모든 키 unset 분기 자동 포함 + audit log (시점/조건/trigger value 적재) + 전수 회귀 테스트 | enum + audit log + 회귀 테스트 ≥10 PASS | 2~3일 | 최리스크 |
-| **T7** | **미검증 trace 3건 완료** — `_get_realtime_data` 폴백 trace + momentum_breakout +7% 종목 평가 경로 trace + R3 자동 SET 시점 관측 (T1/T6의 sub-체크리스트로 통합 가능) | trace 보고서 + Sprint 5 통합 보고에 부록 | 1일 | 윤에이피/박퀀트 |
-| **T8** | **Phase 8.7 entry gate 재정의 문서화 + 측정 dashboard** — §11.5의 10개 지표 dashboard 카드 + 일일 측정 + 통과/미통과 판정 자동화 | gate 문서 + `/admin/phase87-gate` dashboard | 2~3일 | PO/UX |
-
-**병렬 가능 조합**: T1 + T2 + T6 (인프라 영역 분리). T3 + T4 (안전망 영역). T5 + T8 (지표 영역). T7은 T1/T6 sub로 흡수 가능.
+**병렬성**: T1(코드) + T2(DB/백테스트) 는 영역 분리로 병렬. T3(라이브) 는 시간축 분리 — T1/T2 완료를 기다리지 않고 즉시 `WS_TRACE_ENABLED=true` 토글 후 Paper 1주 동안 수집. 라이브 누적 기간이 Sprint 5 명목 기간을 정의 (3~5일 코드/DB + 병행 1주 라이브).
 
 ### 11.4 Sprint 5 Definition of Done
 
-| # | 항목 | 기준 | 상태 |
+| # | 항목 | 기준 | Task |
 |---|------|------|------|
-| S5-1 | #6 root cause 후보 1개 이상 채택 + 재현 방법 문서화 | T1 진단 보고서 | ⬜ |
-| S5-2 | stage shadow mode 1차 풀 20종 × 4 stage = 80건 평가/분당 정상 로깅 | Paper 1거래일 검증 | ⬜ |
-| S5-3 | R1~R4 plan-code 1:1 대조 결과 + 불일치 fix or 문서 갱신 | T3 보고서 | ⬜ |
-| S5-4 | G3 부등호 audit 결과 + (필요 시) hotfix 머지 | T4 audit | ⬜ |
-| S5-5 | M-F2 신호 비중 일별 산출 정상 + 대시보드 카드 노출 | Paper 1거래일 검증 | ⬜ |
-| S5-6 | `SettingsOverrideKey` Enum + R3 자가치유 전수 회귀 테스트 ≥10 PASS | T6 테스트 | ⬜ |
-| S5-7 | 미검증 trace 3건 결론 도출 (T1/T6 흡수 가능) | T7 보고서 | ⬜ |
-| S5-8 | Phase 8.7 entry gate 10개 지표 dashboard + 일일 자동 판정 | T8 dashboard | ⬜ |
-| S5-9 | pytest 전체 통과 | 각 Task 종료 시점 | ⬜ |
-| S5-10 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | 빌드 실패 테스트 | ⬜ |
+| S5-1 | T1 진단서 1장 — #7/#8/#9/#11 변경 위치 확정 | 코드 라인 인용 포함 | T1 |
+| S5-2 | Hotfix A 머지 (#7 R3 unset Enum) | PR 머지 + 회귀 테스트 ≥10 PASS | T1 (Sprint 5 외 분리) |
+| S5-3 | Hotfix C 결정 — #9 G3 부등호 hotfix 분리 or Sprint 안 문서 갱신 | T1 진단 직후 결정 | T1 |
+| S5-4 | T2 백테스트 보고서 — #10 breakout 72.2% 편중 본질 (Sprint 4 walk-forward 60일 stage별 reject 분포) | 보고서 1건 | T2 |
+| S5-5 | T2 DB 측정 — #13 fallback 신호 신뢰도 + #14 secondary 4h 교체율 | DB 쿼리 + 스냅샷 2건 | T2 |
+| S5-6 | E1/E2/E3/E4 측정 인프라 + 대시보드 카드 | E1=라이브 (T3 산출) / E2/E3/E4=DB 기반 (T2 산출) | T2 + T3 |
+| S5-7 | T3 진단 보고서 — #6 KIS WS root cause 후보 1개 이상 채택 + 재현 방법 | Paper 1주 trace 데이터 기반 | T3 |
+| S5-8 | pytest 전체 통과 | 각 Task 종료 시점 | 전체 |
+| S5-9 | Phase 7.0 LIVE 파라미터 잠금 회귀 0건 | 빌드 실패 테스트 | 전체 |
 
-### 11.5 Phase 8.7 entry gate 재정의 (사용자 요청 직접 응답)
+### 11.5 Phase 8.7 entry gate 축소 (10 → 3)
 
-> 사용자 명시: "5거래일 일평균 ≥1 게이트는 무의미하다 — 표면 통과형 게이트 X. 신호 신뢰도 입증 (fallback 비중 / WS 누락률 / stage 다양성 등) 기반으로."
+> **사용자 명시 거부**: "5거래일 일평균 ≥1" 식 표면 통과형 게이트.
+> **축소 원칙**: entry gate는 "라이브로만 입증 가능한 지표"로 한정. 기존 E3~E10은 게이트가 아니라 T1/T2 Task 종료 조건으로 흡수.
 
-**기존 §10 DoD #9~#11 (5거래일 관찰 G-A/G-B/G-C) 폐기 → 다음 10개 지표로 교체.** §7.5 G-Bt3 정의도 본 §11.5로 갱신. G-Bt1(walk-forward KS p≥0.05), G-Bt2(Bootstrap CI 하한 ≥1) 는 유지.
+| # | 지표 | 임계 | 측정 출처 | 비고 |
+|---|------|------|----------|------|
+| **E1** | WS execution 누락률 (1차 풀 대비) | **≤ 5%** | Sprint 5 T3 (라이브 1주) | 라이브로만 입증 가능 |
+| **E2** | fallback 신호 비중 (M-F2) | **≤ 20%** | Sprint 5 T2 (DB 측정) | 과거 데이터로 즉답, 라이브 검증 병행 |
+| **G-Bt1/G-Bt2** | walk-forward KS p≥0.05 + Bootstrap 95% CI 하한 ≥1 | 그대로 | Phase 8.6 §7.5 승계 | Sprint 4 인프라 |
 
-| 카테고리 | # | 지표 | 임계 | 측정 출처 | 근거 |
-|---------|---|------|------|----------|------|
-| **데이터 인프라** | E1 | WS execution 누락률 (1차 풀 대비) | **≤ 5%** | Sprint 5 T1 + T8 일별 | 최리스크 §3 (윤에이피 ≤10% 강화) |
-| **신호 신뢰도** | E2 | fallback 신호 비중 (M-F2) | **≤ 20%** | Sprint 5 T5 일별 | 최리스크 §3 |
-| **신호 신뢰도** | E3 | 단일 stage 점유율 | **≤ 50%** | Sprint 5 T2 shadow mode 일별 | 박퀀트 §2 #10 |
-| **신호 신뢰도** | E4 | Secondary 통과 종목 4h 교체율 | **≤ 30%** | Sprint 5 T8 일중 측정 | 최리스크 §2 #14 |
-| **신호 성과** | E5 | Paper 신호 PnL 5거래일 누적 | **양(+)** | Phase 8.7 Sprint 1 측정 | 박퀀트 §3 / advisor §5 |
-| **안전망 신뢰도** | E6 | 손절 체결 발생 (Paper 5거래일) | **≥ 1** | Phase 8.7 Sprint 1 측정 | 최리스크 §3 / advisor §5 |
-| **안전망 신뢰도** | E7 | R1~R4 plan-code 일치 단위 테스트 통과 | **통과** | Sprint 5 T3 | 최리스크 §3 (P0 신규) |
-| **안전망 신뢰도** | E8 | R3 자가치유 settings:override:* 전수 회귀 통과 | **통과** | Sprint 5 T6 | 최리스크 §3 (P0 신규) |
-| **통계 검증 (승계)** | G-Bt1 | walk-forward KS 검정 p | **≥ 0.05** | Phase 8.6 §7.5 승계 | 박퀀트 §3 |
-| **통계 검증 (승계)** | G-Bt2 | Bootstrap 95% CI 하한 | **≥ 1** | Phase 8.6 §7.5 승계 | 박퀀트 §3 |
-| (참고 트래픽) | — | Paper 일평균 신호 수 | (gate 아님, 모니터링만) | 모니터링 카드 | advisor §5 — 0건 검출 자체는 필요, gate 부적격 |
+**기존 §10 DoD #9~#11 (5거래일 관찰 G-A/G-B/G-C) 폐기** — 표면 카운트 게이트. §7.5 G-Bt3 = 본 §11.5 3개 지표. 직전 plan E3~E10 (단일 stage 점유율 / Secondary 4h 교체율 / Paper PnL / 손절 체결 / R1~R4 plan-code / R3 회귀) 은 게이트가 아니라 **T1/T2 종료 조건**으로 흡수 — §11.4 DoD S5-1~S5-7 참조.
 
-**통과 조건**: 위 10개 지표 모두 통과 (직렬 AND). 단 1개라도 미충족 시 Phase 8.7 Sprint 1 LIVE 토글 차단.
+**통과 조건**: 3개 지표 모두 통과 (직렬 AND). 1개라도 미충족 시 Phase 8.7 Sprint 1 LIVE 토글 차단.
 
-> **E5/E6의 "5거래일" 윈도우는 측정창이지 카운트 게이트가 아님**: 사용자가 거부한 것은 "5거래일 일평균 ≥1" 식의 *카운트* 게이트이지 5거래일 측정창 자체가 아니다. E5(Paper PnL 누적)·E6(손절 체결 ≥1)는 *품질* 지표로 5거래일이 합리적 측정창. 사용자가 5거래일 윈도우 자체도 거부할 경우 7~10거래일로 확장하거나 누적 종목 수 기반 측정으로 전환 가능 (§14 사용자 다음 단계에서 옵션 제시).
-
-### 11.6 Sprint 5 Sprint planner 호출 시 입력
-
-- 본 §11.1~§11.5 + 4 reviewer 리포트 (`phase8.6-sprint5-{api,quant,risk,po}-review.md`)
-- 모니터링 결과 2건 (`sprint4/2026-05-13-monitoring-result.md` + `sprint4/2026-05-14-monitoring-result.md`)
-- 브랜치명 후보: `phase8.6-sprint5`
-
-### 11.7 hotfix 분리 처리 (Sprint 5 외 트랙)
+### 11.6 hotfix 분리 처리 (Sprint 5 외 트랙)
 
 > Sprint 5 본 작업 전에 또는 병행으로 처리. Sprint 5 브랜치는 hotfix 머지 후 rebase.
 
-#### Hotfix A: #7 SECONDARY_POOL_FALLBACK_ENABLED unset + SettingsOverrideKey Enum
+#### Hotfix A: #7 SECONDARY_POOL_FALLBACK_ENABLED unset + SettingsOverrideKey Enum (기존 결정 유지)
 
 - **변경 파일** (예상): `backend/modules/safety/auto_rollback.py`, `backend/core/constants.py` (or `settings.py`), tests
 - **내용**: `SettingsOverrideKey` Enum 도입 + R3 자가치유 분기에서 enum.iter 기반 unset + 회귀 테스트
 - **브랜치**: `hotfix/phase86-r3-unset-enum`
 
-#### Hotfix B: #12 `/screening/primary` change_rate 노출
+#### Hotfix B: #12 `/screening/primary` change_rate 노출 (기존 결정 유지)
 
 - **변경 파일** (예상): `backend/api/routes/screening.py`, response_model, tests
 - **내용**: `PrimaryCandidateResponse` 스키마에 `change_rate: float` 필드 추가
 - **브랜치**: `hotfix/phase86-primary-change-rate`
 
-#### #9 (G3 부등호) — Sprint 5 T4 진단 후 결정 (즉시 hotfix 후보 아님)
+#### Hotfix C (조건부): #9 G3 부등호 (신규 — T1 진단 후 결정)
+
+- **결정 시점**: T1 첫날 (`circuit_breaker` 코드 1줄 의도 확정)
+- **분기**:
+  - 코드 의도와 어긋남 → `hotfix/phase86-g3-comparator` 분리 → 즉시 머지
+  - 코드 의도와 일치 → Sprint 5 안에서 문서/주석 갱신만 (hotfix 분리 X)
+
+### 11.7 Sprint planner 호출 시 입력
+
+- 본 §11.1~§11.6 + 4 reviewer 리포트 (`phase8.6-sprint5-{api,quant,risk,po}-review.md` — 본질 합의 끝남, 재호출 X)
+- 모니터링 결과 2건 (`sprint4/2026-05-13-monitoring-result.md` + `sprint4/2026-05-14-monitoring-result.md`)
+- 브랜치명 후보: `phase8.6-sprint5`
 
 ---
 
-## 12. Sprint 6 — placeholder (Sprint 5 결과 의존)
-
-> **Status**: placeholder, 풀 스펙 미작성 (advisor §3 권고)
-> **착수 시점**: Sprint 5 완료 (예상 2026-05-30 전후) 후 별도 sprint-planner 호출
-> **이유**: Sprint 5 진단 결과에 따라 Sprint 6 작업 범위가 완전히 달라짐
-
-### 12.1 Sprint 5 진단 결과별 Sprint 6 방향 분기
-
-| Sprint 5 진단 결과 | Sprint 6 방향 |
-|------------------|-------------|
-| #6 root cause = **KIS 구독 한도 초과** | 1차 풀 축소 (20→18) + 우선순위 큐 (score 기준) + 잔여 슬롯 polling. `PRIMARY_POOL_SIZE` env. |
-| #6 root cause = **subscribe 레이스** | subscribe 응답 코드 0 미확인 시 재시도 + 누락 종목 분리 재구독 + Telegram 알림 (Phase 6 WS 안정화 인프라 재사용) |
-| #6 root cause = **MST sync 타이밍** | MST sync 강제 동기화 + `KOSPI200_MST_SYNC` kill-switch 활용 |
-| #6 fix 불가 (KIS 한계) | LIVE 전환 무기한 보류 + execution 정상 종목만 신호 발행 대상으로 제한 (fallback 종목은 dry_run 평가) |
-| stage shadow mode = 다수결 ≥3/4 유효 | stage 결합 정책 변경 (직렬 AND → 다수결): shadow → dry_run → 본 도입 단계적 |
-| stage shadow mode = 가중치 학습 가능 | stage 가중치 학습 + OOS R² > 0 검증 후 도입 |
-| R1~R4 plan-code 불일치 발견 | 안전망 plan-code 통일 + Telegram alert payload 강화 + 회귀 테스트 |
-| fallback 신호 비중 (M-F2) ≤ 20% 달성 | Phase 8.7 entry gate E2 자동 통과 → 다른 지표 집중 |
-| fallback 신호 비중 (M-F2) > 50% | fallback 경로 자체 재설계 (Phase 8.5 폴백 일부 폐기 검토) |
-
-### 12.2 Sprint 6 일단 예측 가능한 공통 Task
-
-- 기존 5개 hotfix 임계 재평가 (Sprint 5 측정 결과 기반) — 사용자 명시 "구조 변경 후 재평가 가능"
-- Phase 8.7 entry gate 10개 지표 통과 여부 일일 측정 + 미통과 지표 fix
-- Sprint 6 자체 회귀 테스트 + Paper 1거래일 통합 검증
-
-### 12.3 Sprint 7 — 작성 X
-
-Sprint 6 완료 후 Phase 8.7 entry gate 10개 지표 전수 통과 시 Sprint 7 미필요 → Phase 8.7 Sprint 1 (LIVE 게이트) 직접 진입. 미통과 시 Sprint 7 신설 후 잔여 결함 대응.
-
----
-
-## 13. 14개 결함 추적 표 (Sprint 5/6 처리 경로 종합)
+## 12. 14개 결함 추적 표 (Sprint 5 축소 매핑)
 
 | # | 결함 | 상태 | 처리 | 산출물 |
 |---|------|------|------|--------|
@@ -755,54 +697,50 @@ Sprint 6 완료 후 Phase 8.7 entry gate 10개 지표 전수 통과 시 Sprint 7
 | 3 | ATR_FILTER_PCT 0.05→0.07 | ✅ 완료 | PR #231 hotfix | hotfix/phase86-atr-volume-floor-relax |
 | 4 | MIN_VOLUME_FLOOR_HARD 0.3→0.25 | ✅ 완료 | PR #231 hotfix | (동일) |
 | 5 | /virtual-signals?stock_code= 필터 | ✅ 완료 | PR #236 hotfix | hotfix/virtual-signals-stock-code-filter |
-| 6 | **KIS WS execution 35% 누락** | ⬜ | Sprint 5 T1 진단 → Sprint 6 fix | 진단 보고서 + Sprint 6 PR |
-| 7 | SECONDARY_POOL_FALLBACK_ENABLED unset | ⬜ | **Hotfix A** (Sprint 5 외) | hotfix/phase86-r3-unset-enum |
-| 8 | R1 자동 발동 원인 의문 | ⬜ | Sprint 5 T3 진단 | T3 보고서 + 알림 payload 확장 |
-| 9 | G3 임계 부등호 불일치 | ⬜ | Sprint 5 T4 진단 → 필요 시 hotfix | T4 audit |
-| 10 | breakout 72.2% 단일 stage | ⬜ | Sprint 5 T2 shadow mode 측정 → Sprint 6 결정 | shadow mode 측정 데이터 |
-| 11 | **임계 게임 = stage 직렬 AND** | ⬜ | Sprint 5 T2 shadow → Sprint 6 결합 정책 변경 | Sprint 6 stage 결합 정책 |
+| 6 | **KIS WS execution 35% 누락** | ⬜ | Sprint 5 **T3** (라이브 1주) | T3 진단 보고서 + root cause 채택 |
+| 7 | SECONDARY_POOL_FALLBACK_ENABLED unset | ⬜ | **Hotfix A** (Sprint 5 외, 30분) | hotfix/phase86-r3-unset-enum |
+| 8 | R1 자동 발동 원인 의문 | ⬜ | Sprint 5 **T1** (코드 + DB, 1~2시간) | T1 진단서 |
+| 9 | G3 임계 부등호 불일치 | ⬜ | Sprint 5 **T1** 진단 → 의도 어긋남 시 **Hotfix C** | T1 audit (+ 필요 시 PR) |
+| 10 | breakout 72.2% 단일 stage | ⬜ | Sprint 5 **T2** (walk-forward 60일, 1일) | T2 백테스트 보고서 |
+| 11 | **임계 게임 = stage 직렬 AND** | ⬜ | Sprint 5 **T1 + T2** (코드 리딩 + reject 분포) | T1 변경 위치 + T2 분포 |
 | 12 | /screening/primary change_rate 노출 | ⬜ | **Hotfix B** (Sprint 5 외) | hotfix/phase86-primary-change-rate |
-| 13 | fallback 폭증 (456건) | ⬜ | Sprint 5 T5 정량화 → #6 종속 fix | M-F2 신호 비중 API |
-| 14 | secondary 4h 100% 교체 | ⬜ | Sprint 5 T1 (#6 종속) | T1 진단 보고서 |
-| trace-1 | momentum_breakout +7% 종목 도달 | ⬜ | Sprint 5 T7 | trace 보고서 |
-| trace-2 | `_get_realtime_data` 폴백 로직 | ⬜ | Sprint 5 T7 (#6 종속) | trace 보고서 |
-| trace-3 | R3 자동 SET 로직 | ⬜ | Sprint 5 T6 audit log | audit log + 회귀 테스트 |
+| 13 | fallback 폭증 (456건) | ⬜ | Sprint 5 **T2** (M-F2 DB 쿼리, 2시간) | DB 측정 스냅샷 |
+| 14 | secondary 4h 100% 교체 | ⬜ | Sprint 5 **T2** (screening 이력 DB 쿼리, 1시간) | DB 측정 스냅샷 |
+| trace-1 | momentum_breakout +7% 종목 도달 | ⬜ | Sprint 5 **T1** (코드 평가 경로) | T1 진단서 부록 |
+| trace-2 | `_get_realtime_data` 폴백 로직 | ⬜ | Sprint 5 **T3** (#6 종속) | T3 진단 부록 |
+| trace-3 | R3 자동 SET 로직 | ⬜ | **Hotfix A** 안에서 흡수 (SettingsOverrideKey Enum + 회귀) | hotfix/phase86-r3-unset-enum |
 
 ---
 
-## 14. 사용자 다음 단계 (Sprint 5 진입)
+## 13. 사용자 다음 단계 (Sprint 5 진입)
 
-본 문서는 **Sprint 5 신설 계획 수립 완료 (사용자 승인 대기)** 상태이다.
+본 문서는 **Sprint 5 축소 재설계 완료 (사용자 승인 완료, 2026-05-14)** 상태이다.
 
-### 선택지
+### 진행 절차
 
-1. **승인 → Hotfix A/B 즉시 분리 + Sprint 5 sprint-planner 호출** (권고)
-2. **§11.5 entry gate 10개 지표 임계 수정 후 승인** — 예: WS execution 누락률 ≤5%를 ≤10%로 완화 등 (단 최리스크 권고 강화값을 임의 완화 시 LIVE 안전성 손실)
-3. **Sprint 5 Task 우선순위 변경** — 예: T1(#6 진단) 대신 T2(shadow mode) 우선
-4. **거부 / 재검토** — Sprint 5 신설 보류, 다른 방향
+1. Hotfix A (`hotfix/phase86-r3-unset-enum`) + Hotfix B (`hotfix/phase86-primary-change-rate`) 즉시 분리 — Sprint 5 착수 전 또는 병행
+2. `phase8.6-sprint5` 브랜치 생성 후 sprint-planner agent 호출
+3. T1(코드 즉답, 반나절~1일) → T2(DB/백테스트, 1~2일) 직렬 또는 병렬 실행
+4. T3(라이브 trace) 는 T1 착수와 동시에 `WS_TRACE_ENABLED=true` 토글 → Paper 1주 누적
+5. T1 진단 결과에 따라 Hotfix C(#9) 분리 여부 결정
+6. T1+T2+T3 종료 후 Sprint 5 마무리 — Phase 8.7 entry gate 3개 통과 여부 평가
+7. Sprint 6 placeholder 삭제 — T2/T3 결과로 본질 진단되면 추가 Sprint 자체 불필요. 진짜 구조 재설계 필요 시 Sprint 5 종료 후 판단.
 
-선택 후 다음 자동 진행:
-- Sprint 5 승인 시: `hotfix/phase86-r3-unset-enum` + `hotfix/phase86-primary-change-rate` 즉시 분리 처리 → `phase8.6-sprint5` 브랜치에서 sprint-planner 호출
-- ROADMAP.md Phase 8.6 절 갱신 (Sprint 5 신설 표시 + 다음 마일스톤을 "Phase 8.6 Sprint 5" 로 갱신)
-- index.json phase8.6 sprints 배열 갱신
+### 의사결정 추적 (승인 완료)
 
-### 먼저 검토 권장 섹션
-
-- §11.1 14개 결함 분류 (의사결정 기록)
-- §11.2 Sprint 5 핵심 원칙 7개 (특히 "임계 변경 0건, dry_run 변경 0건" 강제)
-- §11.5 Phase 8.7 entry gate 10개 지표 (사용자 요청 직접 응답)
-- §12 Sprint 6 placeholder (advisor §3 권고 — 미리 풀 스펙 X)
-- §13 14개 결함 추적 표 (전수 처리 경로 확인)
-
-### Sprint 5 신설 결정 추적
-
-| 결정 | 근거 | 출처 |
-|------|------|------|
-| Sprint 1~4 본문 unchanged | 사용자 명시 + 추적성 | 사용자 메시지 |
-| §10 DoD #9~#11 deprecated (삭제 X) | 추적성 | advisor §9 |
-| §7.5 G-Bt3을 §11.5 10개 지표로 교체 (G-Bt1/G-Bt2 유지) | phase8.6 내부 모순 방지 | advisor §6 |
-| Sprint 5 = 진단 + 측정 Sprint, 임계 변경 0건 | 4명 전문가 합의 | 윤/박/최/PO 리뷰 |
-| Sprint 6은 placeholder만 | Sprint 5 결과 의존 | advisor §3 |
-| #9 hotfix 즉시 분리 X | 코드 의도 미확인 | advisor §4 |
-| Phase 8.7 entry gate = 10개 지표 (표면 카운트 폐기) | 사용자 요청 + 4명 합의 | 사용자 메시지 + advisor §5 |
-| Phase 7.0 LIVE 파라미터 영구 잠금 유지 | Phase 표준 (최리스크 G9) | 분기 D 4명 재리뷰 승계 |
+| 결정 | 사용자 답 | 출처 |
+|------|----------|------|
+| 직전 plan(8 Task / entry gate 10지표) 축소 | **승인 완료** — "왜 이렇게 검증하고 가고 싶은게 많은거야" | 사용자 메시지 2026-05-14 |
+| 9개 결함 재분류 (코드/DB/라이브) | **승인 완료** — 8개는 과거 데이터로 즉답, #6만 라이브 | 사용자 메시지 2026-05-14 |
+| Sprint 5 = 3 Task / 3~5일 | **승인 완료** | 사용자 메시지 2026-05-14 |
+| entry gate 10 → 3 (E1/E2/G-Bt1/G-Bt2) | **승인 완료** — 기존 E3~E10은 Task 종료 조건으로 흡수 | 사용자 메시지 2026-05-14 |
+| Sprint 6 placeholder 삭제 | **승인 완료** — Sprint 5 결과 후 판단 | 사용자 메시지 2026-05-14 |
+| Sprint 1~4 본문 unchanged | **승인 완료** — 추적성 | 사용자 메시지 2026-05-14 |
+| 기존 5개 hotfix (#1~#5) 유지 | **승인 완료** | 직전 plan 승계 |
+| Hotfix A/B 즉시 분리 (#7/#12) | **승인 완료** | 직전 plan 승계 |
+| Hotfix C(#9) 조건부 분리 | **승인 완료** — T1 코드 진단 후 결정 | 사용자 메시지 2026-05-14 |
+| 5거래일 Paper 윈도우 별도 게이트 X | **승인 완료** — T3 라이브 1주에 자연 흡수 | 사용자 메시지 2026-05-14 |
+| 전문가 4명 재호출 X | **승인 완료** — 본질 합의 끝남 | 사용자 메시지 2026-05-14 |
+| §10 DoD #9~#11 deprecated (삭제 X) | 유지 — 추적성 | 직전 plan 승계 |
+| §7.5 G-Bt3 = §11.5 3개 지표 (G-Bt1/G-Bt2 유지) | 유지 — phase8.6 내부 모순 방지 | 직전 plan 승계 |
+| Phase 7.0 LIVE 파라미터 영구 잠금 | 유지 — Phase 표준 (최리스크 G9) | 분기 D 4명 재리뷰 승계 |

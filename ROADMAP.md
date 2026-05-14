@@ -53,13 +53,12 @@ Phase 8 ──(VWAP 엔진 + 백테스트 데이터셋)──> Phase 9 (min 3~6�
 ## 프로젝트 현황 대시보드
 
 - 전체 진행률: Phase 0~8 완료 (Phase 8은 Sprint 1·2로 종결, 잔여는 Phase 8.7으로 이관) + Phase 8.5 Sprint 1·1.5·2·2.5 완료 (2026-04-23) → **분기 D 확정으로 종결, 후속작업 Phase 8.6로 이관 (2026-04-28)** + **Phase 8.6 Sprint 1 완료 (2026-04-29)** + **Phase 8.6 Sprint 2 완료 (2026-04-29)** + **Phase 8.6 Sprint 3 완료 (2026-05-07)** + **Phase 8.6 Sprint 4 완료 (2026-05-08)**
-- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (Sprint 1~4 완료 + Sprint 5 신설 (2026-05-14, 사용자 승인 대기))**
-- 현재 Sprint: **Phase 8.6 Sprint 5 — 📋 계획 수립 (2026-05-14)** — 2026-05-13~14 모니터링 14개 결함 처리. 진단·측정 인프라 Sprint (T1~T8). KIS WS execution 35% 누락 root cause trace + stage shadow mode + 안전망 plan-code 일치 검증 + M-F2 정량화 + Phase 8.7 entry gate 10개 지표 dashboard. 동반 hotfix 2건 (R3 unset Enum, /screening/primary change_rate).
+- 현재 Phase: **Phase 8.6 — 신호 생성 로직 구조 재설계 (Sprint 1~4 완료 + Sprint 5 축소 재설계 (2026-05-14, 사용자 승인 완료))**
+- 현재 Sprint: **Phase 8.6 Sprint 5 — 📋 계획 수립 (2026-05-14, 축소 재설계)** — 2026-05-13~14 모니터링 14개 결함 처리. **3 Task / 3~5일** 진단 Sprint (직전 8 Task 폐기). T1(코드 즉답 #7/#8/#9/#11) + T2(DB/백테스트 #10/#13/#14) + T3(라이브 trace #6 KIS WS 1주 병행). 동반 hotfix 2건 (R3 unset Enum, /screening/primary change_rate) + 조건부 Hotfix C(#9 G3 부등호, T1 진단 후 결정). Sprint 6 placeholder 삭제.
 - 완료된 스프린트: Phase 0.5 Sprint 1 (2026-03-29), Phase 1 Sprint 1 (2026-03-29), Phase 1 Sprint 2 (2026-03-29), Phase 2 Sprint 1 (2026-03-29), Phase 2 Sprint 2 (2026-03-29), Phase 2 Sprint 3 (2026-03-30), Phase 2.5 Sprint 1 (2026-03-30), Phase 2.6 Sprint 1 (2026-03-30), Phase 3 Sprint 1 (2026-03-30), Phase 3 Sprint 2 (2026-03-30), Phase 3 Sprint 3 (2026-03-31), Phase 4 Sprint 1 (2026-03-31), Phase 4 Sprint 2 (2026-03-31), Phase 4.5 Sprint 1 (2026-04-01), Phase 4.6 Sprint 1 (2026-04-02), Phase 4.6 Sprint 2 (2026-04-02), Phase 4.7 Sprint 1 (2026-04-02), Phase 4.8 Sprint 1 (2026-04-03), Phase 4.8 Sprint 2 (2026-04-05), Phase 4.8 Sprint 3 (2026-04-05), Phase 4.9 Sprint 1 (2026-04-06), Phase 5 Sprint 1 (2026-04-07), Phase 5 Sprint 2 (2026-04-07), Phase 5.1 Sprint 1 (2026-04-08), Phase 5.2 Sprint 1 (2026-04-08), Phase 6 Sprint 1 (2026-04-12), Phase 6 Sprint 2 (2026-04-12), Phase 6.1 Sprint 1 (2026-04-13), Phase 6.2 Sprint 1 (2026-04-14), Phase 7.0 Sprint 1 (2026-04-15), Phase 7.0 Sprint 2 (2026-04-16), Phase 7.0.1 Sprint 1 (2026-04-16), Phase 8 Sprint 1 (2026-04-20), Phase 8 Sprint 2 (2026-04-22), Phase 8.5 Sprint 1 (2026-04-22), Phase 8.5 Sprint 1.5 (2026-04-23), Phase 8.5 Sprint 2 (2026-04-23), Phase 8.5 Sprint 2.5 (2026-04-23), Phase 8.6 Sprint 1 (2026-04-29), Phase 8.6 Sprint 2 (2026-04-29), Phase 8.6 Sprint 3 (2026-05-07), **Phase 8.6 Sprint 4 (2026-05-08)**
 - 프로덕션 배포: v0.5.0 (2026-03-31) — Vercel + Railway
-- 다음 마일스톤: **Phase 8.6 Sprint 5 — 진단 + 측정 인프라** (사용자 승인 대기, 1.5~2주, hotfix 2건 동반)
-- 후속 마일스톤: **Phase 8.6 Sprint 6** — 진단 결과 기반 구조 변경 (placeholder, Sprint 5 후 풀 스펙 작성)
-- LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 entry gate 10개 지표 통과 후 착수). **DoD 재정의 (2026-05-14)**: 기존 "일평균 신호 ≥1 / 0건 ≤2/5 / tier ≥2종" 폐기 → §Phase 8.6 §11.5 10개 지표 (WS 누락률 ≤5% / fallback 신호 비중 ≤20% / 단일 stage ≤50% / Secondary 4h 교체율 ≤30% / Paper PnL 양(+) / 손절 ≥1 / R1~R4 plan-code 일치 / R3 자가치유 전수 회귀 / G-Bt1 / G-Bt2) 모두 통과
+- 다음 마일스톤: **Phase 8.6 Sprint 5 — 진단 Sprint (축소 재설계)** (사용자 승인 완료, 3 Task / 3~5일, hotfix 2건 동반 + 조건부 Hotfix C)
+- LIVE 게이트 마일스톤: **Phase 8.7 Sprint 1 — E2E 검증 + LIVE 전환 게이트** (Phase 8.6 entry gate 3개 지표 통과 후 착수). **DoD 재정의 (2026-05-14 축소)**: 기존 "일평균 신호 ≥1 / 0건 ≤2/5 / tier ≥2종" 폐기 → §Phase 8.6 §11.5 **3개 지표** (E1 WS 누락률 ≤5% / E2 fallback 신호 비중 ≤20% / G-Bt1+G-Bt2 walk-forward KS+Bootstrap CI) 통과. 직전 plan E3~E10은 게이트 아니라 Sprint 5 T1/T2 종료 조건으로 흡수.
 - Phase 9 착수 조건: **Phase 8.7 Sprint 1 LIVE 게이트 통과 + LIVE 2주 안정 운영** 후 Phase 9 Sprint 0 (Z-score/VWAP/5분봉 가속도 통합 데이터 수집 인프라).
 - 이후 마일스톤: Phase 8.7 Sprint 2 (시스템 관리 UI) → Sprint 3 (성과 분석) → Phase 9 Sprint 0 → Phase 10 (U자형, 2개월+ 축적) → Phase 10.1 (누적 백로그)
 - 장기 마일스톤: Phase 10 — U자형 비선형 보정 (Phase 9 Sprint 3 완료 + 2개월 축적 시 의무 착수)
@@ -1279,17 +1278,17 @@ Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 �
 - tier 다양성 1종(prev_high만), 직렬 AND 곱셈으로 통과율 0 수렴
 - **(2026-05-14 추가)** Sprint 4 완료 후 모니터링에서 KIS WS execution 35% 누락, stage 직렬 AND 잔존, R1 plan-code 불일치 의심 등 14개 결함 발견. 표면 카운트 entry gate(일평균 신호 ≥1) 의 한계 정량 입증.
 
-### 범위 (현재 6 Sprint, 4~6주)
+### 범위 (현재 5 Sprint, Sprint 6 placeholder 삭제됨 2026-05-14 축소 재설계)
 - **Sprint 1** ✅ (2026-04-29 완료) — 선행 패치 + DoR 가드레일 (PO Sprint 2.6 흡수): M-F2 산출(G1), 자동 롤백 R1~R4 다변화(G2), 1차→2차 회로차단기(G3), 폴백 5종 확장, min_volume_floor 시간대 슬라이딩 0.3(09~11시), Phase 7.0 LIVE 파라미터 코드 잠금 — `docs/phase/phase8.6/sprint1/sprint1.md` (7 Task)
 - **Sprint 2** ✅ (2026-04-29 완료) — tier 직렬 AND → 병렬 OR 분리 (gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 동적 상한(`min(0.08, KOSPI200 80퍼센타일×1.2)`), 09:00 캘리브레이션 잡 — `docs/phase/phase8.6/sprint2/sprint2.md` v2 (6 Task, 93 PASS)
 - **Sprint 3** ✅ (2026-05-07 완료) — `volume_surge` tier 신설 (5분봉 거래량 ×5배 + 호가창 매수/매도 ≥2배 + 가격 +0.5%, 09:30~14:00, position 30%, dry_run 기본), 시간대 필터 본 가드 (09:00~09:10 진입 금지 + gap_open 09:05까지 예외, 점심 floor 0.7, 14:30+ 신규 진입 금지), `TEMP_TIME_GUARD_SPRINT2` 제거, 신호 우선순위 큐, R3 활성화, `ATR_COVERAGE_GAP_MAX` 30 원복 — `docs/phase/phase8.6/sprint3/sprint3.md` (6 Task, 1116 PASS, tsc 0건)
 - **Sprint 4** ✅ (2026-05-08 완료) — Walk-forward 60일+ 백테스트 (TimeSeriesSplit 40/20 슬라이딩 + Bootstrap 95% CI 하한 ≥1) + 시뮬↔실측 KS/카이제곱 자동 감지 + LIVE 토글 게이트(G-Bt1·G-Bt2·G-Bt3 직렬 AND) + 임계 재조정 후보 진단 — `docs/phase/phase8.6/sprint4/sprint4.md` (8 Task). §4 예외 조항 발동 사유: Sprint 3 배포 후 Paper 2거래일 G2 신호 0건 누적, 근본 원인 Sprint 3 변경분 외 (volume_threshold 2.0 vs 측정 1.26)
-- **Sprint 5** 🔄 (2026-05-14 계획 수립, 사용자 승인 대기) — **진단 + 측정 인프라 Sprint** — 임계 변경 0건. T1(#6 KIS WS execution 35% 누락 root cause trace) + T2(stage shadow mode 4 stage 평가 측정) + T3(#8 R1 발동 원인 plan-code 1:1 대조) + T4(#9 G3 부등호 audit) + T5(M-F2 신호 비중 정량화) + T6(SettingsOverrideKey Enum + R3 자가치유 전수 회귀) + T7(미검증 trace 3건) + T8(Phase 8.7 entry gate 10개 지표 dashboard) — `docs/phase/phase8.6/phase8.6.md` §11 (8 Task, 1.5~2주)
-- **Sprint 6** 📋 placeholder (Sprint 5 결과 의존, 풀 스펙 미작성) — 진단 결과 기반 구조 변경 (#6 fix / stage 결합 정책 변경 / 5개 hotfix 임계 재평가) — `phase8.6.md` §12
+- **Sprint 5** 🔄 (2026-05-14 계획 수립, 사용자 승인 완료 — 축소 재설계) — **진단 Sprint** — 3 Task / 3~5일. **T1 코드 즉답** (#7 R3 unset + #8 R1 발동 + #9 G3 부등호 + #11 stage 직렬 AND 위치, 반나절~1일) + **T2 DB/백테스트** (#10 breakout 편중 walk-forward 60일 + #13 fallback M-F2 DB + #14 secondary 4h 교체율, 1~2일) + **T3 라이브 trace** (#6 KIS WS execution 35% 누락 root cause, Paper 1주 병행) — `docs/phase/phase8.6/phase8.6.md` §11 (3 Task). 직전 8 Task plan은 사용자 명시 거부로 폐기. Sprint 6 placeholder 삭제.
 
 ### 동반 hotfix (Sprint 5 외 즉시 분리)
 - `hotfix/phase86-r3-unset-enum` — #7 `SECONDARY_POOL_FALLBACK_ENABLED` unset 분기 + `SettingsOverrideKey` Enum 단일 진실 소스
 - `hotfix/phase86-primary-change-rate` — #12 `/screening/primary` response_model에 `change_rate` 필드 추가 (운영 진단)
+- (조건부) `hotfix/phase86-g3-comparator` — #9 G3 부등호 (T1 진단 후 코드 의도와 어긋남 시 분리)
 
 ### Definition of Ready (Sprint 2 착수 차단 해제 조건)
 - G1: 폴백 신호율(M-F2) 산출 가능화 — `signal.fallback=true` 메타데이터 신호→주문→체결 전파
@@ -1306,11 +1305,11 @@ Phase 8.5 v2.6.1 자동 롤백(2026-04-28, `auto_rollback_2d_zero_signals`)이 �
 - `volume_surge` tier dry_run 배포 — ✅ (Paper 5거래일 ≥5건 기준은 deprecated, §11.5로 대체)
 - ~~Paper 5거래일 G-A(일평균 ≥1.5) + G-B(0건 일수 ≤30%) + G-C(tier ≥3종)~~ **deprecated (2026-05-14)** — 표면 카운트 게이트 무의미함이 모니터링으로 입증됨. §11.5 10개 지표로 교체.
 - 60일 Walk-forward 백테스트 KS 검정 p≥0.05 — ✅ (Sprint 4)
-- LIVE 토글 게이트 G-Bt3 정의 갱신 (§11.5 10개 지표 통과) + 미충족 시 dry_run 강제 유지
-- **(Sprint 5 신설)** Phase 8.7 entry gate 10개 지표 (WS 누락률 ≤5% / fallback 신호 비중 ≤20% / 단일 stage ≤50% / Secondary 4h 교체율 ≤30% / Paper PnL 양(+) / 손절 체결 ≥1 / R1~R4 plan-code 일치 / R3 자가치유 전수 회귀 / G-Bt1 / G-Bt2) 모두 통과 후 Phase 8.7 진입
+- LIVE 토글 게이트 G-Bt3 정의 갱신 (§11.5 **3개 지표** 통과) + 미충족 시 dry_run 강제 유지
+- **(Sprint 5 축소 재설계)** Phase 8.7 entry gate **3개 지표** (E1 WS 누락률 ≤5% / E2 fallback 신호 비중 ≤20% / G-Bt1+G-Bt2 walk-forward KS+Bootstrap CI) 모두 통과 후 Phase 8.7 진입. 직전 plan E3~E10은 게이트 아니라 Sprint 5 T1/T2 종료 조건으로 흡수.
 
 ### 후속
-- Phase 8.6 완료 후 → **Phase 8.7 Sprint 1** (E2E + LIVE 게이트, 구 Phase 8 Sprint 3) 착수. Phase 8.7 entry 조건은 §11.5 10개 지표 통과.
+- Phase 8.6 완료 후 → **Phase 8.7 Sprint 1** (E2E + LIVE 게이트, 구 Phase 8 Sprint 3) 착수. Phase 8.7 entry 조건은 §11.5 **3개 지표** 통과 (축소 재설계).
 - Phase 9 Sprint 0 (5분봉 가속도 + KIS 백필) 순서는 변경 없음
 
 > Phase 상세 계획: `docs/phase/phase8.6/phase8.6.md` ✅ Sprint 1~4 완료, Sprint 5 계획 수립 (2026-05-14)
