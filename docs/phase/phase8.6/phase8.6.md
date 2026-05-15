@@ -601,17 +601,54 @@ LIVE 활성화는 다음 모두 충족 시에만:
 
 > 우선순위는 advisor §3 분류표 기반: "정량 확정 + 변경 risk 낮음" 우선. 구조 변경(stage 직렬 AND 해체)은 Sprint 6 결과 본 후 별도 Sprint에서 결정.
 
+#### 사용자 질의(2026-05-15) — "이미 있는 데이터로 대체 가능?" 재검토 결과
+
+phase-planner 1차 응답에서 "T1·T3·T4·T5는 분석으로 대체 가능, T2만 본 구현"으로 분리 권고했으나 **advisor 재검토 결과 3건이 블록**으로 판정되어 결론을 다음과 같이 수정한다 ([재검토 advisor 응답 보존: 본 갱신 커밋].
+
+| 항목 | 1차 결론 | 재검토 결론 | 근거 |
+|------|--------|-----------|------|
+| T1 임계 재조정 | env 1줄 + 분석 | **env + walk-forward 재실행 + Paper 5거래일** 묶음 | walk-forward 시뮬↔실측 KS 검정이 자동 트리거되므로 env만 바꾸고 종료 불가 |
+| T2 폴백 정상화 | 분기 패치 + 카운터 라벨 | **Sprint 6 중심 task** — reject 측정 → 분기 패치 dry_run → Paper 5거래일 + KS | LIVE 진입 경로 + DoD #14(G-F) 단독 closer + record_stage 전수 회귀 위험 |
+| T3 rollback 필드 명확화 | docstring/schema만 | 그대로 (1차 결론 유지) | 코드 archaeology 충분 |
+| T4 1차 풀 커버리지 | 일봉으로 분석 가능 | **데이터 한계 발견 — 분기 (a)/(b) 결정 필요** | grep 결과 `vol5m`은 거래량만, 14:00 가격 스냅샷 미저장. (a) 종가 근사 또는 (b) 신규 스냅샷 잡 + 데이터 축적 대기 |
+| T5 WS trace 재수집 | 환경변수 토글만 | 그대로 (1차 결론 유지) | 운영 토글 + analysis md로 충분 |
+| 분석 분리 운영 | Sprint 밖 사전 분석 | **거부 — Sprint 6 단일 묶음 안에 수행** | PR/sprint-close 트리거/index.json 동기화/sprint-review 검증 매트릭스 전부 task ID 기반 |
+
+#### T4 데이터 한계 (2026-05-15 grep 검증)
+
+- `vol5m:{code}:{date}:{slot}` Redis 키는 **거래량(total_vol)만** 누적 — 가격 미저장 (`backend/modules/collector/volume_aggregator.py:41`)
+- KIS 일봉(`backfill-daily`)은 종가 기준 — 14:00 시점 분포와 괴리 가능
+- 14:00 시점 가격 스냅샷을 별도 잡으로 수집하지 않으면 **"그날 14:00 상승률 상위 N개" 정의 자체가 측정 불가**
+
+| 대안 | 비용 | 정확도 | Sprint 6 적용 |
+|------|------|--------|-------------|
+| (a) "그날 종가 상승률 상위 N개" 근사 | 0 (기존 일봉) | 낮음 (장중 핫 종목과 종가 상위 괴리 가능) | 1차 산출 + 한계 명시 |
+| (b) 14:00 가격 스냅샷 잡 신설 + 5~10거래일 축적 | 신규 잡 1개 + 대기 | 높음 | (a) 결과 모호 시 추가 — Sprint 6 후반/Sprint 7로 이월 가능 |
+
+**phase-planner 권고**: (a)로 1차 추정 → H5(1차 풀 미갱신 병목) 명확하면 결론, 모호하면 (b) 잡 신설하여 Sprint 7 측정 인프라로 인계.
+
+#### Sprint 6 Task 재정렬 (advisor §4 권고 반영)
+
 | Task | 주제 | 변경 범위 추정 | 우선순위 | 의존성 |
 |------|------|--------------|---------|--------|
-| S6-T1 | **2차 스크리닝 임계 재조정** — 자연 패스율 4~5% 분포 측정 후 G3 임계 10% → 4~6% 재산정 + env 토글로 즉시 A/B. R3 트리거 정합 (`auto_rollback_r3_enabled` 등). | env 변수 + 단위 테스트 + 회귀 테스트 (변경 파일 ~3개) | **P0** | 없음 (즉시) |
-| S6-T2 | **fallback strategy 0% 정상화** — 폴백 candidate의 momentum_breakout stage별 reject 분포 측정 (Redis `record_stage` shadow). breakout / volume_threshold / trade_strength / atr_filter 중 어디서 막히는지 정량 → 분기 패치 (예: 폴백 후보는 breakout 우회 또는 약화 임계). dry_run 우선. | `momentum_breakout.py` 분기 + 신규 `_evaluate_fallback_*` (변경 파일 ~4개) | **P0** | T1과 병렬 |
-| S6-T3 | **observation-daily rollback 필드 의미 명확화** — `observation-daily.rollback.is_active` vs `phase86-status.rollback_active` 의미 분리 (객체별 정의 docstring + API 응답 schema 갱신) | docs + API schema (변경 파일 ~2개) | **P1** | 없음 |
-| S6-T4 | **1차 풀 커버리지 측정 task** — 매 거래일 09:00 1차 풀 20종목 vs 그날 14:00 시점 상승률 상위 50종목 교집합/커버리지 정량 (Sprint 5 walk-forward 인프라 차용). **구현은 별도 Sprint 7 후보**. | 신규 `coverage_report.py` 측정 잡 + 일별 메트릭 (변경 파일 ~3개) | **P1** | KIS 일중 데이터 |
-| S6-T5 | **WS trace 다거래일 재수집** — Sprint 5의 1거래일 표본을 5거래일로 확장하여 H1(evict 진동) 반증을 견고화 + 08:10 KST 사전 구독 출처 추적 (LOW) | 운영 trace + analysis md (변경 파일 ~1개) | **P2** | T1·T2와 병렬 가능 |
+| S6-T1 | **2차 스크리닝 임계 재조정** — 4~5% 패스율 정량(이미 §1.5.1 확보) → env 토글 → **walk-forward 재실행 + KS 검정 통과 확인** → Paper 5거래일 관찰. R3 트리거 정합(`auto_rollback_r3_enabled`). | env 변수 + 단위/회귀 테스트 + walk-forward 재실행 결과 (변경 파일 ~4개 + analysis md) | **P0** | 없음 (즉시) |
+| S6-T2 | **fallback strategy 0% 정상화** (Sprint 6 중심 task) — (i) 폴백 candidate momentum_breakout stage별 reject 분포 측정 (Redis `record_stage` shadow + 라벨 분리 — 호출 사이트 전수 점검) (ii) 분기 패치 dry_run (iii) Paper 5거래일 + KS 검정. | `momentum_breakout.py` 분기 + 신규 `_evaluate_fallback_*` + record_stage 라벨 + analysis md (변경 파일 ~5~6개) | **P0** | T1과 병렬 |
+| S6-T3 | **observation-daily rollback 필드 의미 명확화** — `observation-daily.rollback.is_active` vs `phase86-status.rollback_active` 의미 분리 (docstring + API 응답 schema 갱신). 코드 archaeology만 필요. | docs + API schema (변경 파일 ~2개) | **P1** | 없음 |
+| S6-T4 | **1차 풀 커버리지 측정** — (a) 종가 근사로 1차 산출. 모호 시 (b) 14:00 스냅샷 잡 신설 (Sprint 7로 이월 가능). H5 ✅/❌ 판정이 Phase 8.6 범위에 직접 영향 (§10.2 시나리오 D). | (a) analysis md만 (변경 파일 0) / (b) 신규 잡 (변경 파일 ~3개) | **P1** | KIS 일봉 (보유) — (b)는 데이터 축적 대기 |
+| S6-T5 | **WS trace 다거래일 재수집** — `WS_TRACE_ENABLED=true` 토글 5거래일 운영 + 08:10 KST 사전 구독 출처 archaeology + analysis md. | 운영 trace + analysis md (변경 파일 ~1개) | **P2** | T1·T2와 병렬 가능 |
 
-**예상 소요**: 1주~1.5주 (P0 2종이 핵심, P1·P2는 병행)
+**예상 소요**: 1.5~2주 (T2 검증 사이클이 dry_run + Paper 5거래일 포함하므로 1차 추정보다 길어짐, T1과 동기화)
 
 **Sprint 6 종료 직후 5거래일 paper 재관찰** → §10 DoD #9~#11 측정 가능 상태 진입 (Phase 8.7 entry gate 평가 입력).
+
+#### Sprint 밖 사전 분석 분리 — 거부
+
+다음 이유로 T1·T3·T4·T5를 Sprint 밖 "선행 분석"으로 분리하지 않는다:
+
+- 커밋 메시지 task ID 기반 `posttooluse-index-sync.sh`가 분리 운영 시 미동작 → `docs/index.json` 괴리
+- sprint-close의 ROADMAP·deploy.md 트리거가 Sprint 단위 → 분리 시 PR 추적 끊김
+- sprint-review 검증 매트릭스가 Sprint 안의 task md를 기준으로 동작 → 분리 시 검증 사이클 우회
+- 분석 결과를 운영 변경(env 토글)만으로 끝내면 phase8.6.md vs 실 운영 괴리 → §9.1 미해결 리스크에 새 항목 발생
 
 ### Sprint 1 코드 리뷰 발견 Medium 이슈 (Sprint 2에서 개선 권장)
 
@@ -669,6 +706,7 @@ Sprint 5 진단 결과 §10 DoD #9~#15 중 ⬜ 항목은 **현재 측정 자체�
   - 시나리오 A — 임계 재조정 + fallback 정상화로 G-A/G-B/G-C 충족 → Phase 8.7 진입
   - 시나리오 B — 임계 재조정만으로 부족 (stage 직렬 AND가 본질) → 별도 Sprint 7(tier 내부 stage 구조 변경) 필요 → Phase 8.7 진입 추가 지연
   - 시나리오 C — fallback 정상화 자체가 어려움 (구조 결함 깊음) → Phase 8.6 범위 재검토 + 사용자 의사결정
+  - **시나리오 D (Sprint 6 T4 측정 결과, 2026-05-15 추가)** — H5 ✅(1차 풀 vs 14:00/종가 핫 종목 커버리지 < 30%)이면 1차 풀 동적 갱신을 Sprint 7로 흡수하여 phase 8.6 범위 확장 (Phase 8.7 추가 지연). H5 ❌(커버리지 ≥ 30%)이면 1차 풀 정적 유지 + 동적 갱신은 Phase 10.1 백로그 유지. T4 (a) 종가 근사 결과가 모호하면 (b) 14:00 스냅샷 잡으로 Sprint 7 인계.
 
 ---
 
