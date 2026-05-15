@@ -1,0 +1,47 @@
+{
+  "total_events": 80,
+  "by_event": {
+    "subscribe_request": 40,
+    "subscribe_reject": 20,
+    "subscribe_result": 20
+  },
+  "subscribe_request_total": 40,
+  "subscribe_success_total": 20,
+  "success_rate": 0.5,
+  "reject_reasons": {
+    "not_connected": 20
+  },
+  "paths": {
+    "under_limit": 20
+  },
+  "latency_ms": {
+    "count": 20,
+    "min": 0.11086463928222656,
+    "p50": 0.1468658447265625,
+    "max": 2987463.051557541
+  },
+  "per_stock_top10_requests": {
+    "064400": 2,
+    "080220": 2,
+    "090460": 2,
+    "078350": 2,
+    "190510": 2,
+    "005430": 2,
+    "254490": 2,
+    "322000": 2,
+    "005500": 2,
+    "086390": 2
+  },
+  "per_stock_top10_success": {
+    "064400": 1,
+    "080220": 1,
+    "090460": 1,
+    "190510": 1,
+    "078350": 1,
+    "005430": 1,
+    "254490": 1,
+    "322000": 1,
+    "005500": 1,
+    "086390": 1
+  }
+}

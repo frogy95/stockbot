@@ -1,6 +1,6 @@
 # Phase 8.6: 신호 생성 로직 구조 재설계 — 실행 계획
 
-> **Status**: Sprint 4 완료 (2026-05-08, PR #208 develop 머지 대기)
+> **Status**: Sprint 5(진단·측정) 완료 (2026-05-15, v3.0.0 프로덕션 배포). Sprint 6 후보 도출 단계.
 > **ROADMAP 참조**: ROADMAP.md `Phase 8.6` 절 — 본 문서 승인 시 "누적 백로그 통합" → "신호 생성 로직 구조 재설계 (분기 D 트리거 선제 착수)"로 재정의되며, 기존 백로그(피라미딩 / 2차 하이브리드)는 Phase 10.1로 분리한다.
 > **트리거**: Phase 8.5 v2.6.1 5거래일 관찰 결과 분기 D 확정 (2026-04-28 16:10 `auto_rollback_2d_zero_signals` 발동, 4거래일 본 신호 1건 / 폴백 605회).
 > **검토 리포트** (분기 D 4명 재리뷰가 1차 입력 — 본 Phase 결정 추적성 확보):
@@ -43,6 +43,57 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 - 본 Phase는 **Phase 8.6 Sprint 1(E2E + LIVE 게이트)의 선행**이 된다. Phase 8.5 → Phase 8.6의 의존이 본 Phase로 우회된다 (Phase 8.5 완료 기준 "일평균 신호 ≥1"이 분기 D로 미충족이므로).
 - Phase 9·10 순서 자체는 변경하지 않는다. Phase 10(U자형 비선형)은 여전히 Phase 9 Sprint 3 + 2~6개월 축적이 전제.
 - **단, Phase 8.6 → Phase 10.1 (구 백로그) 분리 정책 신규**: 본 Phase가 "누적 백로그 통합"이 아닌 **"분기 D 구조 재설계 선제 착수"**로 재정의되므로, 피라미딩·2차 스크리닝 하이브리드는 Phase 10.1로 별도 분리한다. (사용자 승인 시 ROADMAP·index.json 동시 반영)
+
+### 1.5 Sprint 5 진단 결과 — root cause 재정렬 (2026-05-15 갱신)
+
+> Sprint 5(진단·측정, v3.0.0 프로덕션 배포)에서 신호 0건 원인을 정량 측정한 결과, **기존 작업 가설(Sprint 2 "직렬 AND→병렬 OR" 변경으로 해결 예상)이 부분적으로 반증**되었다. 이번 갱신은 새 증거 기반으로 root cause를 재정렬하고, Sprint 6의 범위를 "이미 정량 확정된 병목을 푸는 측정 가능화 Sprint"로 재정의한다.
+
+#### 1.5.1 새 증거 (Sprint 5 산출)
+
+**증거 A — WS trace aggregate (`sprint5/task3/t3-aggregate-2026-05-15.md`)**
+- 2026-05-15 paper 1거래일 WS trace 80 events 전수 수집
+- 09:00 KST 1차 풀 20종목 구독 **전건 성공** (08:10 사전 시도 20종목은 not_connected reject — WS 핸드셰이크 전)
+- **09:00 ~ 15:30 KST (6.5시간) WS trace 이벤트 0건** — 1차 풀 갱신 미발생, evict / rotate / over_limit_low_priority reject **모두 0**
+- 코드 추적: `scheduler.py`의 `_primary_screen`은 **08:00 단일 cron만 호출** — 장중 1차 풀 갱신이 설계상 없음
+- **함의**: 기존 가설 "1차 풀 정원(20) = WS 한도(20) → 풀 갱신 시 evict 진동 → 데이터 누락 → 신호 0건"은 **반증**. 실제 구조 문제는 "1차 풀이 장전 1회 고정, 장중 6.5시간 미갱신"
+
+**증거 B — Hotfix C(#8 R1/G3 self-clear) 검증 (`sprint5/task1/t1-diagnosis.md` §1)**
+- 16:10 `_check_auto_rollback` 정상 호출 + 활성화 경로 검증 완료 (should_rollback=True → execute_rollback → phase86-status `rollback_active=true`, `circuit_breaker_active=true`, override-status `is_active=true`)
+- self-clear 경로는 트리거(R3 / G3 `all_below_threshold`)가 살아있어 clear 분기 발동 기회 없음 → **미래 자연 해제 시점에 추가 검증 필요**
+- observation-daily의 `rollback.is_active=false`는 phase86-status의 `rollback_active=true`와 **별개 객체** — 의미 명확화 후속 task 필요
+
+**증거 C — stage 분포 (이미 풀세트 instrumentation 존재; t1-diagnosis §3)**
+- Redis `record_stage()` 시간대 bucket 카운터 + DB `StrategyMetricsDaily` + API `/api/v1/metrics/stage-heatmap` 갖춰져 있음
+- 2026-05-14 stage 분포: **breakout 72.2%** / min_volume_floor 16.0% / volume_threshold 11.1% / **pass 0.3%** / trade_strength 0.3%
+- 구조 사실: **Sprint 2 병렬 OR는 tier 수준에만 적용** (gap_open / prev_high / prev_close / volume_surge). **동일 tier 내부의 stage(volume_threshold → trade_strength → orderbook_ratio → breakout 등)는 여전히 직렬 AND**. 첫 압도 stage(breakout)가 short-circuit하여 다른 tier로 흐름 우회 불가.
+- 함의: "tier OR + stage AND" 혼합 게이트에서 stage 단일 reject가 압도 → tier 다양성(G-C)을 구조적으로 막음
+
+**증거 D — fallback strategy 0% (신규 발견; t1-diagnosis §3.5)**
+- 2026-05-14 폴백 풀 후보 평가 **456회 → strategy 통과 신호 0건**
+- 폴백 candidate가 `momentum_breakout.generate_signal()`에서 모두 `RejectedSignal` 반환
+- 7일간 prod `metrics:fallback:triggered:{date}=19` vs `fallback_signals=0`
+- 함의: **폴백 메커니즘 무력화 → E2 게이트(폴백 신호율) 의미 자체 무효화**. Sprint 1 G1(M-F2 산출) 인프라는 정상이지만 **측정할 신호가 0건이라 산출값이 항상 0**
+
+**증거 E — 패스율 vs 임계 간극 (t1-diagnosis §1)**
+- 16:10 G3 로그: 3일 연속 2차 패스율 **4.8% / 4.1% / 4.9%** — 모두 임계 **10% 미만**
+- R3 / G3 발동이 일상화 → 시스템이 사실상 **상시 rollback / circuit-breaker 상태**
+
+#### 1.5.2 Root cause 재정렬
+
+| # | 후보 | 정량 상태 | 변경 risk | Sprint 6 적합성 |
+|---|------|----------|-----------|----------------|
+| (1) | 1차 풀 장중 미갱신 → 그날 핫 종목 풀 밖 | **미측정** (1차 풀 vs 그날 상승률 상위 N 커버리지) | 운영 구조 큼 | 측정 task만 Sprint 6 / 본 구현 별도 Sprint |
+| (2) | 2차 임계 10% vs 자연 패스율 4~5% | **확정** | env 1줄 (G3 즉시 해제) | **Sprint 6 핵심** |
+| (3) | tier OR + stage AND 혼합, breakout 72% short-circuit | **확정** | 구조 변경 큼 | §2 모순 해소됨 — **별도 Sprint(7) 권장** |
+| (4) | fallback strategy 0% | **확정** | momentum_breakout 분기 — 중간 | **Sprint 6 핵심** |
+| (5) | observation-daily `rollback.is_active` vs phase86-status `rollback_active` 의미 충돌 | **확정** | docs / API — 소 | Sprint 6 보조 task |
+| (6) | 08:10 KST 사전 구독 시도 출처 | 미해결 (관측 1건) | debug | Sprint 6 보조 (LOW) |
+
+#### 1.5.3 핵심 통찰: Sprint 2의 한계
+
+- Sprint 2 PR #186은 "**tier 수준 병렬 OR**"를 도입했고 이는 그 자체로 유효 (Sprint 4 walk-forward에서 검증)
+- 그러나 분기 D 본질은 "tier 수준"이 아닌 "**tier 내부 stage 수준의 직렬 AND가 단일 압도 stage(breakout)에 short-circuit 당하는 협소화**"
+- Sprint 6은 **tier 수준 변경을 되돌리는 게 아니라**, ① 임계 재조정으로 통과율을 자연 분포에 맞추고 ② fallback strategy 0% 결함을 정상화하여 폴백 메커니즘을 회복시킨다. **stage 직렬 AND 해체는 Sprint 6의 정량 결과를 본 후 별도 Sprint에서 결정**.
 
 ---
 
@@ -127,8 +178,10 @@ PO는 Sprint 2.6(파라미터 미세조정 + M-F2 + 시뮬 재검증)을 1주 �
 | **2** ✅ | **병렬 OR tier 분리 + ATR 분위수 캘리브레이션** | tier별 sub-게이트 분리(gap_open=ATR우회+gap≥3%, prev_high=ATR+breakout, prev_close=시간가드만), ATR 하한 0.025 + 상한 동적(`min(0.08, 80퍼센타일×1.2)`), 09:00 KOSPI 200 분위수 잡 | Sprint 1 완료 + DoR 통과 | ~~5~7일~~ **완료 (2026-04-22, PR #186)** |
 | **3** ✅ | **`volume_surge` tier 신설 + 시간대 필터** | 5분봉 거래량 ≥ 직전 20분 평균 ×5 + 호가창 매수/매도 잔량 ≥ 2배, 가격 조건 약하게(전일 종가 +0.5%↑), 09:00~09:10 진입 금지·14:30+ 신규 진입 금지·점심 floor 0.7, dry_run=True 기본값 | Sprint 2 + KIS WS 호가 스트림(Phase 6 인프라 재사용) | ~~6~9일~~ **완료 (2026-05-08, PR #200)** |
 | **4** ✅ | **Walk-forward 백테스트 + 시뮬↔실측 자동 감지** | 60거래일+ 백테스트(박스권/추세장 각 20일+), TimeSeriesSplit(40일 학습 / 20일 검증 슬라이딩), 매주 KS 검정 자동 트리거(p<0.05 시 시뮬 재구축 알림), Bootstrap CI 하한 ≥1 통과 시 LIVE 토글 허용 | Sprint 2~3 코드 + KIS 분봉 백필(Phase 9 Sprint 0과 동일 메커니즘) | ~~5~8일~~ **완료 (2026-05-08, PR #208)** |
+| **5** ✅ | **신호 0건 진단 + WS trace 측정 + Hotfix C 검증** | R1/G3 self-clear 진단, WS trace 1거래일 aggregate, stage 분포 측정, fallback strategy 0% 신규 발견 | Sprint 4 완료 후 paper 운영 5거래일 누적 데이터 | **완료 (2026-05-15, v3.0.0)** |
+| **6** 🆕 | **정량 확정된 병목 2종 해소 + 측정 가능화** (후보 — 사용자 검토 대기) | (A) 2차 임계 재조정 — 자연 패스율 4~5% 기반 임계 재산정 + R3/G3 임계 env 토글 정합 / (B) fallback strategy 0% 정상화 — momentum_breakout stage별 reject 분포 측정 + 폴백 후보 진입 분기 개선 / (C) observation-daily rollback 필드 의미 명확화 / (D) 1차 풀 커버리지 측정 task (장중 미갱신 갭의 정량) / (E) 08:10 KST 사전 구독 trace 추적 | Sprint 5 산출물 + 사용자 phase 검토 승인 | **사용자 검토 대기 (Task 수 5건 추정)** |
 
-> **순서**: Sprint 1 → 2 → 3 → **5거래일 Paper 관찰** → Sprint 4 (병렬 불가)
+> **순서**: Sprint 1 → 2 → 3 → **5거래일 Paper 관찰** → Sprint 4 → Sprint 5(진단) → **Sprint 6(병목 해소; 후보)** → Sprint 6 후 5거래일 재관찰 (병렬 불가)
 > - Sprint 1·2·3은 코드 변경 후 즉시 다음 Sprint 착수 가능
 > - **Sprint 3 → 4 사이에 Paper 5거래일 관찰 강제** (§10 DoD #9~#11 충족 측정 = LIVE 토글 게이트 §7.5 G-Bt3 입력)
 > - Sprint 4의 Walk-forward 백테스트는 위 5거래일 관찰과 **병행** (Sprint 4 코드 작업 자체는 Paper 관찰과 시간축 분리)
@@ -534,6 +587,32 @@ LIVE 활성화는 다음 모두 충족 시에만:
 | S4-M1 | `api/routes/backtest.py` | `POST /backtest/run` trigger_run이 uuid를 직접 생성해 반환하지만 실제 WalkForwardRunner.run()은 내부에서 별도 uuid를 생성함 — 클라이언트가 받은 run_id로 DB를 조회하면 항상 404 반환 | Medium | Phase 8.7에서 run_id를 runner에 주입하거나 반환값 poll 방식으로 교체 권장 |
 | S4-M2 | `modules/backtest/live_gate.py` | G-Bt1 "no_completed_backtest_run" 상태에서 passed=True 반환 — 최초 배포 후 백테스트 미실행 시 LIVE 게이트 G-Bt1을 자동 통과함 (underspecified=True 명시, 의도적 설계) | Medium | 첫 배포 후 즉시 백테스트를 실행하거나, 미완료 시 passed=False로 보수 처리하는 옵션 검토 (Phase 8.7) |
 
+### Sprint 5 진단 — 반증된 가설 / 미해결 가설 보존
+
+| # | 가설 | 검증 결과 (2026-05-15) | 처리 |
+|---|------|----------------------|------|
+| H1 | "1차 풀 정원(20) = WS 한도(20) → 풀 갱신 시 evict 진동 → 데이터 누락 → 신호 0건" | **반증** — 09:00~15:30 evict/rotate/over_limit reject 모두 0 (`t3-aggregate-2026-05-15.md`) | 폐기. 단 1거래일 표본이므로 추가 거래일 trace로 재확인 (Sprint 6 보조 task) |
+| H2 | "Sprint 2 병렬 OR 도입으로 tier 다양성 확보 → 신호 회복" | **부분 반증** — tier 수준 OR는 작동하나 tier 내부 stage 직렬 AND가 단일 압도 stage(breakout 72%)에 short-circuit | tier 내부 stage 구조 변경은 **별도 Sprint(7)** 후속 결정 |
+| H3 | "신호 0건은 데이터 부족 또는 측정 실패" | **반증** — stage instrumentation 풀세트 가동 중, pass율 4~5% 정량 확정 | 측정 인프라 정상. Sprint 6은 **임계 재조정 + fallback 정상화** 노선 |
+| H4 (신규) | "fallback 메커니즘 무력화로 E2 게이트 의미 자체 무효화" | **확정** — 456회 평가 0건 통과 | Sprint 6 핵심 task |
+| H5 (신규) | "1차 풀 장중 미갱신(6.5시간 고정)이 그날 핫 종목 커버리지를 구조적으로 막는다" | **미측정** — 커버리지 정량 산출 필요 | Sprint 6 측정 task 후 별도 Sprint 구현 결정 |
+
+### Sprint 6 후보 Task 상세 (사용자 검토 대기 — phase-planner 권고)
+
+> 우선순위는 advisor §3 분류표 기반: "정량 확정 + 변경 risk 낮음" 우선. 구조 변경(stage 직렬 AND 해체)은 Sprint 6 결과 본 후 별도 Sprint에서 결정.
+
+| Task | 주제 | 변경 범위 추정 | 우선순위 | 의존성 |
+|------|------|--------------|---------|--------|
+| S6-T1 | **2차 스크리닝 임계 재조정** — 자연 패스율 4~5% 분포 측정 후 G3 임계 10% → 4~6% 재산정 + env 토글로 즉시 A/B. R3 트리거 정합 (`auto_rollback_r3_enabled` 등). | env 변수 + 단위 테스트 + 회귀 테스트 (변경 파일 ~3개) | **P0** | 없음 (즉시) |
+| S6-T2 | **fallback strategy 0% 정상화** — 폴백 candidate의 momentum_breakout stage별 reject 분포 측정 (Redis `record_stage` shadow). breakout / volume_threshold / trade_strength / atr_filter 중 어디서 막히는지 정량 → 분기 패치 (예: 폴백 후보는 breakout 우회 또는 약화 임계). dry_run 우선. | `momentum_breakout.py` 분기 + 신규 `_evaluate_fallback_*` (변경 파일 ~4개) | **P0** | T1과 병렬 |
+| S6-T3 | **observation-daily rollback 필드 의미 명확화** — `observation-daily.rollback.is_active` vs `phase86-status.rollback_active` 의미 분리 (객체별 정의 docstring + API 응답 schema 갱신) | docs + API schema (변경 파일 ~2개) | **P1** | 없음 |
+| S6-T4 | **1차 풀 커버리지 측정 task** — 매 거래일 09:00 1차 풀 20종목 vs 그날 14:00 시점 상승률 상위 50종목 교집합/커버리지 정량 (Sprint 5 walk-forward 인프라 차용). **구현은 별도 Sprint 7 후보**. | 신규 `coverage_report.py` 측정 잡 + 일별 메트릭 (변경 파일 ~3개) | **P1** | KIS 일중 데이터 |
+| S6-T5 | **WS trace 다거래일 재수집** — Sprint 5의 1거래일 표본을 5거래일로 확장하여 H1(evict 진동) 반증을 견고화 + 08:10 KST 사전 구독 출처 추적 (LOW) | 운영 trace + analysis md (변경 파일 ~1개) | **P2** | T1·T2와 병렬 가능 |
+
+**예상 소요**: 1주~1.5주 (P0 2종이 핵심, P1·P2는 병행)
+
+**Sprint 6 종료 직후 5거래일 paper 재관찰** → §10 DoD #9~#11 측정 가능 상태 진입 (Phase 8.7 entry gate 평가 입력).
+
 ### Sprint 1 코드 리뷰 발견 Medium 이슈 (Sprint 2에서 개선 권장)
 
 | # | 파일 | 내용 | Severity | Sprint 2 조치 |
@@ -572,7 +651,24 @@ LIVE 활성화는 다음 모두 충족 시에만:
 | 16 | pytest 전체 통과 | 각 Sprint 종료 시점 | ⬜ |
 | 17 | 회귀 0건: Phase 7.0 LIVE 파라미터 코드 잠금 | Sprint 1 완료 + 빌드 실패 테스트 | ⬜ |
 
-위 17개 모두 ✅ 후 Phase 8.6 Sprint 1(E2E + LIVE 게이트)로 진행.
+위 17개 모두 ✅ 후 Phase 8.7(E2E + LIVE 게이트)로 진행.
+
+### 10.1 Sprint 6 (후보) — DoD 측정 가능화 Sprint
+
+Sprint 5 진단 결과 §10 DoD #9~#15 중 ⬜ 항목은 **현재 측정 자체가 의미 없는 상태**다 (2차 패스율 4~5%이고 R3/G3 상시 발동 + fallback 0건). Sprint 6의 사명은 **DoD를 닫는 게 아니라 DoD가 측정 가능한 상태로 시스템을 복원**하는 것이다.
+
+- **Sprint 6 자체로 닫는 DoD**: 없음 (도구는 이미 Sprint 1~4에서 구축 완료)
+- **Sprint 6 후 측정 가능해지는 DoD**: #9 G-A, #10 G-B, #11 G-C, #12 G-D, #14 G-F (폴백 0% 정상화 시)
+- **Sprint 6 후 별도 측정 사이클 (5거래일 paper 재관찰)이 Phase 8.7 entry gate 평가의 1차 입력**
+
+### 10.2 Phase 8.7 entry gate 재평가 (2026-05-15 기준)
+
+- 기존 게이트: §10 DoD 17건 모두 ✅
+- Sprint 5 후 현실: DoD #9~#15 측정 자체가 무의미한 시스템 상태 (상시 rollback / circuit-breaker)
+- **재평가 결과**: Phase 8.7 entry gate는 **Sprint 6 완료 + 그 후 5거래일 paper 재관찰**까지 가야 평가 가능. Sprint 6 결과에 따라:
+  - 시나리오 A — 임계 재조정 + fallback 정상화로 G-A/G-B/G-C 충족 → Phase 8.7 진입
+  - 시나리오 B — 임계 재조정만으로 부족 (stage 직렬 AND가 본질) → 별도 Sprint 7(tier 내부 stage 구조 변경) 필요 → Phase 8.7 진입 추가 지연
+  - 시나리오 C — fallback 정상화 자체가 어려움 (구조 결함 깊음) → Phase 8.6 범위 재검토 + 사용자 의사결정
 
 ---
 

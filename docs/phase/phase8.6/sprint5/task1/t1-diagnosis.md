@@ -102,6 +102,63 @@ execute 내부는 should_*=False일 때 자동 해제 분기로 빠짐(이미 �
 
 **Hotfix C는 #8 본질 결함이며 plan §11.3 Hotfix C 후보(#9)와 명칭 충돌 — 본 결함을 Hotfix C로 우선 분리하고, #9는 Hotfix D 검토로 차순위.**
 
+### Hotfix C 효과 검증 (2026-05-15 16:12 KST)
+
+PR #240(2026-05-14 21:39 KST 머지)로 scheduler self-clear 분기가 정상 호출됨을 검증.
+
+**검증 시점**: 16:10 KST `_check_auto_rollback` cron 실행 직후
+
+**Railway 로그 증거**:
+
+```
+2026-05-15 07:10:00,000 INFO [apscheduler] Running job "CollectorScheduler._check_auto_rollback" ...
+2026-05-15 07:10:00,067 INFO [scheduler] phase86_g2: should_rollback=True triggered=['R3']
+2026-05-15 07:10:00,068 WARNING [auto_rollback] G2 자동 롤백 발동: triggers=['R3']
+  detail={'R1_signal_counts': {'2026-05-15': 0, '2026-05-14': 2, '2026-05-13': 0},
+          'R3_tier_counts':   {'2026-05-15': 0, '2026-05-14': 1, '2026-05-13': 0, ...}}
+2026-05-15 07:10:00,854 INFO  [scheduler] phase86_g3: should_trigger=True reason=all_below_threshold
+2026-05-15 07:10:00,856 WARNING [circuit_breaker] G3 회로차단기 발동: reason=all_below_threshold
+  detail={'threshold': 0.1, 'consecutive_days': 3,
+          'rates': [('2026-05-15', 0.0481), ('2026-05-14', 0.0417), ('2026-05-13', 0.0499)]}
+```
+
+**API 측정**:
+
+- `GET /api/v1/health/observation-daily` (HTTP 200) — `{"signals":{"total":0}, "rollback":{"is_active":false}}`
+- `GET /api/v1/metrics/phase86-status` (HTTP 401) — JWT 만료(08:41 KST), 재측정 보류
+
+**시나리오 판정**:
+
+| 측정 항목 | 값 | 평가 |
+|-----------|-----|------|
+| 오늘 signals.total | **0** | R1 발동 조건(3일 연속 0~2) 충족 — 시스템 작동 정상 |
+| scheduler 호출 | ✅ 16:10 정상 실행 | self-clear 분기에 도달 가능성 확보 |
+| should_rollback / should_trigger | True (R3 / all_below_threshold) | 트리거가 살아있음 — **clear 조건 미충족** |
+| "G2 자동 롤백 해제" / "G3 회로차단기 해제" 로그 | **부재** | 정상 (clear 조건 미충족 시 발동 안 함) |
+
+**판정: ✅ 부분 검증 — scheduler 정상 호출됨, self-clear 분기 도달 가능. 단, 트리거 조건(R3/all_below_threshold)이 살아있어 clear 분기는 발동 사례 없음**.
+
+완전 검증을 위해서는 트리거가 자연 해제되는 시점(예: signals.total ≥ 3 또는 패스율 ≥ 10%) 도래 필요.
+
+**모순 해소 (JWT 갱신 후 16:35 KST 재측정)**:
+
+`GET /api/v1/metrics/phase86-status`:
+```json
+{"rollback_active": true, "circuit_breaker_active": true,
+ "fallback_share": 0.0, "fallback_signals": 0, "primary_candidates": 20}
+```
+
+`GET /api/v1/metrics/override-status`:
+```json
+{"is_active": true, "affected_keys": ["SECONDARY_POOL_FALLBACK_ENABLED"]}
+```
+
+해석: scheduler가 발동시킨 G2 rollback / G3 circuit breaker는 phase86-status에서 **`true`로 정상 반영**. observation-daily의 `rollback.is_active=false`는 **별개 객체**(예: manual rollback 또는 다른 상태 저장소)를 가리키며 본 검증과 무관.
+
+→ **Hotfix C 활성화 경로 검증 완료**: should_rollback=True 판정 시 `execute_rollback`이 호출되어 실제 상태가 `rollback_active=true`로 변경됨. self-clear 경로(should=False 시 자동 해제)는 트리거가 자연 풀리는 미래 시점에 추가 검증 가능.
+
+→ observation-daily의 `rollback` 필드 의미 명확화는 별도 후속 작업으로 분리 (본 검증 범위 외).
+
 ---
 
 ## §2. #9 — G3 임계 부등호 의도
