@@ -18,7 +18,8 @@ PR: https://github.com/frogy95/stockbot/pull/243 (머지 완료 2026-05-15 18:08
 - ✅ `/api/v1/health` → `{"status":"healthy","database":"connected","redis":"connected"}`
 - ✅ 프론트엔드(Vercel) 접속 확인 (HTTP 307 정상 리다이렉트)
 - ✅ Railway 배포 로그 정상 (alembic 마이그레이션 완료, 스케줄러 기동, 텔레그램 웹훅 등록)
-- ⬜ WS trace 로그 확인 — 시장 시간 중 WS 메시지 수신 시점에 기록됨 (다음 장 개장 후 확인)
+- ✅ WS trace 로그 확인 (2026-05-15 09:06 KST) — 09:00 정각 1차 풀 20종목 구독 정상: `subscribe_request` 20건 / `subscribe_result` 20건 (모두 `ok=true`, `path=under_limit`). 인프라 정상 작동, 17:08 aggregate cron까지 자연 누적 대기.
+  - ⚠️ **즉시 확인 필요**: trace의 `max` 필드가 **20**으로 기록됨 (우리가 가정한 "한도 35"와 불일치). 1차 풀 정원(20) = WS 구독 한도(20)이면, 풀 갱신 시 evict 없이 신규 구독 불가 구조 → root cause 후보 A의 강력한 단서.
 
 **신규 환경변수 (Railway 수동 설정)**:
 - ✅ `WS_TRACE_ENABLED=true` — Railway 설정 완료 (2026-05-15). Paper 1거래일 trace 수집용 (오늘 2026-05-15 장 마감(15:30)까지).

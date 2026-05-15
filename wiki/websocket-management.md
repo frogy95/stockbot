@@ -41,7 +41,34 @@ LIVE에서 경로 누락 시 서버가 HTTP 101 응답 후 즉시 연결을 종�
 
 - 장 시작 시 1차 스크리닝 후보 종목 일괄 구독
 - 장중 스크리닝 결과에 따라 구독 종목 동적 추가/제거
-- 최대 동시 구독 수: KIS API 제한에 따름
+
+### 구독 한도 — 확정 사실 (2026-05-15 검증)
+
+| 항목 | 값 | 출처 |
+|------|-----|------|
+| KIS WS 한 연결당 구독 상한 | **40건 (메시지 단위)** | `backend/core/clients/kis_config.py:45` 주석 |
+| 종목당 사용 TR_ID | **2개** (`H0STCNT0` 체결가 + `H0STASP0` 호가) | `backend/modules/collector/ws_manager.py:15` `DEFAULT_TR_IDS` |
+| **종목 단위 한도** | **20종목** (= 40 / 2) | `kis_config.py:45,58` `max_ws_subscriptions=20` (PAPER/LIVE 동일) |
+
+- `ws_manager.py:41`의 라이브러리 디폴트값 `max_subscriptions=35`는 미사용. 실제 운영값은 `env.max_ws_subscriptions=20`이 `main.py:91`에서 명시 주입된다.
+- 한도 초과 동작:
+  - 신규 종목 우선순위 > 최소 우선순위 → **rotate** (최저 우선순위 종목 evict 후 신규 구독, `path=rotate`)
+  - 그 외 → reject (`path=over_limit_low_priority`)
+
+### 구조 위험 — Phase 8.6 진단 결과 (2026-05-15 09:06 KST)
+
+WS trace 인프라(`WS_TRACE_ENABLED=true`)로 09:00 정각 수신을 확인한 결과 다음 구조 위험이 식별되었다:
+
+- **1차 풀 정원(20) = WS 종목 한도(20)** — 마진 0
+- 풀 갱신 시 신규 종목 1건이라도 진입하면 **반드시 1종목 evict** 필요
+- 풀 갱신이 잦거나 KIS ACK 지연이 있으면 구독↔해제 진동 → **체결 메시지 누락** 가능
+- 체결 누락 → 체결강도/거래량 계산 결손 → 2차 스크리닝 입력 결손 → **신호 생성 0건의 직접 원인 후보** (Phase 8.6 진단 후보 A의 정정된 형태)
+
+다음 단계:
+- 2026-05-15 17:08 KST aggregate에서 `path=rotate` / `path=over_limit_low_priority` / subscribe→result 지연 분포 / 종목 토글 빈도 확인 → root cause 확정
+- Sprint 6 후속 조치 후보: 1차 풀 정원 축소(16~18)로 마진 확보, 또는 풀 갱신 주기 완화
+
+> 진단 상세: `docs/phase/phase8.6/sprint5/sprint5-closing-report.md`, root cause 후보 #6.
 
 ## 체결강도 계산
 
